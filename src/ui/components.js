@@ -74,6 +74,8 @@ export function relicChip(relicId, onHover) {
   if (onHover) {
     node.addEventListener('mouseenter', () => onHover(r, node, true));
     node.addEventListener('mouseleave', () => onHover(r, node, false));
+    // Touch: tap a relic to inspect it (hover never fires on touch).
+    node.addEventListener('click', (e) => { e.stopPropagation(); onHover(r, node, true); });
   }
   return node;
 }
