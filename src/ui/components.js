@@ -41,10 +41,14 @@ export function renderCard(card, opts = {}) {
 
   let costText = card.cost === 'X' ? 'X' : card.cost;
   if (card.cost === -1) costText = '';
-  node.appendChild(el('div', { class: 'card-cost', text: String(costText) }));
-  node.appendChild(el('div', { class: 'card-art', text: CARD_ART[card.id] || card._bp?.art || TYPE_GLYPH[card.char] || '◈' }));
+  node.appendChild(el('div', { class: 'card-cost' }, [el('span', { text: String(costText) })]));
   node.appendChild(el('div', { class: 'card-name', text: card.name }));
-  node.appendChild(el('div', { class: 'card-type', text: card.type.toUpperCase() }));
+  const glyph = CARD_ART[card.id] || card._bp?.art || TYPE_GLYPH[card.char] || '◈';
+  node.appendChild(el('div', { class: 'card-art' }, [
+    el('div', { class: 'art-motif' }),
+    el('div', { class: 'art-glyph', text: glyph }),
+  ]));
+  node.appendChild(el('div', { class: 'card-type' }, [el('span', { text: card.type.toUpperCase() })]));
   node.appendChild(el('div', { class: 'card-desc', html: highlightKeywords(cardDesc(card)) }));
 
   if (opts.onClick) node.addEventListener('click', () => opts.onClick(card, node));

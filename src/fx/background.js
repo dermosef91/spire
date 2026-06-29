@@ -1,6 +1,10 @@
-// Animated cosmic backdrop: a parallax starfield with drifting nebula motes and
-// occasional shooting stars, rendered on a single full-screen canvas behind the
-// UI. Cheap (a few hundred particles), DPR-aware, and honours reduced-motion.
+// Animated backdrop for the "Incandescent" theme: a deep-black field of
+// white/amber stars, slow smoky orange nebula, a glowing horizontal audio
+// waveform across the midline, and the occasional ember streak. DPR-aware and
+// honours reduced-motion. Rendered on one full-screen canvas behind the UI.
+
+const ORANGE = [255, 122, 26];
+const AMBER = [255, 170, 60];
 
 export function mountBackground() {
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -10,7 +14,7 @@ export function mountBackground() {
   const ctx = canvas.getContext('2d');
 
   let W = 0, H = 0, dpr = 1;
-  let stars = [], motes = [], shooting = [];
+  let stars = [], motes = [], embers = [], wave = [];
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -22,44 +26,38 @@ export function mountBackground() {
   }
 
   function seed() {
-    const count = Math.round((W * H) / 9000); // density
+    const count = Math.round((W * H) / 8000);
     stars = [];
     for (let i = 0; i < count; i++) {
       stars.push({
         x: Math.random() * W, y: Math.random() * H,
-        r: Math.random() * 1.5 + 0.3,
-        z: Math.random() * 0.8 + 0.2,          // parallax depth / brightness
-        tw: Math.random() * Math.PI * 2,        // twinkle phase
-        tws: Math.random() * 1.5 + 0.4,         // twinkle speed
-        hue: Math.random() < 0.5 ? 45 : (Math.random() < 0.5 ? 280 : 175),
+        r: Math.random() * 1.4 + 0.3, z: Math.random() * 0.8 + 0.2,
+        tw: Math.random() * Math.PI * 2, tws: Math.random() * 1.4 + 0.4,
+        warm: Math.random() < 0.4,
       });
     }
-    // Glowing nebula motes (large soft gradients drifting slowly)
-    const palette = [
-      [224, 69, 123],  // magenta
-      [52, 209, 191],  // teal
-      [154, 123, 209], // violet
-      [255, 206, 92],  // gold
-    ];
     motes = [];
-    const moteCount = Math.max(4, Math.round((W * H) / 220000));
+    const moteCount = Math.max(3, Math.round((W * H) / 260000));
     for (let i = 0; i < moteCount; i++) {
       motes.push({
         x: Math.random() * W, y: Math.random() * H,
-        r: Math.random() * 240 + 160,
-        dx: (Math.random() - 0.5) * 0.08, dy: (Math.random() - 0.5) * 0.08,
-        c: palette[i % palette.length], a: Math.random() * 0.08 + 0.05,
+        r: Math.random() * 280 + 180,
+        dx: (Math.random() - 0.5) * 0.07, dy: (Math.random() - 0.5) * 0.07,
+        c: i % 3 === 0 ? AMBER : ORANGE, a: Math.random() * 0.06 + 0.04,
       });
     }
+    // pre-roll waveform phase offsets
+    wave = [];
+    for (let i = 0; i < 7; i++) wave.push({ amp: 6 + Math.random() * 26, k: 0.004 + Math.random() * 0.02, ph: Math.random() * Math.PI * 2, sp: 0.4 + Math.random() * 1.2 });
   }
 
   let last = performance.now();
+  let t = 0;
   function frame(now) {
-    const dt = Math.min(48, now - last) / 1000;
-    last = now;
+    const dt = Math.min(48, now - last) / 1000; last = now; t += dt;
     ctx.clearRect(0, 0, W, H);
 
-    // Nebula motes
+    // smoky nebula
     for (const m of motes) {
       m.x += m.dx; m.y += m.dy;
       if (m.x < -m.r) m.x = W + m.r; if (m.x > W + m.r) m.x = -m.r;
@@ -67,41 +65,60 @@ export function mountBackground() {
       const g = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, m.r);
       g.addColorStop(0, `rgba(${m.c[0]},${m.c[1]},${m.c[2]},${m.a})`);
       g.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(m.x - m.r, m.y - m.r, m.r * 2, m.r * 2);
+      ctx.fillStyle = g; ctx.fillRect(m.x - m.r, m.y - m.r, m.r * 2, m.r * 2);
     }
 
-    // Stars
+    // stars
     for (const s of stars) {
       s.tw += s.tws * dt;
-      const tw = 0.6 + 0.4 * Math.sin(s.tw);
-      const a = s.z * tw;
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fillStyle = s.hue === 45
-        ? `rgba(255,228,160,${a})`
-        : s.hue === 175 ? `rgba(170,240,225,${a})` : `rgba(210,190,255,${a})`;
+      const a = s.z * (0.55 + 0.45 * Math.sin(s.tw));
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = s.warm ? `rgba(255,176,80,${a})` : `rgba(245,240,230,${a})`;
       ctx.fill();
-      if (!reduce) { s.y += s.z * 2 * dt; if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; } }
+      if (!reduce) { s.y += s.z * 1.4 * dt; if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; } }
     }
 
-    // Occasional shooting star
-    if (!reduce && Math.random() < 0.004 && shooting.length < 2) {
-      shooting.push({ x: Math.random() * W * 0.6, y: Math.random() * H * 0.4, vx: 380 + Math.random() * 220, vy: 160 + Math.random() * 120, life: 1 });
+    // glowing audio waveform across the midline
+    drawWave(H * 0.46, 0.55);
+    drawWave(H * 0.46, 1.0);
+
+    // ember streaks rising
+    if (!reduce && Math.random() < 0.02 && embers.length < 24) {
+      embers.push({ x: Math.random() * W, y: H + 6, vy: -(20 + Math.random() * 45), vx: (Math.random() - 0.5) * 12, life: 1, r: Math.random() * 1.6 + 0.6 });
     }
-    for (let i = shooting.length - 1; i >= 0; i--) {
-      const sh = shooting[i];
-      sh.x += sh.vx * dt; sh.y += sh.vy * dt; sh.life -= dt * 1.2;
-      if (sh.life <= 0 || sh.x > W || sh.y > H) { shooting.splice(i, 1); continue; }
-      const tailX = sh.x - sh.vx * 0.06, tailY = sh.y - sh.vy * 0.06;
-      const g = ctx.createLinearGradient(tailX, tailY, sh.x, sh.y);
-      g.addColorStop(0, 'rgba(255,228,160,0)');
-      g.addColorStop(1, `rgba(255,240,200,${Math.min(1, sh.life)})`);
-      ctx.strokeStyle = g; ctx.lineWidth = 2; ctx.beginPath();
-      ctx.moveTo(tailX, tailY); ctx.lineTo(sh.x, sh.y); ctx.stroke();
+    for (let i = embers.length - 1; i >= 0; i--) {
+      const e = embers[i];
+      e.x += e.vx * dt; e.y += e.vy * dt; e.life -= dt * 0.35;
+      if (e.life <= 0 || e.y < -6) { embers.splice(i, 1); continue; }
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,${120 + Math.random() * 60 | 0},40,${Math.min(0.9, e.life)})`;
+      ctx.shadowColor = 'rgba(255,120,30,0.8)'; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0;
     }
 
     raf = requestAnimationFrame(frame);
+  }
+
+  function drawWave(yBase, alpha) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.beginPath();
+    const speed = reduce ? 0 : t;
+    for (let x = 0; x <= W; x += 4) {
+      let y = 0;
+      for (const w of wave) y += Math.sin(x * w.k + w.ph + speed * w.sp) * w.amp;
+      // taper toward edges
+      const taper = Math.sin((x / W) * Math.PI);
+      y = yBase + y * (0.35 + taper * 0.9);
+      if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    const grad = ctx.createLinearGradient(0, 0, W, 0);
+    grad.addColorStop(0, 'rgba(255,122,26,0)');
+    grad.addColorStop(0.5, `rgba(255,150,50,${0.5 * alpha})`);
+    grad.addColorStop(1, 'rgba(255,122,26,0)');
+    ctx.strokeStyle = grad; ctx.lineWidth = 1.5 * alpha + 0.5;
+    ctx.shadowColor = 'rgba(255,130,30,0.6)'; ctx.shadowBlur = 14 * alpha;
+    ctx.stroke();
+    ctx.restore();
   }
 
   let raf = null;
@@ -114,6 +131,4 @@ export function mountBackground() {
   raf = requestAnimationFrame(frame);
 }
 
-function debounce(fn, ms) {
-  let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
-}
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
