@@ -1,0 +1,11 @@
+{
+  "name": "ase-obsidian-spire",
+  "version": "1.0.0",
+  "description": "ÀṢẸ — Ascend the Obsidian Spire: an afrofuturist roguelike deckbuilder.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "serve": "node server.js"
+  },
+  "license": "MIT"
+}
