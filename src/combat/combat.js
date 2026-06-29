@@ -18,6 +18,7 @@ export class Combat {
     this.opts = opts; // { elite, boss, rewards }
     this.onUpdate = () => {};
     this.onLog = () => {};
+    this.fx = () => {}; // visual-effect hook set by the view: fx(type, payload)
     this.logs = [];
     this.over = false;
     this.victory = false;
@@ -162,11 +163,13 @@ export class Combat {
       remaining -= blocked;
     }
     let hpLost = 0;
+    const blocked = dmg - remaining;
     if (remaining > 0) {
       target.hp -= remaining;
       hpLost = remaining;
       if (target.isPlayer) this.fire('hpLost', { amount: remaining });
     }
+    this.fx('damage', { target, dmg, hpLost, blocked, isAttack });
     // Backlash (thorns) when attacked
     if (isAttack && source && target.powers.thorns) {
       this.applyDamage(source, target.powers.thorns, { isAttack: false });
@@ -187,6 +190,7 @@ export class Combat {
         entity.hp = 0; entity.alive = false; this.lose();
       } else {
         entity.hp = 0; entity.alive = false;
+        this.fx('death', { target: entity });
         this.onEnemyDeath(entity);
       }
     }
@@ -207,6 +211,7 @@ export class Combat {
     if (!target || !target.alive) { target = this.randomEnemy(); if (!target) return 0; }
     let total = 0;
     const mult = this._cardDamageMult || 1;
+    this.fx('attackstart', { source: this.player, target });
     for (let i = 0; i < hits; i++) {
       if (!target.alive) break;
       const dmg = this.calcAttackDamage(base, this.player, target) * mult;
@@ -217,6 +222,7 @@ export class Combat {
   }
   dealAll(base, hits = 1) {
     let total = 0;
+    this.fx('attackstart', { source: this.player });
     for (let i = 0; i < hits; i++) {
       for (const e of this.livingEnemies()) {
         const dmg = this.calcAttackDamage(base, this.player, e) * (this._cardDamageMult || 1);
@@ -238,6 +244,7 @@ export class Combat {
 
   // Enemy attack on player
   enemyAttack(enemy, base, hits = 1) {
+    this.fx('attackstart', { source: enemy, target: this.player });
     for (let i = 0; i < hits; i++) {
       if (!this.player.alive) break;
       const dmg = this.calcAttackDamage(base, enemy, this.player);
@@ -251,21 +258,32 @@ export class Combat {
     if (this.player.powers.noBlock) return;
     let b = amount + (this.player.powers.dexterity || 0);
     if (this.player.powers.frail) b = Math.floor(b * 0.75);
-    this.player.block += Math.max(0, b);
+    b = Math.max(0, b);
+    this.player.block += b;
+    if (b > 0) this.fx('block', { entity: this.player, amount: b });
     this.notify();
   }
-  gainBlockRaw(amount) { if (this.player.powers.noBlock) return; this.player.block += Math.max(0, amount); this.notify(); }
+  gainBlockRaw(amount) {
+    if (this.player.powers.noBlock) return;
+    const b = Math.max(0, amount);
+    this.player.block += b;
+    if (b > 0) this.fx('block', { entity: this.player, amount: b });
+    this.notify();
+  }
   gainBlockTo(entity, amount, raw = false) {
     if (entity.isPlayer && entity.powers.noBlock) return;
     let b = amount;
     if (!raw && entity.isPlayer) { b += (entity.powers.dexterity || 0); if (entity.powers.frail) b = Math.floor(b * 0.75); }
-    entity.block += Math.max(0, b);
+    b = Math.max(0, b);
+    entity.block += b;
+    if (b > 0) this.fx('block', { entity, amount: b });
     this.notify();
   }
 
   heal(amount) {
     if (amount <= 0) return;
     this.player.hp = Math.min(this.player.maxHp, this.player.hp + amount);
+    this.fx('heal', { entity: this.player, amount });
     this.notify();
   }
   loseHp(entity, amount) {
@@ -295,6 +313,7 @@ export class Combat {
     } else if (target.powers[key] === 0) {
       delete target.powers[key];
     }
+    if (amount !== 0) this.fx('power', { target, key, amount });
     this.notify();
   }
 

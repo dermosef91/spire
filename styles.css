@@ -33,16 +33,15 @@ body {
   font-family: 'Rajdhani', system-ui, sans-serif;
   overflow-x: hidden;
 }
-body::before {
-  /* faint kente-stripe weave overlay */
+body::after {
+  /* soft cinematic vignette */
   content: '';
-  position: fixed; inset: 0; pointer-events: none; opacity: 0.05; z-index: 0;
-  background-image:
-    repeating-linear-gradient(90deg, var(--gold) 0 2px, transparent 2px 26px),
-    repeating-linear-gradient(0deg, var(--teal) 0 2px, transparent 2px 40px);
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(120% 120% at 50% 35%, transparent 55%, rgba(0,0,0,0.55) 100%);
 }
+#bg-canvas { position: fixed; inset: 0; z-index: -2; display: block; }
 
-#game-root { position: relative; z-index: 1; min-height: 100vh; }
+#game-root { position: relative; z-index: 1; min-height: 100dvh; }
 h1, h2, h3 { font-family: 'Cinzel', serif; letter-spacing: 0.04em; margin: 0.2em 0; }
 
 .scene { opacity: 0; transform: translateY(8px); transition: opacity 0.4s ease, transform 0.4s ease; padding: 16px; max-width: 1180px; margin: 0 auto; }
@@ -391,4 +390,278 @@ html { -webkit-text-size-adjust: 100%; }
   .card-art { font-size: 20px; }
   .card-desc { font-size: 10px; }
   .hpbar { width: 88px; }
+}
+
+/* ============================================================
+   VISUAL OVERHAUL v2 — depth, glass, glow & motion
+   ============================================================ */
+
+/* ---- Scene transition: rise + fade with a touch of scale ---- */
+.scene { transition: opacity 0.45s ease, transform 0.45s cubic-bezier(.2,.8,.2,1); transform: translateY(14px) scale(0.995); }
+.scene.show { transform: none; }
+
+/* ---- Glassy panels everywhere ---- */
+.topbar, .char-card, .overlay-box, .reward-row, .shop-mini, .map-scroller,
+.event-scene .event-text, .combat-controls { backdrop-filter: blur(8px) saturate(1.1); -webkit-backdrop-filter: blur(8px) saturate(1.1); }
+.topbar { background: linear-gradient(180deg, rgba(40,24,72,0.7), rgba(18,10,34,0.7)); box-shadow: 0 6px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06); }
+.combat-topbar { position: relative; z-index: 6; }
+
+/* ---- Buttons: glossy, with sheen sweep ---- */
+.btn { position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08); }
+.btn::after { content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.25), transparent); transform: skewX(-20deg); transition: left 0.5s ease; }
+.btn:hover::after { left: 120%; }
+.btn.primary { box-shadow: 0 6px 22px rgba(255,206,92,0.35), inset 0 1px 0 rgba(255,255,255,0.4); }
+
+/* ---- Title: animated gold shimmer + glow breath ---- */
+.game-title {
+  background: linear-gradient(100deg, #fff3cf, var(--gold) 40%, #ffb347 55%, var(--gold) 70%, #fff3cf);
+  background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: titleShift 7s linear infinite, titleBreath 4s ease-in-out infinite;
+}
+@keyframes titleShift { to { background-position: 250% 0; } }
+@keyframes titleBreath { 0%,100% { filter: drop-shadow(0 0 30px rgba(255,206,92,0.35)); } 50% { filter: drop-shadow(0 0 60px rgba(255,206,92,0.6)); } }
+.game-subtitle { animation: fadeUp 1s ease both 0.2s; }
+.title-lore { animation: fadeUp 1s ease both 0.4s; }
+.title-buttons { animation: fadeUp 1s ease both 0.6s; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* ============================================================
+   CARDS — framed, gemmed, foil sheen
+   ============================================================ */
+.card {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), transparent 40%),
+    linear-gradient(180deg, #2a1850, #150b2a);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.05);
+  border-width: 2px;
+}
+.card::before { /* inner frame */
+  content: ''; position: absolute; inset: 5px; border-radius: 9px;
+  border: 1px solid rgba(255,255,255,0.10); pointer-events: none;
+}
+.card::after { /* foil sheen sweep on hover */
+  content: ''; position: absolute; inset: 0; border-radius: 12px; pointer-events: none; opacity: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.22) 48%, transparent 62%);
+  background-size: 220% 220%; background-position: 100% 0; transition: opacity 0.2s ease;
+}
+@media (hover: hover) { .card:hover::after { opacity: 1; animation: foil 0.7s ease; } }
+@keyframes foil { from { background-position: 120% 0; } to { background-position: -20% 0; } }
+.card.type-attack { background: linear-gradient(180deg, rgba(255,255,255,0.05), transparent 40%), linear-gradient(180deg, #43141d, #1c0a12); }
+.card.type-skill  { background: linear-gradient(180deg, rgba(255,255,255,0.05), transparent 40%), linear-gradient(180deg, #11293f, #0b1322); }
+.card.type-power  { background: linear-gradient(180deg, rgba(255,255,255,0.05), transparent 40%), linear-gradient(180deg, #311c4f, #160c28); }
+.card-art {
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.7));
+  background: radial-gradient(circle at 50% 40%, rgba(255,255,255,0.10), transparent 62%);
+  border-radius: 50%;
+}
+.card-cost { box-shadow: 0 2px 8px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.8); }
+.card.upgraded .card-name { text-shadow: 0 0 10px rgba(255,206,92,0.7); }
+.card.playing { animation: cardPlay 0.32s ease forwards; }
+@keyframes cardPlay { to { transform: translateY(-40px) scale(1.12); opacity: 0; } }
+
+/* ============================================================
+   BATTLEFIELD — medallion combatants with rings, glow & idle float
+   ============================================================ */
+.battlefield { align-items: center; }
+.combatant { transition: opacity 0.4s ease; }
+.stage { position: relative; display: grid; place-items: center; padding-top: 6px; }
+
+.medallion { position: relative; width: 116px; height: 116px; display: grid; place-items: center; }
+.player .medallion { width: 132px; height: 132px; }
+.med-ring {
+  position: absolute; inset: -8px; border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--ring1, #ffce5c), transparent 25%, var(--ring2, #9a7bd1) 50%, transparent 75%, var(--ring1, #ffce5c));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+  animation: ringSpin 9s linear infinite; opacity: 0.85;
+}
+.enemy .med-ring { --ring1: #ff7a6e; --ring2: #b5483f; }
+.player .med-ring { --ring1: #ffce5c; --ring2: #34d1bf; }
+@keyframes ringSpin { to { transform: rotate(360deg); } }
+.med-core {
+  position: relative; width: 100%; height: 100%; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 38% 32%, #3a2860, #150b2a 75%);
+  box-shadow: inset 0 4px 18px rgba(0,0,0,0.6), inset 0 -6px 16px rgba(255,255,255,0.05), 0 0 26px rgba(154,123,209,0.35);
+  border: 2px solid rgba(255,255,255,0.12);
+}
+.enemy .med-core { background: radial-gradient(circle at 38% 32%, #5a2330, #1c0a12 75%); box-shadow: inset 0 4px 18px rgba(0,0,0,0.6), 0 0 26px rgba(224,69,123,0.3); }
+.player .med-core { background: radial-gradient(circle at 38% 32%, #2a4a55, #102028 75%); box-shadow: inset 0 4px 18px rgba(0,0,0,0.6), 0 0 30px rgba(52,209,191,0.35); }
+.glyph { font-size: 60px; line-height: 1; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6)); animation: medFloat 3.4s ease-in-out infinite; }
+.player .glyph { font-size: 70px; }
+.enemy:nth-child(2n) .glyph { animation-duration: 3.9s; }
+.enemy:nth-child(3n) .glyph { animation-duration: 4.4s; }
+@keyframes medFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.ground-shadow { width: 84px; height: 16px; margin-top: 2px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0,0,0,0.55), transparent); filter: blur(2px); animation: shadowPulse 3.4s ease-in-out infinite; }
+@keyframes shadowPulse { 0%,100% { transform: scale(1); opacity: 0.55; } 50% { transform: scale(0.86); opacity: 0.4; } }
+
+.block-badge {
+  position: absolute; top: -4px; left: -4px; min-width: 30px; height: 30px; padding: 0 6px;
+  border-radius: 15px; display: grid; place-items: center; font-weight: 800; font-size: 14px; color: #eaf3ff;
+  background: radial-gradient(circle at 35% 30%, #9cd0ff, #2c6fb0); border: 2px solid #cfe6ff;
+  box-shadow: 0 0 14px rgba(94,169,230,0.7); z-index: 3;
+}
+.block-badge::before { content: '🛡'; position: absolute; inset: 0; display: grid; place-items: center; opacity: 0.25; font-size: 22px; }
+
+.cname { font-family: 'Cinzel', serif; font-size: 15px; color: var(--ink); margin-top: 4px; text-shadow: 0 1px 3px #000; }
+.hpbar { width: 138px; height: 18px; border-radius: 10px; background: #240c12; border: 1px solid rgba(255,120,110,0.35);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.6); overflow: hidden; position: relative; }
+.hpfill { background: linear-gradient(180deg, #ff8a6e, #e0455a); box-shadow: 0 0 10px rgba(224,69,90,0.5); transition: width 0.45s cubic-bezier(.2,.8,.2,1); }
+.hpfill.low { background: linear-gradient(180deg, #ff5d54, #a8202a); }
+.player .hpfill { background: linear-gradient(180deg, #7be0b0, #2bbd86); }
+.hptext { font-size: 12px; }
+
+/* Enemy intent as a glowing bubble that bobs */
+.intent { top: -40px; background: linear-gradient(180deg, rgba(20,10,34,0.92), rgba(8,4,16,0.92));
+  border: 1px solid var(--gold); box-shadow: 0 4px 14px rgba(0,0,0,0.5), 0 0 14px rgba(255,206,92,0.2);
+  animation: intentBob 2.6s ease-in-out infinite; }
+@keyframes intentBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.intent::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%) rotate(45deg);
+  width: 10px; height: 10px; background: rgba(8,4,16,0.92); border-right: 1px solid var(--gold); border-bottom: 1px solid var(--gold); }
+
+/* targeting glow */
+.combat-scene.targeting .enemy.targetable { cursor: pointer; }
+.combat-scene.targeting .enemy.targetable .med-core { animation: targetPulse 1s ease-in-out infinite; cursor: pointer; }
+@keyframes targetPulse { 0%,100% { box-shadow: inset 0 4px 18px rgba(0,0,0,0.6), 0 0 18px rgba(255,206,92,0.5); } 50% { box-shadow: inset 0 4px 18px rgba(0,0,0,0.6), 0 0 34px rgba(255,206,92,0.95); } }
+
+/* Orbs glow stronger + gentle spin of inner light */
+.orb { box-shadow: 0 0 16px currentColor, inset 0 -4px 8px rgba(0,0,0,0.4), inset 0 3px 6px rgba(255,255,255,0.4); }
+
+/* Energy orb pulse */
+.energy-orb { animation: energyPulse 2.6s ease-in-out infinite; }
+@keyframes energyPulse { 0%,100% { box-shadow: 0 0 16px rgba(255,206,92,0.5); } 50% { box-shadow: 0 0 28px rgba(255,206,92,0.9); } }
+.combat-controls { background: linear-gradient(180deg, rgba(31,17,56,0.6), rgba(12,7,24,0.6)); border: 1px solid var(--line); border-radius: 12px; padding: 8px 14px; }
+
+/* ============================================================
+   FX LAYER — floating numbers, slashes, rings, particles, shakes
+   ============================================================ */
+.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
+.float-num { position: absolute; transform: translate(-50%, -50%); font-family: 'Cinzel', serif; font-weight: 900;
+  font-size: 30px; text-shadow: 0 2px 6px #000, 0 0 12px currentColor; animation: floatUp 1.05s ease-out forwards; will-change: transform, opacity; }
+.float-damage { color: #ff6a5e; }
+.float-block { color: #8fd0ff; }
+.float-heal { color: #7be0a0; }
+.float-buff { color: #9be67a; font-size: 22px; }
+.float-debuff { color: #ff9a6b; font-size: 22px; }
+.float-blocked { color: #bfe0ff; font-size: 26px; }
+@keyframes floatUp { 0% { opacity: 0; transform: translate(-50%, -30%) scale(0.6); } 20% { opacity: 1; transform: translate(-50%, -60%) scale(1.15); } 100% { opacity: 0; transform: translate(-50%, -150%) scale(1); } }
+
+.slash-fx { position: absolute; width: 120px; height: 120px; transform: translate(-50%, -50%) rotate(-30deg);
+  background: linear-gradient(90deg, transparent, #fff, transparent); border-radius: 50%; opacity: 0; mix-blend-mode: screen;
+  -webkit-mask: linear-gradient(90deg, transparent 42%, #000 50%, transparent 58%); mask: linear-gradient(90deg, transparent 42%, #000 50%, transparent 58%);
+  animation: slashAnim 0.4s ease-out forwards; }
+@keyframes slashAnim { 0% { opacity: 0; transform: translate(-50%,-50%) rotate(-50deg) scale(0.5); } 35% { opacity: 0.95; } 100% { opacity: 0; transform: translate(-50%,-50%) rotate(-12deg) scale(1.25); } }
+
+.ring-fx { position: absolute; width: 30px; height: 30px; transform: translate(-50%, -50%); border-radius: 50%;
+  border: 3px solid rgba(255,206,92,0.9); opacity: 0.9; animation: ringAnim 0.55s ease-out forwards; }
+@keyframes ringAnim { to { width: 150px; height: 150px; opacity: 0; } }
+
+.particle { position: absolute; width: 7px; height: 7px; border-radius: 50%; transform: translate(-50%,-50%);
+  box-shadow: 0 0 8px currentColor; animation: particleAnim 0.7s ease-out forwards; }
+@keyframes particleAnim { 0% { opacity: 1; transform: translate(-50%,-50%); } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.4); } }
+
+/* hit flashes (applied to the .combatant) */
+.combatant.flash-hit .med-core { animation: flashHit 0.4s ease; }
+.combatant.flash-block .med-core { animation: flashBlock 0.4s ease; }
+.combatant.flash-heal .med-core { animation: flashHeal 0.4s ease; }
+@keyframes flashHit { 0%,100% { filter: none; } 30% { filter: brightness(2.4) sepia(1) hue-rotate(-30deg) saturate(4); } }
+@keyframes flashBlock { 0%,100% { filter: none; } 30% { filter: brightness(1.8) hue-rotate(180deg) saturate(2); } }
+@keyframes flashHeal { 0%,100% { filter: none; } 30% { filter: brightness(1.8) hue-rotate(80deg) saturate(2); } }
+
+/* shakes / lunges applied to .combatant, animating the medallion */
+.combatant.shake .medallion { animation: shakeA 0.36s; }
+.combatant.shake-big .medallion { animation: shakeB 0.5s; }
+@keyframes shakeA { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(3px)} }
+@keyframes shakeB { 0%,100%{transform:translate(0,0) rotate(0)} 15%{transform:translate(-10px,2px) rotate(-4deg)} 35%{transform:translate(9px,-2px) rotate(3deg)} 55%{transform:translate(-7px,1px) rotate(-2deg)} 75%{transform:translate(5px,-1px) rotate(1deg)} }
+.combatant.lunge-right .medallion { animation: lungeR 0.34s ease; }
+.combatant.lunge-left .medallion { animation: lungeL 0.34s ease; }
+@keyframes lungeR { 0%,100%{transform:translateX(0)} 40%{transform:translateX(34px) scale(1.05)} }
+@keyframes lungeL { 0%,100%{transform:translateX(0)} 40%{transform:translateX(-34px) scale(1.05)} }
+
+.combatant.dying { animation: die 0.62s ease forwards; }
+@keyframes die { to { opacity: 0; transform: translateY(10px) scale(0.7) rotate(8deg); filter: grayscale(1) brightness(0.4); } }
+
+/* screen shake on the whole scene */
+.combat-scene.scene-shake { animation: sShake 0.3s; }
+.combat-scene.scene-shake-big { animation: sShakeBig 0.46s; }
+@keyframes sShake { 0%,100%{transform:translate(0,0)} 25%{transform:translate(-4px,2px)} 50%{transform:translate(3px,-2px)} 75%{transform:translate(-2px,1px)} }
+@keyframes sShakeBig { 0%,100%{transform:translate(0,0)} 20%{transform:translate(-9px,4px)} 40%{transform:translate(8px,-4px)} 60%{transform:translate(-6px,3px)} 80%{transform:translate(4px,-2px)} }
+.combat-scene.won .enemy-side { animation: winFade 0.6s ease forwards; }
+@keyframes winFade { to { opacity: 0.2; filter: grayscale(0.6); } }
+
+/* ============================================================
+   MAP — glowing nodes, flowing paths
+   ============================================================ */
+.edge { stroke: rgba(255,206,92,0.22); stroke-dasharray: 5 7; animation: dashFlow 18s linear infinite; }
+@keyframes dashFlow { to { stroke-dashoffset: -200; } }
+.map-node { background: radial-gradient(circle at 35% 30%, #2c1b4a, #120a24);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 -3px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.06); }
+.map-node.reachable { animation: nodePulse 1.8s ease-in-out infinite; }
+@keyframes nodePulse { 0%,100% { box-shadow: 0 0 10px rgba(255,206,92,0.4); } 50% { box-shadow: 0 0 22px rgba(255,206,92,0.85); } }
+.node-boss { animation: bossPulse 2s ease-in-out infinite; background: radial-gradient(circle at 35% 30%, #4a1830, #1a0a18); }
+@keyframes bossPulse { 0%,100% { box-shadow: 0 0 16px rgba(224,69,123,0.5); transform: translate(-50%,-50%) scale(1); } 50% { box-shadow: 0 0 34px rgba(224,69,123,0.9); transform: translate(-50%,-50%) scale(1.06); } }
+.map-node.current { box-shadow: 0 0 22px var(--teal); }
+
+/* char select cards float in */
+.char-card { animation: fadeUp 0.6s ease both; }
+.char-card:nth-child(2) { animation-delay: 0.1s; }
+.char-card:nth-child(3) { animation-delay: 0.2s; }
+
+/* reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .game-title, .glyph, .ground-shadow, .intent, .med-ring, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene { animation: none !important; }
+  .scene { transform: none; }
+}
+
+/* FX layer needs a positioned combat scene to anchor against */
+.combat-scene { position: relative; min-height: 100dvh; }
+
+/* ============================================================
+   MOBILE OVERRIDES v2 — scale the medallion combatants
+   (appended last so they win over the v2 desktop rules)
+   ============================================================ */
+@media (max-width: 760px) {
+  .medallion { width: 94px; height: 94px; }
+  .player .medallion { width: 104px; height: 104px; }
+  .glyph { font-size: 46px; } .player .glyph { font-size: 52px; }
+  .hpbar { width: 118px; }
+  .cname { font-size: 13px; }
+  .float-num { font-size: 24px; }
+}
+@media (max-height: 560px) {
+  .combat-scene { min-height: 0; }
+  .medallion { width: 76px; height: 76px; }
+  .player .medallion { width: 86px; height: 86px; }
+  .glyph { font-size: 38px; } .player .glyph { font-size: 44px; }
+  .ground-shadow { width: 60px; height: 12px; }
+  .hpbar { width: 100px; height: 15px; }
+  .cname { font-size: 12px; margin-top: 2px; }
+  .block-badge { min-width: 24px; height: 24px; font-size: 12px; }
+  .intent { top: -30px; }
+  .float-num { font-size: 22px; }
+}
+@media (max-height: 430px) {
+  .medallion { width: 62px; height: 62px; }
+  .player .medallion { width: 70px; height: 70px; }
+  .glyph { font-size: 30px; } .player .glyph { font-size: 34px; }
+  .hpbar { width: 84px; height: 13px; }
+}
+
+/* Tighten landscape-phone combat so the whole board + hand fit without clipping */
+@media (max-height: 560px) {
+  .battlefield { padding-top: 22px; }      /* headroom for intent bubbles */
+  .stage { padding-top: 0; }
+  .medallion { width: 66px; height: 66px; }
+  .player .medallion { width: 74px; height: 74px; }
+  .glyph { font-size: 33px; } .player .glyph { font-size: 38px; }
+  .combatant { gap: 2px; min-width: 84px; }
+  .cname { margin-top: 1px; }
+  .hand { min-height: 0; padding: 6px 6px 4px; }
+  .card { width: 100px; height: 124px; }
+  .card-desc { font-size: 10px; }
+  .combat-controls { margin-top: 2px; padding: 4px 12px; }
+  .combat-log { min-height: 14px; margin: 1px 0; font-size: 11px; }
+  .orbs { margin-top: 2px; }
+  .orb { width: 24px; height: 24px; }
 }

@@ -1,6 +1,9 @@
 // Entry point: boot the game and unlock audio on first interaction.
 import { Game } from './game.js';
 import { audio } from './audio.js';
+import { mountBackground } from './fx/background.js';
+
+mountBackground();
 
 const root = document.getElementById('game-root');
 const game = new Game(root);
