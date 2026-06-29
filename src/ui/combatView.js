@@ -196,6 +196,11 @@ export class CombatView {
   tryPotion(potion, idx) {
     const c = this.combat;
     if (c.over) return;
+    // On touch, confirm first (potions are single-use and easy to fat-finger).
+    if (this.game.isTouch() && !this._potionConfirmed) {
+      this.game.confirm(`Use ${potion.name}?`, potion.desc, () => { this._potionConfirmed = true; this.tryPotion(potion, idx); this._potionConfirmed = false; });
+      return;
+    }
     if (potion.targeted) {
       const living = c.livingEnemies();
       if (living.length === 1) { c.usePotion(potion, living[0]); this.game.run.removePotionAt(idx); this.render(); return; }

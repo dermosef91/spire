@@ -16,6 +16,7 @@ import { CombatView } from './ui/combatView.js';
 import { renderCard, topBar, relicChip, button } from './ui/components.js';
 import { POWERS } from './data/keywords.js';
 import { audio } from './audio.js';
+import { fullscreenSupported, isFullscreen, toggleFullscreen, onFullscreenChange, isTouchDevice } from './core/fullscreen.js';
 
 const MAX_ACT = 3;
 
@@ -23,9 +24,51 @@ export class Game {
   constructor(root) {
     this.root = root;
     this.run = null;
+    this.touch = isTouchDevice();
     this.tip = el('div', { class: 'tooltip', id: 'tooltip' });
     document.body.appendChild(this.tip);
     this.meta = loadMeta();
+    this.setupMobile();
+  }
+
+  isTouch() { return this.touch; }
+
+  // ----------------------------------------------------------- mobile / fullscreen
+  setupMobile() {
+    // Floating fullscreen toggle, present on every scene.
+    if (fullscreenSupported()) {
+      this.fsBtn = el('button', {
+        class: 'fs-toggle', attrs: { 'aria-label': 'Toggle fullscreen', title: 'Fullscreen' }, text: '⛶',
+        on: { click: () => toggleFullscreen(document.documentElement) },
+      });
+      document.body.appendChild(this.fsBtn);
+      onFullscreenChange(() => { if (this.fsBtn) this.fsBtn.textContent = isFullscreen() ? '🗗' : '⛶'; });
+    }
+    // Non-blocking "rotate to landscape" hint (CSS decides when to show it).
+    this.rotateHint = el('div', { class: 'rotate-hint', html: '<span class="rot-ic">⟳</span> Rotate to landscape for the best view' });
+    document.body.appendChild(this.rotateHint);
+
+    if (this.touch) document.body.classList.add('is-touch');
+
+    // On touch, a tap anywhere that is not an inspectable chip dismisses the tooltip.
+    document.addEventListener('pointerdown', (e) => {
+      if (!this.touch) return;
+      if (!e.target.closest('.relic, .potion, .tooltip')) this.tooltip(null, null, false);
+    }, true);
+  }
+
+  // A small yes/no confirm overlay (used for irreversible touch actions like potions).
+  confirm(title, desc, onYes) {
+    const overlay = el('div', { class: 'overlay' });
+    const box = el('div', { class: 'overlay-box confirm-box' });
+    box.appendChild(el('h3', { text: title }));
+    if (desc) box.appendChild(el('p', { class: 'event-text', html: desc }));
+    const row = el('div', { class: 'confirm-row' });
+    row.appendChild(button('Use', () => { document.body.removeChild(overlay); onYes(); }, 'primary'));
+    row.appendChild(button('Cancel', () => document.body.removeChild(overlay)));
+    box.appendChild(row);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
   }
 
   // ----------------------------------------------------------- scene helpers
@@ -77,6 +120,12 @@ export class Game {
     btns.appendChild(button(audio.musicOn ? '♪ Music: On' : '♪ Music: Off', (e) => {
       const on = audio.toggleMusic(); e.target.textContent = on ? '♪ Music: On' : '♪ Music: Off';
     }));
+    if (fullscreenSupported()) {
+      btns.appendChild(button(isFullscreen() ? '⛶ Exit Fullscreen' : '⛶ Fullscreen', async (e) => {
+        const on = await toggleFullscreen(document.documentElement);
+        e.target.textContent = on ? '⛶ Exit Fullscreen' : '⛶ Fullscreen';
+      }));
+    }
     panel.appendChild(btns);
     panel.appendChild(el('div', { class: 'title-meta', text: `Runs: ${this.meta.runs}  ·  Victories: ${this.meta.wins}  ·  Best Floor: ${this.meta.bestFloor}` }));
     this.setScene(panel, 'title');
@@ -625,11 +674,14 @@ export class Game {
   usePotionOnMap(potion, idx) {
     const run = this.run;
     if (potion.combatOnly) { audio.play('error'); return; }
-    potion.use({ run, combat: null, target: null });
-    run.removePotionAt(idx);
-    audio.play('select');
-    // refresh whichever map-ish scene we're on
-    this.showMap();
+    const doUse = () => {
+      potion.use({ run, combat: null, target: null });
+      run.removePotionAt(idx);
+      audio.play('select');
+      this.showMap();
+    };
+    if (this.touch) this.confirm(`Use ${potion.name}?`, potion.desc, doUse);
+    else doUse();
   }
 
   // ----------------------------------------------------------- end states
