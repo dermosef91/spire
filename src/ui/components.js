@@ -7,6 +7,7 @@ import { POWERS } from '../data/keywords.js';
 import { UI, cardArt, relicIcon, potionIcon, powerIcon } from './icons.js';
 import { fullscreenSupported, toggleFullscreen } from '../core/fullscreen.js';
 import { hasCardArt } from './card-art.js';
+import { audio } from '../audio.js';
 
 export function renderCard(card, opts = {}) {
   const typeClass = `type-${card.type}`;
@@ -56,7 +57,7 @@ export function renderCard(card, opts = {}) {
 }
 
 export function highlightKeywords(text) {
-  const kws = ['Ward', 'Resolve', 'Grace', 'Exposed', 'Sapped', 'Brittle', 'Blight', 'Phase',
+  const kws = ['Block', 'Resolve', 'Grace', 'Exposed', 'Sapped', 'Brittle', 'Blight', 'Phase',
     'Verse', 'Spirit', 'Storm', 'Tide', 'Shade', 'Sun', 'Focus', 'Àṣẹ', 'Backlash', 'Bronzeplate',
     'Exhaust', 'Ethereal', 'Innate', 'Retain', 'Regrowth', 'Charm', 'Evoke', 'Channel', 'Max HP'];
   let out = text;
@@ -111,6 +112,24 @@ export function topBar(run, extra = {}) {
   for (const rid of run.relics) relicWrap.appendChild(relicChip(rid, extra.onHover));
   right.appendChild(relicWrap);
 
+  const muteBtn = el('button', {
+    class: 'tb-mute',
+    html: audio.muted ? UI.soundOff : UI.soundOn,
+    attrs: {
+      'aria-label': audio.muted ? 'Unmute all sounds' : 'Mute all sounds',
+      title: audio.muted ? 'Unmute Sound' : 'Mute Sound'
+    },
+    on: {
+      click: () => {
+        const isMuted = audio.toggleMute();
+        muteBtn.innerHTML = isMuted ? UI.soundOff : UI.soundOn;
+        muteBtn.setAttribute('aria-label', isMuted ? 'Unmute all sounds' : 'Mute all sounds');
+        muteBtn.setAttribute('title', isMuted ? 'Unmute Sound' : 'Mute Sound');
+      }
+    }
+  });
+  right.appendChild(muteBtn);
+
   if (fullscreenSupported()) {
     right.appendChild(el('button', {
       class: 'tb-fs', html: UI.fullscreen, attrs: { 'aria-label': 'Toggle fullscreen', title: 'Fullscreen' },
@@ -125,7 +144,7 @@ export function topBar(run, extra = {}) {
 
 export function powerPips(entity) {
   const wrap = el('div', { class: 'powers' });
-  if (entity.block > 0) wrap.appendChild(el('div', { class: 'pip pip-block', html: `<i class="pip-ic">${powerIcon('block')}</i> ${entity.block}`, title: 'Ward — absorbs damage' }));
+  if (entity.block > 0) wrap.appendChild(el('div', { class: 'pip pip-block', html: `<i class="pip-ic">${powerIcon('block')}</i> ${entity.block}`, title: 'Block — absorbs damage' }));
   for (const [key, val] of Object.entries(entity.powers)) {
     if (!val) continue;
     const def = POWERS[key];

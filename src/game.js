@@ -107,6 +107,7 @@ export class Game {
 
   // ----------------------------------------------------------- title
   showTitle() {
+    audio.setMusicMode('title');
     audio.play('select');
     const panel = el('div', { class: 'title-screen' });
     panel.appendChild(el('h1', { class: 'game-title', html: 'ÀṢẸ' }));
@@ -195,6 +196,7 @@ export class Game {
 
   // ----------------------------------------------------------- map
   showMap() {
+    audio.setMusicMode('ambient');
     saveRun(this.run);
     const run = this.run;
     const map = run.map;
@@ -306,6 +308,7 @@ export class Game {
   startBoss() { this.beginCombat(this.pickEncounter('boss'), 'boss'); }
 
   beginCombat(enemyIds, kind) {
+    audio.setCombat(true);
     const combat = new Combat(this.run, enemyIds, { kind });
     const view = new CombatView(this, combat);
     view.onEnd = (c) => this.afterCombat(c, kind);
@@ -315,6 +318,7 @@ export class Game {
   }
 
   afterCombat(combat, kind) {
+    audio.setCombat(false);
     // Write HP back
     this.run.hp = Math.max(0, combat.player.hp);
     if (!combat.victory) { this.gameOver(false); return; }

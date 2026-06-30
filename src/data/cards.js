@@ -17,7 +17,7 @@ function def(id, bp) {
 }
 
 // ============================================================== AMARA — Agojie Bladedancer
-// Strength ("Resolve"), Ward, raw blades and ancestral fury.
+// Strength ("Resolve"), Block, raw blades and ancestral fury.
 
 def('slash', {
   name: 'Blade Arc', char: 'amara', type: 'attack', rarity: 'basic', cost: 1,
@@ -29,7 +29,7 @@ def('slash', {
 def('brace', {
   name: 'Iron Stance', char: 'amara', type: 'skill', rarity: 'basic', cost: 1,
   block: 5, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward.`,
+  desc: (c) => `Gain ${c.block} Block.`,
   upgrade: (c) => { c.block = 8; },
   onPlay: (ctx) => ctx.gainBlock(ctx.c.block),
 });
@@ -50,7 +50,7 @@ def('twin_fangs', {
 def('ironwave', {
   name: 'Ironwave', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
   dmg: 5, block: 5, target: 'enemy',
-  desc: (c) => `Gain ${c.block} Ward. Deal ${c.dmg} damage.`,
+  desc: (c) => `Gain ${c.block} Block. Deal ${c.dmg} damage.`,
   upgrade: (c) => { c.dmg = 7; c.block = 7; },
   onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.deal(ctx.enemy, ctx.c.dmg); },
 });
@@ -78,7 +78,7 @@ def('crosscut', {
 def('shrug', {
   name: 'Shrug It Off', char: 'amara', type: 'skill', rarity: 'common', cost: 1,
   block: 8, magic: 1, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward. Draw ${c.magic} card.`,
+  desc: (c) => `Gain ${c.block} Block. Draw ${c.magic} card.`,
   upgrade: (c) => { c.block = 11; },
   onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.draw(ctx.c.magic); },
 });
@@ -113,7 +113,7 @@ def('ember_within', {
 def('bulwark', {
   name: 'Bulwark', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 1,
   target: 'self',
-  desc: (c) => `Double your current Ward.`,
+  desc: (c) => `Double your current Block.`,
   upgrade: (c) => { c.cost = 0; },
   onPlay: (ctx) => { ctx.gainBlockRaw(ctx.self.block); },
 });
@@ -198,7 +198,7 @@ def('jab', {
 def('refrain', {
   name: 'Refrain', char: 'kofi', type: 'skill', rarity: 'basic', cost: 1,
   block: 5, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward.`,
+  desc: (c) => `Gain ${c.block} Block.`,
   upgrade: (c) => { c.block = 8; },
   onPlay: (ctx) => ctx.gainBlock(ctx.c.block),
 });
@@ -219,7 +219,7 @@ def('blight_needle', {
 def('quickstep', {
   name: 'Quickstep', char: 'kofi', type: 'skill', rarity: 'common', cost: 1,
   block: 6, magic: 1, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward. Draw ${c.magic} card.`,
+  desc: (c) => `Gain ${c.block} Block. Draw ${c.magic} card.`,
   upgrade: (c) => { c.block = 8; },
   onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.draw(ctx.c.magic); },
 });
@@ -240,7 +240,7 @@ def('crescendo', {
 def('deflect', {
   name: 'Deflect', char: 'kofi', type: 'skill', rarity: 'common', cost: 0,
   block: 4, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward.`,
+  desc: (c) => `Gain ${c.block} Block.`,
   upgrade: (c) => { c.block = 7; },
   onPlay: (ctx) => ctx.gainBlock(ctx.c.block),
 });
@@ -254,7 +254,7 @@ def('shard_burst', {
 def('backbeat', {
   name: 'Backbeat', char: 'kofi', type: 'skill', rarity: 'common', cost: 1,
   block: 6, magic: 1, target: 'enemy',
-  desc: (c) => `Gain ${c.block} Ward. Apply ${c.magic} Sapped.`,
+  desc: (c) => `Gain ${c.block} Block. Apply ${c.magic} Sapped.`,
   upgrade: (c) => { c.block = 8; c.magic = 2; },
   onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.applyEnemy('weak', ctx.c.magic); },
 });
@@ -341,7 +341,7 @@ def('pulse', {
 def('barrier', {
   name: 'Barrier', char: 'zara', type: 'skill', rarity: 'basic', cost: 1,
   block: 5, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward.`,
+  desc: (c) => `Gain ${c.block} Block.`,
   upgrade: (c) => { c.block = 8; },
   onPlay: (ctx) => ctx.gainBlock(ctx.c.block),
 });
@@ -383,7 +383,7 @@ def('coolhead', {
 def('capacitor', {
   name: 'Capacitor', char: 'zara', type: 'skill', rarity: 'common', cost: 1,
   block: 7, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward. Gain 1 Àṣẹ next turn.`,
+  desc: (c) => `Gain ${c.block} Block. Gain 1 Àṣẹ next turn.`,
   upgrade: (c) => { c.block = 10; },
   onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.combat.energyNextTurn += 1; },
 });
@@ -397,7 +397,7 @@ def('chaos', {
 def('glacier', {
   name: 'Glacier', char: 'zara', type: 'skill', rarity: 'common', cost: 2,
   block: 7, magic: 2, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward. Channel ${c.magic} Tide.`,
+  desc: (c) => `Gain ${c.block} Block. Channel ${c.magic} Tide.`,
   upgrade: (c) => { c.block = 10; },
   onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.channel('tide', ctx.c.magic); },
 });
@@ -490,7 +490,7 @@ def('flash', {
 def('panic_button', {
   name: 'Panic Button', char: 'colorless', type: 'skill', rarity: 'uncommon', cost: 0,
   block: 30, target: 'self', exhaust: true,
-  desc: (c) => `Gain ${c.block} Ward. You cannot gain Ward next turn. Exhaust.`,
+  desc: (c) => `Gain ${c.block} Block. You cannot gain Block next turn. Exhaust.`,
   upgrade: (c) => { c.block = 40; },
   onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.combat.addTrigger('turnStart', () => ctx.applySelf('noBlock', 1), 'Panic Button', true); },
 });

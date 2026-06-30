@@ -12,7 +12,7 @@ export const CHARACTERS = {
     startGold: 99,
     relic: 'ancestral_cuirass',
     blurb:
-      'A warrior of the all-woman regiment of Dahomey, reforged in star-iron. She fights with Resolve and unbreakable Ward, turning ancestral fury into edge and armor.',
+      'A warrior of the all-woman regiment of Dahomey, reforged in star-iron. She fights with Resolve and unbreakable Block, turning ancestral fury into edge and armor.',
     deck: ['slash', 'slash', 'slash', 'slash', 'slash', 'brace', 'brace', 'brace', 'brace', 'sunder'],
     cardPool: [
       'twin_fangs', 'ironwave', 'pommel', 'cleave', 'crosscut', 'shrug', 'thunderclap',

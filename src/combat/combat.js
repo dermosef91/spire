@@ -150,7 +150,7 @@ export class Combat {
     return Math.max(0, dmg);
   }
 
-  // Apply a chunk of damage to an entity through Ward, returns HP actually lost.
+  // Apply a chunk of damage to an entity through Block, returns HP actually lost.
   applyDamage(target, amount, { isAttack = false, source = null } = {}) {
     if (!target.alive) return 0;
     let dmg = amount;
@@ -234,7 +234,7 @@ export class Combat {
   }
   dealAllRaw(amount) { for (const e of this.livingEnemies()) this.applyDamage(e, amount, { isAttack: true, source: this.player }); this.notify(); }
 
-  // Orb / non-attack damage (ignores Resolve & Sapped, respects Exposed + Ward)
+  // Orb / non-attack damage (ignores Resolve & Sapped, respects Exposed + Block)
   orbDamage(target, base) {
     if (!target || !target.alive) return 0;
     let dmg = base;

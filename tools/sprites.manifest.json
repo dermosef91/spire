@@ -27,12 +27,12 @@
   {
     "id": "brass_sentinel",
     "kind": "enemy",
-    "prompt": "A massive blocky brass-plated golem standing rigid. Flat rectangular head with a single horizontal visor slit glowing deep ember. Heavy riveted chest plate with a circular power core in the abdomen emanating orange rings. Squat powerful stance, thick segmented arms with gear joints. Antenna crest on top of head. Industrial and imposing. Full figure head-to-feet, centered."
+    "prompt": "A majestic, towering golem constructed from heavy plates of burnished brass and dark iron. Flat rectangular head with a single horizontal visor slit glowing with intense ember-orange light. Intricate geometric African-inspired tribal patterns etched into the brass chest plates. A circular power core in the center of its torso radiates glowing concentric energy rings. Segmented gear-jointed limbs and heavy brass fists. Imposing, robotic, and powerful. Full figure head-to-feet, centered."
   },
   {
     "id": "market_thief",
     "kind": "enemy",
-    "prompt": "A hooded nimble figure in dark layered wrappings, crouching stance. Only glowing amber eyes visible under the deep cowl. One hand clutches a stolen golden coin with concentric ring engravings. Lean build, tattered cloak edges dissolving into shadow wisps. Geometric shadow patterns on the cloak. Full figure, centered."
+    "prompt": "A hooded nimble figure in dark layered wrappings, crouching low in a ready stance. Only glowing amber eyes visible under the deep cowl. One hand clutches a stolen golden coin with concentric ring engravings. Lean athletic build, tattered cloak edges dissolving into shadow wisps. Geometric shadow patterns on the cloak. Full figure head-to-feet, leaving a wide safety margin at the bottom of the frame so no feet or details are cut off. Centered."
   },
   {
     "id": "gilded_warden",
@@ -42,7 +42,7 @@
   {
     "id": "the_gatekeeper",
     "kind": "enemy",
-    "prompt": "A monumental living stone archway entity — two massive carved pillars form its legs, a great glowing orange eye above the lintel. Concentric orbital rings spin around the eye. Ancient carved glyphs and geometric patterns cover the stone surface. Ember light seeps from cracks. Doorway between the pillars shows void darkness. Imposing and ancient. Full figure, centered."
+    "prompt": "A monumental living stone archway entity of epic proportions. Two massive, towering carved black stone pillars etched with glowing ember-orange ancient glyphs form its legs. A colossal glowing eye floats above the stone lintel, surrounded by spinning concentric orbital rings. Space-time warping and dark void energy visible inside the archway. Ancient, intimidating, and majestic. Full figure, centered."
   },
   {
     "id": "sand_wraith",

@@ -7,10 +7,10 @@
 export const POWERS = {
   // --- Core combat resource ---
   block: {
-    name: 'Ward',
+    name: 'Block',
     type: 'buff',
     icon: '🛡',
-    desc: 'Absorbs incoming damage. Most Wards fade at the start of your turn.',
+    desc: 'Absorbs incoming damage. Most Block fades at the start of your turn.',
   },
 
   // --- Persistent buffs ---
@@ -24,7 +24,7 @@ export const POWERS = {
     name: 'Grace',
     type: 'buff',
     icon: '🌀',
-    desc: 'Increases Ward gained from cards by {n}.',
+    desc: 'Increases Block gained from cards by {n}.',
   },
   regen: {
     name: 'Regrowth',
@@ -37,7 +37,7 @@ export const POWERS = {
     name: 'Bronzeplate',
     type: 'buff',
     icon: '🥉',
-    desc: 'At the end of your turn, gain {n} Ward.',
+    desc: 'At the end of your turn, gain {n} Block.',
   },
   thorns: {
     name: 'Backlash',
@@ -91,7 +91,7 @@ export const POWERS = {
     type: 'debuff',
     duration: 'turn',
     icon: '💔',
-    desc: 'Gains 25% less Ward from cards.',
+    desc: 'Gains 25% less Block from cards.',
   },
   poison: {
     name: 'Blight',
@@ -119,7 +119,7 @@ export const POWERS = {
     type: 'debuff',
     duration: 'turn',
     icon: '🚫',
-    desc: 'Cannot gain Ward this turn.',
+    desc: 'Cannot gain Block this turn.',
   },
 };
 

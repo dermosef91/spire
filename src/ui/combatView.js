@@ -8,7 +8,7 @@ import { POWERS } from '../data/keywords.js';
 import { audio } from '../audio.js';
 import { ensureFxLayer, floatText, hitFlash, shake, lunge, slash, ring, screenShake, burst } from './fx.js';
 import { combatModel, INTENT, UI, powerIcon } from './icons.js';
-import { spriteOrSvg } from './sprites.js';
+import { spriteOrSvg, hasSprite } from './sprites.js';
 
 const eidOf = (ent) => (ent.isPlayer ? 'p' : 'e' + ent.idx);
 
@@ -27,6 +27,9 @@ export class CombatView {
     this.els = {};        // eid -> combatant element
     this.parts = {};      // eid -> { intent, glyph, hpfill, hptext, block, powers, medallion }
     this._lastHandCards = [];
+    this.tempPoses = {};  // locks pose updates during dynamic animations
+    this.idleInterval = null;
+    this.currentIdleFrame = 'idle';
   }
 
   mount(root) {
@@ -36,6 +39,7 @@ export class CombatView {
     this._lastHandCards = [];
     this.build();
     this.combat.start();
+    this.startIdleLoop();
   }
 
   build() {
@@ -114,11 +118,6 @@ export class CombatView {
     nameRow.appendChild(nameEl);
     nameRow.appendChild(badgeEl);
 
-    const subtitleText = ent.isPlayer 
-      ? (this.combat.run.character.title || 'The Champion') 
-      : (ENEMY_SUBTITLES[ent.id] || 'The Adversary');
-    const subtitleEl = el('div', { class: 'combatant-subtitle', text: subtitleText });
-
     const hpwrap = el('div', { class: 'hpbar' });
     parts.hpfill = el('div', { class: 'hpfill' });
     parts.hptext = el('div', { class: 'hptext' });
@@ -126,7 +125,6 @@ export class CombatView {
     hpwrap.appendChild(parts.hptext);
 
     infoWrap.appendChild(nameRow);
-    infoWrap.appendChild(subtitleEl);
     infoWrap.appendChild(hpwrap);
     infoWrap.appendChild(parts.block);
     wrap.appendChild(infoWrap);
@@ -177,6 +175,7 @@ export class CombatView {
 
     if (c.over && !this.ended) {
       this.ended = true;
+      this.clearIdleLoop();
       this.scene.classList.add(c.victory ? 'won' : 'lost');
       setTimeout(() => this.onEnd && this.onEnd(c), 850);
     }
@@ -185,6 +184,11 @@ export class CombatView {
   updateCombatant(ent) {
     const p = this.parts[eidOf(ent)];
     if (!p) return;
+
+    if (!this.tempPoses[eidOf(ent)]) {
+      this.setSpritePose(ent, ent.block > 0 ? 'block' : (this.currentIdleFrame || 'idle'));
+    }
+
     const pct = Math.max(0, (ent.hp / ent.maxHp) * 100);
     p.hpfill.style.width = pct + '%';
     p.hpfill.classList.toggle('low', pct < 35);
@@ -611,6 +615,19 @@ export class CombatView {
     if (type === 'attackstart') {
       const src = this.elFor(payload.source);
       lunge(src, payload.source && payload.source.isPlayer ? 'right' : 'left');
+      
+      if (payload.source) {
+        const eid = eidOf(payload.source);
+        this.tempPoses[eid] = true;
+        this.setSpritePose(payload.source, 'attack');
+        
+        setTimeout(() => {
+          delete this.tempPoses[eid];
+          if (payload.source.alive) {
+            this.setSpritePose(payload.source, payload.source.block > 0 ? 'block' : (this.currentIdleFrame || 'idle'));
+          }
+        }, 380);
+      }
       return;
     }
     if (type === 'damage') {
@@ -654,13 +671,56 @@ export class CombatView {
       return;
     }
   }
+
+  setSpritePose(ent, pose) {
+    const eid = eidOf(ent);
+    const p = this.parts[eid];
+    if (!p || !p.glyph) return;
+    const img = p.glyph.querySelector('img.model-img');
+    if (!img) return; // Fallback SVG does not support pose swapping
+
+    const baseId = ent.isPlayer ? this.combat.run.character.id : ent.id;
+    let spriteId = baseId;
+    if (pose !== 'idle') {
+      const varId = `${baseId}_${pose}`;
+      if (hasSprite(varId)) {
+        spriteId = varId;
+      }
+    }
+    
+    const newSrc = `assets/sprites/${spriteId}.png`;
+    if (img.src.indexOf(newSrc) === -1) {
+      img.src = newSrc;
+    }
+  }
+
+  startIdleLoop() {
+    this.clearIdleLoop();
+    this.currentIdleFrame = 'idle';
+    this.idleInterval = setInterval(() => {
+      this.currentIdleFrame = this.currentIdleFrame === 'idle' ? 'idle2' : 'idle';
+      
+      const pEnt = this.combat.player;
+      const eid = eidOf(pEnt);
+      if (pEnt.alive && !pEnt.block && !this.tempPoses[eid]) {
+        this.setSpritePose(pEnt, this.currentIdleFrame);
+      }
+    }, 1500);
+  }
+
+  clearIdleLoop() {
+    if (this.idleInterval) {
+      clearInterval(this.idleInterval);
+      this.idleInterval = null;
+    }
+  }
 }
 
 function orbTitle(orb, c) {
   const f = c.focus();
   const map = {
     storm: `Storm — passive: ${3 + f} to a random enemy. Evoke: ${8 + f}.`,
-    tide: `Tide — passive: gain ${2 + f} Ward. Evoke: gain ${5 + f} Ward.`,
+    tide: `Tide — passive: gain ${2 + f} Block. Evoke: gain ${5 + f} Block.`,
     shade: `Shade — passive: stores +${4 + f} (now ${orb.value}). Evoke: deal stored.`,
     sun: `Sun — passive: +1 Àṣẹ next turn. Evoke: gain 2 Àṣẹ.`,
   };

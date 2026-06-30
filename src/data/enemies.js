@@ -4,7 +4,7 @@
 //
 // Combat API used here:
 //   combat.enemyAttack(self, dmg, hits)   — strength/weak/vuln applied, hits player
-//   combat.gainBlockTo(self, n)           — enemy gains Ward
+//   combat.gainBlockTo(self, n)           — enemy gains Block
 //   combat.applyPower(target, key, n, src)
 //   combat.addCardToPile(card, pile)      — e.g. statuses into player piles
 //   combat.player

@@ -24,7 +24,7 @@ Any static file server works — there is no compilation. You can also just open
 1. **Choose a champion**, each with a unique deck and play style.
 2. **Climb the act map** — a branching path of rooms. Pick your route upward.
 3. **Win card battles** by spending **Àṣẹ** (energy) to play cards: deal damage,
-   raise **Ward** (block), and stack buffs/debuffs. Read each enemy's **intent**
+   raise **Block**, and stack buffs/debuffs. Read each enemy's **intent**
    above its head and plan the turn. Click a card, then click a target.
 4. **Spend rewards** — add cards, collect relics & potions, shop at the bazaar,
    rest at Ancestor Fires (heal or upgrade), and gamble on events.
@@ -38,7 +38,7 @@ from the title to resume.
 
 | Champion | Title | Identity |
 |---|---|---|
-| **Amara** ⚔️ | The Agojie Bladedancer | Resolve (strength), heavy Ward, ancestral fury |
+| **Amara** ⚔️ | The Agojie Bladedancer | Resolve (strength), heavy Block, ancestral fury |
 | **Kofi** 🎶 | The Griot of the Cosmos | Verses, Blight (poison), relentless tempo & draw |
 | **Zara** ✨ | The Star-Weaver | Channels Spirits — Storm, Tide, Shade, Sun — amplified by Focus |
 
@@ -46,7 +46,7 @@ from the title to resume.
 
 - Three distinct, fully playable classes with ~16 unique cards each (60+ cards total),
   plus colorless cards, statuses and curses — each upgradable.
-- Turn-based combat engine with Ward, Resolve, Exposed/Sapped/Brittle, Blight,
+- Turn-based combat engine with Block, Resolve, Exposed/Sapped/Brittle, Blight,
   Backlash, Phase, channeled **orb Spirits**, enemy intents and scripted AI.
 - 24 relics and 11 potions with real combat/run hooks.
 - Branching, seeded act maps with monsters, elites, bosses, events, shops,

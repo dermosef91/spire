@@ -22,9 +22,9 @@ def('swift_brew', {
   combatOnly: true,
   use: (ctx) => ctx.combat.draw(3),
 });
-def('ward_brew', {
-  name: 'Wardstone Brew', rarity: 'common', color: '#6fa8dc',
-  desc: 'Gain 12 Ward.',
+def('block_brew', {
+  name: 'Blockstone Brew', rarity: 'common', color: '#6fa8dc',
+  desc: 'Gain 12 Block.',
   combatOnly: true,
   use: (ctx) => ctx.combat.gainBlockTo(ctx.combat.player, 12, true),
 });
