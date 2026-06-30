@@ -1217,7 +1217,7 @@ html { -webkit-text-size-adjust: 100%; }
 .fs-toggle.is-on { border-color: var(--orange); }
 
 /* character-select portrait */
-.char-glyph { width: 92px; height: 92px; margin: 0 auto 2px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6)); }
+.char-glyph { width: 156px; height: 156px; margin: 0 auto 2px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6)); }
 .char-glyph .svg-ic { width: 100%; height: 100%; }
 
 /* combat medallion model fills the disc; whole model floats, parts animate */
