@@ -127,10 +127,6 @@ export class Game {
     panel.appendChild(ornament);
 
     panel.appendChild(el('div', { class: 'game-subtitle', text: 'Ascend the Obsidian Spire' }));
-    panel.appendChild(el('p', {
-      class: 'title-lore',
-      text: 'The Static crept down from the heavens and twisted the guardians of the Spire. Channel the Àṣẹ of the Ancestors. Climb. Cleanse the Heart — or be unwritten.',
-    }));
     const btns = el('div', { class: 'title-buttons' });
     if (hasSave()) {
       btns.appendChild(button('Continue Climb', () => { const r = loadRun(); if (r) { this.run = r; this.showMap(); } }, 'primary'));
