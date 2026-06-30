@@ -26,15 +26,16 @@ export class CombatView {
     this._dragEnd = (e) => this.dragEnd(e);
     this.els = {};        // eid -> combatant element
     this.parts = {};      // eid -> { intent, glyph, hpfill, hptext, block, powers, medallion }
+    this._lastHandCards = [];
   }
 
   mount(root) {
     this.root = root;
     this.combat.onUpdate = () => this.update();
     this.combat.fx = (type, payload) => this.onFx(type, payload);
+    this._lastHandCards = [];
     this.build();
     this.combat.start();
-    this.update();
   }
 
   build() {
@@ -43,10 +44,6 @@ export class CombatView {
     this.scene = scene;
     this.topbarHolder = el('div', { class: 'combat-topbar' });
     scene.appendChild(this.topbarHolder);
-
-    // Battlefield is absolute, so we add a spacer to push the controls/hand to the bottom
-    const spacer = el('div', { class: 'combat-spacer' });
-    scene.appendChild(spacer);
 
     const field = el('div', { class: 'battlefield' });
     this.playerSide = el('div', { class: 'player-side' });
@@ -77,6 +74,13 @@ export class CombatView {
     this.handHolder = el('div', { class: 'hand' });
     scene.appendChild(this.handHolder);
 
+    this.drawPileEl = el('div', { class: 'screen-pile draw-pile', title: 'Draw Pile' });
+    scene.appendChild(this.drawPileEl);
+    this.discardPileEl = el('div', { class: 'screen-pile discard-pile', title: 'Discard Pile' });
+    scene.appendChild(this.discardPileEl);
+    this.exhaustPileEl = el('div', { class: 'screen-pile exhaust-pile', title: 'Exhaust Pile', style: { display: 'none' } });
+    scene.appendChild(this.exhaustPileEl);
+
     this.root.appendChild(scene);
     this.fxLayer = ensureFxLayer(scene);
   }
@@ -98,7 +102,6 @@ export class CombatView {
 
     stage.appendChild(parts.medallion);
     stage.appendChild(parts.glyph);
-    stage.appendChild(parts.block);
     stage.appendChild(el('div', { class: 'ground-shadow' }));
     wrap.appendChild(stage);
 
@@ -125,6 +128,7 @@ export class CombatView {
     infoWrap.appendChild(nameRow);
     infoWrap.appendChild(subtitleEl);
     infoWrap.appendChild(hpwrap);
+    infoWrap.appendChild(parts.block);
     wrap.appendChild(infoWrap);
 
     parts.powers = el('div', { class: 'powers' });
@@ -237,11 +241,28 @@ export class CombatView {
     const bar = clear(this.controlsHolder);
     bar.className = 'combat-controls-holder combat-controls';
     bar.appendChild(el('div', { class: 'energy', html: `<span class="energy-orb">${c.energy}</span><span class="energy-max">/${c.maxEnergy}</span>` }));
-    const piles = el('div', { class: 'piles' });
-    piles.appendChild(el('div', { class: 'pile', html: `<i class="pile-ic">${UI.draw}</i><b>${c.drawPile.length}</b>` }));
-    piles.appendChild(el('div', { class: 'pile', html: `<i class="pile-ic">${UI.discard}</i><b>${c.discardPile.length}</b>` }));
-    if (c.exhaustPile.length) piles.appendChild(el('div', { class: 'pile', html: `<i class="pile-ic">${UI.exhaust}</i><b>${c.exhaustPile.length}</b>` }));
-    bar.appendChild(piles);
+
+    // Update screen piles (absolute positioned stacks)
+    if (this.drawPileEl) {
+      clear(this.drawPileEl);
+      this.drawPileEl.appendChild(el('div', { class: 'pile-stack-art', html: UI.drawStack }));
+      this.drawPileEl.appendChild(el('div', { class: 'pile-badge', text: String(c.drawPile.length) }));
+    }
+    if (this.discardPileEl) {
+      clear(this.discardPileEl);
+      this.discardPileEl.appendChild(el('div', { class: 'pile-stack-art', html: UI.discardStack }));
+      this.discardPileEl.appendChild(el('div', { class: 'pile-badge', text: String(c.discardPile.length) }));
+    }
+    if (this.exhaustPileEl) {
+      clear(this.exhaustPileEl);
+      if (c.exhaustPile.length) {
+        this.exhaustPileEl.style.display = '';
+        this.exhaustPileEl.appendChild(el('div', { class: 'pile-stack-art', html: UI.exhaustStack }));
+        this.exhaustPileEl.appendChild(el('div', { class: 'pile-badge', text: String(c.exhaustPile.length) }));
+      } else {
+        this.exhaustPileEl.style.display = 'none';
+      }
+    }
     const textStr = this.pendingCard ? 'Cancel' : 'End Turn';
     const endBtn = el('button', {
       class: 'btn end-turn',
@@ -268,9 +289,91 @@ export class CombatView {
 
   renderHand() {
     const c = this.combat;
+
+    // 1. Identify which cards are being removed from the hand
+    const prevHand = this._lastHandCards || [];
+    const currentHand = c.hand;
+    this._lastHandCards = currentHand.slice();
+
+    const goneCards = prevHand.filter(pc => !currentHand.some(cc => cc.uid === pc.uid));
+
+    // Animate gone/played/discarded cards
+    if (goneCards.length > 0 && this.scene && this.discardPileEl) {
+      const sceneRect = this.scene.getBoundingClientRect();
+
+      goneCards.forEach((card) => {
+        const cardEl = this.handHolder.querySelector(`.card[data-uid="${card.uid}"]`);
+        if (cardEl) {
+          const isExhausted = card.exhaust || card.type === 'power' || card._forceExhaust || (c.exhaustPile && c.exhaustPile.some(ec => ec.uid === card.uid));
+          const targetPileEl = (isExhausted && this.exhaustPileEl) ? this.exhaustPileEl : this.discardPileEl;
+
+          if (targetPileEl) {
+            const cardRect = cardEl.getBoundingClientRect();
+            const clone = cardEl.cloneNode(true);
+
+            clone.classList.remove('in-hand', 'selected', 'dragging');
+            clone.classList.add('flying-card');
+
+            const startX = cardRect.left - sceneRect.left;
+            const startY = cardRect.top - sceneRect.top;
+
+            clone.style.position = 'absolute';
+            clone.style.left = `${startX}px`;
+            clone.style.top = `${startY}px`;
+            clone.style.width = `${cardRect.width}px`;
+            clone.style.height = `${cardRect.height}px`;
+            clone.style.margin = '0';
+            clone.style.zIndex = '100';
+            clone.style.pointerEvents = 'none';
+            clone.style.transformOrigin = 'center center';
+            clone.style.transform = cardEl.style.transform || window.getComputedStyle(cardEl).transform;
+
+            this.scene.appendChild(clone);
+
+            // Determine destination rect
+            let destRect;
+            if (isExhausted && (!this.exhaustPileEl || !c.exhaustPile || c.exhaustPile.length === 0)) {
+              const discRect = this.discardPileEl.getBoundingClientRect();
+              destRect = {
+                left: discRect.left,
+                top: discRect.top - 102,
+                width: discRect.width,
+                height: discRect.height
+              };
+            } else {
+              destRect = targetPileEl.getBoundingClientRect();
+            }
+
+            const destX = (destRect.left - sceneRect.left) + (destRect.width / 2) - (cardRect.width / 2);
+            const destY = (destRect.top - sceneRect.top) + (destRect.height / 2) - (cardRect.height / 2);
+
+            const anim = clone.animate([
+              {
+                transform: clone.style.transform,
+                opacity: 1
+              },
+              {
+                transform: `translate(${destX - startX}px, ${destY - startY}px) scale(0.18) rotate(35deg)`,
+                opacity: 0
+              }
+            ], {
+              duration: 450,
+              easing: 'cubic-bezier(0.25, 1, 0.5, 1)'
+            });
+
+            anim.onfinish = () => {
+              clone.remove();
+            };
+          }
+        }
+      });
+    }
+
     const hand = clear(this.handHolder);
     const N = c.hand.length;
     const mid = (N - 1) / 2;
+
+    const newCardsToAnimate = [];
 
     c.hand.forEach((card, idx) => {
       const playable = c.canPlay(card);
@@ -290,7 +393,68 @@ export class CombatView {
       // Drag-and-drop to play (mouse + touch); a tap falls back to click-to-play.
       node.addEventListener('pointerdown', (e) => this.onCardPointerDown(e, card, node));
       hand.appendChild(node);
+
+      // 2. Identify new cards to animate
+      const isNew = !prevHand.some(pc => pc.uid === card.uid);
+      if (isNew && this.drawPileEl) {
+        newCardsToAnimate.push({ node, newIdx: newCardsToAnimate.length });
+        
+        // Hide card immediately before layout and animation
+        node.style.opacity = '0';
+        node.style.pointerEvents = 'none';
+      }
     });
+
+    // 3. Animate new cards flying from draw pile
+    if (newCardsToAnimate.length > 0 && this.drawPileEl) {
+      requestAnimationFrame(() => {
+        const drawRect = this.drawPileEl.getBoundingClientRect();
+        if (drawRect.width > 0) {
+          newCardsToAnimate.forEach(({ node, newIdx }) => {
+            if (!document.body.contains(node)) return;
+
+            const nodeRect = node.getBoundingClientRect();
+            if (nodeRect.width > 0) {
+              const dx = drawRect.left - nodeRect.left;
+              const dy = drawRect.top - nodeRect.top;
+
+              const fannedTransform = window.getComputedStyle(node).transform;
+              const delay = Math.min(newIdx * 85, 400);
+
+              const anim = node.animate([
+                {
+                  transform: `translate(${dx}px, ${dy}px) scale(0.2) rotate(0deg)`,
+                  opacity: 0
+                },
+                {
+                  transform: fannedTransform,
+                  opacity: 1
+                }
+              ], {
+                duration: 450,
+                easing: 'cubic-bezier(0.18, 0.89, 0.32, 1.12)',
+                delay: delay
+              });
+
+              anim.onfinish = () => {
+                node.style.opacity = '';
+                node.style.pointerEvents = '';
+              };
+            } else {
+              // Safeguard if layout measurements failed
+              node.style.opacity = '';
+              node.style.pointerEvents = '';
+            }
+          });
+        } else {
+          // Safeguard if draw pile measurements failed
+          newCardsToAnimate.forEach(({ node }) => {
+            node.style.opacity = '';
+            node.style.pointerEvents = '';
+          });
+        }
+      });
+    }
   }
 
   // ----------------------------------------------------------- input

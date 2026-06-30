@@ -5,3 +5,4 @@ scratch_*
 /tmp/
 assets/sprites/style-key.png
 tools/package-lock.json
+.env
