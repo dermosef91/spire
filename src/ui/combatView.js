@@ -8,6 +8,7 @@ import { POWERS } from '../data/keywords.js';
 import { audio } from '../audio.js';
 import { ensureFxLayer, floatText, hitFlash, shake, lunge, slash, ring, screenShake, burst } from './fx.js';
 import { combatModel, INTENT, UI, powerIcon } from './icons.js';
+import { spriteOrSvg } from './sprites.js';
 
 const eidOf = (ent) => (ent.isPlayer ? 'p' : 'e' + ent.idx);
 
@@ -83,7 +84,9 @@ export class CombatView {
 
     const stage = el('div', { class: 'stage' });
     parts.medallion = el('div', { class: 'medallion' });
-    parts.glyph = el('div', { class: 'glyph imodel', html: combatModel(ent, this.combat.run.character.id) });
+    const spriteId = ent.isPlayer ? this.combat.run.character.id : ent.id;
+    const svgHtml = combatModel(ent, this.combat.run.character.id);
+    parts.glyph = el('div', { class: 'glyph imodel' }, [spriteOrSvg(spriteId, svgHtml)]);
     parts.block = el('div', { class: 'block-badge', style: { display: 'none' } });
     parts.medallion.appendChild(el('div', { class: 'med-ring' }));
     parts.medallion.appendChild(el('div', { class: 'med-core' }, [parts.glyph]));

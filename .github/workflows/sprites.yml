@@ -1,0 +1,63 @@
+name: Generate Sprites
+
+# Manual trigger only — the human clicks "Run workflow" after adding the
+# OPENAI_API_KEY repo secret. Can also be invoked via API dispatch.
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Regenerate all sprites (ignore cache)'
+        required: false
+        default: 'false'
+        type: boolean
+      ids:
+        description: 'Comma-separated entity IDs (empty = all)'
+        required: false
+        default: ''
+        type: string
+      dry_run:
+        description: 'Dry run (placeholder PNGs, no API calls)'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install tool dependencies
+        working-directory: tools
+        run: npm install
+
+      - name: Generate sprites
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          if [ -n "${{ inputs.ids }}" ]; then ARGS="$ARGS --ids ${{ inputs.ids }}"; fi
+          node tools/gen-sprites.js $ARGS
+
+      - name: Commit generated sprites
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/sprites/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: generate sprites [automated]"
+            git push
+          fi

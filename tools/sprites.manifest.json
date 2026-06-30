@@ -1,0 +1,92 @@
+[
+  {
+    "id": "amara",
+    "kind": "champion",
+    "prompt": "A powerful Agojie bladedancer woman in heroic standing pose. Spiked crown with radiating golden rays, cowrie-shell collar necklace, geometric kente-patterned robe with bold orange trim bands. Two crossed star-iron blades held at her sides, blades catching ember-orange rim light. Athletic regal build, facial scarification marks on cheeks, Bantu knots hairstyle. Ornamental shoulder armor with geometric etchings. Full figure head-to-feet, centered."
+  },
+  {
+    "id": "kofi",
+    "kind": "champion",
+    "prompt": "A cosmic griot bard man standing centered, cradling a large ornate kora instrument with decorated gourd resonator. Short dreadlocks, flowing scholar's robe with horizontal embroidered stripe bands in orange and amber. Calm wise expression, eyes glowing faintly. Musical note wisps and concentric sound-wave rings emanating outward. The kora neck extends upward with tuning pegs catching rim light. Full figure head-to-feet."
+  },
+  {
+    "id": "zara",
+    "kind": "champion",
+    "prompt": "A star-weaver channeler woman standing centered with both hands raised, glowing spirit orbs floating between her fingers. Star diadem crown with radiating spike rays, long flowing mystical robe with celestial geometric patterns and concentric circle motifs. Orbiting energy rings around her torso. Serene focused expression, eyes glowing amber. Ethereal trailing energy wisps. Full figure head-to-feet."
+  },
+  {
+    "id": "husk_drone",
+    "kind": "enemy",
+    "prompt": "A hovering diamond-shaped automaton drone with a single large glowing cyclopean eye at its center, iris ember-orange. Geometric faceted black carapace with orange circuit-line etchings. Small angular mechanical fins. Ember energy core visible through hull cracks. Orbiting concentric targeting rings around the eye. Insectoid and alien. Full figure centered."
+  },
+  {
+    "id": "static_jackal",
+    "kind": "enemy",
+    "prompt": "A sleek jackal-headed humanoid wraith in predatory standing pose. Sharp angular upright ears, slitted glowing orange eyes, jagged static-lightning patterns crackling across its lean black body. Clawed hands at the ready. Digital interference distortion and halftone noise around its edges. Geometric tribal markings on the chest. Full figure head-to-feet, centered."
+  },
+  {
+    "id": "brass_sentinel",
+    "kind": "enemy",
+    "prompt": "A massive blocky brass-plated golem standing rigid. Flat rectangular head with a single horizontal visor slit glowing deep ember. Heavy riveted chest plate with a circular power core in the abdomen emanating orange rings. Squat powerful stance, thick segmented arms with gear joints. Antenna crest on top of head. Industrial and imposing. Full figure head-to-feet, centered."
+  },
+  {
+    "id": "market_thief",
+    "kind": "enemy",
+    "prompt": "A hooded nimble figure in dark layered wrappings, crouching stance. Only glowing amber eyes visible under the deep cowl. One hand clutches a stolen golden coin with concentric ring engravings. Lean build, tattered cloak edges dissolving into shadow wisps. Geometric shadow patterns on the cloak. Full figure, centered."
+  },
+  {
+    "id": "gilded_warden",
+    "kind": "enemy",
+    "prompt": "An imposing temple guardian in ornamental golden armor with radiating sun-ray shoulder plates. Tall helm with a single vertical crest spike, cross-shaped visor glowing with inner ember light. Ceremonial spear held vertically, spear tip catching orange rim light. Concentric halo rings behind the head. Regal and immovable stance. Full figure head-to-feet, centered."
+  },
+  {
+    "id": "the_gatekeeper",
+    "kind": "enemy",
+    "prompt": "A monumental living stone archway entity — two massive carved pillars form its legs, a great glowing orange eye above the lintel. Concentric orbital rings spin around the eye. Ancient carved glyphs and geometric patterns cover the stone surface. Ember light seeps from cracks. Doorway between the pillars shows void darkness. Imposing and ancient. Full figure, centered."
+  },
+  {
+    "id": "sand_wraith",
+    "kind": "enemy",
+    "prompt": "A flowing spectral figure made of swirling sand particles with a single large eye in a featureless smooth face, eye glowing ember-orange. Tattered robes dissolving into sand grain particles at the edges. Hourglass-like torso shape. Drifting weightless floating posture, trailing sand wisps. Concentric rings around the eye. Full figure, centered."
+  },
+  {
+    "id": "mirror_shade",
+    "kind": "enemy",
+    "prompt": "A diamond-shaped mirror entity that refracts orange light. Crystalline faceted obsidian body with sharp geometric angles, a small glowing amber core at its center. Faint orange afterimage reflections trailing from edges. Floating in space, radiating concentric geometric patterns. Angular and alien. Full figure, centered."
+  },
+  {
+    "id": "chrome_serpent",
+    "kind": "enemy",
+    "prompt": "A sinuous metallic serpent with chrome-plated scales coiled in an elegant S-shape. Ember-glowing orange underbelly segments between black armor plates. Angular head with jewel-like amber eyes and mechanical fanged jaws. Circuit-line etchings along the body. Coiled around concentric rings. Full figure, centered."
+  },
+  {
+    "id": "brass_colossus",
+    "kind": "enemy",
+    "prompt": "A towering massive brass robot, much larger and heavier than other figures. Blocky rectangular head, very wide chest plate with heavy rivets, thick pillar-like arms with gear-joint elbows. Large circular glowing ember core in the chest radiating concentric energy rings. Industrial, unstoppable, covered in geometric plate armor. Full figure head-to-feet, centered."
+  },
+  {
+    "id": "the_archivist",
+    "kind": "enemy",
+    "prompt": "A robed scholarly figure shaped like an open book, with fanning pages forming angular wings. Twin glowing ember eyes peer from a deep hooded cowl. Holds a floating tome surrounded by orbiting glyphs, symbols, and concentric knowledge-rings. Dark robes with geometric text-like patterns. Scholarly yet threatening presence. Full figure, centered."
+  },
+  {
+    "id": "void_chanter",
+    "kind": "enemy",
+    "prompt": "A hooded cultist figure with a dark void sphere hovering above its head, the sphere ringed by concentric orange orbital lines. Featureless black face beneath the cowl, mouth open in a silent chant. Dark robes trailing into nothingness at the hem. Ominous radiating darkness aura with halftone grain. Full figure, centered."
+  },
+  {
+    "id": "static_seraph",
+    "kind": "enemy",
+    "prompt": "An angelic figure with geometric energy wings made of radiating lightning-bolt rays in orange and amber. Round featureless head with a glowing concentric halo ring. Slender robed body floating upright. Crackling static electricity arcs between wing tips. Holy yet dangerous presence. Full figure head-to-feet, centered."
+  },
+  {
+    "id": "chrome_archon",
+    "kind": "enemy",
+    "prompt": "A hexagonal-bodied chrome overlord with multiple glowing ember eyes arranged symmetrically across its faceted face. Inner and outer hexagonal shell layers with geometric etchings. Orbiting amber dots circle the body in concentric rings. Regal alien geometry, floating and imposing. Crown-like crest of angular spikes. Full figure, centered."
+  },
+  {
+    "id": "heart_of_static",
+    "kind": "enemy",
+    "prompt": "A massive pulsating heart-shaped core of pure crackling static energy, surrounded by multiple concentric spinning orbital rings of increasing size. Radiating lightning rays and ember-orange energy bolts in all directions. Central bright glowing core with deep ember heart. The final boss — overwhelming cosmic scale, filling the frame. Centered."
+  }
+]

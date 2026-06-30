@@ -1,0 +1,10 @@
+{
+  "name": "ase-sprite-tools",
+  "private": true,
+  "type": "module",
+  "description": "Dev-only sprite generation tools for ÀṢẸ: Ascend the Obsidian Spire",
+  "dependencies": {
+    "openai": "^4.0.0",
+    "sharp": "^0.33.0"
+  }
+}

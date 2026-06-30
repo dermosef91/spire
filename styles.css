@@ -545,6 +545,10 @@ html { -webkit-text-size-adjust: 100%; }
 .glyph { width: 116%; height: 116%; display: grid; place-items: center; overflow: visible; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.7)); }
 .glyph .svg-ic { width: 100%; height: 100%; overflow: visible; }
 
+/* PNG sprite images inside the medallion/glyph */
+.model-img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(255,106,26,0.45)); pointer-events: none; }
+.char-glyph .model-img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(255,106,26,0.3)); }
+
 /* card art motif */
 .art-glyph { position: relative; width: 86%; height: 86%; display: grid; place-items: center; filter: none; }
 .art-glyph .svg-ic { width: 100%; height: 100%; }
