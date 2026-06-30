@@ -23,7 +23,7 @@ export function renderCard(card, opts = {}) {
     el('div', { class: 'art-glyph', html: cardArt(card.id) }),
   ]));
   node.appendChild(el('div', { class: 'card-type' }, [el('span', { text: card.type.toUpperCase() })]));
-  node.appendChild(el('div', { class: 'card-desc', html: highlightKeywords(cardDesc(card)) }));
+  node.appendChild(el('div', { class: 'card-desc' }, [el('span', { class: 'card-desc-in', html: highlightKeywords(cardDesc(card)) })]));
 
   if (opts.onClick) node.addEventListener('click', () => opts.onClick(card, node));
   if (opts.onHover) {
