@@ -230,17 +230,28 @@ export class CombatView {
   renderHand() {
     const c = this.combat;
     const hand = clear(this.handHolder);
-    for (const card of c.hand) {
+    const N = c.hand.length;
+    const mid = (N - 1) / 2;
+
+    c.hand.forEach((card, idx) => {
       const playable = c.canPlay(card);
       const node = renderCard(card, {
         disabled: !playable,
         class: 'in-hand ' + (this.pendingCard === card ? 'selected' : ''),
         onHover: (cd, n, on) => { if (!this.drag) this.game.tooltip(cd, n, on, 'card'); },
       });
+
+      const diff = idx - mid;
+      const angle = diff * Math.min(8, 32 / Math.max(1, N));
+      const shift = Math.pow(Math.abs(diff), 1.5) * 5;
+
+      node.style.setProperty('--angle', `${angle}deg`);
+      node.style.setProperty('--shift', `${shift}px`);
+
       // Drag-and-drop to play (mouse + touch); a tap falls back to click-to-play.
       node.addEventListener('pointerdown', (e) => this.onCardPointerDown(e, card, node));
       hand.appendChild(node);
-    }
+    });
   }
 
   // ----------------------------------------------------------- input
