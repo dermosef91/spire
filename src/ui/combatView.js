@@ -84,14 +84,17 @@ export class CombatView {
 
     const stage = el('div', { class: 'stage' });
     parts.medallion = el('div', { class: 'medallion' });
+    parts.medallion.appendChild(el('div', { class: 'med-ring' }));
+    parts.medallion.appendChild(el('div', { class: 'med-core' }));
+
     const spriteId = ent.isPlayer ? this.combat.run.character.id : ent.id;
     const svgHtml = combatModel(ent, this.combat.run.character.id);
     parts.glyph = el('div', { class: 'glyph imodel' }, [spriteOrSvg(spriteId, svgHtml)]);
     parts.block = el('div', { class: 'block-badge', style: { display: 'none' } });
-    parts.medallion.appendChild(el('div', { class: 'med-ring' }));
-    parts.medallion.appendChild(el('div', { class: 'med-core' }, [parts.glyph]));
-    parts.medallion.appendChild(parts.block);
+
     stage.appendChild(parts.medallion);
+    stage.appendChild(parts.glyph);
+    stage.appendChild(parts.block);
     stage.appendChild(el('div', { class: 'ground-shadow' }));
     wrap.appendChild(stage);
 
