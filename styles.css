@@ -587,7 +587,6 @@ body.scene-combat #bg-image.show {
 .glyph { position: absolute; z-index: 2; width: calc(var(--med) * 1.85); height: calc(var(--med) * 1.85); display: grid; place-items: center; overflow: visible; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.7)); animation: medFloat 3.6s ease-in-out infinite; pointer-events: none; bottom: 12px; }
 .player .glyph { width: calc(var(--med) * 2.05); height: calc(var(--med) * 2.05); bottom: 16px; }
 .enemy:nth-child(2n) .glyph { animation-duration: 4.1s; } .enemy:nth-child(3n) .glyph { animation-duration: 4.6s; }
-.enemy .glyph > * { transform: scaleX(-1); }
 @keyframes medFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 .ground-shadow { width: calc(var(--med) * 1.1); height: calc(var(--med) * 0.14); margin-top: 4px; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(255,106,26,0.32), transparent); filter: blur(3px); animation: shadowPulse 3.6s ease-in-out infinite; }
