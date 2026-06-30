@@ -264,7 +264,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
 .combatant { display: flex; flex-direction: column; align-items: center; gap: clamp(3px, 0.8vh, 7px); min-width: 120px; position: relative; transition: opacity 0.4s ease; }
 
 .stage { position: relative; display: grid; place-items: center; }
-.medallion { position: relative; width: var(--med); height: var(--med); display: grid; place-items: center; }
+.medallion { position: relative; z-index: 1; width: var(--med); height: var(--med); display: grid; place-items: center; }
 .player .medallion { width: calc(var(--med) * 1.12); height: calc(var(--med) * 1.12); }
 .medallion::after { content: ''; position: absolute; inset: -26%; border-radius: 50%; z-index: 0;
   background: repeating-conic-gradient(from 0deg, transparent 0 5deg, rgba(255,122,26,0.16) 5deg 6deg);
@@ -284,8 +284,8 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
   background: radial-gradient(circle at 48% 42%, #281606 0%, #0b0604 72%);
   border: 1px solid rgba(255,150,60,0.28); box-shadow: inset 0 0 26px rgba(0,0,0,0.78), 0 0 30px rgba(255,106,26,0.35); }
 .enemy .med-core { background: radial-gradient(circle at 48% 42%, #2a0e05 0%, #0b0403 72%); box-shadow: inset 0 0 26px rgba(0,0,0,0.78), 0 0 30px rgba(232,67,26,0.35); border-color: rgba(232,67,26,0.32); }
-.glyph { line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.7)); animation: medFloat 3.6s ease-in-out infinite; }
-.player .glyph { /* size handled by model svg filling .glyph */ }
+.glyph { position: absolute; z-index: 2; width: calc(var(--med) * 1.85); height: calc(var(--med) * 1.85); display: grid; place-items: center; overflow: visible; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.7)); animation: medFloat 3.6s ease-in-out infinite; pointer-events: none; bottom: 12px; }
+.player .glyph { width: calc(var(--med) * 2.05); height: calc(var(--med) * 2.05); bottom: 16px; }
 .enemy:nth-child(2n) .glyph { animation-duration: 4.1s; } .enemy:nth-child(3n) .glyph { animation-duration: 4.6s; }
 @keyframes medFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 .ground-shadow { width: 110px; height: 14px; margin-top: 4px; border-radius: 50%;
@@ -428,16 +428,16 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
 .particle { position: absolute; width: 7px; height: 7px; border-radius: 50%; transform: translate(-50%,-50%); box-shadow: 0 0 8px currentColor; animation: particleAnim 0.7s ease-out forwards; }
 @keyframes particleAnim { 0% { opacity: 1; transform: translate(-50%,-50%); } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.4); } }
 
-.combatant.flash-hit .med-core { animation: flashHit 0.4s ease; }
-.combatant.flash-block .med-core { animation: flashBlock 0.4s ease; }
-.combatant.flash-heal .med-core { animation: flashHeal 0.4s ease; }
+.combatant.flash-hit .stage { animation: flashHit 0.4s ease; }
+.combatant.flash-block .stage { animation: flashBlock 0.4s ease; }
+.combatant.flash-heal .stage { animation: flashHeal 0.4s ease; }
 @keyframes flashHit { 0%,100% { filter: none; } 30% { filter: brightness(2.6) saturate(3); } }
 @keyframes flashBlock { 0%,100% { filter: none; } 30% { filter: brightness(1.8) hue-rotate(180deg) saturate(2); } }
 @keyframes flashHeal { 0%,100% { filter: none; } 30% { filter: brightness(1.9) saturate(2.4); } }
-.combatant.shake .medallion { animation: shakeA 0.36s; } .combatant.shake-big .medallion { animation: shakeB 0.5s; }
+.combatant.shake .stage { animation: shakeA 0.36s; } .combatant.shake-big .stage { animation: shakeB 0.5s; }
 @keyframes shakeA { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(3px)} }
 @keyframes shakeB { 0%,100%{transform:translate(0,0) rotate(0)} 15%{transform:translate(-10px,2px) rotate(-4deg)} 35%{transform:translate(9px,-2px) rotate(3deg)} 55%{transform:translate(-7px,1px) rotate(-2deg)} 75%{transform:translate(5px,-1px) rotate(1deg)} }
-.combatant.lunge-right .medallion { animation: lungeR 0.34s ease; } .combatant.lunge-left .medallion { animation: lungeL 0.34s ease; }
+.combatant.lunge-right .stage { animation: lungeR 0.34s ease; } .combatant.lunge-left .stage { animation: lungeL 0.34s ease; }
 @keyframes lungeR { 0%,100%{transform:translateX(0)} 40%{transform:translateX(36px) scale(1.05)} }
 @keyframes lungeL { 0%,100%{transform:translateX(0)} 40%{transform:translateX(-36px) scale(1.05)} }
 .combatant.dying { animation: die 0.62s ease forwards; }
@@ -542,7 +542,7 @@ html { -webkit-text-size-adjust: 100%; }
 .char-glyph .svg-ic { width: 100%; height: 100%; }
 
 /* combat medallion model fills the disc; whole model floats, parts animate */
-.glyph { width: 116%; height: 116%; display: grid; place-items: center; overflow: visible; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.7)); }
+.glyph { display: grid; place-items: center; overflow: visible; }
 .glyph .svg-ic { width: 100%; height: 100%; overflow: visible; }
 
 /* PNG sprite images inside the medallion/glyph */
