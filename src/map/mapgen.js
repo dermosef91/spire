@@ -3,8 +3,8 @@
 // adjacent columns, sharing nodes where they cross.
 
 const ROWS = 15;
-const COLS = 7;
-const PATHS = 6;
+const COLS = 5;
+const PATHS = 5;
 
 export function generateMap(rng, act) {
   const grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
