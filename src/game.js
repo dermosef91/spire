@@ -15,6 +15,7 @@ import { Combat } from './combat/combat.js';
 import { CombatView } from './ui/combatView.js';
 import { renderCard, topBar, relicChip, button } from './ui/components.js';
 import { POWERS } from './data/keywords.js';
+import { UI, NODE, relicIcon, potionIcon, characterModel } from './ui/icons.js';
 import { audio } from './audio.js';
 import { fullscreenSupported, isFullscreen, toggleFullscreen, onFullscreenChange, isTouchDevice } from './core/fullscreen.js';
 
@@ -38,11 +39,11 @@ export class Game {
     // Floating fullscreen toggle, present on every scene.
     if (fullscreenSupported()) {
       this.fsBtn = el('button', {
-        class: 'fs-toggle', attrs: { 'aria-label': 'Toggle fullscreen', title: 'Fullscreen' }, text: '⛶',
+        class: 'fs-toggle', attrs: { 'aria-label': 'Toggle fullscreen', title: 'Fullscreen' }, html: UI.fullscreen,
         on: { click: () => toggleFullscreen(document.documentElement) },
       });
       document.body.appendChild(this.fsBtn);
-      onFullscreenChange(() => { if (this.fsBtn) this.fsBtn.textContent = isFullscreen() ? '🗗' : '⛶'; });
+      onFullscreenChange(() => { if (this.fsBtn) this.fsBtn.classList.toggle('is-on', isFullscreen()); });
     }
     // Non-blocking "rotate to landscape" hint (CSS decides when to show it).
     this.rotateHint = el('div', { class: 'rotate-hint', html: '<span class="rot-ic">⟳</span> Rotate to landscape for the best view' });
@@ -117,13 +118,13 @@ export class Game {
       btns.appendChild(button('Continue Climb', () => { const r = loadRun(); if (r) { this.run = r; this.showMap(); } }, 'primary'));
     }
     btns.appendChild(button('New Run', () => this.showCharSelect(), hasSave() ? '' : 'primary'));
-    btns.appendChild(button(audio.musicOn ? '♪ Music: On' : '♪ Music: Off', (e) => {
-      const on = audio.toggleMusic(); e.target.textContent = on ? '♪ Music: On' : '♪ Music: Off';
+    btns.appendChild(button(audio.musicOn ? 'Music: On' : 'Music: Off', (e) => {
+      const on = audio.toggleMusic(); e.target.textContent = on ? 'Music: On' : 'Music: Off';
     }));
     if (fullscreenSupported()) {
-      btns.appendChild(button(isFullscreen() ? '⛶ Exit Fullscreen' : '⛶ Fullscreen', async (e) => {
+      btns.appendChild(button(isFullscreen() ? 'Exit Fullscreen' : 'Fullscreen', async (e) => {
         const on = await toggleFullscreen(document.documentElement);
-        e.target.textContent = on ? '⛶ Exit Fullscreen' : '⛶ Fullscreen';
+        e.target.textContent = on ? 'Exit Fullscreen' : 'Fullscreen';
       }));
     }
     panel.appendChild(btns);
@@ -140,10 +141,10 @@ export class Game {
     for (const id of Object.keys(CHARACTERS)) {
       const ch = CHARACTERS[id];
       const card = el('div', { class: 'char-card', style: { '--cc': ch.color, '--ca': ch.accent } });
-      card.appendChild(el('div', { class: 'char-glyph', text: ch.glyph }));
+      card.appendChild(el('div', { class: 'char-glyph imodel', html: characterModel(id) }));
       card.appendChild(el('div', { class: 'char-name', text: ch.name }));
       card.appendChild(el('div', { class: 'char-title', text: ch.title }));
-      card.appendChild(el('div', { class: 'char-hp', html: `❤ ${ch.maxHp} HP` }));
+      card.appendChild(el('div', { class: 'char-hp', html: `<i class="tb-ic">${UI.heart}</i> ${ch.maxHp} HP` }));
       card.appendChild(el('div', { class: 'char-blurb', text: ch.blurb }));
       const starter = RELICS[ch.relic];
       card.appendChild(el('div', { class: 'char-relic', html: `Starter: <b>${starter.name}</b> — ${starter.desc}` }));
@@ -227,7 +228,7 @@ export class Game {
       const n = el('div', {
         class: `map-node node-${type} ${isReach ? 'reachable' : ''} ${isCurrent ? 'current' : ''}`,
         style: { left: x + 'px', top: y + 'px' },
-        text: NODE_ICON[type] || '?',
+        html: NODE_ICON[type] || '',
         title: NODE_LABEL[type] || type,
       });
       if (isReach) n.addEventListener('click', () => this.enterNode(posObj));
@@ -343,25 +344,25 @@ export class Game {
         if (rw.taken) continue;
         const row = el('div', { class: 'reward-row' });
         if (rw.type === 'gold') {
-          row.appendChild(el('div', { class: 'reward-icon', text: '🪙' }));
+          row.appendChild(el('div', { class: 'reward-icon', html: UI.coin }));
           row.appendChild(el('div', { class: 'reward-label', text: `${rw.amount} gold` }));
           row.addEventListener('click', () => { run.gold += rw.amount; rw.taken = true; audio.play('select'); rebuild(); });
         } else if (rw.type === 'potion') {
           const p = POTIONS[rw.id];
-          row.appendChild(el('div', { class: 'reward-icon', text: '⚗' }));
+          row.appendChild(el('div', { class: 'reward-icon', style: { '--pcolor': p.color }, html: potionIcon() }));
           row.appendChild(el('div', { class: 'reward-label', html: `<b>${p.name}</b> — ${p.desc}` }));
           row.addEventListener('click', () => {
             if (run.addPotion(rw.id)) { rw.taken = true; audio.play('select'); rebuild(); }
           });
         } else if (rw.type === 'relic') {
-          row.appendChild(el('div', { class: 'reward-icon', text: '🏺' }));
+          row.appendChild(el('div', { class: 'reward-icon', html: relicIcon('default') }));
           row.appendChild(el('div', { class: 'reward-label', text: 'Ancestral Relic' }));
           row.addEventListener('click', () => {
             const name = run.grantRandomRelic();
             rw.taken = true; audio.play('reward'); rebuild();
           });
         } else if (rw.type === 'card') {
-          row.appendChild(el('div', { class: 'reward-icon', text: '🃏' }));
+          row.appendChild(el('div', { class: 'reward-icon', html: UI.draw }));
           row.appendChild(el('div', { class: 'reward-label', text: 'Add a card to your deck' }));
           row.addEventListener('click', () => {
             this.cardChoiceOverlay(rw.options, (picked) => {
@@ -458,7 +459,7 @@ export class Game {
     const run = this.run;
     const panel = el('div', { class: 'event-scene' });
     panel.appendChild(topBar(run, { onHover: (o, n, on) => this.tooltip(o, n, on) }));
-    panel.appendChild(el('div', { class: 'event-art', text: '🏆' }));
+    panel.appendChild(el('div', { class: 'event-art', html: NODE.treasure }));
     panel.appendChild(el('h2', { text: 'A Cache of the Ancients' }));
     panel.appendChild(el('p', { class: 'event-text', text: 'A reliquary of humming brass rests in an alcove of bioluminescent moss. Within: coin, and something older.' }));
     const choices = el('div', { class: 'choices' });
@@ -478,7 +479,7 @@ export class Game {
     const run = this.run;
     const panel = el('div', { class: 'rest-scene' });
     panel.appendChild(topBar(run, { onHover: (o, n, on) => this.tooltip(o, n, on) }));
-    panel.appendChild(el('div', { class: 'rest-fire', text: '🔥' }));
+    panel.appendChild(el('div', { class: 'rest-fire', html: NODE.rest }));
     panel.appendChild(el('h2', { text: 'An Ancestor Fire' }));
     panel.appendChild(el('p', { class: 'event-text', text: 'Warmth in the cold throat of the Spire. You may tend your wounds or sharpen your craft.' }));
     const choices = el('div', { class: 'choices' });
@@ -505,7 +506,7 @@ export class Game {
     run.usedEvents.push(ev.id);
     const panel = el('div', { class: 'event-scene' });
     panel.appendChild(topBar(run, { onHover: (o, n, on) => this.tooltip(o, n, on) }));
-    panel.appendChild(el('div', { class: 'event-art', text: '✦' }));
+    panel.appendChild(el('div', { class: 'event-art', html: NODE.event }));
     panel.appendChild(el('h2', { text: ev.name }));
     panel.appendChild(el('p', { class: 'event-text', text: ev.text }));
     const choices = el('div', { class: 'choices' });
@@ -558,7 +559,7 @@ export class Game {
     const panel = el('div', { class: 'shop-scene' });
     panel.appendChild(topBar(run, { onHover: (o, n, on) => this.tooltip(o, n, on) }));
     panel.appendChild(el('h2', { text: 'The Brass Bazaar' }));
-    panel.appendChild(el('div', { class: 'shop-gold', html: `You carry 🪙 <b>${run.gold}</b> gold` }));
+    panel.appendChild(el('div', { class: 'shop-gold', html: `You carry <i class="tb-ic">${UI.coin}</i> <b>${run.gold}</b> gold` }));
 
     const cardSec = el('div', { class: 'shop-section' });
     cardSec.appendChild(el('h3', { text: 'Cards' }));
@@ -567,7 +568,7 @@ export class Game {
       if (item.sold) { cardRow.appendChild(el('div', { class: 'card sold', text: 'SOLD' })); return; }
       const holder = el('div', { class: 'shop-item' });
       holder.appendChild(renderCard(item.card, { disabled: run.gold < item.price, onHover: (cd, n, on) => this.tooltip(cd, n, on, 'card') }));
-      holder.appendChild(el('div', { class: `price ${run.gold < item.price ? 'cant' : ''}`, text: `🪙 ${item.price}` }));
+      holder.appendChild(el('div', { class: `price ${run.gold < item.price ? 'cant' : ''}`, html: `<i class="tb-ic">${UI.coin}</i> ${item.price}` }));
       holder.addEventListener('click', () => this.buy(shop, 'cards', i));
       cardRow.appendChild(holder);
     });
@@ -582,7 +583,7 @@ export class Game {
       const holder = el('div', { class: 'shop-mini' });
       holder.appendChild(relicChip(item.id, (o, n, on) => this.tooltip(o, n, on)));
       holder.appendChild(el('div', { class: 'mini-label', text: r.name }));
-      holder.appendChild(el('div', { class: `price ${run.gold < item.price ? 'cant' : ''}`, text: `🪙 ${item.price}` }));
+      holder.appendChild(el('div', { class: `price ${run.gold < item.price ? 'cant' : ''}`, html: `<i class="tb-ic">${UI.coin}</i> ${item.price}` }));
       holder.addEventListener('click', () => this.buy(shop, 'relics', i));
       otherSec.appendChild(holder);
     });
@@ -591,9 +592,9 @@ export class Game {
       if (item.sold) return;
       const p = POTIONS[item.id];
       const holder = el('div', { class: 'shop-mini' });
-      holder.appendChild(el('div', { class: 'potion', style: { '--pcolor': p.color }, text: '⚗', title: p.desc }));
+      holder.appendChild(el('div', { class: 'potion', style: { '--pcolor': p.color }, html: potionIcon(), title: p.desc }));
       holder.appendChild(el('div', { class: 'mini-label', text: p.name }));
-      holder.appendChild(el('div', { class: `price ${run.gold < item.price ? 'cant' : ''}`, text: `🪙 ${item.price}` }));
+      holder.appendChild(el('div', { class: `price ${run.gold < item.price ? 'cant' : ''}`, html: `<i class="tb-ic">${UI.coin}</i> ${item.price}` }));
       holder.addEventListener('click', () => this.buy(shop, 'potions', i));
       otherSec.appendChild(holder);
     });
@@ -602,7 +603,7 @@ export class Game {
     // card removal service
     const removeRow = el('div', { class: 'shop-section' });
     if (!shop.removeUsed) {
-      removeRow.appendChild(button(`Reforge — remove a card (🪙 ${shop.removePrice})`, () => {
+      removeRow.appendChild(button(`Reforge — remove a card (${shop.removePrice} gold)`, () => {
         if (run.gold < shop.removePrice) { audio.play('error'); return; }
         this.deckOverlay(() => true, (entry) => {
           run.gold -= shop.removePrice; run.removeCardAt(entry._i); shop.removeUsed = true; shop.removePrice += 25;
@@ -707,7 +708,7 @@ export class Game {
   }
 }
 
-const NODE_ICON = { monster: '⚔', elite: '☠', boss: '👑', event: '?', shop: '🛒', rest: '🔥', treasure: '🏆' };
+const NODE_ICON = { monster: NODE.monster, elite: NODE.elite, boss: NODE.boss, event: NODE.event, shop: NODE.shop, rest: NODE.rest, treasure: NODE.treasure };
 const NODE_LABEL = { monster: 'Combat', elite: 'Elite (hard fight, relic)', boss: 'Boss', event: 'Unknown event', shop: 'Bazaar', rest: 'Ancestor Fire', treasure: 'Treasure' };
 function legendHtml() {
   return Object.entries(NODE_LABEL).map(([k, v]) => `<span class="leg"><span class="leg-ic node-${k}">${NODE_ICON[k]}</span>${v}</span>`).join('');

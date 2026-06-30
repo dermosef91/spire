@@ -4,33 +4,7 @@ import { cardDesc } from '../data/cards.js';
 import { RELICS } from '../data/relics.js';
 import { POTIONS } from '../data/potions.js';
 import { POWERS } from '../data/keywords.js';
-
-const TYPE_GLYPH = {
-  amara: '⚔️', kofi: '🎶', zara: '✨', colorless: '◈', status: '✖', curse: '☠',
-};
-
-// Distinct art per card id for flavor and readability at a glance.
-const CARD_ART = {
-  // Amara
-  slash: '🗡️', brace: '🛡️', sunder: '💥', twin_fangs: '🐅', ironwave: '🌊', pommel: '🤜',
-  cleave: '🪓', crosscut: '✖️', shrug: '🤷🏾', thunderclap: '⛈️', rising_strike: '🔺',
-  war_trance: '🥁', ember_within: '🔥', bulwark: '🧱', read_tell: '👁️', shockwave: '📳',
-  disarm: '🦾', whirlwind: '🌪️', ancestral_fury: '😤', blood_offering: '🩸', devour: '🦷',
-  harvest: '🌾', skyfall: '🔨',
-  // Kofi
-  jab: '👊🏾', refrain: '🎵', cutting_verse: '🎼', blight_needle: '💉', quickstep: '👣',
-  double_tap: '🥢', crescendo: '📈', deflect: '🪶', shard_burst: '🔆', backbeat: '🎶',
-  venom_chorus: '☣️', syncopation: '🪘', accelerando: '⚡', catalyst: '⚗️', bouncing_verse: '🎯',
-  veil: '🌫️', blight_bloom: '🌺', the_long_song: '🎺', grand_finale: '🎆',
-  // Zara
-  pulse: '🔵', barrier: '🔰', channel_storm: '🌩️', resonate: '📡', static_burst: '⚡',
-  frostbind: '❄️', coolhead: '🧊', capacitor: '🔋', chaos: '🎲', glacier: '🏔️',
-  summon_shade: '🌑', attune: '🧿', doomgloom: '🌚', skim: '🗂️', echocast: '🔁',
-  summon_sun: '☀️', overclock: '⏱️', stormcall: '🌀', echo_form: '♾️', falling_star: '☄️',
-  // Colorless / status
-  shiv: '🔪', flash: '💡', panic_button: '🚨', apotheosis: '🌟',
-  wound: '🩹', dazed: '😵', static_curse: '📺', regret: '😔',
-};
+import { UI, cardArt, relicIcon, potionIcon, powerIcon } from './icons.js';
 
 export function renderCard(card, opts = {}) {
   const typeClass = `type-${card.type}`;
@@ -43,10 +17,9 @@ export function renderCard(card, opts = {}) {
   if (card.cost === -1) costText = '';
   node.appendChild(el('div', { class: 'card-cost' }, [el('span', { text: String(costText) })]));
   node.appendChild(el('div', { class: 'card-name', text: card.name }));
-  const glyph = CARD_ART[card.id] || card._bp?.art || TYPE_GLYPH[card.char] || '◈';
   node.appendChild(el('div', { class: 'card-art' }, [
     el('div', { class: 'art-motif' }),
-    el('div', { class: 'art-glyph', text: glyph }),
+    el('div', { class: 'art-glyph', html: cardArt(card.id) }),
   ]));
   node.appendChild(el('div', { class: 'card-type' }, [el('span', { text: card.type.toUpperCase() })]));
   node.appendChild(el('div', { class: 'card-desc', html: highlightKeywords(cardDesc(card)) }));
@@ -74,7 +47,7 @@ export function relicChip(relicId, onHover) {
   const r = RELICS[relicId];
   if (!r) return el('span');
   const cls = `relic relic-${r.rarity}`;
-  const node = el('div', { class: cls, text: relicGlyph(r), title: `${r.name} — ${r.desc}` });
+  const node = el('div', { class: cls, html: relicIcon(relicId), title: `${r.name} — ${r.desc}` });
   if (onHover) {
     node.addEventListener('mouseenter', () => onHover(r, node, true));
     node.addEventListener('mouseleave', () => onHover(r, node, false));
@@ -84,21 +57,10 @@ export function relicChip(relicId, onHover) {
   return node;
 }
 
-function relicGlyph(r) {
-  const map = {
-    ancestral_cuirass: '🛡', griot_drum: '🥁', star_lens: '🔭', brass_anklet: '⚙',
-    kente_wrap: '🧣', cowrie_purse: '🐚', healing_gourd: '🍵', whetstone_idol: '🗿',
-    ancestor_bead: '📿', sun_disk: '☀', obsidian_charm: '⬛', talking_drum: '🪘',
-    mask_of_masks: '🎭', iron_lattice: '🔩', twin_serpent: '🐍', heart_of_nyumbani: '❤',
-    ancestor_idol: '🪬', cosmic_egg: '🥚', eternal_flame: '🔥', ascendant_crown: '👑',
-  };
-  return map[r.id] || '✦';
-}
-
 export function potionChip(potionId, idx, onClick, onHover) {
   const p = POTIONS[potionId];
   if (!p) return el('span');
-  const node = el('div', { class: 'potion', style: { '--pcolor': p.color }, text: '⚗', title: `${p.name} — ${p.desc}` });
+  const node = el('div', { class: 'potion', style: { '--pcolor': p.color }, html: potionIcon(), title: `${p.name} — ${p.desc}` });
   if (onClick) node.addEventListener('click', () => onClick(p, idx));
   if (onHover) {
     node.addEventListener('mouseenter', () => onHover(p, node, true));
@@ -110,9 +72,9 @@ export function potionChip(potionId, idx, onClick, onHover) {
 export function topBar(run, extra = {}) {
   const bar = el('div', { class: 'topbar' });
   const left = el('div', { class: 'tb-left' });
-  left.appendChild(el('div', { class: 'tb-char', html: `${run.character.glyph} <b>${run.character.name}</b>` }));
-  left.appendChild(el('div', { class: 'tb-hp', html: `❤ <b>${run.hp}</b>/${run.maxHp}` }));
-  left.appendChild(el('div', { class: 'tb-gold', html: `🪙 <b>${run.gold}</b>` }));
+  left.appendChild(el('div', { class: 'tb-char', html: `<b>${run.character.name}</b>` }));
+  left.appendChild(el('div', { class: 'tb-hp', html: `<i class="tb-ic">${UI.heart}</i> <b>${run.hp}</b>/${run.maxHp}` }));
+  left.appendChild(el('div', { class: 'tb-gold', html: `<i class="tb-ic">${UI.coin}</i> <b>${run.gold}</b>` }));
   left.appendChild(el('div', { class: 'tb-act', text: `Act ${run.act}` }));
 
   const right = el('div', { class: 'tb-right' });
@@ -133,13 +95,13 @@ export function topBar(run, extra = {}) {
 
 export function powerPips(entity) {
   const wrap = el('div', { class: 'powers' });
-  if (entity.block > 0) wrap.appendChild(el('div', { class: 'pip pip-block', html: `🛡 ${entity.block}`, title: 'Ward — absorbs damage' }));
+  if (entity.block > 0) wrap.appendChild(el('div', { class: 'pip pip-block', html: `<i class="pip-ic">${powerIcon('block')}</i> ${entity.block}`, title: 'Ward — absorbs damage' }));
   for (const [key, val] of Object.entries(entity.powers)) {
     if (!val) continue;
     const def = POWERS[key];
     if (!def) continue;
     const cls = def.type === 'buff' ? 'pip-buff' : 'pip-debuff';
-    wrap.appendChild(el('div', { class: `pip ${cls}`, html: `${def.icon} ${val}`, title: `${def.name}: ${def.desc.replace('{n}', val)}` }));
+    wrap.appendChild(el('div', { class: `pip ${cls}`, html: `<i class="pip-ic">${powerIcon(key)}</i> ${val}`, title: `${def.name}: ${def.desc.replace('{n}', val)}` }));
   }
   return wrap;
 }
