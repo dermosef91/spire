@@ -637,7 +637,27 @@ export class CombatView {
         this.setSpritePose(payload.source, 'attack');
         
         if (!payload.source.isPlayer) {
-          audio.play('enemy_attack');
+          audio.play('attack');
+        }
+        
+        setTimeout(() => {
+          delete this.tempPoses[eid];
+          if (payload.source.alive) {
+            this.setSpritePose(payload.source, payload.source.block > 0 ? 'block' : 'idle');
+          }
+        }, 855);
+      }
+      return;
+    }
+    if (type === 'skillstart') {
+      if (payload.source) {
+        const eid = eidOf(payload.source);
+        this.tempPoses[eid] = true;
+        this.setSpritePose(payload.source, 'skill');
+        
+        const srcEl = this.elFor(payload.source);
+        if (srcEl) {
+          shine(layer, srcEl);
         }
         
         setTimeout(() => {
@@ -700,8 +720,8 @@ export class CombatView {
     const eid = eidOf(ent);
     const p = this.parts[eid];
     if (!p || !p.glyph) return;
-    const img = p.glyph.querySelector('img.model-img');
-    if (!img) return; // Fallback SVG does not support pose swapping
+    const container = p.glyph.querySelector('.sprite-container');
+    if (!container) return; // Fallback SVG does not support pose swapping
 
     const baseId = ent.isPlayer ? this.combat.run.character.id : ent.id;
     let spriteId = baseId;
@@ -713,8 +733,45 @@ export class CombatView {
     }
     
     const newSrc = `assets/sprites/${spriteId}.png`;
-    if (img.src.indexOf(newSrc) === -1) {
-      img.src = newSrc;
+    const activeImg = container.querySelector('.model-img.active-pose');
+    
+    if (activeImg) {
+      if (activeImg.src.indexOf(newSrc) === -1) {
+        // Clean up any remaining fading-out images immediately to avoid leaks
+        container.querySelectorAll('.model-img:not(.active-pose)').forEach(el => el.remove());
+        
+        // Create the new image element
+        const newImg = document.createElement('img');
+        newImg.className = 'model-img';
+        newImg.src = newSrc;
+        newImg.alt = '';
+        newImg.draggable = false;
+        
+        container.appendChild(newImg);
+        
+        // Trigger transition
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            newImg.classList.add('active-pose');
+            activeImg.classList.remove('active-pose');
+            
+            // Clean up the old image after transition (150ms matching the transition duration)
+            setTimeout(() => {
+              if (activeImg.parentNode === container) {
+                container.removeChild(activeImg);
+              }
+            }, 150);
+          });
+        });
+      }
+    } else {
+      const fallbackImg = container.querySelector('.model-img');
+      if (fallbackImg) {
+        fallbackImg.classList.add('active-pose');
+        if (fallbackImg.src.indexOf(newSrc) === -1) {
+          fallbackImg.src = newSrc;
+        }
+      }
     }
   }
 
