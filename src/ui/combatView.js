@@ -98,12 +98,31 @@ export class CombatView {
     stage.appendChild(el('div', { class: 'ground-shadow' }));
     wrap.appendChild(stage);
 
-    wrap.appendChild(el('div', { class: 'cname', text: ent.name }));
+    // New health bar / nameplate design
+    const infoWrap = el('div', { class: 'combatant-info' });
+
+    const nameRow = el('div', { class: 'combatant-name-row' });
+    const nameEl = el('div', { class: 'combatant-name', text: ent.name });
+    const badgeEl = el('div', { class: 'combatant-badge', html: BADGE_SVG });
+    nameRow.appendChild(nameEl);
+    nameRow.appendChild(badgeEl);
+
+    const subtitleText = ent.isPlayer 
+      ? (this.combat.run.character.title || 'The Champion') 
+      : (ENEMY_SUBTITLES[ent.id] || 'The Adversary');
+    const subtitleEl = el('div', { class: 'combatant-subtitle', text: subtitleText });
+
     const hpwrap = el('div', { class: 'hpbar' });
     parts.hpfill = el('div', { class: 'hpfill' });
     parts.hptext = el('div', { class: 'hptext' });
-    hpwrap.appendChild(parts.hpfill); hpwrap.appendChild(parts.hptext);
-    wrap.appendChild(hpwrap);
+    hpwrap.appendChild(parts.hpfill);
+    hpwrap.appendChild(parts.hptext);
+
+    infoWrap.appendChild(nameRow);
+    infoWrap.appendChild(subtitleEl);
+    infoWrap.appendChild(hpwrap);
+    wrap.appendChild(infoWrap);
+
     parts.powers = el('div', { class: 'powers' });
     wrap.appendChild(parts.powers);
 
@@ -219,8 +238,24 @@ export class CombatView {
     piles.appendChild(el('div', { class: 'pile', html: `<i class="pile-ic">${UI.discard}</i><b>${c.discardPile.length}</b>` }));
     if (c.exhaustPile.length) piles.appendChild(el('div', { class: 'pile', html: `<i class="pile-ic">${UI.exhaust}</i><b>${c.exhaustPile.length}</b>` }));
     bar.appendChild(piles);
+    const textStr = this.pendingCard ? 'Cancel' : 'End Turn';
     const endBtn = el('button', {
-      class: 'btn end-turn', text: this.pendingCard ? 'Cancel' : 'End Turn',
+      class: 'btn end-turn',
+      html: `
+        <span class="end-turn-decor border-outer"></span>
+        <span class="end-turn-decor border-inner"></span>
+        <span class="end-turn-body"></span>
+        <span class="end-turn-content">
+          <span class="end-turn-text">${textStr}</span>
+          ${this.pendingCard ? '' : `
+          <span class="end-turn-icon-wrap">
+            <svg class="end-turn-icon" viewBox="0 0 24 24">
+              <path d="M12 21c-1.2-3.3-2.7-5-5-7.5 2.5-.5 4.5.5 6-1 1-1 1.5-2.5 1-4.5 1.5 2 3.5 3 6 3-2.5 1-4.5 2.5-5 5-.5 2.5.5 4-3 5z" />
+            </svg>
+          </span>
+          `}
+        </span>
+      `,
       on: { click: () => { if (this.pendingCard) { this.pendingCard = null; this.update(); } else this.endTurn(); } },
     });
     if (c.animating) endBtn.disabled = true;
@@ -463,3 +498,28 @@ function orbTitle(orb, c) {
   };
   return map[orb.type] || orb.type;
 }
+
+const BADGE_SVG = `<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="8" class="badge-svg">
+  <circle cx="50" cy="50" r="12" fill="currentColor"/>
+  <circle cx="50" cy="50" r="24" stroke-width="6"/>
+  <path d="M 18,30 A 28,28 0 0,0 18,70" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 82,30 A 28,28 0 0,1 82,70" stroke-width="8" stroke-linecap="round"/>
+</svg>`;
+
+const ENEMY_SUBTITLES = {
+  husk_drone: 'The Rusted Automaton',
+  static_jackal: 'The Sparking Predator',
+  brass_sentinel: 'The Stony Dreadnought',
+  market_thief: 'The Shadowy Purloiner',
+  gilded_warden: 'The Golden Vanguard',
+  the_gatekeeper: 'The Gatekeeper of the Spire',
+  sand_wraith: 'The Drifting Apparition',
+  mirror_shade: 'The Twisted Reflection',
+  chrome_serpent: 'The Metallic Wyrm',
+  brass_colossus: 'The Gigantic Guardian',
+  the_archivist: 'The Chronicler of Static',
+  void_chanter: 'The Void Hymnal',
+  static_seraph: 'The Celestial Dissonance',
+  chrome_archon: 'The Obsidian Architect',
+  heart_of_static: 'The Apex of the Spire',
+};

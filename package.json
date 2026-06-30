@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "serve": "node server.js"
+    "serve": "node server.js",
+    "sprites": "node tools/gen-sprites.js",
+    "backgrounds": "node tools/gen-backgrounds.js"
   },
   "license": "MIT"
 }
