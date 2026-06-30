@@ -59,6 +59,20 @@ body::after {
   background: radial-gradient(125% 125% at 50% 32%, transparent 52%, rgba(0,0,0,0.7) 100%);
 }
 #bg-canvas { position: fixed; inset: 0; z-index: -2; display: block; }
+#bg-image {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 0.4s ease-in-out;
+  pointer-events: none;
+}
+#bg-image.show {
+  opacity: 0.65;
+}
 #game-root { position: relative; z-index: 1; min-height: 100dvh; }
 
 h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0.2em 0; font-weight: 700; text-transform: uppercase; }
@@ -765,6 +779,7 @@ html { -webkit-text-size-adjust: 100%; }
 @media (prefers-reduced-motion: reduce) {
   .game-title, .glyph, .ground-shadow, .intent, .med-ring, .medallion::after, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene, .rest-fire { animation: none !important; }
   .scene { transform: none; }
+  #bg-image { transition: none !important; }
 }
 
 /* ============================================================
