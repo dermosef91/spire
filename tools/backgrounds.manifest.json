@@ -1,5 +1,11 @@
 [
   {
+    "id": "title",
+    "name": "Title Screen",
+    "act": 0,
+    "prompt": "A grand, empty obsidian spire with a wide stone staircase leading up to a glowing eclipse-portal. Simple stone columns on the sides, clean and uncluttered. No characters, no people, no cards, no text, no HUD, no UI."
+  },
+  {
     "id": "sunken_market",
     "name": "The Sunken Market",
     "act": 1,

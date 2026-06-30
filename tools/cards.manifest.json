@@ -3,36 +3,420 @@
     "id": "slash",
     "char": "amara",
     "name": "Blade Arc",
-    "prompt": "Afrofuturist woodcut illustration of two glowing energy blades intersecting in a wide dynamic arc. Bold black ink linework, halftone dot shading, high contrast. Limited palette of ember orange, deep ember, amber, cream, and black. Concentric orbital circles and geometric patterns in the background. Dramatic orange rim lighting."
+    "prompt": "Two glowing energy blades intersecting in a wide dynamic arc. Radiant orange rim lighting. Geometric African patterns in the background."
   },
   {
     "id": "brace",
     "char": "amara",
     "name": "Iron Stance",
-    "prompt": "Afrofuturist graphic illustration of a heavy geometric shield plate glowing with tribal engravings. Concentric energy shielding rings radiating outwards, halftone dot textures. Contrast limited palette of orange, deep ember, amber, cream, and black. Bold outline style."
+    "prompt": "A heavy geometric shield plate glowing with tribal engravings. Concentric energy shielding rings radiating outwards."
+  },
+  {
+    "id": "sunder",
+    "char": "amara",
+    "name": "Sunder",
+    "prompt": "A heavy energy blade shattering an obsidian wall, stone fragments and orange embers exploding outward."
+  },
+  {
+    "id": "twin_fangs",
+    "char": "amara",
+    "name": "Twin Fangs",
+    "prompt": "Two glowing crossed dagger blades held symmetrically, radiating sharp energy sparks."
+  },
+  {
+    "id": "ironwave",
+    "char": "amara",
+    "name": "Ironwave",
+    "prompt": "A wave of obsidian spikes rising from the ground, glowing with inner orange cracks."
+  },
+  {
+    "id": "pommel",
+    "char": "amara",
+    "name": "Pommel Strike",
+    "prompt": "A heavy sword hilt striking forward, surrounded by concentric impact rings."
+  },
+  {
+    "id": "cleave",
+    "char": "amara",
+    "name": "Cleave",
+    "prompt": "A wide horizontal blade sweep leaving a trailing arc of ember light."
+  },
+  {
+    "id": "crosscut",
+    "char": "amara",
+    "name": "Crosscut",
+    "prompt": "Two diagonal slashing lines intersecting in an X pattern, highly stylized."
+  },
+  {
+    "id": "shrug",
+    "char": "amara",
+    "name": "Shrug It Off",
+    "prompt": "A heavy shield blocking a barrage of incoming energy arrows."
+  },
+  {
+    "id": "thunderclap",
+    "char": "amara",
+    "name": "Thunderclap",
+    "prompt": "A powerful shockwave expanding from a clenched fist, concentric soundwave rings."
+  },
+  {
+    "id": "rising_strike",
+    "char": "amara",
+    "name": "Rising Strike",
+    "prompt": "An upward blade slash with trailing vertical light beams and embers."
+  },
+  {
+    "id": "war_trance",
+    "char": "amara",
+    "name": "War Trance",
+    "prompt": "Concentric orbital circles surrounding a single focused eye, high contrast."
+  },
+  {
+    "id": "ember_within",
+    "char": "amara",
+    "name": "Ember Within",
+    "prompt": "A human heart glowing with molten orange embers and crackling energy lines."
+  },
+  {
+    "id": "bulwark",
+    "char": "amara",
+    "name": "Bulwark",
+    "prompt": "A massive blocky obsidian wall shield with geometric patterns."
+  },
+  {
+    "id": "read_tell",
+    "char": "amara",
+    "name": "Read the Tell",
+    "prompt": "Profile portrait of a warrior woman with Bantu knots, glowing eyes, and white geometric face paint, analyzing targeting lines."
+  },
+  {
+    "id": "shockwave",
+    "char": "amara",
+    "name": "Shockwave",
+    "prompt": "Ground cracking open with radiant orange energy lines, stone fragments hovering."
+  },
+  {
+    "id": "disarm",
+    "char": "amara",
+    "name": "Disarm",
+    "prompt": "A broken sword falling in half, its blade shattered, surrounded by static interference."
+  },
+  {
+    "id": "whirlwind",
+    "char": "amara",
+    "name": "Whirlwind",
+    "prompt": "A swirling vortex of wind and blade outlines in a concentric circle."
+  },
+  {
+    "id": "ancestral_fury",
+    "char": "amara",
+    "name": "Ancestral Fury",
+    "prompt": "A ghostly fist silhouette punching downward, surrounded by tribal sunburst rays."
+  },
+  {
+    "id": "blood_offering",
+    "char": "amara",
+    "name": "Blood Offering",
+    "prompt": "A glowing blood droplet dripping onto an ancient geometric stone altar."
+  },
+  {
+    "id": "devour",
+    "char": "amara",
+    "name": "Devour",
+    "prompt": "A dark silhouette of a monstrous mouth with sharp glowing orange teeth."
+  },
+  {
+    "id": "harvest",
+    "char": "amara",
+    "name": "Harvest",
+    "prompt": "A glowing curved scythe blade cutting through stalks of energy."
+  },
+  {
+    "id": "skyfall",
+    "char": "amara",
+    "name": "Skyfall",
+    "prompt": "A massive war hammer falling from a stormy cloud, struck by lightning."
+  },
+  {
+    "id": "jab",
+    "char": "kofi",
+    "name": "Jab",
+    "prompt": "A quick fist strike or thrust, surrounded by speed lines and sparks."
+  },
+  {
+    "id": "refrain",
+    "char": "kofi",
+    "name": "Refrain",
+    "prompt": "A clean musical note symbol inside a protective shield outline."
+  },
+  {
+    "id": "cutting_verse",
+    "char": "kofi",
+    "name": "Cutting Verse",
+    "prompt": "Glowing musical notes with sharp blade-like edges cutting through space."
+  },
+  {
+    "id": "blight_needle",
+    "char": "kofi",
+    "name": "Blight Needle",
+    "prompt": "A thin glowing poison needle dripping dark liquid."
+  },
+  {
+    "id": "quickstep",
+    "char": "kofi",
+    "name": "Quickstep",
+    "prompt": "Stylized footprints showing movement, with trailing speed lines."
+  },
+  {
+    "id": "double_tap",
+    "char": "kofi",
+    "name": "Double Tap",
+    "prompt": "Two tribal drums being struck simultaneously, soundwaves emanating."
   },
   {
     "id": "crescendo",
     "char": "kofi",
     "name": "Crescendo",
-    "prompt": "Afrofuturist risograph illustration of a stylized African kora instrument neck projecting cosmic soundwaves. Soundwave lines and concentric circles radiating outward in glowing orange and cream. Bold black ink linework, halftone textures, high contrast. Limited palette of ember orange, deep ember, amber, cream, and black."
+    "prompt": "A stylized African kora instrument neck projecting radiating soundwaves and concentric circles."
   },
   {
     "id": "deflect",
     "char": "kofi",
     "name": "Deflect",
-    "prompt": "Afrofuturist graphic illustration of cosmic shield lines resembling a curved sounding board blocking incoming red projectiles. Vibrational energy waves in orange and amber. Concentric circular resonance patterns. Bold black ink lines, halftone details. limited palette of orange, amber, cream, and black."
+    "prompt": "A curved sound board blocking incoming projectiles, vibrational waves."
   },
   {
-    "id": "channel_storm",
+    "id": "shard_burst",
+    "char": "kofi",
+    "name": "Shard Burst",
+    "prompt": "Crystalline shards exploding outward from a central point."
+  },
+  {
+    "id": "backbeat",
+    "char": "kofi",
+    "name": "Backbeat",
+    "prompt": "A large bass drum radiating low-frequency concentric soundwave rings."
+  },
+  {
+    "id": "venom_chorus",
+    "char": "kofi",
+    "name": "Venom Chorus",
+    "prompt": "Multiple poison droplets falling like rain, glowing green and orange."
+  },
+  {
+    "id": "syncopation",
+    "char": "kofi",
+    "name": "Syncopation",
+    "prompt": "Profile of a bard singer with concentric soundwaves, matching the style-key silhouette."
+  },
+  {
+    "id": "accelerando",
+    "char": "kofi",
+    "name": "Accelerando",
+    "prompt": "Fast-paced tempo lines and spinning gears, high energy."
+  },
+  {
+    "id": "catalyst",
+    "char": "kofi",
+    "name": "Catalyst",
+    "prompt": "A chemical flask bubbling with green and orange acid, steam rising."
+  },
+  {
+    "id": "bouncing_verse",
+    "char": "kofi",
+    "name": "Bouncing Verse",
+    "prompt": "A musical note bouncing between two geometric walls, soundwaves."
+  },
+  {
+    "id": "veil",
+    "char": "kofi",
+    "name": "Veil",
+    "prompt": "A crescent moon shrouded in cosmic smoke and star patterns."
+  },
+  {
+    "id": "blight_bloom",
+    "char": "kofi",
+    "name": "Blight Bloom",
+    "prompt": "A decaying flower dripping poison droplets, organic shapes."
+  },
+  {
+    "id": "the_long_song",
+    "char": "kofi",
+    "name": "The Long Song",
+    "prompt": "An endless winding path of musical stave lines disappearing into a stellar background."
+  },
+  {
+    "id": "grand_finale",
+    "char": "kofi",
+    "name": "Grand Finale",
+    "prompt": "A massive explosion of soundwaves and fireworks, filling the frame."
+  },
+  {
+    "id": "pulse",
     "char": "zara",
-    "name": "Storm Channel",
-    "prompt": "Afrofuturist woodcut illustration of a swirling vortex of cosmic energy orbs and jagged lightning bolts. Concentric orbital rings, geometric sunburst patterns. High contrast, bold black ink linework, halftone dot shading. Limited palette of ember orange, deep ember, amber, cream, and black."
+    "name": "Pulse",
+    "prompt": "An expanding concentric ring of electrical energy and lightning sparks."
   },
   {
     "id": "barrier",
     "char": "zara",
     "name": "Barrier",
-    "prompt": "Afrofuturist risograph illustration of a glowing triangular geometric barrier shield. Concentric energy lines, stellar patterns, orbiting dots. High contrast, bold black linework, limited palette of orange, deep ember, amber, cream, and black."
+    "prompt": "A glowing triangular geometric barrier shield, stellar patterns."
+  },
+  {
+    "id": "channel_storm",
+    "char": "zara",
+    "name": "Storm Channel",
+    "prompt": "Swirling vortex of cosmic energy orbs and lightning, sunburst patterns."
+  },
+  {
+    "id": "resonate",
+    "char": "zara",
+    "name": "Resonate",
+    "prompt": "Concentric circle rings vibrating intensely, high frequency."
+  },
+  {
+    "id": "static_burst",
+    "char": "zara",
+    "name": "Static Burst",
+    "prompt": "A chaotic explosion of static electricity and circuit lines."
+  },
+  {
+    "id": "frostbind",
+    "char": "zara",
+    "name": "Frostbind",
+    "prompt": "Symmetrical ice crystals forming a chain, geometric design."
+  },
+  {
+    "id": "coolhead",
+    "char": "zara",
+    "name": "Coolhead",
+    "prompt": "A calm silhouette of a head surrounded by circular energy lines."
+  },
+  {
+    "id": "capacitor",
+    "char": "zara",
+    "name": "Capacitor",
+    "prompt": "A glowing electrical cylinder battery with circuit overlays."
+  },
+  {
+    "id": "chaos",
+    "char": "zara",
+    "name": "Chaos",
+    "prompt": "Swirling random geometric shapes and electricity arcs."
+  },
+  {
+    "id": "glacier",
+    "char": "zara",
+    "name": "Glacier",
+    "prompt": "A massive iceberg refracting orange and amber light lines."
+  },
+  {
+    "id": "summon_shade",
+    "char": "zara",
+    "name": "Summon Shade",
+    "prompt": "A shadowy figure emerging from a dark orb, void particles."
+  },
+  {
+    "id": "attune",
+    "char": "zara",
+    "name": "Attune",
+    "prompt": "An eye aligning with planetary/orbital paths."
+  },
+  {
+    "id": "doomgloom",
+    "char": "zara",
+    "name": "Doom and Gloom",
+    "prompt": "A dark storm cloud raining down shadow particles."
+  },
+  {
+    "id": "skim",
+    "char": "zara",
+    "name": "Skim",
+    "prompt": "A hand scanning glowing card shapes in mid-air."
+  },
+  {
+    "id": "echocast",
+    "char": "zara",
+    "name": "Echocast",
+    "prompt": "Mirror reflections of an energy beam, refracting."
+  },
+  {
+    "id": "summon_sun",
+    "char": "zara",
+    "name": "Summon Sun",
+    "prompt": "A blazing sun orb radiating clean solar flares."
+  },
+  {
+    "id": "overclock",
+    "char": "zara",
+    "name": "Overclock",
+    "prompt": "An eye with gear patterns and circuit overlays."
+  },
+  {
+    "id": "stormcall",
+    "char": "zara",
+    "name": "Stormcall",
+    "prompt": "Multiple lightning strikes hitting a geometric spire."
+  },
+  {
+    "id": "echo_form",
+    "char": "zara",
+    "name": "Echo Form",
+    "prompt": "Multiple glowing translucent silhouettes behind a figure."
+  },
+  {
+    "id": "falling_star",
+    "char": "zara",
+    "name": "Falling Star",
+    "prompt": "A meteor falling through space, trailing fire."
+  },
+  {
+    "id": "shiv",
+    "char": "colorless",
+    "name": "Shiv",
+    "prompt": "A small clean obsidian blade silhouette."
+  },
+  {
+    "id": "flash",
+    "char": "colorless",
+    "name": "Flash of Steel",
+    "prompt": "A bright starburst light, high contrast."
+  },
+  {
+    "id": "panic_button",
+    "char": "colorless",
+    "name": "Panic Button",
+    "prompt": "A large glowing hazard warning sign with geometric trim."
+  },
+  {
+    "id": "apotheosis",
+    "char": "colorless",
+    "name": "Apotheosis",
+    "prompt": "A figure ascending into a blinding circular starburst."
+  },
+  {
+    "id": "wound",
+    "char": "status",
+    "name": "Wound",
+    "prompt": "A jagged cut on a black surface, bleeding glowing orange embers."
+  },
+  {
+    "id": "dazed",
+    "char": "status",
+    "name": "Dazed",
+    "prompt": "Swirling spiral lines above a silhouette of a head."
+  },
+  {
+    "id": "static_curse",
+    "char": "curse",
+    "name": "Static Curse",
+    "prompt": "A skull surrounded by digital glitch static lines."
+  },
+  {
+    "id": "regret",
+    "char": "curse",
+    "name": "Regret",
+    "prompt": "A figure kneeling in darkness with head bowed."
   }
 ]

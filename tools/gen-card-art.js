@@ -37,9 +37,9 @@ const ID_FILTER = idsFlag
     : null;
 
 // ── Style bible (embedded in every prompt) ──────────────────────────────────
-const STYLE_BIBLE = `Afrofuturist dark graphic card illustration in a bold woodcut / risograph screen-print style. Full graphic design filling the canvas with a dark textured background. High contrast, bold black ink linework, halftone dot shading. Color palette strictly limited to black, deep ember #e8431a, ember orange #ff6a1a, amber #ffab47, and cream #f3e8d8 — absolutely no other hues. Concentric orbital circle sigils, soundwaves, and geometric African-inspired ornamental patterns as decorative elements. Grain and halftone texture throughout. Bold centered symbolic icon or themed composition. No frame border, no text, no UI chrome.`;
+const STYLE_BIBLE = `Afrofuturist dark graphic card illustration in a bold woodcut and risograph screen-print style. High contrast clean graphic layout, bold black ink outlines, minimal halftone shading, simple shapes with low detail to ensure readability at very small sizes. Color palette strictly limited to black, deep ember #e8431a, ember orange #ff6a1a, amber #ffab47, and cream #f3e8d8 — absolutely no other colors. Concentric orbital rings, glowing central sigil, and clean geometric border accents. Clean design filling the frame. No text.`;
 
-const STYLE_KEY_PROMPT = `${STYLE_BIBLE} Subject: a glowing abstract central orb surrounded by concentric sound waves and geometric African trim bands on a textured dark background. This is a style calibration reference image.`;
+const STYLE_KEY_PROMPT = `${STYLE_BIBLE} Subject: A neutral template icon showing a single bold glowing orbital energy orb at the center with radiating clean sun-ray lines. Very clean composition, low complexity, minimal detail. This is a style calibration template image.`;
 
 // ── Cost tracking ───────────────────────────────────────────────────────────
 let totalCost = 0;
