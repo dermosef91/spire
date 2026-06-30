@@ -1,24 +1,37 @@
-name: Generate Sprites
+name: Generate Assets
 
 # Manual trigger only — the human clicks "Run workflow" after adding the
 # OPENAI_API_KEY repo secret. Can also be invoked via API dispatch.
+# Runs on a GitHub-hosted runner (open egress), so it does not depend on any
+# Claude Code session network policy. Generates sprites, card art, and/or
+# backgrounds and commits the new PNGs back to the branch.
 on:
   workflow_dispatch:
     inputs:
+      target:
+        description: 'Which assets to generate'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - sprites
+          - card-art
+          - backgrounds
       force:
-        description: 'Regenerate all sprites (ignore cache)'
+        description: 'Regenerate all assets (ignore existing files)'
         required: false
-        default: 'false'
+        default: false
         type: boolean
       ids:
-        description: 'Comma-separated entity IDs (empty = all)'
+        description: 'Comma-separated ids (empty = all). Applies to every selected target.'
         required: false
         default: ''
         type: string
       dry_run:
         description: 'Dry run (placeholder PNGs, no API calls)'
         required: false
-        default: 'false'
+        default: false
         type: boolean
 
 permissions:
@@ -40,24 +53,38 @@ jobs:
         working-directory: tools
         run: npm install
 
-      - name: Generate sprites
+      - name: Generate assets
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
+          if [ -z "$OPENAI_API_KEY" ] && [ "${{ inputs.dry_run }}" != "true" ]; then
+            echo "::error::Repo secret OPENAI_API_KEY is not set. Add it under Settings → Secrets and variables → Actions, or run with dry_run."
+            exit 1
+          fi
           ARGS=""
           if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
           if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
           if [ -n "${{ inputs.ids }}" ]; then ARGS="$ARGS --ids ${{ inputs.ids }}"; fi
-          node tools/gen-sprites.js $ARGS
 
-      - name: Commit generated sprites
+          TARGET="${{ inputs.target }}"
+          if [ "$TARGET" = "all" ] || [ "$TARGET" = "sprites" ]; then
+            echo "── Generating sprites ──"; node tools/gen-sprites.js $ARGS
+          fi
+          if [ "$TARGET" = "all" ] || [ "$TARGET" = "card-art" ]; then
+            echo "── Generating card art ──"; node tools/gen-card-art.js $ARGS
+          fi
+          if [ "$TARGET" = "all" ] || [ "$TARGET" = "backgrounds" ]; then
+            echo "── Generating backgrounds ──"; node tools/gen-backgrounds.js $ARGS
+          fi
+
+      - name: Commit generated assets
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/sprites/
+          git add "assets/sprites/" "assets/card-art/" "assets/title screen and backgrounds/"
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "chore: generate sprites [automated]"
+            git commit -m "chore: generate assets [automated]"
             git push
           fi

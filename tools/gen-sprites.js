@@ -16,6 +16,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import './proxy-bootstrap.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -46,7 +47,7 @@ let totalCost = 0;
 const costLog = [];
 
 function logCost(id, endpoint, model) {
-  // Approximate costs (gpt-image-1 1024x1024)
+  // Approximate costs (gpt-image-2 1024x1024)
   const cost = endpoint === 'generate' ? 0.04 : 0.04;
   totalCost += cost;
   costLog.push({ id, endpoint, model, estimatedCost: `$${cost.toFixed(3)}` });
