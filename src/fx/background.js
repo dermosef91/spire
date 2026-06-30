@@ -14,7 +14,7 @@ export function mountBackground() {
   const ctx = canvas.getContext('2d');
 
   let W = 0, H = 0, dpr = 1;
-  let stars = [], motes = [], embers = [], wave = [];
+  let stars = [], motes = [], embers = [];
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -46,9 +46,6 @@ export function mountBackground() {
         c: i % 3 === 0 ? AMBER : ORANGE, a: Math.random() * 0.06 + 0.04,
       });
     }
-    // pre-roll waveform phase offsets
-    wave = [];
-    for (let i = 0; i < 7; i++) wave.push({ amp: 6 + Math.random() * 26, k: 0.004 + Math.random() * 0.02, ph: Math.random() * Math.PI * 2, sp: 0.4 + Math.random() * 1.2 });
   }
 
   let last = performance.now();
@@ -78,10 +75,6 @@ export function mountBackground() {
       if (!reduce) { s.y += s.z * 1.4 * dt; if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; } }
     }
 
-    // glowing audio waveform across the midline
-    drawWave(H * 0.46, 0.55);
-    drawWave(H * 0.46, 1.0);
-
     // ember streaks rising
     if (!reduce && Math.random() < 0.02 && embers.length < 24) {
       embers.push({ x: Math.random() * W, y: H + 6, vy: -(20 + Math.random() * 45), vx: (Math.random() - 0.5) * 12, life: 1, r: Math.random() * 1.6 + 0.6 });
@@ -96,29 +89,6 @@ export function mountBackground() {
     }
 
     raf = requestAnimationFrame(frame);
-  }
-
-  function drawWave(yBase, alpha) {
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.beginPath();
-    const speed = reduce ? 0 : t;
-    for (let x = 0; x <= W; x += 4) {
-      let y = 0;
-      for (const w of wave) y += Math.sin(x * w.k + w.ph + speed * w.sp) * w.amp;
-      // taper toward edges
-      const taper = Math.sin((x / W) * Math.PI);
-      y = yBase + y * (0.35 + taper * 0.9);
-      if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-    }
-    const grad = ctx.createLinearGradient(0, 0, W, 0);
-    grad.addColorStop(0, 'rgba(255,122,26,0)');
-    grad.addColorStop(0.5, `rgba(255,150,50,${0.5 * alpha})`);
-    grad.addColorStop(1, 'rgba(255,122,26,0)');
-    ctx.strokeStyle = grad; ctx.lineWidth = 1.5 * alpha + 0.5;
-    ctx.shadowColor = 'rgba(255,130,30,0.6)'; ctx.shadowBlur = 14 * alpha;
-    ctx.stroke();
-    ctx.restore();
   }
 
   let raf = null;

@@ -507,3 +507,69 @@ html { -webkit-text-size-adjust: 100%; }
   .game-title, .glyph, .ground-shadow, .intent, .med-ring, .medallion::after, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene, .rest-fire { animation: none !important; }
   .scene { transform: none; }
 }
+
+/* ============================================================
+   CUSTOM SVG ICONS + ANIMATED MODELS
+   ============================================================ */
+.svg-ic { display: block; width: 100%; height: 100%; overflow: visible; }
+
+/* inline icon wrappers */
+.tb-ic { display: inline-grid; place-items: center; width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
+.pip-ic { display: inline-grid; place-items: center; width: 1.1em; height: 1.1em; vertical-align: -0.18em; }
+.intent-ic { display: inline-grid; place-items: center; width: 22px; height: 22px; vertical-align: -0.35em; }
+.pile-ic { display: inline-grid; place-items: center; width: 20px; height: 20px; vertical-align: -0.3em; margin-right: 3px; }
+
+/* relics / potions / nodes / rewards / legend */
+.relic .svg-ic { width: 76%; height: 76%; }
+.potion:not(.empty) { background: none; border: none; box-shadow: none; }
+.potion .svg-ic { width: 100%; height: 100%; }
+.map-node .svg-ic { width: 62%; height: 62%; }
+.node-boss .svg-ic { width: 66%; height: 66%; }
+.leg-ic .svg-ic { width: 82%; height: 82%; }
+.reward-icon { width: 38px; height: 38px; display: grid; place-items: center; filter: none; font-size: 0; }
+.reward-icon .svg-ic { width: 100%; height: 100%; }
+.event-art, .rest-fire { width: 92px; height: 92px; margin: 10px auto; font-size: 0; filter: none; }
+.event-art .svg-ic, .rest-fire .svg-ic { width: 100%; height: 100%; }
+.rest-fire { animation: restGlow 1.6s ease-in-out infinite alternate; }
+@keyframes restGlow { from { filter: drop-shadow(0 0 8px rgba(232,67,26,0.5)); } to { filter: drop-shadow(0 0 22px rgba(255,122,26,0.85)); } }
+.fs-toggle .svg-ic { width: 60%; height: 60%; }
+.fs-toggle.is-on { border-color: var(--orange); }
+
+/* character-select portrait */
+.char-glyph { width: 92px; height: 92px; margin: 0 auto 2px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6)); }
+.char-glyph .svg-ic { width: 100%; height: 100%; }
+
+/* combat medallion model fills the disc; whole model floats, parts animate */
+.glyph { width: 86%; height: 86%; display: grid; place-items: center; filter: drop-shadow(0 3px 8px rgba(0,0,0,0.65)); }
+.glyph .svg-ic { width: 100%; height: 100%; }
+
+/* card art motif */
+.art-glyph { position: relative; width: 86%; height: 86%; display: grid; place-items: center; filter: none; }
+.art-glyph .svg-ic { width: 100%; height: 100%; }
+
+/* ---- model animation utilities (target SVG <g> parts) ---- */
+.imodel [class^="m-"], .imodel [class*=" m-"] { transform-box: fill-box; transform-origin: center; }
+.m-spin { animation: mSpin 16s linear infinite; }
+.m-spin-rev { animation: mSpin 22s linear infinite reverse; }
+.m-orbit { animation: mSpin 18s linear infinite; }
+@keyframes mSpin { to { transform: rotate(360deg); } }
+.m-breathe { animation: mBreathe 3.8s ease-in-out infinite; }
+@keyframes mBreathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+.m-bob, .m-drift { animation: mBob 3.4s ease-in-out infinite; }
+@keyframes mBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.m-pulse { animation: mPulse 1.9s ease-in-out infinite; }
+@keyframes mPulse { 0%,100% { transform: scale(1); opacity: 0.92; } 50% { transform: scale(1.1); opacity: 1; } }
+.m-flicker { animation: mFlicker 2.6s steps(1, end) infinite; }
+@keyframes mFlicker { 0%,89%,100% { opacity: 1; } 90% { opacity: 0.45; } 92% { opacity: 1; } 95% { opacity: 0.6; } 97% { opacity: 1; } }
+.m-gleam, .m-strings { animation: mGleam 2.8s ease-in-out infinite; }
+@keyframes mGleam { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+.m-notes { animation: mNotes 3.2s ease-in-out infinite; }
+@keyframes mNotes { 0% { opacity: 0; transform: translateY(8px); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(-16px); } }
+.m-shift { animation: mShift 4.2s ease-in-out infinite; }
+@keyframes mShift { 0%,100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
+.m-coil { animation: mCoil 4s ease-in-out infinite; }
+@keyframes mCoil { 0%,100% { transform: translateX(0); } 50% { transform: translateX(3px) translateY(-2px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .imodel [class^="m-"], .imodel [class*=" m-"], .rest-fire { animation: none !important; }
+}

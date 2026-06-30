@@ -7,6 +7,7 @@ import { renderCard, topBar } from './components.js';
 import { POWERS } from '../data/keywords.js';
 import { audio } from '../audio.js';
 import { ensureFxLayer, floatText, hitFlash, shake, lunge, slash, ring, screenShake, burst } from './fx.js';
+import { combatModel, INTENT, UI, powerIcon } from './icons.js';
 
 const eidOf = (ent) => (ent.isPlayer ? 'p' : 'e' + ent.idx);
 
@@ -79,7 +80,7 @@ export class CombatView {
 
     const stage = el('div', { class: 'stage' });
     parts.medallion = el('div', { class: 'medallion' });
-    parts.glyph = el('div', { class: 'glyph', text: ent.glyph });
+    parts.glyph = el('div', { class: 'glyph imodel', html: combatModel(ent, this.combat.run.character.id) });
     parts.block = el('div', { class: 'block-badge', style: { display: 'none' } });
     parts.medallion.appendChild(el('div', { class: 'med-ring' }));
     parts.medallion.appendChild(el('div', { class: 'med-core' }, [parts.glyph]));
@@ -161,7 +162,7 @@ export class CombatView {
       const def = POWERS[key]; if (!def) continue;
       const cls = def.type === 'buff' ? 'pip-buff' : 'pip-debuff';
       p.powers.appendChild(el('div', {
-        class: `pip ${cls}`, html: `${def.icon} ${val}`,
+        class: `pip ${cls}`, html: `<i class="pip-ic">${powerIcon(key)}</i> ${val}`,
         title: `${def.name}: ${def.desc.replace('{n}', val)}`,
       }));
     }
@@ -177,12 +178,12 @@ export class CombatView {
     if (it.type === 'attack' || it.type === 'attackdebuff') {
       const dmg = c.calcAttackDamage(it.dmg, enemy, c.player);
       const hits = it.hits || 1;
-      wrap.appendChild(el('span', { class: 'intent-atk', html: `⚔ ${dmg}${hits > 1 ? `×${hits}` : ''}` }));
+      wrap.appendChild(el('span', { class: 'intent-atk', html: `<i class="intent-ic">${INTENT.attack}</i>${dmg}${hits > 1 ? `×${hits}` : ''}` }));
     }
-    if (it.type === 'attackdebuff' || it.type === 'debuff') wrap.appendChild(el('span', { class: 'intent-deb', text: '☠' }));
-    if (it.type === 'block' || it.type === 'buffblock') wrap.appendChild(el('span', { class: 'intent-def', text: '🛡' }));
-    if (it.type === 'buff' || it.type === 'buffblock') wrap.appendChild(el('span', { class: 'intent-buf', text: '⬆' }));
-    if (it.type === 'unknown') wrap.appendChild(el('span', { class: 'intent-unk', text: '❔' }));
+    if (it.type === 'attackdebuff' || it.type === 'debuff') wrap.appendChild(el('span', { class: 'intent-deb', html: `<i class="intent-ic">${INTENT.debuff}</i>` }));
+    if (it.type === 'block' || it.type === 'buffblock') wrap.appendChild(el('span', { class: 'intent-def', html: `<i class="intent-ic">${INTENT.block}</i>` }));
+    if (it.type === 'buff' || it.type === 'buffblock') wrap.appendChild(el('span', { class: 'intent-buf', html: `<i class="intent-ic">${INTENT.buff}</i>` }));
+    if (it.type === 'unknown') wrap.appendChild(el('span', { class: 'intent-unk', html: `<i class="intent-ic">${INTENT.unknown}</i>` }));
     wrap.title = it.name || '';
   }
 
@@ -196,7 +197,7 @@ export class CombatView {
         this.orbsHolder.appendChild(el('div', { class: `orb orb-${orb.type}`, text: label, title: orbTitle(orb, c) }));
       } else this.orbsHolder.appendChild(el('div', { class: 'orb empty' }));
     }
-    if (c.focus()) this.orbsHolder.appendChild(el('div', { class: 'orb-focus', html: `✨${c.focus()}` }));
+    if (c.focus()) this.orbsHolder.appendChild(el('div', { class: 'orb-focus', html: `<i class="pip-ic">${powerIcon('focus')}</i>${c.focus()}` }));
   }
 
   renderControls() {
@@ -205,9 +206,9 @@ export class CombatView {
     bar.className = 'combat-controls-holder combat-controls';
     bar.appendChild(el('div', { class: 'energy', html: `<span class="energy-orb">${c.energy}</span><span class="energy-max">/${c.maxEnergy}</span>` }));
     const piles = el('div', { class: 'piles' });
-    piles.appendChild(el('div', { class: 'pile', html: `🂠 <b>${c.drawPile.length}</b>` }));
-    piles.appendChild(el('div', { class: 'pile', html: `🗑 <b>${c.discardPile.length}</b>` }));
-    if (c.exhaustPile.length) piles.appendChild(el('div', { class: 'pile', html: `💨 <b>${c.exhaustPile.length}</b>` }));
+    piles.appendChild(el('div', { class: 'pile', html: `<i class="pile-ic">${UI.draw}</i><b>${c.drawPile.length}</b>` }));
+    piles.appendChild(el('div', { class: 'pile', html: `<i class="pile-ic">${UI.discard}</i><b>${c.discardPile.length}</b>` }));
+    if (c.exhaustPile.length) piles.appendChild(el('div', { class: 'pile', html: `<i class="pile-ic">${UI.exhaust}</i><b>${c.exhaustPile.length}</b>` }));
     bar.appendChild(piles);
     const endBtn = el('button', {
       class: 'btn end-turn', text: this.pendingCard ? 'Cancel' : 'End Turn',
@@ -311,7 +312,7 @@ export class CombatView {
         if (payload.isAttack) slash(layer, el2);
         if (payload.target.isPlayer || big) screenShake(this.scene, big);
       } else if (payload.blocked > 0) {
-        floatText(layer, el2, '🛡', 'blocked');
+        floatText(layer, el2, 'WARD', 'blocked');
         hitFlash(el2, 'block');
       }
       return;
