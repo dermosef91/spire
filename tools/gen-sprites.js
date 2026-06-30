@@ -65,13 +65,12 @@ function createPlaceholder(id, kind) {
 }
 
 async function createPlaceholderWithSharp(sharp, id, kind) {
-  const size = 512;
+  const size = 1024;
   const isChamp = kind === 'champion';
   // Create a simple colored rectangle with text overlay using raw SVG
   const bgColor = isChamp ? '#1c0f06' : '#0b0403';
   const accentColor = isChamp ? '#ff6a1a' : '#e8431a';
   const svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-    <rect width="${size}" height="${size}" fill="transparent"/>
     <circle cx="${size/2}" cy="${size/2}" r="${size * 0.38}" fill="${bgColor}" stroke="${accentColor}" stroke-width="6"/>
     <circle cx="${size/2}" cy="${size/2}" r="${size * 0.28}" fill="none" stroke="${accentColor}" stroke-width="2" opacity="0.5"/>
     <text x="${size/2}" y="${size/2 - 20}" text-anchor="middle" fill="#ffab47" font-size="28" font-family="monospace" font-weight="bold">${id}</text>
@@ -229,8 +228,8 @@ async function postProcess(sharp, buf) {
     // trim can fail on some images, continue without
   }
 
-  // Resize to 512x512 maintaining aspect ratio, pad with transparent
-  img = img.resize(512, 512, {
+  // Resize to 1024x1024 maintaining aspect ratio, pad with transparent
+  img = img.resize(1024, 1024, {
     fit: 'contain',
     background: { r: 0, g: 0, b: 0, alpha: 0 },
   });
@@ -301,7 +300,7 @@ async function main() {
   }
 
   // Step 1: Generate style-key reference
-  if (!existsSync(STYLE_KEY_PATH) || FORCE) {
+  if (!existsSync(STYLE_KEY_PATH)) {
     await generateStyleKey(openai, sharp);
   } else {
     console.log('🎨 Style-key exists, reusing');

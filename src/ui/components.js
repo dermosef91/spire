@@ -137,5 +137,41 @@ export function powerPips(entity) {
 }
 
 export function button(label, onClick, cls = '') {
-  return el('button', { class: `btn ${cls}`, text: label, on: { click: onClick } });
+  const isPrimary = cls.split(' ').includes('primary');
+  
+  const leftOrn = isPrimary 
+    ? `<svg class="btn-svg-target" viewBox="0 0 44 44" width="44" height="44">
+        <line x1="22" y1="2" x2="22" y2="42" stroke="currentColor" stroke-width="1.5" />
+        <line x1="2" y1="22" x2="42" y2="22" stroke="currentColor" stroke-width="1.5" />
+        <circle cx="22" cy="22" r="14" fill="none" stroke="currentColor" stroke-width="1.5" />
+        <path d="M22 2 L22 6 M22 38 L22 42 M2 22 L6 22 M38 22 L42 22" stroke="currentColor" stroke-width="2" />
+        <circle cx="22" cy="22" r="7" fill="#ff5a00" />
+        <circle cx="22" cy="22" r="2.5" fill="#fff" />
+       </svg>`
+    : `<svg class="btn-svg-flourish-left" viewBox="0 0 24 24" width="18" height="18">
+        <path d="M18 6 L10 12 L18 18 M12 6 L4 12 L12 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <line x1="22" y1="8" x2="22" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+       </svg>`;
+
+  const rightOrn = isPrimary
+    ? `<svg class="btn-svg-chevron-right" viewBox="0 0 16 16" width="16" height="16">
+        <path d="M3 3 L9 8 L3 13 M8 3 L14 8 L8 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+       </svg>`
+    : `<svg class="btn-svg-flourish-right" viewBox="0 0 24 24" width="18" height="18">
+        <path d="M6 6 L14 12 L6 18 M12 6 L20 12 L12 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <line x1="2" y1="8" x2="2" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+       </svg>`;
+
+  return el('button', {
+    class: `btn ${cls}`,
+    html: `
+      <span class="btn-decor border-outer"></span>
+      <span class="btn-decor border-inner"></span>
+      <span class="btn-body"></span>
+      <span class="btn-content">${label}</span>
+      <span class="btn-ornament left">${leftOrn}</span>
+      <span class="btn-ornament right">${rightOrn}</span>
+    `,
+    on: { click: onClick }
+  });
 }

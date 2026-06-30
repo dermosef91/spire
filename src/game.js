@@ -137,12 +137,17 @@ export class Game {
     }
     btns.appendChild(button('New Run', () => this.showCharSelect(), hasSave() ? '' : 'primary'));
     btns.appendChild(button(audio.musicOn ? 'Music: On' : 'Music: Off', (e) => {
-      const on = audio.toggleMusic(); e.target.textContent = on ? 'Music: On' : 'Music: Off';
+      const on = audio.toggleMusic();
+      const txt = e.currentTarget.querySelector('.btn-content');
+      if (txt) txt.textContent = on ? 'Music: On' : 'Music: Off';
+      else e.target.textContent = on ? 'Music: On' : 'Music: Off';
     }));
     if (fullscreenSupported()) {
       btns.appendChild(button(isFullscreen() ? 'Exit Fullscreen' : 'Fullscreen', async (e) => {
         const on = await toggleFullscreen(document.documentElement);
-        e.target.textContent = on ? 'Exit Fullscreen' : 'Fullscreen';
+        const txt = e.currentTarget.querySelector('.btn-content');
+        if (txt) txt.textContent = on ? 'Exit Fullscreen' : 'Fullscreen';
+        else e.target.textContent = on ? 'Exit Fullscreen' : 'Fullscreen';
       }));
     }
     panel.appendChild(btns);

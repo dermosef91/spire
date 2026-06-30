@@ -37,7 +37,7 @@ const ID_FILTER = idsFlag
     : null;
 
 // ── Style bible (embedded in every prompt) ──────────────────────────────────
-const STYLE_BIBLE = `Afrofuturist dark graphic card illustration in a bold woodcut and risograph screen-print style. High contrast clean graphic layout, bold black ink outlines, minimal halftone shading, simple shapes with low detail to ensure readability at very small sizes. Color palette strictly limited to black, deep ember #e8431a, ember orange #ff6a1a, amber #ffab47, and cream #f3e8d8 — absolutely no other colors. Concentric orbital rings, glowing central sigil, and clean geometric border accents. Clean design filling the frame. No text.`;
+const STYLE_BIBLE = `Afrofuturist dark card illustration mirroring the visual style of the reference image. High contrast clean graphic layout, minimal halftone shading. Color palette limited to black, deep ember #e8431a, ember orange #ff6a1a, amber #ffab47, and cream #f3e8d8. No text.`;
 
 const STYLE_KEY_PROMPT = `${STYLE_BIBLE} Subject: A neutral template icon showing a single bold glowing orbital energy orb at the center with radiating clean sun-ray lines. Very clean composition, low complexity, minimal detail. This is a style calibration template image.`;
 
@@ -97,7 +97,7 @@ async function generateStyleKey(openai, sharp) {
       model: 'gpt-image-2',
       prompt: STYLE_KEY_PROMPT,
       n: 1,
-      size: '1024x1024',
+      size: '1024x768',
     });
   });
 
@@ -141,7 +141,7 @@ async function generateCardArt(openai, OpenAI, sharp, card) {
       image: styleKeyFile,
       prompt: fullPrompt,
       n: 1,
-      size: '1024x1024',
+      size: '1024x768',
     });
   });
 
@@ -161,8 +161,8 @@ async function postProcess(sharp, buf) {
   // Load raw image with sharp
   let img = sharp(buf);
 
-  // Resize/crop to 512x512 with fit: 'cover' (fills completely)
-  img = img.resize(512, 512, {
+  // Resize/crop to 512x384 (4:3 aspect ratio) with fit: 'cover'
+  img = img.resize(512, 384, {
     fit: 'cover',
   });
 
