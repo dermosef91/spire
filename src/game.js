@@ -16,6 +16,7 @@ import { CombatView } from './ui/combatView.js';
 import { renderCard, topBar, relicChip, button } from './ui/components.js';
 import { POWERS } from './data/keywords.js';
 import { UI, NODE, relicIcon, potionIcon, characterModel } from './ui/icons.js';
+import { spriteOrSvg } from './ui/sprites.js';
 import { audio } from './audio.js';
 import { fullscreenSupported, isFullscreen, toggleFullscreen, onFullscreenChange, isTouchDevice } from './core/fullscreen.js';
 
@@ -133,7 +134,8 @@ export class Game {
     for (const id of Object.keys(CHARACTERS)) {
       const ch = CHARACTERS[id];
       const card = el('div', { class: 'char-card', style: { '--cc': ch.color, '--ca': ch.accent } });
-      card.appendChild(el('div', { class: 'char-glyph imodel', html: characterModel(id) }));
+      const charGlyph = el('div', { class: 'char-glyph imodel' }, [spriteOrSvg(id, characterModel(id))]);
+      card.appendChild(charGlyph);
       card.appendChild(el('div', { class: 'char-name', text: ch.name }));
       card.appendChild(el('div', { class: 'char-title', text: ch.title }));
       card.appendChild(el('div', { class: 'char-hp', html: `<i class="tb-ic">${UI.heart}</i> ${ch.maxHp} HP` }));
