@@ -62,14 +62,59 @@ export const INTENT = {
 };
 
 /* ============================== MAP NODES ============================== */
+// Carved line-art glyphs themed via the per-node `color` (currentColor) with
+// ember/amber accents. Built to read as silhouettes at ~26px on the act map.
 export const NODE = {
-  monster: S(`<path d="M30 70 L70 30 M30 30 L70 70" stroke="currentColor" stroke-width="9"/>`),
-  elite: S(`<path d="M50 20 L60 42 L84 44 L66 60 L72 84 L50 70 L28 84 L34 60 L16 44 L40 42 Z" fill="none" stroke="currentColor" stroke-width="6"/>`),
-  boss: S(`${rings(50, 50, 2, 16, 'currentColor', 0.5)}<circle cx="50" cy="50" r="16" fill="#1a0603" stroke="currentColor" stroke-width="5"/><path d="M34 40 L40 52 L50 36 L60 52 L66 40 V62 H34Z" fill="currentColor"/>`),
-  event: S(`<path d="M40 42 C40 28 64 30 62 44 C60 54 50 54 50 64" stroke="currentColor" stroke-width="8"/><circle cx="50" cy="78" r="5" fill="currentColor"/>`),
-  shop: S(`<path d="M28 38 H72 L68 64 H32 Z" fill="none" stroke="currentColor" stroke-width="5"/><path d="M36 38 L40 26 H60 L64 38" stroke="currentColor" stroke-width="5"/><circle cx="42" cy="72" r="4" fill="currentColor"/><circle cx="58" cy="72" r="4" fill="currentColor"/>`),
-  rest: S(`<path d="M50 24 C58 40 72 44 64 62 C60 72 40 72 36 62 C28 44 42 40 50 24Z" fill="${E}" stroke="currentColor" stroke-width="4"/><path d="M50 40 C54 50 60 52 56 62" stroke="${A}" stroke-width="3"/>`),
-  treasure: S(`<rect x="26" y="42" width="48" height="32" rx="4" fill="#16100b" stroke="currentColor" stroke-width="5"/><path d="M26 42 C26 28 74 28 74 42" stroke="currentColor" stroke-width="5"/><rect x="46" y="50" width="8" height="12" fill="${A}"/>`),
+  // Combat — a fanged spirit-mask: spiked crown, fierce inward eyes, bared teeth.
+  monster: S(`
+    <path d="M30 30 Q50 23 70 30 Q73 46 64 62 Q56 80 50 82 Q44 80 36 62 Q27 46 30 30Z" fill="#16100b" stroke="currentColor" stroke-width="5"/>
+    <path d="M36 30 V22 M50 28 V19 M64 30 V22" stroke="currentColor" stroke-width="2.6"/>
+    <path d="M36 44 L47 47 L36 51 M64 44 L53 47 L64 51" stroke="currentColor" stroke-width="4" fill="none"/>
+    <path d="M50 52 V58" stroke="currentColor" stroke-width="2.6"/>
+    <path d="M41 64 L45 71 L50 64 L55 71 L59 64" stroke="currentColor" stroke-width="3.4" fill="none"/>`),
+  // Elite — a horned demon skull: curved horns, ember eyes, gnashing teeth.
+  elite: S(`
+    <path d="M31 42 Q22 30 20 22 Q30 26 36 38 M69 42 Q78 30 80 22 Q70 26 64 38" stroke="currentColor" stroke-width="4.5" fill="none"/>
+    <path d="M50 28 C34 28 28 42 28 54 C28 62 33 66 35 72 L37 80 H63 L65 72 C67 66 72 62 72 54 C72 42 66 28 50 28Z" fill="#16100b" stroke="currentColor" stroke-width="5"/>
+    <path d="M35 52 L46 47 L46 59Z M65 52 L54 47 L54 59Z" fill="${E}" stroke="currentColor" stroke-width="1.5"/>
+    <path d="M46 63 L50 69 L54 63" stroke="currentColor" stroke-width="2.6" fill="none"/>
+    <path d="M43 73 V80 M50 72 V80 M57 73 V80" stroke="currentColor" stroke-width="2.6"/>`),
+  // Boss — a crowned, horned warlord skull on a halo of rings.
+  boss: S(`
+    ${rings(50, 50, 2, 17, 'currentColor', 0.3)}
+    <path d="M28 44 Q15 30 12 20 Q26 26 33 40 M72 44 Q85 30 88 20 Q74 26 67 40" stroke="currentColor" stroke-width="4" fill="none"/>
+    <path d="M50 24 L45 11 M50 24 L55 11" stroke="currentColor" stroke-width="3.4"/>
+    <path d="M50 26 C31 26 23 42 23 56 C23 66 29 70 31 78 L34 88 H66 L69 78 C71 70 77 66 77 56 C77 42 69 26 50 26Z" fill="#1a0603" stroke="currentColor" stroke-width="5"/>
+    <path d="M33 54 L45 48 L45 62Z M67 54 L55 48 L55 62Z" fill="${E}" stroke="currentColor" stroke-width="1.6"/>
+    <path d="M45 65 L50 72 L55 65" stroke="currentColor" stroke-width="3" fill="none"/>
+    <path d="M41 80 V88 M50 79 V88 M59 80 V88" stroke="currentColor" stroke-width="3"/>`),
+  // Unknown event — a glyph-question rising from a spark, with drifting motes.
+  event: S(`
+    <path d="M39 42 C39 27 65 29 63 44 C61 55 50 54 50 65" stroke="currentColor" stroke-width="8"/>
+    <circle cx="50" cy="79" r="5" fill="currentColor"/>
+    <path d="M24 30 l2.4 5.4 5.4 2.4 -5.4 2.4 -2.4 5.4 -2.4 -5.4 -5.4 -2.4 5.4 -2.4Z" fill="${A}" opacity="0.85"/>
+    <circle cx="74" cy="62" r="2.4" fill="${A}" opacity="0.7"/>`),
+  // Bazaar — a striped market awning over a stall counter and a coin.
+  shop: S(`
+    <path d="M30 40 L34 27 H66 L70 40 Z" fill="#16100b" stroke="currentColor" stroke-width="3.5"/>
+    <path d="M42 27 L41 40 M50 27 V40 M58 27 L59 40" stroke="currentColor" stroke-width="2" opacity="0.75"/>
+    <path d="M31 40 V74 H69 V40" fill="none" stroke="currentColor" stroke-width="3.4"/>
+    <path d="M31 58 H69" stroke="currentColor" stroke-width="2.4" opacity="0.7"/>
+    <circle cx="50" cy="65" r="6.5" fill="none" stroke="${A}" stroke-width="3"/>
+    <path d="M50 61 V69 M47 63 q3.5 2 0 4" stroke="${A}" stroke-width="2" fill="none"/>`),
+  // Ancestor Fire — a campfire flame dancing over crossed logs.
+  rest: S(`
+    <path d="M50 24 C59 39 71 44 62 61 C58 71 42 71 38 61 C31 47 43 42 50 24Z" fill="${E}" stroke="currentColor" stroke-width="4"/>
+    <path d="M50 39 C54 47 59 50 54 60" stroke="${A}" stroke-width="3" fill="none"/>
+    <path d="M28 74 L72 66 M28 66 L72 74" stroke="currentColor" stroke-width="4"/>`),
+  // Treasure — a banded chest with a glinting lock and a sparkle.
+  treasure: S(`
+    <path d="M26 44 C26 30 74 30 74 44" fill="#16100b" stroke="currentColor" stroke-width="5"/>
+    <rect x="26" y="44" width="48" height="30" rx="3" fill="#16100b" stroke="currentColor" stroke-width="5"/>
+    <path d="M26 56 H74" stroke="currentColor" stroke-width="3"/>
+    <rect x="44" y="51" width="12" height="13" rx="2.5" fill="${A}" stroke="currentColor" stroke-width="2"/>
+    <circle cx="50" cy="56" r="2" fill="#16100b"/><path d="M50 56 V61" stroke="#16100b" stroke-width="1.8"/>
+    <path d="M70 33 l1.8 4 4 1.8 -4 1.8 -1.8 4 -1.8 -4 -4 -1.8 4 -1.8Z" fill="${A}" opacity="0.85"/>`),
 };
 
 /* ============================== POWERS / STATUS ============================== */
