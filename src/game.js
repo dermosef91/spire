@@ -17,6 +17,7 @@ import { renderCard, topBar, relicChip, button } from './ui/components.js';
 import { POWERS } from './data/keywords.js';
 import { UI, NODE, relicIcon, potionIcon, characterModel } from './ui/icons.js';
 import { spriteOrSvg } from './ui/sprites.js';
+import { updateBackground } from './ui/backgrounds.js';
 import { audio } from './audio.js';
 import { fullscreenSupported, isFullscreen, toggleFullscreen, onFullscreenChange, isTouchDevice } from './core/fullscreen.js';
 
@@ -71,6 +72,10 @@ export class Game {
     const wrap = el('div', { class: `scene ${sceneClass}` }, [node]);
     this.root.appendChild(wrap);
     requestAnimationFrame(() => wrap.classList.add('show'));
+    
+    // Update dynamic background image based on active scene and act
+    const actNum = this.run ? this.run.act : null;
+    updateBackground(sceneClass, actNum);
   }
 
   tooltip(obj, node, on, kind) {

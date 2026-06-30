@@ -374,7 +374,6 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
   color: var(--cream);
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  text-shadow: 0 1px 3px #000;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -403,7 +402,6 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
   letter-spacing: 0.08em;
   margin-top: 2px;
   margin-bottom: 6px;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
   white-space: nowrap;
 }
 .hpbar {
@@ -411,23 +409,21 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
   height: 22px;
   border-radius: 999px;
   background: #230704;
-  border: 1px solid rgba(255, 106, 26, 0.08);
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.8);
+  border: none;
   overflow: hidden;
   position: relative;
 }
 .hpfill {
   height: 100%;
-  background: linear-gradient(180deg, #d3341b, #931908);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 0 8px rgba(185, 43, 21, 0.4);
+  background: #c62828;
   transition: width 0.45s cubic-bezier(.2, .8, .2, 1);
   border-radius: 999px;
 }
 .hpfill.low {
-  background: linear-gradient(180deg, #b71c1c, #7f0000);
+  background: #8e0000;
 }
 .player .hpfill {
-  background: linear-gradient(180deg, #d3341b, #931908);
+  background: #c62828;
 }
 .hptext {
   position: absolute;
@@ -438,7 +434,6 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
   font-size: 12px;
   font-weight: 700;
   color: #ffffff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
   letter-spacing: 0.05em;
 }
 .powers { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; max-width: 170px; }
