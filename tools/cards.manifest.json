@@ -1,0 +1,38 @@
+[
+  {
+    "id": "slash",
+    "char": "amara",
+    "name": "Blade Arc",
+    "prompt": "Afrofuturist woodcut illustration of two glowing energy blades intersecting in a wide dynamic arc. Bold black ink linework, halftone dot shading, high contrast. Limited palette of ember orange, deep ember, amber, cream, and black. Concentric orbital circles and geometric patterns in the background. Dramatic orange rim lighting."
+  },
+  {
+    "id": "brace",
+    "char": "amara",
+    "name": "Iron Stance",
+    "prompt": "Afrofuturist graphic illustration of a heavy geometric shield plate glowing with tribal engravings. Concentric energy shielding rings radiating outwards, halftone dot textures. Contrast limited palette of orange, deep ember, amber, cream, and black. Bold outline style."
+  },
+  {
+    "id": "crescendo",
+    "char": "kofi",
+    "name": "Crescendo",
+    "prompt": "Afrofuturist risograph illustration of a stylized African kora instrument neck projecting cosmic soundwaves. Soundwave lines and concentric circles radiating outward in glowing orange and cream. Bold black ink linework, halftone textures, high contrast. Limited palette of ember orange, deep ember, amber, cream, and black."
+  },
+  {
+    "id": "deflect",
+    "char": "kofi",
+    "name": "Deflect",
+    "prompt": "Afrofuturist graphic illustration of cosmic shield lines resembling a curved sounding board blocking incoming red projectiles. Vibrational energy waves in orange and amber. Concentric circular resonance patterns. Bold black ink lines, halftone details. limited palette of orange, amber, cream, and black."
+  },
+  {
+    "id": "channel_storm",
+    "char": "zara",
+    "name": "Storm Channel",
+    "prompt": "Afrofuturist woodcut illustration of a swirling vortex of cosmic energy orbs and jagged lightning bolts. Concentric orbital rings, geometric sunburst patterns. High contrast, bold black ink linework, halftone dot shading. Limited palette of ember orange, deep ember, amber, cream, and black."
+  },
+  {
+    "id": "barrier",
+    "char": "zara",
+    "name": "Barrier",
+    "prompt": "Afrofuturist risograph illustration of a glowing triangular geometric barrier shield. Concentric energy lines, stellar patterns, orbiting dots. High contrast, bold black linework, limited palette of orange, deep ember, amber, cream, and black."
+  }
+]

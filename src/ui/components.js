@@ -6,6 +6,7 @@ import { POTIONS } from '../data/potions.js';
 import { POWERS } from '../data/keywords.js';
 import { UI, cardArt, relicIcon, potionIcon, powerIcon } from './icons.js';
 import { fullscreenSupported, toggleFullscreen } from '../core/fullscreen.js';
+import { hasCardArt } from './card-art.js';
 
 export function renderCard(card, opts = {}) {
   const typeClass = `type-${card.type}`;
@@ -17,11 +18,32 @@ export function renderCard(card, opts = {}) {
   let costText = card.cost === 'X' ? 'X' : card.cost;
   if (card.cost === -1) costText = '';
   node.appendChild(el('div', { class: 'card-cost' }, [el('span', { text: String(costText) })]));
+
+  // Corner decorations
+  node.appendChild(el('div', { class: 'card-corners' }, [
+    el('div', { class: 'corner-tl' }),
+    el('div', { class: 'corner-tr' }),
+    el('div', { class: 'corner-bl' }),
+    el('div', { class: 'corner-br' }),
+  ]));
+
+  // Inner double border frame
+  node.appendChild(el('div', { class: 'card-frame' }));
+
   node.appendChild(el('div', { class: 'card-name', text: card.name }));
-  node.appendChild(el('div', { class: 'card-art' }, [
+  const artChildren = [
     el('div', { class: 'art-motif' }),
     el('div', { class: 'art-glyph', html: cardArt(card.id) }),
-  ]));
+  ];
+  if (hasCardArt(card.id)) {
+    const img = el('img', {
+      class: 'card-art-img',
+      attrs: { src: `assets/card-art/${card.id}.png`, alt: '', draggable: 'false' },
+    });
+    img.onerror = () => { img.style.display = 'none'; };
+    artChildren.push(img);
+  }
+  node.appendChild(el('div', { class: 'card-art' }, artChildren));
   node.appendChild(el('div', { class: 'card-type' }, [el('span', { text: card.type.toUpperCase() })]));
   node.appendChild(el('div', { class: 'card-desc' }, [el('span', { class: 'card-desc-in', html: highlightKeywords(cardDesc(card)) })]));
 

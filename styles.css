@@ -198,31 +198,74 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
   position: relative; width: var(--card-w); height: var(--card-h); border-radius: 8px; padding: 6px 7px; flex: 0 0 auto;
   display: flex; flex-direction: column; user-select: none; cursor: pointer;
   background: linear-gradient(180deg, #16100b 0%, #0c0806 100%);
-  border: 1.5px solid var(--orange);
+  border: 1.5px solid var(--c-border);
   box-shadow: 0 12px 28px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,170,80,0.12), 0 0 16px rgba(255,106,26,0.12);
-  transition: transform 0.14s ease, box-shadow 0.14s ease;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.22s ease;
+  --c-border: var(--orange);
 }
-.card::before { content: ''; position: absolute; inset: 5px; border-radius: 5px; pointer-events: none; border: 1px solid rgba(255,170,80,0.28); }
+.card.type-attack { --c-border: var(--c-attack); }
+.card.type-skill { --c-border: #9fb0c4; }
+.card.type-power { --c-border: var(--c-power); }
+.card.upgraded { --c-border: var(--amber); box-shadow: 0 12px 28px rgba(0,0,0,0.6), 0 0 18px rgba(255,176,46,0.5); }
+
+/* Fanning & Hand Placement */
+.card.in-hand {
+  transform: rotate(var(--angle, 0deg)) translateY(var(--shift, 0px));
+}
+.card.in-hand:hover {
+  transform: translateY(calc(var(--shift, 0px) - 38px)) rotate(var(--angle, 0deg)) scale(1.08) !important;
+  box-shadow: 0 22px 46px rgba(0,0,0,0.7), 0 0 26px rgba(255,106,26,0.5);
+  z-index: 10 !important;
+}
+.card.in-hand.selected {
+  transform: translateY(calc(var(--shift, 0px) - 42px)) rotate(var(--angle, 0deg)) scale(1.1) !important;
+  box-shadow: 0 0 30px var(--orange);
+  z-index: 9 !important;
+}
+
+.card::before { content: ''; position: absolute; inset: 2px; border-radius: 7px; pointer-events: none; border: 1px solid rgba(255,170,80,0.1); }
 .card::after { content: ''; position: absolute; inset: 0; border-radius: 8px; pointer-events: none; opacity: 0;
   background: linear-gradient(115deg, transparent 32%, rgba(255,190,110,0.22) 48%, transparent 64%); background-size: 220% 220%; transition: opacity 0.2s ease; }
 @media (hover: hover) {
   .card:hover { transform: translateY(-14px) scale(1.05); box-shadow: 0 22px 46px rgba(0,0,0,0.7), 0 0 26px rgba(255,106,26,0.5); z-index: 6; }
   .card:hover::after { opacity: 1; animation: foil 0.7s ease; }
 }
-@keyframes foil { from { background-position: 120% 0; } to { background-position: -20% 0; } }
 .card.disabled { filter: grayscale(0.7) brightness(0.6); cursor: not-allowed; }
 .card.disabled:hover { transform: none; }
-.card.selected { transform: translateY(-18px) scale(1.07); box-shadow: 0 0 30px var(--orange); border-color: var(--amber); }
-.card.type-attack { border-color: var(--c-attack); }
-.card.type-skill { border-color: #9fb0c4; }
-.card.type-skill::before { border-color: rgba(200,215,235,0.3); }
-.card.type-power { border-color: var(--c-power); }
-.card.upgraded { border-color: var(--amber); box-shadow: 0 12px 28px rgba(0,0,0,0.6), 0 0 18px rgba(255,176,46,0.5); }
+.card.selected { transform: translateY(-18px) scale(1.07); box-shadow: 0 0 30px var(--orange); }
+
+/* Corner & Frame Ornaments */
+.card-corners { position: absolute; inset: 0; pointer-events: none; }
+.corner-tl, .corner-tr, .corner-bl, .corner-br { position: absolute; width: 6px; height: 6px; }
+.corner-tl { top: 3px; left: 3px; border-top: 1.5px solid var(--c-border); border-left: 1.5px solid var(--c-border); }
+.corner-tr { top: 3px; right: 3px; border-top: 1.5px solid var(--c-border); border-right: 1.5px solid var(--c-border); }
+.corner-bl { bottom: 3px; left: 3px; border-bottom: 1.5px solid var(--c-border); border-left: 1.5px solid var(--c-border); }
+.corner-br { bottom: 3px; right: 3px; border-bottom: 1.5px solid var(--c-border); border-right: 1.5px solid var(--c-border); }
+
+.card-frame {
+  position: absolute;
+  inset: 5px;
+  border-radius: 5px;
+  pointer-events: none;
+  border: 3px double var(--c-border);
+  opacity: 0.75;
+}
 
 .card-cost { position: absolute; top: -11px; left: -11px; width: clamp(26px, calc(var(--card-h) * 0.17), 34px); height: clamp(26px, calc(var(--card-h) * 0.17), 34px); border-radius: 50%; z-index: 3;
   display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: clamp(13px, calc(var(--card-h) * 0.092), 18px); color: var(--cream);
   background: radial-gradient(circle at 50% 50%, #1c1008, #0a0604);
-  border: 2px solid var(--orange); box-shadow: 0 0 12px rgba(255,106,26,0.6), inset 0 0 6px rgba(255,140,40,0.4); }
+  border: 2px solid var(--c-border); box-shadow: 0 0 12px rgba(255,106,26,0.6), inset 0 0 6px rgba(255,140,40,0.4); }
+.card-cost::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  border: 1px dashed var(--c-border);
+  opacity: 0.5;
+  pointer-events: none;
+  animation: costRingSpin 40s linear infinite;
+}
+@keyframes costRingSpin { to { transform: rotate(360deg); } }
 .card-name { font-family: var(--font-display); font-size: clamp(10px, calc(var(--card-h) * 0.072), 14px); text-align: center; color: var(--cream); letter-spacing: 0.04em;
   text-transform: uppercase; line-height: 1.05; min-height: 1.1em; margin: 1px 0 3px; padding: 0 14px; text-shadow: 0 1px 3px #000; }
 .card.upgraded .card-name { color: var(--amber); }
@@ -235,6 +278,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
     repeating-radial-gradient(circle at 50% 50%, transparent 0 7px, rgba(255,140,40,0.12) 7px 8px);
   -webkit-mask: radial-gradient(circle at 50% 50%, #000 18%, transparent 72%); mask: radial-gradient(circle at 50% 50%, #000 18%, transparent 72%); }
 .art-glyph { position: relative; font-size: 40px; filter: var(--duotone) drop-shadow(0 2px 8px rgba(0,0,0,0.7)); }
+.card-art-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; border-radius: 3px; }
 .card-type { text-align: center; margin: 1px 0 3px; }
 .card-type span { display: inline-block; font-family: var(--font-display); font-size: clamp(7px, calc(var(--card-h) * 0.046), 9px); letter-spacing: 0.2em; color: #190a02;
   background: var(--orange); padding: 2px clamp(6px, calc(var(--card-h) * 0.05), 10px); border-radius: 2px; font-weight: 600; }
