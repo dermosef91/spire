@@ -354,7 +354,6 @@ body.scene-charselect #bg-image.show {
   /* Responsive layout offsets for combatant elements */
   --info-bottom: clamp(170px, 29vh, 250px);
   --powers-bottom: calc(var(--info-bottom) - 34px);
-  --intent-bottom: calc(var(--info-bottom) + 84px);
   --block-bottom: calc(var(--info-bottom) - 5px);
   --block-left: calc(50% - 94px);
   --med-top: 13%;
@@ -428,7 +427,11 @@ body.scene-charselect #bg-image.show {
   flex-direction: column;
   align-items: flex-start;
   width: 160px;
-  margin-top: 4px;
+  position: absolute;
+  bottom: var(--info-bottom);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
 }
 .combatant-name-row {
   display: flex;
@@ -505,15 +508,16 @@ body.scene-charselect #bg-image.show {
   color: #ffffff;
   letter-spacing: 0.05em;
 }
-.powers { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; max-width: 170px; }
+.powers { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; max-width: 170px;
+  position: absolute; bottom: var(--powers-bottom); left: 50%; transform: translateX(-50%); z-index: 5; }
 .pip { font-family: var(--font-display); font-size: 12px; font-weight: 600; padding: 2px 7px; border-radius: 3px; background: rgba(0,0,0,0.5); border: 1px solid var(--line-soft); }
 .pip-buff { color: #ffd28a; border-color: rgba(255,176,80,0.5); }
 .pip-debuff { color: #ff8a6a; border-color: rgba(232,67,26,0.5); }
-
-.intent { position: absolute; top: -42px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; align-items: center;
+ 
+.intent { position: absolute; top: calc(var(--med-top) - 48px); left: 50%; transform: translateX(-50%); display: flex; gap: 6px; align-items: center;
   font-family: var(--font-display); font-size: 17px; font-weight: 600; white-space: nowrap;
   background: linear-gradient(180deg, rgba(18,10,6,0.95), rgba(8,4,2,0.95)); padding: 4px 11px; border-radius: 4px;
-  border: 1px solid var(--orange); box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 14px rgba(255,106,26,0.25); animation: intentBob 2.6s ease-in-out infinite; }
+  border: 1px solid var(--orange); box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 14px rgba(255,106,26,0.25); animation: intentBob 2.6s ease-in-out infinite; z-index: 5; }
 @keyframes intentBob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-4px); } }
 .intent::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%) rotate(45deg); width: 9px; height: 9px;
   background: rgba(8,4,2,0.95); border-right: 1px solid var(--orange); border-bottom: 1px solid var(--orange); }
@@ -684,11 +688,11 @@ body.scene-charselect #bg-image.show {
 
 .hand { flex: 0 0 auto; display: flex; gap: clamp(8px, 1.4vw, 16px); justify-content: center; align-items: flex-end;
   flex-wrap: nowrap; overflow-x: auto; overflow-y: visible; min-height: 0; padding: clamp(8px, 1.6vh, 18px) 10px 6px;
-  scroll-snap-type: x proximity; scrollbar-width: none; }
+  scroll-snap-type: x proximity; scrollbar-width: none; position: relative; z-index: 10; }
 .hand::-webkit-scrollbar { display: none; }
 .hand .card { scroll-snap-align: center; }
-.combat-log { flex: 0 0 auto; }
-.combat-controls { flex: 0 0 auto; }
+.combat-log { flex: 0 0 auto; position: relative; z-index: 10; }
+.combat-controls { flex: 0 0 auto; position: relative; z-index: 10; }
 
 /* ============================================================
    REWARDS / EVENTS / SHOP / REST / END
@@ -834,7 +838,7 @@ html { -webkit-text-size-adjust: 100%; }
   .hptext { font-size: 10px; }
   .combatant-badge { width: 14px; height: 14px; }
   .block-badge { min-width: 24px; height: 24px; font-size: 12px; }
-  .intent { top: -28px; font-size: 14px; } .orbs .orb { width: 26px; height: 26px; }
+  .intent { top: calc(var(--med-top) - 34px); font-size: 14px; } .orbs .orb { width: 26px; height: 26px; }
   .combat-log { min-height: 12px; font-size: 11px; margin: 1px 0; } .combat-controls { margin-top: 0; padding: 2px 12px; }
   .energy-orb { width: clamp(40px, 9vh, 56px); height: clamp(40px, 9vh, 56px); font-size: clamp(16px, 4vh, 22px); }
   .piles { font-size: 12px; gap: 10px; }
@@ -882,8 +886,8 @@ html { -webkit-text-size-adjust: 100%; }
 .glyph .svg-ic { width: 100%; height: 100%; overflow: visible; }
 
 /* PNG sprite images inside the medallion/glyph */
-.model-img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(255,106,26,0.45)); pointer-events: none; }
-.char-glyph .model-img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(255,106,26,0.3)); }
+.model-img { width: 100%; height: 100%; object-fit: contain; object-position: center top; filter: drop-shadow(0 2px 8px rgba(255,106,26,0.45)); pointer-events: none; }
+.char-glyph .model-img { width: 100%; height: 100%; object-fit: contain; object-position: center; filter: drop-shadow(0 2px 8px rgba(255,106,26,0.3)); }
 
 /* card art motif */
 .art-glyph { position: relative; width: 86%; height: 86%; display: grid; place-items: center; filter: none; }
