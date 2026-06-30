@@ -23,7 +23,7 @@ def('husk_drone', {
   name: 'Husk Drone', glyph: '🛸', act: 1, hpMin: 10, hpMax: 14,
   moves: {
     zap: atk('Zap', 6),
-    buzz: { name: 'Overcharge', intent: { type: 'buff' }, run: (c, s) => c.applyPower(s, 'strength', 2, s) },
+    buzz: { name: 'Overcharge', intent: { type: 'buffblock', block: 4 }, run: (c, s) => { c.applyPower(s, 'strength', 2, s); c.gainBlockTo(s, 4); } },
   },
   pick: (s, c, rng) => (s.history.filter((m) => m === 'buzz').length === 0 && s.turn === 1 ? 'zap' : (s.turn % 3 === 0 ? 'buzz' : 'zap')),
 });
@@ -31,13 +31,13 @@ def('static_jackal', {
   name: 'Static Jackal', glyph: '🐺', act: 1, hpMin: 13, hpMax: 17,
   moves: {
     bite: atk('Snap', 8),
-    howl: { name: 'Howl', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'weak', 1, s) },
+    howl: { name: 'Howl', intent: { type: 'debuffblock', block: 5 }, run: (c, s) => { c.applyPower(c.player, 'weak', 1, s); c.gainBlockTo(s, 5); } },
     lunge: atk('Lunge', 5, 2),
   },
   pick: (s, c, rng) => rng.pick(['bite', 'lunge', 'howl']),
 });
 def('brass_sentinel', {
-  name: 'Brass Sentinel', glyph: '🗿', act: 1, hpMin: 20, hpMax: 25,
+  name: 'Brass Sentinel', glyph: '🗿', act: 1, hpMin: 20, hpMax: 25, startBlock: 8,
   moves: {
     slam: atk('Slam', 9),
     guard: { name: 'Lock Down', intent: { type: 'block', block: 8 }, run: (c, s) => c.gainBlockTo(s, 8) },
@@ -76,7 +76,7 @@ def('the_gatekeeper', {
   moves: {
     judge: atk('Judgement', 16),
     barrage: atk('Sevenfold Strike', 4, 4),
-    seal: { name: 'Seal the Gate', intent: { type: 'buffblock', block: 18 }, run: (c, s) => { c.gainBlockTo(s, 18); c.applyPower(c.player, 'frail', 2, s); } },
+    seal: { name: 'Seal the Gate', intent: { type: 'debuffblock', block: 18 }, run: (c, s) => { c.gainBlockTo(s, 18); c.applyPower(c.player, 'frail', 2, s); } },
     decree: { name: 'Decree', intent: { type: 'debuff' }, run: (c, s) => { c.applyPower(c.player, 'weak', 2, s); c.applyPower(c.player, 'vulnerable', 2, s); } },
   },
   pick: (s, c, rng) => {
@@ -106,7 +106,7 @@ def('mirror_shade', {
 def('chrome_serpent', {
   name: 'Chrome Serpent', glyph: '🐍', act: 2, hpMin: 40, hpMax: 46,
   moves: {
-    constrict: { name: 'Constrict', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'weak', 2, s) },
+    constrict: { name: 'Constrict', intent: { type: 'debuffblock', block: 8 }, run: (c, s) => { c.applyPower(c.player, 'weak', 2, s); c.gainBlockTo(s, 8); } },
     crush: atk('Crush', 16),
     venom: { name: 'Venom Spit', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.applyPower(c.player, 'poison', 4, s); } },
   },
@@ -115,7 +115,7 @@ def('chrome_serpent', {
 
 // Act 2 elite
 def('brass_colossus', {
-  name: 'Brass Colossus', glyph: '🤖', act: 2, elite: true, hpMin: 120, hpMax: 130,
+  name: 'Brass Colossus', glyph: '🤖', act: 2, elite: true, hpMin: 120, hpMax: 130, startBlock: 15,
   moves: {
     quake: atk('Quake', 22),
     twin: atk('Piston Punch', 9, 2),
@@ -135,7 +135,7 @@ def('the_archivist', {
   moves: {
     erase: atk('Erase', 20),
     catalog: { name: 'Catalog', intent: { type: 'attackdebuff', dmg: 10 }, run: (c, s) => { c.enemyAttack(s, 10); c.addCardToPile(c.makeCard('dazed'), 'draw'); c.addCardToPile(c.makeCard('dazed'), 'draw'); } },
-    censor: { name: 'Censor', intent: { type: 'buffblock', block: 25 }, run: (c, s) => { c.gainBlockTo(s, 25); c.applyPower(c.player, 'weak', 2, s); } },
+    censor: { name: 'Censor', intent: { type: 'debuffblock', block: 25 }, run: (c, s) => { c.gainBlockTo(s, 25); c.applyPower(c.player, 'weak', 2, s); } },
     purge: { name: 'Purge', intent: { type: 'attack', dmg: 7, hits: 3 }, run: (c, s) => c.enemyAttack(s, 7, 3) },
   },
   pick: (s, c, rng) => {
@@ -165,7 +165,7 @@ def('static_seraph', {
 
 // Act 3 elite
 def('chrome_archon', {
-  name: 'Chrome Archon', glyph: '👾', act: 3, elite: true, hpMin: 160, hpMax: 170,
+  name: 'Chrome Archon', glyph: '👾', act: 3, elite: true, hpMin: 160, hpMax: 170, startBlock: 20,
   moves: {
     annihilate: atk('Annihilate', 30),
     swarm: atk('Nanoswarm', 6, 4),
@@ -183,7 +183,7 @@ def('heart_of_static', {
   moves: {
     blast: atk('Reality Blast', 42),
     multibeam: atk('Cascade', 5, 6),
-    static_field: { name: 'Static Field', intent: { type: 'debuff' }, run: (c, s) => { for (let i = 0; i < 3; i++) c.addCardToPile(c.makeCard('dazed'), 'draw'); c.applyPower(c.player, 'weak', 1, s); } },
+    static_field: { name: 'Static Field', intent: { type: 'debuffblock', block: 20 }, run: (c, s) => { for (let i = 0; i < 3; i++) c.addCardToPile(c.makeCard('dazed'), 'draw'); c.applyPower(c.player, 'weak', 1, s); c.gainBlockTo(s, 20); } },
     rebuild: { name: 'Rebuild', intent: { type: 'buffblock', block: 30 }, run: (c, s) => { c.gainBlockTo(s, 30); c.applyPower(s, 'strength', 4, s); } },
   },
   buff: { name: 'Invincibility', desc: 'Caps the damage taken in a single turn.' },

@@ -79,10 +79,11 @@ export class Combat {
     const bp = ENEMIES[id];
     if (!bp) throw new Error('Unknown enemy ' + id);
     const hp = this.rng.int(bp.hpMin, bp.hpMax);
+    const block = bp.startBlock || 0;
     return {
       id, bp, idx,
       name: bp.name, glyph: bp.glyph,
-      hp, maxHp: hp, block: 0,
+      hp, maxHp: hp, block,
       powers: {}, alive: true,
       isPlayer: false,
       turn: 1, history: [], last: null,
@@ -446,6 +447,9 @@ export class Combat {
     if (card.verse) this.versesThisTurn += 1;
 
     this.log(`You play ${card.name}.`);
+    if (card.type === 'skill') {
+      this.fx('useSkill', { entity: this.player });
+    }
     const ctx = this.makeCtx(card, target);
     card._bp.onPlay(ctx);
 

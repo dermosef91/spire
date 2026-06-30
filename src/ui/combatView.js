@@ -6,7 +6,7 @@ import { el, clear } from '../core/util.js';
 import { renderCard, topBar } from './components.js';
 import { POWERS } from '../data/keywords.js';
 import { audio } from '../audio.js';
-import { ensureFxLayer, floatText, hitFlash, shake, lunge, slash, ring, screenShake, burst } from './fx.js';
+import { ensureFxLayer, floatText, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine } from './fx.js';
 import { combatModel, INTENT, UI, powerIcon } from './icons.js';
 import { spriteOrSvg, hasSprite } from './sprites.js';
 
@@ -138,6 +138,7 @@ export class CombatView {
   // ----------------------------------------------------------- update (in place)
   update() {
     if (!this.scene) return;
+    this.game.tooltip(null, null, false);
     const c = this.combat;
 
     clear(this.topbarHolder).appendChild(topBar(this.game.run, {
@@ -216,8 +217,11 @@ export class CombatView {
       const hits = it.hits || 1;
       wrap.appendChild(el('span', { class: 'intent-atk', html: `<i class="intent-ic">${INTENT.attack}</i>${dmg}${hits > 1 ? `×${hits}` : ''}` }));
     }
-    if (it.type === 'attackdebuff' || it.type === 'debuff') wrap.appendChild(el('span', { class: 'intent-deb', html: `<i class="intent-ic">${INTENT.debuff}</i>` }));
-    if (it.type === 'block' || it.type === 'buffblock') wrap.appendChild(el('span', { class: 'intent-def', html: `<i class="intent-ic">${INTENT.block}</i>` }));
+    if (it.type === 'attackdebuff' || it.type === 'debuff' || it.type === 'debuffblock') wrap.appendChild(el('span', { class: 'intent-deb', html: `<i class="intent-ic">${INTENT.debuff}</i>` }));
+    if (it.type === 'block' || it.type === 'buffblock' || it.type === 'debuffblock') {
+      const blockAmt = it.block || 0;
+      wrap.appendChild(el('span', { class: 'intent-def', html: `<i class="intent-ic">${INTENT.block}</i>${blockAmt > 0 ? blockAmt : ''}` }));
+    }
     if (it.type === 'buff' || it.type === 'buffblock') wrap.appendChild(el('span', { class: 'intent-buf', html: `<i class="intent-ic">${INTENT.buff}</i>` }));
     if (it.type === 'unknown') wrap.appendChild(el('span', { class: 'intent-unk', html: `<i class="intent-ic">${INTENT.unknown}</i>` }));
     wrap.title = it.name || '';
@@ -584,7 +588,7 @@ export class CombatView {
         if (pEnt.alive) {
           this.setSpritePose(pEnt, pEnt.block > 0 ? 'block' : 'idle');
         }
-      }, 570);
+      }, 855);
     }
 
     this.combat.playCard(card, target);
@@ -632,12 +636,16 @@ export class CombatView {
         this.tempPoses[eid] = true;
         this.setSpritePose(payload.source, 'attack');
         
+        if (!payload.source.isPlayer) {
+          audio.play('enemy_attack');
+        }
+        
         setTimeout(() => {
           delete this.tempPoses[eid];
           if (payload.source.alive) {
             this.setSpritePose(payload.source, payload.source.block > 0 ? 'block' : 'idle');
           }
-        }, 570);
+        }, 855);
       }
       return;
     }
@@ -679,6 +687,11 @@ export class CombatView {
       const el2 = this.elFor(payload.target); if (!el2) return;
       burst(layer, el2, '#ffce5c', 18);
       el2.classList.add('dying');
+      return;
+    }
+    if (type === 'useSkill') {
+      const el2 = this.elFor(payload.entity); if (!el2) return;
+      shine(layer, el2);
       return;
     }
   }
