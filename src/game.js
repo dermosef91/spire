@@ -36,15 +36,7 @@ export class Game {
 
   // ----------------------------------------------------------- mobile / fullscreen
   setupMobile() {
-    // Floating fullscreen toggle, present on every scene.
-    if (fullscreenSupported()) {
-      this.fsBtn = el('button', {
-        class: 'fs-toggle', attrs: { 'aria-label': 'Toggle fullscreen', title: 'Fullscreen' }, html: UI.fullscreen,
-        on: { click: () => toggleFullscreen(document.documentElement) },
-      });
-      document.body.appendChild(this.fsBtn);
-      onFullscreenChange(() => { if (this.fsBtn) this.fsBtn.classList.toggle('is-on', isFullscreen()); });
-    }
+    // (Fullscreen toggle lives in the top bar in-run, and on the title screen.)
     // Non-blocking "rotate to landscape" hint (CSS decides when to show it).
     this.rotateHint = el('div', { class: 'rotate-hint', html: '<span class="rot-ic">⟳</span> Rotate to landscape for the best view' });
     document.body.appendChild(this.rotateHint);

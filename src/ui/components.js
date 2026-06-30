@@ -5,6 +5,7 @@ import { RELICS } from '../data/relics.js';
 import { POTIONS } from '../data/potions.js';
 import { POWERS } from '../data/keywords.js';
 import { UI, cardArt, relicIcon, potionIcon, powerIcon } from './icons.js';
+import { fullscreenSupported, toggleFullscreen } from '../core/fullscreen.js';
 
 export function renderCard(card, opts = {}) {
   const typeClass = `type-${card.type}`;
@@ -87,6 +88,13 @@ export function topBar(run, extra = {}) {
   const relicWrap = el('div', { class: 'tb-relics' });
   for (const rid of run.relics) relicWrap.appendChild(relicChip(rid, extra.onHover));
   right.appendChild(relicWrap);
+
+  if (fullscreenSupported()) {
+    right.appendChild(el('button', {
+      class: 'tb-fs', html: UI.fullscreen, attrs: { 'aria-label': 'Toggle fullscreen', title: 'Fullscreen' },
+      on: { click: () => toggleFullscreen(document.documentElement) },
+    }));
+  }
 
   bar.appendChild(left);
   bar.appendChild(right);

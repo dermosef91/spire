@@ -165,73 +165,232 @@ export function cardArt(id) { return S(M[CARD_MOTIF[id]] || M.burst, { cls: 'car
 // Each model fills the medallion core; figure in cream/orange line-art on the
 // disc, with looping CSS-driven motion. Built to read at small sizes.
 
+// Champions — detailed, shaded full-figure portraits (viewBox 0 0 100 110, the
+// figure rises from the disc). Layered fills give woodcut depth; CSS classes
+// animate sub-parts. DK = darkest base, MD = mid shade.
+const DK = '#1c0f06', MD = '#3a1d0a', DKv = '#160c22';
+const CHARVB = '0 0 100 112';
+
 const CHAR = {
-  // Amara — Agojie bladedancer: crowned warrior with crossed star-iron blades.
+  // Amara — Agojie bladedancer: crowned warrior, cowrie collar, kente robe, crossed star-iron blades.
   amara: S(`
-    <g class="m-orbit" opacity="0.5">${orbitDots(50, 50, 40, 8, 2, O)}</g>
-    <g class="m-breathe">
-      <path d="M30 78 L42 50 L58 50 L70 78" fill="#1a0d06" stroke="${O}" stroke-width="3"/>
-      <path d="M40 50 q10 -8 20 0" stroke="${A}" stroke-width="3" fill="none"/>
-      <circle cx="50" cy="38" r="11" fill="#1a0d06" stroke="${O}" stroke-width="3"/>
-      <path d="M40 32 q10 -10 20 0" stroke="${A}" stroke-width="3" fill="none"/>
-      <circle cx="46" cy="38" r="1.6" fill="${A}"/><circle cx="54" cy="38" r="1.6" fill="${A}"/>
-      <path d="M50 24 l3 -8 M44 26 l-2 -7 M56 26 l2 -7" stroke="${A}" stroke-width="2"/>
-    </g>
+    <defs></defs>
+    <g class="m-spin" opacity="0.5">${rays(50, 50, 30, 50, 20, O, 0.45, 1.6)}</g>
     <g class="m-gleam">
-      <path d="M26 66 L62 30" stroke="${C}" stroke-width="3"/><path d="M60 28 l6 -2 -2 6Z" fill="${O}"/>
-      <path d="M74 66 L38 30" stroke="${A}" stroke-width="3"/><path d="M40 28 l-6 -2 2 6Z" fill="${O}"/>
-    </g>`),
-
-  // Kofi — griot: robed bard cradling a glowing kora, notes rising.
-  kofi: S(`
-    <g class="m-notes" opacity="0.85"><path d="M64 30 V14 L74 17 V22 L64 19" fill="${A}"/><circle cx="62" cy="30" r="3" fill="${A}"/></g>
-    <g class="m-breathe">
-      <path d="M30 78 C30 56 70 56 70 78Z" fill="#1a0d06" stroke="${O}" stroke-width="3"/>
-      <circle cx="50" cy="36" r="10" fill="#1a0d06" stroke="${O}" stroke-width="3"/>
-      <path d="M41 33 q9 -9 18 0" stroke="${A}" stroke-width="2" fill="none"/>
-      <ellipse cx="44" cy="58" rx="13" ry="15" fill="#160c22" stroke="${A}" stroke-width="3"/>
-      <line x1="44" y1="46" x2="44" y2="70" stroke="${O}" stroke-width="2"/>
-      <path d="M44 44 L66 26" stroke="${O}" stroke-width="3"/>
-      <g class="m-strings"><line x1="40" y1="46" x2="62" y2="28" stroke="${A}" stroke-width="1"/><line x1="48" y1="46" x2="70" y2="28" stroke="${A}" stroke-width="1"/></g>
-    </g>`),
-
-  // Zara — star-weaver: robed channeler with orbiting spirit-orbs and halo.
-  zara: S(`
-    <circle cx="50" cy="42" r="22" fill="none" stroke="${O}" stroke-width="1.5" opacity="0.5" class="m-spin"/>
-    <g class="m-breathe">
-      <path d="M32 80 C32 54 68 54 68 80Z" fill="#160c22" stroke="${O}" stroke-width="3"/>
-      <circle cx="50" cy="40" r="10" fill="#160c22" stroke="${A}" stroke-width="3"/>
-      <path d="M50 26 v-8" stroke="${A}" stroke-width="2"/><circle cx="50" cy="16" r="2.5" fill="${A}"/>
-      <path d="M44 58 q6 6 12 0" stroke="${A}" stroke-width="2" fill="none"/>
+      <path d="M20 96 L48 50 L51 52 L26 100Z" fill="${MD}" stroke="${C}" stroke-width="1.4"/><path d="M48 50 l5 -5 1 7 -4 3Z" fill="${A}" stroke="${C}" stroke-width="1"/>
+      <path d="M80 96 L52 50 L49 52 L74 100Z" fill="${MD}" stroke="${A}" stroke-width="1.4"/><path d="M52 50 l-5 -5 -1 7 4 3Z" fill="${O}" stroke="${C}" stroke-width="1"/>
     </g>
-    <g class="m-orbit"><circle cx="78" cy="42" r="4" fill="${A}"/><circle cx="22" cy="42" r="3" fill="${O}"/><circle cx="50" cy="78" r="3.5" fill="${E}"/></g>`),
+    <g class="m-breathe">
+      <!-- robe with kente bands -->
+      <path d="M26 108 L31 64 Q50 55 69 64 L74 108Z" fill="${DK}" stroke="${O}" stroke-width="2.4"/>
+      <path d="M40 63 V108 M50 60 V108 M60 63 V108" stroke="${A}" stroke-width="1.3" opacity="0.65"/>
+      <path d="M31 78 H69 M30 92 H70" stroke="${E}" stroke-width="1.6" opacity="0.6"/>
+      <!-- shoulder armor -->
+      <path d="M28 66 Q50 52 72 66 L67 60 Q50 49 33 60Z" fill="${E}" stroke="${A}" stroke-width="1.4"/>
+      <!-- cowrie collar + neck -->
+      <path d="M45 55 H55 L53 61 H47Z" fill="${DK}" stroke="${O}" stroke-width="1.8"/>
+      <path d="M37 56 Q50 64 63 56" fill="none" stroke="${A}" stroke-width="2"/>
+      <circle cx="42" cy="57" r="1.4" fill="${A}"/><circle cx="50" cy="59" r="1.4" fill="${A}"/><circle cx="58" cy="57" r="1.4" fill="${A}"/>
+      <!-- head, side-shaded -->
+      <ellipse cx="50" cy="40" rx="10.5" ry="12" fill="${DK}" stroke="${O}" stroke-width="2.4"/>
+      <path d="M50 28 a10.5 12 0 0 0 0 24Z" fill="#000" opacity="0.28"/>
+      <!-- crown / headwrap with rays -->
+      <path d="M38 33 Q50 21 62 33 L59 29 Q50 23 41 29Z" fill="${E}" stroke="${A}" stroke-width="1.4"/>
+      <path d="M50 22 V13 M43 24 L39 16 M57 24 L61 16" stroke="${A}" stroke-width="2"/><circle cx="50" cy="12" r="2.2" fill="${A}"/>
+      <!-- face: eyes + markings -->
+      <path d="M44 38 h4 M52 38 h4" stroke="${A}" stroke-width="1.8"/>
+      <path d="M50 41 V45 M45 46 Q50 50 55 46" stroke="${A}" stroke-width="1.2" fill="none"/>
+      <path d="M41 35 l-2 -3 M59 35 l2 -3" stroke="${A}" stroke-width="1"/>
+      <circle cx="38" cy="45" r="2.2" fill="none" stroke="${A}" stroke-width="1.4"/><circle cx="62" cy="45" r="2.2" fill="none" stroke="${A}" stroke-width="1.4"/>
+    </g>`, { vb: CHARVB }),
+
+  // Kofi — griot of the cosmos: robed bard cradling a great kora, notes rising.
+  kofi: S(`
+    <g class="m-notes" opacity="0.9"><path d="M72 30 V12 L82 15 V20 L72 17" fill="${A}"/><circle cx="70" cy="30" r="2.6" fill="${A}"/><circle cx="80" cy="20" r="2" fill="${O}"/></g>
+    <g class="m-breathe">
+      <!-- robe -->
+      <path d="M27 108 L32 62 Q50 54 68 62 L73 108Z" fill="${DK}" stroke="${O}" stroke-width="2.4"/>
+      <path d="M44 62 L42 108 M58 62 L60 108" stroke="${A}" stroke-width="1.3" opacity="0.6"/>
+      <path d="M32 80 H68 M31 94 H69" stroke="${E}" stroke-width="1.4" opacity="0.55"/>
+      <!-- head + short locs -->
+      <ellipse cx="44" cy="38" rx="9.5" ry="11" fill="${DK}" stroke="${O}" stroke-width="2.4"/>
+      <path d="M44 28 a9.5 11 0 0 0 0 22Z" fill="#000" opacity="0.26"/>
+      <path d="M35 33 q9 -11 18 0 M37 30 v-4 M42 27 v-4 M47 27 v-4 M52 29 v-4" stroke="${A}" stroke-width="1.5"/>
+      <path d="M40 39 h3 M48 39 h3" stroke="${A}" stroke-width="1.6"/>
+      <path d="M44 41 v3 M41 46 q3 3 6 0" stroke="${A}" stroke-width="1.1" fill="none"/>
+      <!-- kora: resonator gourd, neck, bridge, many strings -->
+      <ellipse cx="43" cy="66" rx="16" ry="18" fill="${DKv}" stroke="${A}" stroke-width="2.4"/>
+      <ellipse cx="43" cy="66" rx="8.5" ry="9.5" fill="none" stroke="${O}" stroke-width="1.5"/>
+      <circle cx="43" cy="66" r="2.2" fill="${O}"/>
+      <line x1="43" y1="48" x2="43" y2="84" stroke="${O}" stroke-width="2.4"/>
+      <path d="M48 50 L80 16" stroke="${O}" stroke-width="3"/>
+      <g class="m-strings"><path d="M38 50 L70 16 M42 50 L74 16 M46 50 L78 16" stroke="${A}" stroke-width="0.7"/></g>
+      <circle cx="80" cy="16" r="2.6" fill="${A}"/>
+    </g>`, { vb: CHARVB }),
+
+  // Zara — star-weaver: robed channeler, star diadem, raised hands, orbiting spirit-orbs.
+  zara: S(`
+    <circle cx="50" cy="42" r="27" fill="none" stroke="${O}" stroke-width="1.4" opacity="0.5" class="m-spin"/>
+    <g class="m-orbit"><circle cx="82" cy="42" r="4" fill="${A}"/><circle cx="18" cy="42" r="3" fill="${O}"/><circle cx="50" cy="73" r="3.4" fill="${E}"/></g>
+    <g class="m-breathe">
+      <!-- robe -->
+      <path d="M27 108 L31 60 Q50 52 69 60 L73 108Z" fill="${DKv}" stroke="${O}" stroke-width="2.4"/>
+      <path d="M50 60 V108" stroke="${A}" stroke-width="1.2" opacity="0.5"/>
+      <path d="M38 74 L50 67 L62 74" fill="none" stroke="${A}" stroke-width="1.4" opacity="0.6"/>
+      <path d="M34 88 H66" stroke="${E}" stroke-width="1.4" opacity="0.5"/>
+      <!-- channeling arms -->
+      <path d="M33 64 Q22 52 25 40 M67 64 Q78 52 75 40" stroke="${O}" stroke-width="2.4" fill="none"/>
+      <circle cx="25" cy="39" r="2.4" fill="${A}"/><circle cx="75" cy="39" r="2.4" fill="${A}"/>
+      <!-- head + star diadem -->
+      <ellipse cx="50" cy="40" rx="9.5" ry="11" fill="${DKv}" stroke="${A}" stroke-width="2.4"/>
+      <path d="M50 40 a9.5 11 0 0 0 0 22" fill="#000" opacity="0.24"/>
+      <path d="M50 28 l2.2 -7 2.2 7Z M50 28 l-2.2 -7 -2.2 7Z" fill="${A}"/>
+      <circle cx="50" cy="17" r="2.4" fill="${A}"/>
+      <path d="M45 39 h3 M52 39 h3" stroke="${A}" stroke-width="1.6"/>
+      <path d="M46 46 q4 4 8 0" stroke="${A}" stroke-width="1.2" fill="none"/>
+    </g>`, { vb: CHARVB }),
 };
 
 /* ============================== ENEMY MODELS ============================== */
 const ENE = {
-  husk_drone: S(`<g class="m-bob"><polygon points="50,26 72,46 50,58 28,46" fill="#1a0d06" stroke="${O}" stroke-width="3"/><circle cx="50" cy="46" r="7" fill="${E}"/><circle cx="50" cy="46" r="2.5" fill="${A}"/><path d="M30 60 L50 66 L70 60" stroke="${O}" stroke-width="3" fill="none"/></g><g class="m-spin" opacity="0.6">${orbitDots(50, 48, 30, 6, 2, O)}</g>`),
-  static_jackal: S(`<g class="m-flicker"><path d="M26 74 L34 44 L28 30 L42 40 L58 40 L72 30 L66 44 L74 74Z" fill="#1a0d06" stroke="${O}" stroke-width="3"/><path d="M40 52 L46 56 L40 60 M60 52 L54 56 L60 60" stroke="${E}" stroke-width="3"/><path d="M44 68 H56" stroke="${A}" stroke-width="3"/></g>`),
-  brass_sentinel: S(`<g class="m-breathe"><rect x="32" y="40" width="36" height="38" rx="3" fill="#1a0d06" stroke="${O}" stroke-width="3"/><rect x="38" y="26" width="24" height="20" rx="3" fill="#1a0d06" stroke="${A}" stroke-width="3"/><path d="M44 36 H56" stroke="${E}" stroke-width="4"/><circle cx="50" cy="58" r="6" fill="none" stroke="${A}" stroke-width="3"/></g>`),
-  market_thief: S(`<g class="m-shift"><path d="M34 78 C34 50 66 50 66 78Z" fill="#160c12" stroke="${O}" stroke-width="3"/><path d="M38 44 C38 26 62 26 62 44 L58 50 H42Z" fill="#160c12" stroke="${A}" stroke-width="3"/><circle cx="44" cy="44" r="2.5" fill="${E}"/><circle cx="56" cy="44" r="2.5" fill="${E}"/><circle cx="70" cy="64" r="6" fill="${A}" stroke="${C}" stroke-width="1.5"/></g>`),
-  gilded_warden: S(`<g class="m-spin" opacity="0.6">${rays(50, 46, 22, 38, 16, A, 0.7, 2)}</g><g class="m-breathe"><path d="M30 80 L40 48 H60 L70 80Z" fill="#1a0d06" stroke="${O}" stroke-width="3"/><path d="M36 46 C36 26 64 26 64 46Z" fill="#1a0d06" stroke="${A}" stroke-width="3"/><path d="M44 40 H56 M50 32 V44" stroke="${E}" stroke-width="3"/></g>`),
-  the_gatekeeper: S(`<g class="m-breathe"><path d="M24 80 V40 H76 V80 M24 40 L20 32 H80 L76 40 M34 80 V52 H44 V80 M56 80 V52 H66 V80" stroke="${O}" stroke-width="3" fill="none"/><circle cx="50" cy="40" r="8" fill="${E}"/></g><g class="m-spin" opacity="0.5">${rings(50, 40, 2, 16, A, 0.5)}</g>`),
-  sand_wraith: S(`<g class="m-drift"><path d="M50 24 C70 24 74 46 70 60 C66 74 56 70 50 82 C44 70 34 74 30 60 C26 46 30 24 50 24Z" fill="#160c12" stroke="${O}" stroke-width="3"/><path d="M22 50 C36 36 64 36 78 50 C64 62 36 62 22 50Z" fill="#1a0d06" stroke="${A}" stroke-width="2"/><circle cx="50" cy="50" r="7" fill="${E}"/><circle cx="50" cy="50" r="2.5" fill="${A}"/></g>`),
-  mirror_shade: S(`<g class="m-flicker"><path d="M50 20 L74 50 L50 80 L26 50Z" fill="#16100b" stroke="${A}" stroke-width="3"/><path d="M50 20 L50 80 M26 50 H74" stroke="${O}" stroke-width="2" opacity="0.7"/><circle cx="50" cy="50" r="6" fill="${E}"/></g>`),
-  chrome_serpent: S(`<g class="m-coil"><path d="M26 70 q14 -20 24 -2 q10 18 24 -6" stroke="${O}" stroke-width="7" fill="none"/><path d="M70 56 l8 -4 -2 8Z" fill="${A}"/><circle cx="30" cy="66" r="3" fill="${E}"/></g>`),
-  brass_colossus: S(`<g class="m-breathe"><rect x="28" y="42" width="44" height="40" rx="3" fill="#1a0d06" stroke="${O}" stroke-width="3"/><rect x="40" y="24" width="20" height="20" rx="3" fill="#1a0d06" stroke="${A}" stroke-width="3"/><path d="M44 34 H56" stroke="${E}" stroke-width="4"/><rect x="20" y="46" width="8" height="28" fill="${O}"/><rect x="72" y="46" width="8" height="28" fill="${O}"/><circle cx="50" cy="60" r="7" fill="none" stroke="${A}" stroke-width="3"/></g>`),
-  the_archivist: S(`<g class="m-spin" opacity="0.5">${rings(50, 48, 3, 12, A, 0.5)}</g><g class="m-breathe"><path d="M30 70 L30 36 L50 44 L70 36 L70 70 L50 78Z" fill="#160c12" stroke="${O}" stroke-width="3"/><line x1="50" y1="44" x2="50" y2="78" stroke="${A}" stroke-width="2"/><circle cx="40" cy="56" r="3" fill="${E}"/><circle cx="60" cy="56" r="3" fill="${E}"/></g>`),
-  void_chanter: S(`<g class="m-drift"><path d="M32 82 C30 52 70 52 68 82Z" fill="#120a16" stroke="${O}" stroke-width="3"/><path d="M38 48 C38 26 62 26 62 48 L56 54 H44Z" fill="#120a16" stroke="${A}" stroke-width="3"/></g><circle cx="50" cy="40" r="9" fill="#0a0604" stroke="${E}" stroke-width="3" class="m-pulse"/>`),
-  static_seraph: S(`<g class="m-spin" opacity="0.6">${rays(50, 44, 12, 30, 16, A, 0.8, 2)}</g><g class="m-breathe"><path d="M20 50 Q40 40 36 60 M80 50 Q60 40 64 60" stroke="${A}" stroke-width="3" fill="none"/><circle cx="50" cy="44" r="10" fill="#1a0d06" stroke="${O}" stroke-width="3"/><path d="M40 78 C40 56 60 56 60 78Z" fill="#1a0d06" stroke="${O}" stroke-width="3"/><circle cx="50" cy="28" r="9" fill="none" stroke="${A}" stroke-width="2"/></g>`),
-  chrome_archon: S(`<g class="m-spin" opacity="0.6">${orbitDots(50, 50, 34, 8, 3, E)}</g><g class="m-breathe"><polygon points="50,24 74,40 74,64 50,80 26,64 26,40" fill="#160c12" stroke="${O}" stroke-width="3"/><circle cx="42" cy="48" r="3.5" fill="${E}"/><circle cx="58" cy="48" r="3.5" fill="${E}"/><circle cx="50" cy="62" r="3.5" fill="${A}"/></g>`),
+  // Act 1
+  husk_drone: S(`
+    <g class="m-spin" opacity="0.55">${orbitDots(50, 48, 32, 6, 2, O)}</g>
+    <g class="m-bob">
+      <polygon points="50,22 74,46 50,60 26,46" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <polygon points="50,22 74,46 50,46" fill="#000" opacity="0.3"/>
+      <polygon points="50,30 64,46 50,54 36,46" fill="none" stroke="${A}" stroke-width="1.4"/>
+      <circle cx="50" cy="46" r="8" fill="${E}"/><circle cx="50" cy="46" r="3" fill="${A}"/>
+      <path d="M30 60 L50 68 L70 60" stroke="${O}" stroke-width="2.6" fill="none"/>
+      <path d="M38 64 L50 60 L62 64" stroke="${A}" stroke-width="1.4" fill="none"/>
+    </g>`),
+  static_jackal: S(`
+    <g class="m-flicker">
+      <path d="M24 76 L33 44 L27 28 L43 39 L57 39 L73 28 L67 44 L76 76Z" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M24 76 L33 44 L50 50 L50 76Z" fill="#000" opacity="0.28"/>
+      <path d="M33 44 L43 39 L40 49Z M67 44 L57 39 L60 49Z" fill="${MD}"/>
+      <path d="M38 53 L46 57 L38 61 M62 53 L54 57 L62 61" stroke="${E}" stroke-width="3" fill="none"/>
+      <path d="M43 69 H57 M46 65 L50 68 L54 65" stroke="${A}" stroke-width="2.2" fill="none"/>
+    </g>`),
+  brass_sentinel: S(`
+    <g class="m-breathe">
+      <rect x="31" y="42" width="38" height="40" rx="4" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <rect x="31" y="42" width="19" height="40" fill="#000" opacity="0.26"/>
+      <rect x="37" y="24" width="26" height="22" rx="4" fill="${DK}" stroke="${A}" stroke-width="2.4"/>
+      <path d="M43 35 H57" stroke="${E}" stroke-width="4"/>
+      <path d="M37 52 H63 M37 60 H63" stroke="${A}" stroke-width="1.4" opacity="0.6"/>
+      <circle cx="50" cy="70" r="6.5" fill="none" stroke="${A}" stroke-width="2.6"/><circle cx="50" cy="70" r="2" fill="${O}"/>
+      <rect x="44" y="18" width="12" height="6" fill="${MD}" stroke="${A}" stroke-width="1.2"/>
+    </g>`),
+  market_thief: S(`
+    <g class="m-shift">
+      <path d="M33 82 C33 52 67 52 67 82Z" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M33 82 C33 52 50 52 50 52 L50 82Z" fill="#000" opacity="0.26"/>
+      <path d="M38 46 C38 26 62 26 62 46 L57 52 H43Z" fill="${DK}" stroke="${A}" stroke-width="2.4"/>
+      <path d="M44 45 h4 M52 45 h4" stroke="${E}" stroke-width="2.4"/>
+      <circle cx="71" cy="64" r="6.5" fill="${A}" stroke="${C}" stroke-width="1.4"/><path d="M68 61 q6 3 0 6" stroke="#6a3a10" stroke-width="1.6" fill="none"/>
+    </g>`),
+  gilded_warden: S(`
+    <g class="m-spin" opacity="0.55">${rays(50, 46, 22, 40, 18, A, 0.6, 2)}</g>
+    <g class="m-breathe">
+      <path d="M28 84 L40 50 H60 L72 84Z" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M28 84 L40 50 H50 L50 84Z" fill="#000" opacity="0.26"/>
+      <path d="M35 48 C35 24 65 24 65 48Z" fill="${DK}" stroke="${A}" stroke-width="2.6"/>
+      <path d="M43 40 H57 M50 30 V46" stroke="${E}" stroke-width="3"/>
+      <path d="M40 56 H60 M38 66 H62" stroke="${A}" stroke-width="1.4" opacity="0.6"/>
+      <circle cx="50" cy="20" r="2.4" fill="${A}"/>
+    </g>`),
+  the_gatekeeper: S(`
+    <g class="m-spin" opacity="0.45">${rings(50, 44, 3, 14, A, 0.45)}</g>
+    <g class="m-breathe">
+      <path d="M22 84 V42 H78 V84 M22 42 L17 32 H83 L78 42" stroke="${O}" stroke-width="3" fill="${DK}"/>
+      <path d="M33 84 V54 H44 V84 M56 84 V54 H67 V84" fill="#000" stroke="${A}" stroke-width="2"/>
+      <circle cx="50" cy="42" r="9" fill="#000" stroke="${E}" stroke-width="3"/><circle cx="50" cy="42" r="3.4" fill="${A}"/>
+      <path d="M17 32 L50 22 L83 32" fill="none" stroke="${A}" stroke-width="2"/>
+    </g>`),
+  // Act 2
+  sand_wraith: S(`
+    <g class="m-drift">
+      <path d="M50 22 C72 22 76 46 71 61 C67 76 56 71 50 84 C44 71 33 76 29 61 C24 46 28 22 50 22Z" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M50 22 C39 22 31 34 30 50 L50 50Z" fill="#000" opacity="0.26"/>
+      <path d="M22 50 C36 35 64 35 78 50 C64 63 36 63 22 50Z" fill="${MD}" stroke="${A}" stroke-width="2"/>
+      <circle cx="50" cy="50" r="8" fill="${E}"/><circle cx="50" cy="50" r="3" fill="${A}"/>
+      <path d="M34 70 q16 10 32 0" stroke="${A}" stroke-width="1.4" fill="none" opacity="0.6"/>
+    </g>`),
+  mirror_shade: S(`
+    <g class="m-flicker">
+      <path d="M50 18 L76 50 L50 82 L24 50Z" fill="${DK}" stroke="${A}" stroke-width="2.6"/>
+      <path d="M50 18 L50 82 L24 50Z" fill="#000" opacity="0.3"/>
+      <path d="M50 18 L76 50 M24 50 H76" stroke="${O}" stroke-width="1.6" opacity="0.7"/>
+      <circle cx="50" cy="50" r="6.5" fill="${E}"/><circle cx="50" cy="50" r="2.2" fill="${A}"/>
+      <path d="M38 36 L46 44 M62 36 L54 44" stroke="${A}" stroke-width="1.2"/>
+    </g>`),
+  chrome_serpent: S(`
+    <g class="m-coil">
+      <path d="M24 72 q14 -22 25 -3 q11 19 27 -7" stroke="${O}" stroke-width="7" fill="none"/>
+      <path d="M24 72 q14 -22 25 -3 q11 19 27 -7" stroke="${A}" stroke-width="2" fill="none" opacity="0.6"/>
+      <path d="M76 62 l9 -5 -3 9Z" fill="${E}" stroke="${A}" stroke-width="1"/>
+      <circle cx="28" cy="68" r="3.2" fill="${E}"/>
+      <path d="M40 60 l3 3 M54 56 l3 3" stroke="${A}" stroke-width="1.4"/>
+    </g>`),
+  brass_colossus: S(`
+    <g class="m-breathe">
+      <rect x="18" y="46" width="9" height="30" rx="2" fill="${MD}" stroke="${O}" stroke-width="1.6"/>
+      <rect x="73" y="46" width="9" height="30" rx="2" fill="${MD}" stroke="${O}" stroke-width="1.6"/>
+      <rect x="27" y="42" width="46" height="42" rx="4" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <rect x="27" y="42" width="23" height="42" fill="#000" opacity="0.26"/>
+      <rect x="39" y="22" width="22" height="22" rx="4" fill="${DK}" stroke="${A}" stroke-width="2.4"/>
+      <path d="M44 33 H56" stroke="${E}" stroke-width="4.5"/>
+      <circle cx="50" cy="62" r="8" fill="none" stroke="${A}" stroke-width="2.6"/><circle cx="50" cy="62" r="2.6" fill="${O}"/>
+      <path d="M34 50 H40 M60 50 H66" stroke="${A}" stroke-width="1.6" opacity="0.6"/>
+    </g>`),
+  the_archivist: S(`
+    <g class="m-spin" opacity="0.45">${rings(50, 50, 3, 13, A, 0.45)}</g>
+    <g class="m-breathe">
+      <path d="M28 72 L28 34 L50 43 L72 34 L72 72 L50 80Z" fill="${DKv}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M28 34 L50 43 L50 80 L28 72Z" fill="#000" opacity="0.28"/>
+      <line x1="50" y1="43" x2="50" y2="80" stroke="${A}" stroke-width="2"/>
+      <path d="M34 50 L46 54 M66 50 L54 54" stroke="${A}" stroke-width="1.2" opacity="0.6"/>
+      <circle cx="40" cy="58" r="3.2" fill="${E}"/><circle cx="60" cy="58" r="3.2" fill="${E}"/>
+    </g>`),
+  // Act 3
+  void_chanter: S(`
+    <circle cx="50" cy="40" r="11" fill="#000" stroke="${E}" stroke-width="3" class="m-pulse"/>
+    <g class="m-drift">
+      <path d="M31 84 C29 52 71 52 69 84Z" fill="${DKv}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M31 84 C30 56 50 53 50 53 L50 84Z" fill="#000" opacity="0.3"/>
+      <path d="M37 50 C37 26 63 26 63 50 L57 56 H43Z" fill="${DKv}" stroke="${A}" stroke-width="2.4"/>
+      <path d="M44 60 q6 5 12 0" stroke="${E}" stroke-width="1.6" fill="none"/>
+    </g>`),
+  static_seraph: S(`
+    <g class="m-spin" opacity="0.6">${rays(50, 42, 12, 32, 18, A, 0.7, 2)}</g>
+    <g class="m-breathe">
+      <path d="M18 52 Q42 38 36 64 Q30 54 18 52Z M82 52 Q58 38 64 64 Q70 54 82 52Z" fill="${MD}" stroke="${A}" stroke-width="1.8"/>
+      <path d="M40 82 C40 58 60 58 60 82Z" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <circle cx="50" cy="44" r="10" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <circle cx="50" cy="26" r="9" fill="none" stroke="${A}" stroke-width="2"/>
+      <path d="M45 43 h3 M52 43 h3" stroke="${E}" stroke-width="2"/>
+    </g>`),
+  chrome_archon: S(`
+    <g class="m-spin" opacity="0.55">${orbitDots(50, 50, 35, 8, 3, E)}</g>
+    <g class="m-breathe">
+      <polygon points="50,22 75,39 75,65 50,82 25,65 25,39" fill="${DKv}" stroke="${O}" stroke-width="2.6"/>
+      <polygon points="50,22 75,39 75,65 50,82" fill="#000" opacity="0.26"/>
+      <polygon points="50,32 65,42 65,60 50,70 35,60 35,42" fill="none" stroke="${A}" stroke-width="1.4"/>
+      <circle cx="42" cy="48" r="3.4" fill="${E}"/><circle cx="58" cy="48" r="3.4" fill="${E}"/><circle cx="50" cy="62" r="3.4" fill="${A}"/>
+    </g>`),
   heart_of_static: S(`
-    <g class="m-spin">${rays(50, 50, 26, 44, 20, O, 0.5, 2)}</g>
-    <g class="m-spin-rev" opacity="0.7">${rings(50, 50, 2, 14, A, 0.6)}</g>
-    <g class="m-pulse"><circle cx="50" cy="50" r="20" fill="#0a0403" stroke="${E}" stroke-width="4"/>
-      <path d="M50 34 C60 44 60 44 50 50 C40 56 40 56 50 66" stroke="${A}" stroke-width="3" fill="none"/>
-      <circle cx="50" cy="50" r="6" fill="${O}"/></g>`),
+    <g class="m-spin">${rays(50, 50, 26, 46, 24, O, 0.5, 2)}</g>
+    <g class="m-spin-rev" opacity="0.7">${rings(50, 50, 3, 13, A, 0.55)}</g>
+    <g class="m-pulse">
+      <circle cx="50" cy="50" r="22" fill="#0a0403" stroke="${E}" stroke-width="4"/>
+      <circle cx="50" cy="50" r="22" fill="none" stroke="${A}" stroke-width="1" opacity="0.6"/>
+      <path d="M50 32 C62 44 62 44 50 50 C38 56 38 56 50 68" stroke="${A}" stroke-width="3" fill="none"/>
+      <circle cx="50" cy="50" r="6.5" fill="${O}"/><circle cx="50" cy="50" r="2.6" fill="${C}"/>
+    </g>`),
 };
 
-const GENERIC_ENEMY = S(`<g class="m-bob"><polygon points="50,28 70,48 50,72 30,48" fill="#1a0d06" stroke="${O}" stroke-width="3"/><circle cx="50" cy="48" r="6" fill="${E}"/></g>`);
+const GENERIC_ENEMY = S(`<g class="m-bob"><polygon points="50,26 72,48 50,74 28,48" fill="${DK}" stroke="${O}" stroke-width="2.6"/><circle cx="50" cy="48" r="7" fill="${E}"/><circle cx="50" cy="48" r="2.6" fill="${A}"/></g>`);
 
 export function characterModel(id) { return CHAR[id] || CHAR.amara; }
 export function enemyModel(id) { return ENE[id] || GENERIC_ENEMY; }
