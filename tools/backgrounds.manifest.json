@@ -1,0 +1,20 @@
+[
+  {
+    "id": "sunken_market",
+    "name": "The Sunken Market",
+    "act": 1,
+    "prompt": "A flooded subterranean bazaar of brass and bone sprawling beneath the shadow of a massive obsidian spire. Towering modular stalls with brass scales, hanging bone windchimes, and glowing amber lantern beads reflecting off the murky water surface. Half-submerged stone platforms, skeletal pillars, and ancient geometric etchings on the damp cave walls. Ominous yet vibrant atmosphere."
+  },
+  {
+    "id": "brass_archive",
+    "name": "The Brass Archive",
+    "act": 2,
+    "prompt": "A grand, infinite library chamber where endless shelves of parchment scrolls and mechanical books spiral vertically into the darkness. Towering curved brass pillars, massive interlocking brass clockwork gears rotating slowly on the walls, and floating orbital ring sigils casting glowing amber light. Suspended pathways with ornate railings, and piles of mechanical scrolls lying on heavy stone study desks."
+  },
+  {
+    "id": "static_crown",
+    "name": "The Static Crown",
+    "act": 3,
+    "prompt": "The cosmic summit of the Obsidian Spire, open to a vast space void filled with orbiting concentric circles, geometric patterns, and ancient stellar glyphs. At the center, a colossal pulsating core of pure crackling static energy and deep-ember lightning bolts. Great stone arches of obsidian frame the platform, and energy storms of orange, amber, and deep-red crackle across the scene."
+  }
+]
