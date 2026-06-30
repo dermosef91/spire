@@ -69,6 +69,10 @@ export class Game {
   // ----------------------------------------------------------- scene helpers
   setScene(node, sceneClass = '') {
     clear(this.root);
+    // Remove previous scene classes from body and add the current one
+    document.body.className = document.body.className.replace(/\bscene-\S+/g, '');
+    if (sceneClass) document.body.classList.add(`scene-${sceneClass}`);
+
     const wrap = el('div', { class: `scene ${sceneClass}` }, [node]);
     this.root.appendChild(wrap);
     requestAnimationFrame(() => wrap.classList.add('show'));
@@ -106,6 +110,22 @@ export class Game {
     audio.play('select');
     const panel = el('div', { class: 'title-screen' });
     panel.appendChild(el('h1', { class: 'game-title', html: 'ÀṢẸ' }));
+    
+    // Title ornament divider matching reference
+    const ornament = el('div', { class: 'title-ornament' });
+    ornament.appendChild(el('span', { class: 'orn-diamond', text: '❖' }));
+    ornament.appendChild(el('span', { class: 'orn-bar', text: '❘' }));
+    ornament.appendChild(el('span', { class: 'orn-bar', text: '❘' }));
+    ornament.appendChild(el('span', { class: 'orn-bar', text: '❘' }));
+    ornament.appendChild(el('span', { class: 'orn-bar', text: '❘' }));
+    ornament.appendChild(el('span', { class: 'orn-dot', text: '●' }));
+    ornament.appendChild(el('span', { class: 'orn-bar', text: '❘' }));
+    ornament.appendChild(el('span', { class: 'orn-bar', text: '❘' }));
+    ornament.appendChild(el('span', { class: 'orn-bar', text: '❘' }));
+    ornament.appendChild(el('span', { class: 'orn-bar', text: '❘' }));
+    ornament.appendChild(el('span', { class: 'orn-diamond', text: '❖' }));
+    panel.appendChild(ornament);
+
     panel.appendChild(el('div', { class: 'game-subtitle', text: 'Ascend the Obsidian Spire' }));
     panel.appendChild(el('p', {
       class: 'title-lore',
