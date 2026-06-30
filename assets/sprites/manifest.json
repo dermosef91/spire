@@ -1,18 +1,18 @@
 {
-  "generated": "2026-06-30T21:12:36.903Z",
+  "generated": "2026-06-30T21:43:55.813Z",
   "dryRun": false,
   "ids": [
     "amara",
     "amara_attack",
     "amara_block",
-    "amara_idle2",
+    "amara_skill",
     "brass_sentinel",
     "gilded_warden",
     "husk_drone",
     "kofi",
     "kofi_attack",
     "kofi_block",
-    "kofi_idle2",
+    "kofi_skill",
     "market_thief",
     "static_jackal",
     "the_archivist",
@@ -20,6 +20,6 @@
     "zara",
     "zara_attack",
     "zara_block",
-    "zara_idle2"
+    "zara_skill"
   ]
 }

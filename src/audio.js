@@ -1,5 +1,5 @@
 const SOUNDS = {
-  select: 'assets/sounds/select.mp3',
+  select: 'assets/sounds/select.wav',
   reward: 'assets/sounds/reward.wav',
   attack: 'assets/sounds/attack.wav',
 };
@@ -15,6 +15,7 @@ class Audio {
     this.musicMode = 'title'; // 'title', 'ambient', 'combat'
     this.titleMusic = null;
     this.combatMusic = null;
+    this.bossMusic = null;
     this.buffers = {};
     this.loadingBuffers = {};
   }
@@ -78,6 +79,13 @@ class Audio {
       this.combatMusic = new window.Audio('assets/music/combattheme1.mp3');
       this.combatMusic.loop = true;
       this.combatMusic.volume = 0.08;
+    }
+  }
+  ensureBossMusic() {
+    if (!this.bossMusic) {
+      this.bossMusic = new window.Audio('assets/music/combattheme3.mp3');
+      this.bossMusic.loop = true;
+      this.bossMusic.volume = 0.08;
     }
   }
   tone(freq, dur, type = 'sine', gain = 0.12, when = 0) {
@@ -157,6 +165,13 @@ class Audio {
         this.combatMusic.currentTime = 0;
         this.combatMusic.play().catch(e => console.warn("Combat music autoplay blocked:", e));
       }
+    } else if (this.musicMode === 'boss') {
+      this.ensureBossMusic();
+      if (this.bossMusic.paused) {
+        this.stopMusic();
+        this.bossMusic.currentTime = 0;
+        this.bossMusic.play().catch(e => console.warn("Boss music autoplay blocked:", e));
+      }
     } else {
       if (!this._music) {
         this.stopMusic();
@@ -197,6 +212,9 @@ class Audio {
     if (this.combatMusic) {
       this.combatMusic.pause();
     }
+    if (this.bossMusic) {
+      this.bossMusic.pause();
+    }
   }
   setMusicMode(mode) {
     if (this.musicMode === mode) return;
@@ -205,8 +223,12 @@ class Audio {
       this.startMusic();
     }
   }
-  setCombat(isCombat) {
-    this.setMusicMode(isCombat ? 'combat' : 'ambient');
+  setCombat(isCombat, isBoss = false) {
+    if (isCombat) {
+      this.setMusicMode(isBoss ? 'boss' : 'combat');
+    } else {
+      this.setMusicMode('ambient');
+    }
   }
 }
 export const audio = new Audio();

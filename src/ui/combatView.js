@@ -28,8 +28,6 @@ export class CombatView {
     this.parts = {};      // eid -> { intent, glyph, hpfill, hptext, block, powers, medallion }
     this._lastHandCards = [];
     this.tempPoses = {};  // locks pose updates during dynamic animations
-    this.idleInterval = null;
-    this.currentIdleFrame = 'idle';
   }
 
   mount(root) {
@@ -39,7 +37,6 @@ export class CombatView {
     this._lastHandCards = [];
     this.build();
     this.combat.start();
-    this.startIdleLoop();
   }
 
   build() {
@@ -175,7 +172,6 @@ export class CombatView {
 
     if (c.over && !this.ended) {
       this.ended = true;
-      this.clearIdleLoop();
       this.scene.classList.add(c.victory ? 'won' : 'lost');
       setTimeout(() => this.onEnd && this.onEnd(c), 850);
     }
@@ -186,7 +182,7 @@ export class CombatView {
     if (!p) return;
 
     if (!this.tempPoses[eidOf(ent)]) {
-      this.setSpritePose(ent, ent.block > 0 ? 'block' : (this.currentIdleFrame || 'idle'));
+      this.setSpritePose(ent, ent.block > 0 ? 'block' : 'idle');
     }
 
     const pct = Math.max(0, (ent.hp / ent.maxHp) * 100);
@@ -576,6 +572,21 @@ export class CombatView {
     // brief play animation on the card element
     const cardEl = this.handHolder.querySelector(`.card[data-uid="${card.uid}"]`);
     if (cardEl) { cardEl.classList.add('playing'); }
+
+    if (card.type === 'skill') {
+      const pEnt = this.combat.player;
+      const eid = eidOf(pEnt);
+      this.tempPoses[eid] = true;
+      this.setSpritePose(pEnt, 'skill');
+      
+      setTimeout(() => {
+        delete this.tempPoses[eid];
+        if (pEnt.alive) {
+          this.setSpritePose(pEnt, pEnt.block > 0 ? 'block' : 'idle');
+        }
+      }, 570);
+    }
+
     this.combat.playCard(card, target);
   }
 
@@ -624,9 +635,9 @@ export class CombatView {
         setTimeout(() => {
           delete this.tempPoses[eid];
           if (payload.source.alive) {
-            this.setSpritePose(payload.source, payload.source.block > 0 ? 'block' : (this.currentIdleFrame || 'idle'));
+            this.setSpritePose(payload.source, payload.source.block > 0 ? 'block' : 'idle');
           }
-        }, 380);
+        }, 570);
       }
       return;
     }
@@ -694,26 +705,6 @@ export class CombatView {
     }
   }
 
-  startIdleLoop() {
-    this.clearIdleLoop();
-    this.currentIdleFrame = 'idle';
-    this.idleInterval = setInterval(() => {
-      this.currentIdleFrame = this.currentIdleFrame === 'idle' ? 'idle2' : 'idle';
-      
-      const pEnt = this.combat.player;
-      const eid = eidOf(pEnt);
-      if (pEnt.alive && !pEnt.block && !this.tempPoses[eid]) {
-        this.setSpritePose(pEnt, this.currentIdleFrame);
-      }
-    }, 1500);
-  }
-
-  clearIdleLoop() {
-    if (this.idleInterval) {
-      clearInterval(this.idleInterval);
-      this.idleInterval = null;
-    }
-  }
 }
 
 function orbTitle(orb, c) {

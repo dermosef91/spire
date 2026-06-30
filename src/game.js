@@ -308,7 +308,7 @@ export class Game {
   startBoss() { this.beginCombat(this.pickEncounter('boss'), 'boss'); }
 
   beginCombat(enemyIds, kind) {
-    audio.setCombat(true);
+    audio.setCombat(true, kind === 'boss');
     const combat = new Combat(this.run, enemyIds, { kind });
     const view = new CombatView(this, combat);
     view.onEnd = (c) => this.afterCombat(c, kind);
