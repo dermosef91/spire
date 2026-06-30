@@ -1164,7 +1164,7 @@ html { -webkit-text-size-adjust: 100%; }
   .block-badge { min-width: 24px; height: 24px; font-size: 12px; bottom: 5px; left: -12px; }
   .intent { bottom: calc(25% + 42px); font-size: 14px; } .orbs { bottom: calc(25% + 42px); } .orbs .orb { width: 26px; height: 26px; }
   .powers { bottom: calc(25% - 24px); }
-  .combat-log { min-height: 12px; font-size: 11px; margin: 1px 0; } .combat-controls { margin-top: 0; padding: 2px 12px; }
+  .combat-log { min-height: 12px; font-size: 11px; margin: auto 0 1px; } .combat-controls { margin-top: 0; padding: 2px 12px; }
   .energy-orb { width: clamp(40px, 9vh, 56px); height: clamp(40px, 9vh, 56px); font-size: clamp(16px, 4vh, 22px); }
   .screen-pile {
     width: 50px;
