@@ -20,6 +20,9 @@ export class CombatView {
     this.pendingCard = null;
     this.onEnd = null;
     this.ended = false;
+    this.drag = null;
+    this._dragMove = (e) => this.dragMove(e);
+    this._dragEnd = (e) => this.dragEnd(e);
     this.els = {};        // eid -> combatant element
     this.parts = {};      // eid -> { intent, glyph, hpfill, hptext, block, powers, medallion }
   }
@@ -226,9 +229,10 @@ export class CombatView {
       const node = renderCard(card, {
         disabled: !playable,
         class: 'in-hand ' + (this.pendingCard === card ? 'selected' : ''),
-        onClick: () => this.clickCard(card),
-        onHover: (cd, n, on) => this.game.tooltip(cd, n, on, 'card'),
+        onHover: (cd, n, on) => { if (!this.drag) this.game.tooltip(cd, n, on, 'card'); },
       });
+      // Drag-and-drop to play (mouse + touch); a tap falls back to click-to-play.
+      node.addEventListener('pointerdown', (e) => this.onCardPointerDown(e, card, node));
       hand.appendChild(node);
     }
   }
@@ -253,6 +257,94 @@ export class CombatView {
     const card = this.pendingCard;
     this.pendingCard = null;
     this.playCard(card, enemy);
+  }
+
+  // ----------------------------------------------------------- drag & drop
+  onCardPointerDown(e, card, node) {
+    if (this.combat.animating || this.combat.over) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (this.drag) return;
+    const r = node.getBoundingClientRect();
+    this.drag = {
+      card, node, id: e.pointerId, sx: e.clientX, sy: e.clientY,
+      w: r.width, h: r.height, moved: false,
+      handTop: this.handHolder.getBoundingClientRect().top,
+    };
+    try { node.setPointerCapture(e.pointerId); } catch (_) {}
+    node.addEventListener('pointermove', this._dragMove);
+    node.addEventListener('pointerup', this._dragEnd);
+    node.addEventListener('pointercancel', this._dragEnd);
+  }
+
+  dragMove(e) {
+    const d = this.drag;
+    if (!d) return;
+    const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
+    if (!d.moved) {
+      if (Math.hypot(dx, dy) < 8) return;
+      d.moved = true;
+      this.game.tooltip(null, null, false);
+      d.node.classList.add('dragging');
+      d.node.style.width = d.w + 'px';
+      d.node.style.height = d.h + 'px';
+      if (d.card.target === 'enemy') this.scene.classList.add('targeting');
+    }
+    d.node.style.left = (e.clientX - d.w / 2) + 'px';
+    d.node.style.top = (e.clientY - d.h / 2) + 'px';
+    const playable = this.combat.canPlay(d.card);
+    if (d.card.target === 'enemy') {
+      const hit = this.enemyAt(e.clientX, e.clientY);
+      this.setDragOver(hit ? hit.node : null);
+      d.node.classList.toggle('will-play', !!hit && playable);
+    } else {
+      const inZone = e.clientY < d.handTop - 6;
+      d.node.classList.toggle('will-play', inZone && playable);
+    }
+  }
+
+  dragEnd(e) {
+    const d = this.drag;
+    if (!d) return;
+    d.node.removeEventListener('pointermove', this._dragMove);
+    d.node.removeEventListener('pointerup', this._dragEnd);
+    d.node.removeEventListener('pointercancel', this._dragEnd);
+    try { d.node.releasePointerCapture(d.id); } catch (_) {}
+    this.drag = null;
+    this.setDragOver(null);
+    this.scene.classList.remove('targeting');
+
+    if (!d.moved) { this.clickCard(d.card); return; } // tap → click-to-play
+
+    let played = false;
+    if (this.combat.canPlay(d.card)) {
+      if (d.card.target === 'enemy') {
+        const hit = this.enemyAt(e.clientX, e.clientY);
+        if (hit) { this.playCard(d.card, hit.e); played = true; }
+      } else if (e.clientY < d.handTop - 6) {
+        this.playCard(d.card, this.combat.randomEnemy());
+        played = true;
+      }
+    }
+    if (!played) audio.play('error');
+    this.update(); // re-render the hand (clears the lifted node, restores layout)
+  }
+
+  enemyAt(x, y) {
+    const pad = 14;
+    for (const en of this.combat.livingEnemies()) {
+      const node = this.els[eidOf(en)];
+      if (!node) continue;
+      const r = node.getBoundingClientRect();
+      if (x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad) return { e: en, node };
+    }
+    return null;
+  }
+
+  setDragOver(node) {
+    if (this._dragOverNode === node) return;
+    if (this._dragOverNode) this._dragOverNode.classList.remove('drag-over');
+    this._dragOverNode = node;
+    if (node) node.classList.add('drag-over');
   }
 
   playCard(card, target) {
