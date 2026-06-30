@@ -44,6 +44,10 @@ export class CombatView {
     this.topbarHolder = el('div', { class: 'combat-topbar' });
     scene.appendChild(this.topbarHolder);
 
+    // Battlefield is absolute, so we add a spacer to push the controls/hand to the bottom
+    const spacer = el('div', { class: 'combat-spacer' });
+    scene.appendChild(spacer);
+
     const field = el('div', { class: 'battlefield' });
     this.playerSide = el('div', { class: 'player-side' });
     this.enemySide = el('div', { class: 'enemy-side' });

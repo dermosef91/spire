@@ -104,17 +104,37 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
 .title { display: flex; align-items: center; justify-content: center; min-height: 92vh; }
 .title-screen { text-align: center; max-width: 680px; }
 .game-title {
-  font-family: var(--font-display); font-size: 120px; font-weight: 700; margin: 0; letter-spacing: 0.06em;
-  color: var(--orange);
-  text-shadow: 0 0 46px rgba(255,106,26,0.55), 0 0 4px rgba(255,200,140,0.8);
-  animation: titleBreath 4.5s ease-in-out infinite;
+  font-family: 'Cinzel', 'Playfair Display', Georgia, serif; font-size: 130px; font-weight: 700; margin: 0; letter-spacing: 0.12em;
+  color: var(--cream);
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.95), 0 0 10px rgba(0, 0, 0, 0.7);
+  text-indent: 0.12em; /* Centers the text properly with letter-spacing */
 }
-@keyframes titleBreath { 0%,100% { text-shadow: 0 0 40px rgba(255,106,26,0.45), 0 0 4px rgba(255,200,140,0.7); } 50% { text-shadow: 0 0 70px rgba(255,106,26,0.8), 0 0 8px rgba(255,220,160,0.95); } }
-.game-subtitle { font-family: var(--font-display); font-size: 20px; color: var(--cream); letter-spacing: 0.42em; text-transform: uppercase; margin-bottom: 18px; opacity: 0.9; animation: fadeUp 1s ease both 0.15s; }
+.title-ornament {
+  display: flex; justify-content: center; align-items: center; gap: 8px;
+  margin: 14px auto 16px auto;
+  font-family: var(--font-body);
+  user-select: none;
+  animation: fadeUp 1s ease both 0.1s;
+}
+.title-ornament .orn-diamond {
+  color: var(--orange); font-size: 15px; opacity: 0.95;
+}
+.title-ornament .orn-bar {
+  color: var(--orange); font-size: 14px; opacity: 0.45; margin: 0 -2px; font-weight: 300;
+}
+.title-ornament .orn-dot {
+  color: var(--amber); font-size: 9px; opacity: 0.95; margin: 0 4px;
+}
+.game-subtitle { font-family: var(--font-display); font-size: 22px; color: var(--orange); letter-spacing: 0.18em; text-transform: none; margin-bottom: 24px; opacity: 0.95; animation: fadeUp 1s ease both 0.15s; }
 .title-lore { color: var(--muted); line-height: 1.7; font-size: 17px; margin: 18px auto; max-width: 540px; animation: fadeUp 1s ease both 0.3s; }
 .title-buttons { display: flex; flex-direction: column; gap: 12px; max-width: 300px; margin: 24px auto; animation: fadeUp 1s ease both 0.45s; }
 .title-meta { color: var(--muted); font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.6; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+body.scene-title #bg-image.show,
+body.scene-charselect #bg-image.show {
+  opacity: 0.7;
+}
 
 /* ----------------------------- char select ----------------------------- */
 .charselect { text-align: center; }
@@ -315,15 +335,39 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
 /* The combat scene is locked to one viewport; children flex to fit so the hand
    is always fully visible and nothing clips off-screen. */
 .combat-scene { position: relative; display: flex; flex-direction: column; height: 100dvh; min-height: 0; overflow: hidden; }
-.combat-topbar { flex: 0 0 auto; }
-.battlefield { display: grid; grid-template-columns: 1fr 1.35fr; gap: 20px; flex: 1 1 auto; min-height: 0; align-items: center; padding: 4px 0 0; }
-.player-side { display: flex; flex-direction: column; align-items: center; gap: clamp(6px, 1.4vh, 12px); }
-.enemy-side { display: flex; gap: clamp(16px, 4vw, 40px); justify-content: center; align-items: flex-end; flex-wrap: wrap; }
-.combatant { display: flex; flex-direction: column; align-items: center; gap: clamp(3px, 0.8vh, 7px); min-width: 120px; position: relative; transition: opacity 0.4s ease; }
+.combat-topbar { flex: 0 0 auto; position: relative; z-index: 10; }
+.combat-spacer { flex: 1 1 auto; min-height: 0; pointer-events: none; }
+.battlefield { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1.35fr; gap: 20px; z-index: 1; pointer-events: none; }
+.player-side { display: flex; flex-direction: column; align-items: center; position: relative; height: 100%; pointer-events: none; }
+.enemy-side { display: flex; gap: clamp(16px, 4vw, 40px); justify-content: center; align-items: flex-end; flex-wrap: nowrap; position: relative; height: 100%; pointer-events: none; }
+.combatant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  min-width: 120px;
+  position: relative;
+  transition: opacity 0.4s ease;
+  pointer-events: auto;
+  
+  /* Responsive layout offsets for combatant elements */
+  --info-bottom: clamp(170px, 29vh, 250px);
+  --powers-bottom: calc(var(--info-bottom) - 34px);
+  --intent-bottom: calc(var(--info-bottom) + 84px);
+  --block-bottom: calc(var(--info-bottom) - 5px);
+  --block-left: calc(50% - 94px);
+  --med-top: 13%;
+  --med-size: calc(var(--med) * 1.5);
+  
+  padding-bottom: var(--info-bottom);
+}
+.combatant.player {
+  --med-size: calc(var(--med) * 1.8);
+}
 
-.stage { position: relative; display: grid; place-items: center; }
-.medallion { position: relative; z-index: 1; width: var(--med); height: var(--med); display: grid; place-items: center; }
-.player .medallion { width: calc(var(--med) * 1.12); height: calc(var(--med) * 1.12); }
+.stage { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.medallion { position: absolute !important; top: var(--med-top); left: 50%; transform: translateX(-50%); z-index: 1; width: var(--med-size) !important; height: var(--med-size) !important; display: grid; place-items: center; }
 .medallion::after { content: ''; position: absolute; inset: -26%; border-radius: 50%; z-index: 0;
   background: repeating-conic-gradient(from 0deg, transparent 0 5deg, rgba(255,122,26,0.16) 5deg 6deg);
   -webkit-mask: radial-gradient(circle, #000 26%, transparent 66%); mask: radial-gradient(circle, #000 26%, transparent 66%);
@@ -342,15 +386,40 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
   background: radial-gradient(circle at 48% 42%, #281606 0%, #0b0604 72%);
   border: 1px solid rgba(255,150,60,0.28); box-shadow: inset 0 0 26px rgba(0,0,0,0.78), 0 0 30px rgba(255,106,26,0.35); }
 .enemy .med-core { background: radial-gradient(circle at 48% 42%, #2a0e05 0%, #0b0403 72%); box-shadow: inset 0 0 26px rgba(0,0,0,0.78), 0 0 30px rgba(232,67,26,0.35); border-color: rgba(232,67,26,0.32); }
-.glyph { position: absolute; z-index: 2; width: calc(var(--med) * 1.85); height: calc(var(--med) * 1.85); display: grid; place-items: center; overflow: visible; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.7)); animation: medFloat 3.6s ease-in-out infinite; pointer-events: none; bottom: 12px; }
-.player .glyph { width: calc(var(--med) * 2.05); height: calc(var(--med) * 2.05); bottom: 16px; }
+
+.glyph {
+  position: absolute;
+  top: 48px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  pointer-events: none;
+  z-index: 2;
+  animation: medFloat 3.6s ease-in-out infinite;
+  
+  /* Fade to transparent/black at the bottom of the screen */
+  -webkit-mask-image: linear-gradient(to bottom, black 35%, transparent 88%);
+  mask-image: linear-gradient(to bottom, black 35%, transparent 88%);
+}
+.player .glyph {
+  width: auto;
+  height: auto;
+  bottom: 0;
+}
+.glyph > img, .glyph > div { width: 100%; height: 100%; }
+.glyph > div { display: flex; justify-content: center; align-items: flex-start; }
+.glyph .svg-ic { width: auto; height: 100%; max-width: 100%; }
+
 .enemy:nth-child(2n) .glyph { animation-duration: 4.1s; } .enemy:nth-child(3n) .glyph { animation-duration: 4.6s; }
 @keyframes medFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-.ground-shadow { width: 110px; height: 14px; margin-top: 4px; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(255,106,26,0.32), transparent); filter: blur(3px); animation: shadowPulse 3.6s ease-in-out infinite; }
-@keyframes shadowPulse { 0%,100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(0.85); opacity: 0.42; } }
+.ground-shadow { display: none; }
 
-.block-badge { position: absolute; top: 2px; left: 2px; min-width: 30px; height: 30px; padding: 0 6px; z-index: 4;
+.block-badge { position: absolute; bottom: var(--block-bottom); left: var(--block-left); min-width: 30px; height: 30px; padding: 0 6px; z-index: 6;
   border-radius: 15px; display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 14px; color: #eaf3ff;
   background: radial-gradient(circle at 40% 35%, #bcd6ff, #2f6fb0); border: 2px solid #d8ebff; box-shadow: 0 0 14px rgba(120,180,255,0.7); }
 
