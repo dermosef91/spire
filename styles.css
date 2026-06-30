@@ -1150,7 +1150,7 @@ html { -webkit-text-size-adjust: 100%; }
 
 /* Short viewports (landscape phones): trim vertical chrome so it all fits. */
 @media (max-height: 560px) {
-  .battlefield { grid-template-columns: 1fr 1.3fr; gap: 10px; padding-top: 20px; }
+  .battlefield { grid-template-columns: 1fr 1.3fr; gap: 10px; padding-top: 20px; bottom: 26%; }
   .topbar { margin-bottom: 6px; padding: 4px 12px; } .tb-left > div { font-size: 13px; }
   .relic, .potion { width: 28px; height: 28px; }
   .combatant { min-width: 84px; }
@@ -1165,6 +1165,12 @@ html { -webkit-text-size-adjust: 100%; }
   .powers { bottom: calc(25% - 24px); }
   .combat-log { min-height: 12px; font-size: 11px; margin: auto 0 1px; } .combat-controls { margin-top: 0; padding: 2px 12px; }
   .energy-orb { width: clamp(40px, 9vh, 56px); height: clamp(40px, 9vh, 56px); font-size: clamp(16px, 4vh, 22px); }
+  /* Bigger, legible hand in landscape: enlarge the cards and flatten the fan
+     (the rotation/downward dip pushes cards off the short bottom edge and
+     skews the text), so a tight landscape gets an upright, readable row. */
+  .combat-scene { --card-h: clamp(150px, 34vh, 196px); --card-w: calc(var(--card-h) * 0.7); }
+  .hand { padding-top: 4px; padding-bottom: 8px; gap: clamp(6px, 1vw, 14px); }
+  .hand .card.in-hand { --shift: 0px !important; --angle: 0deg !important; }
   .screen-pile {
     width: 50px;
     height: 62px;
