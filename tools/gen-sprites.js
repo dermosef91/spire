@@ -108,15 +108,14 @@ async function generateStyleKey(openai, sharp) {
 
   const result = await withRetry(async () => {
     return openai.images.generate({
-      model: 'gpt-image-1',
+      model: 'gpt-image-2',
       prompt: STYLE_KEY_PROMPT,
       n: 1,
       size: '1024x1024',
-      background: 'transparent',
     });
   });
 
-  logCost('style-key', 'generate', 'gpt-image-1');
+  logCost('style-key', 'generate', 'gpt-image-2');
 
   const b64 = result.data[0].b64_json;
   const rawBuf = Buffer.from(b64, 'base64');
@@ -127,7 +126,7 @@ async function generateStyleKey(openai, sharp) {
   console.log('  ✓ Style-key saved');
 }
 
-async function generateEntity(openai, sharp, entity) {
+async function generateEntity(openai, OpenAI, sharp, entity) {
   const { id, kind, prompt } = entity;
   const outPath = join(SPRITES_DIR, `${id}.png`);
 
@@ -149,21 +148,21 @@ async function generateEntity(openai, sharp, entity) {
 
   // Read style-key as image input for consistency
   const styleKeyBuf = readFileSync(STYLE_KEY_PATH);
-  const styleKeyB64 = styleKeyBuf.toString('base64');
+  // Prepare style key file for OpenAI API with correct mimetype
+  const styleKeyFile = await OpenAI.toFile(styleKeyBuf, 'style-key.png', { type: 'image/png' });
 
   const result = await withRetry(async () => {
     // Use images.edit with the style-key as the base image for consistency
     return openai.images.edit({
-      model: 'gpt-image-1',
-      image: styleKeyBuf,
+      model: 'gpt-image-2',
+      image: styleKeyFile,
       prompt: fullPrompt,
       n: 1,
       size: '1024x1024',
-      background: 'transparent',
     });
   });
 
-  logCost(id, 'edit', 'gpt-image-1');
+  logCost(id, 'edit', 'gpt-image-2');
 
   const b64 = result.data[0].b64_json;
   const rawBuf = Buffer.from(b64, 'base64');
@@ -177,10 +176,51 @@ async function generateEntity(openai, sharp, entity) {
 
 // ── Post-processing ─────────────────────────────────────────────────────────
 async function postProcess(sharp, buf) {
-  // 1. Trim transparent edges
-  // 2. Resize to 512x512 (contain, transparent padding)
-  // 3. Optimize PNG compression
-  let img = sharp(buf);
+  // 1. Load raw pixel data
+  const baseImg = sharp(buf);
+  const { data, info } = await baseImg.raw().toBuffer({ resolveWithObject: true });
+  
+  // 2. Scan and key out neutral-bright background (checkerboard squares)
+  const outputBuffer = Buffer.alloc(info.width * info.height * 4);
+  const channels = info.channels;
+  
+  for (let i = 0; i < info.width * info.height; i++) {
+    const srcIdx = i * channels;
+    const destIdx = i * 4;
+    
+    const r = data[srcIdx];
+    const g = data[srcIdx + 1];
+    const b = data[srcIdx + 2];
+    
+    // Check if pixel is neutral-bright (part of checkerboard background)
+    const isNeutralBright = 
+      r > 150 && 
+      Math.abs(r - g) < 12 && 
+      Math.abs(r - b) < 12 && 
+      Math.abs(g - b) < 12;
+      
+    if (isNeutralBright) {
+      // Key out! Set alpha to 0
+      outputBuffer[destIdx] = 0;
+      outputBuffer[destIdx + 1] = 0;
+      outputBuffer[destIdx + 2] = 0;
+      outputBuffer[destIdx + 3] = 0;
+    } else {
+      outputBuffer[destIdx] = r;
+      outputBuffer[destIdx + 1] = g;
+      outputBuffer[destIdx + 2] = b;
+      outputBuffer[destIdx + 3] = channels === 4 ? data[srcIdx + 3] : 255;
+    }
+  }
+  
+  // 3. Rebuild sharp image from the keyed buffer
+  let img = sharp(outputBuffer, {
+    raw: {
+      width: info.width,
+      height: info.height,
+      channels: 4
+    }
+  });
 
   // Trim transparent border
   try {
@@ -196,7 +236,6 @@ async function postProcess(sharp, buf) {
   });
 
   // Palette quantize toward our theme palette for color consistency
-  // sharp doesn't have direct palette mapping, but we can increase compression
   img = img.png({
     compressionLevel: 9,
     adaptiveFiltering: true,
@@ -243,6 +282,7 @@ async function main() {
 
   // Load OpenAI SDK (only if not dry-run)
   let openai = null;
+  let OpenAIClass = null;
   if (!DRY_RUN) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -253,6 +293,7 @@ async function main() {
     try {
       const { default: OpenAI } = await import('openai');
       openai = new OpenAI({ apiKey });
+      OpenAIClass = OpenAI;
     } catch (err) {
       console.error('❌ openai SDK not installed. Run: npm install openai');
       process.exit(1);
@@ -272,7 +313,7 @@ async function main() {
   const generated = [];
   for (const entity of entities) {
     try {
-      const id = await generateEntity(openai, sharp, entity);
+      const id = await generateEntity(openai, OpenAIClass, sharp, entity);
       if (id) generated.push(id);
     } catch (err) {
       console.error(`  ❌ ${entity.id} failed: ${err.message}`);
