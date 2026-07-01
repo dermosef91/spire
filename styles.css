@@ -330,7 +330,7 @@ body.scene-reward #bg-image.show {
 
 /* ----------------------------- char select / map ----------------------------- */
 @media (min-width: 1024px) and (min-height: 561px) {
-  .scene.charselect, .scene.map {
+  .scene.charselect {
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
@@ -339,6 +339,8 @@ body.scene-reward #bg-image.show {
        heading is never clipped off the top edge. */
     justify-content: safe center;
   }
+  /* .scene.map itself always stretches full-height (see the base map rules)
+     so the board reaches the bottom of the viewport on every breakpoint. */
   /* Desktop combat: keep the fanned hand out from under the pinned energy orb
      and End Turn button. Two levers, because .hand uses justify-content:center
      (so margins alone can't push a too-wide hand off a control — the overflow
@@ -416,36 +418,72 @@ body.scene-reward #bg-image.show {
 .potion.empty { background: rgba(255,170,80,0.05); border: 1px dashed rgba(255,170,80,0.25); color: rgba(255,170,80,0.3); cursor: default; }
 
 /* ----------------------------- map ----------------------------- */
-.map-header { text-align: center; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.08em; }
-.map-header b { color: var(--orange); }
-.map-scroller { max-height: 66vh; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px;
+/* The map scene fills the viewport edge-to-edge below the top bar; the
+   scroller (not this rule) is the flexible element that stretches to the
+   bottom, so the board is never boxed into a fixed-height slice. */
+.scene.map { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+.map-scene { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.map-header {
+  flex: 0 0 auto; position: relative; display: flex; align-items: center; justify-content: center;
+  min-height: 30px; padding: 0 76px; margin-bottom: 8px;
+}
+.map-title { color: var(--muted); letter-spacing: 0.08em; text-align: center; }
+.map-title b { color: var(--orange); }
+.map-scroller { flex: 1 1 auto; min-height: 0; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px;
   background: linear-gradient(180deg, rgba(16,10,6,0.7), rgba(8,5,3,0.85)); padding: 10px 0; -webkit-overflow-scrolling: touch; }
 .map-board { position: relative; margin: 0 auto; }
 .map-edges { position: absolute; left: 0; top: 0; pointer-events: none; }
 .edge { stroke: rgba(255, 122, 26, 0.28); stroke-width: 2; stroke-dasharray: 4 7; animation: dashFlow 16s linear infinite; }
 @keyframes dashFlow { to { stroke-dashoffset: -220; } }
+/* Plain line-art glyphs — no circular badge behind them — connected by the
+   dashed edges above. Sizing is on the wrapper div; the icon fills most of
+   it (see .map-node .svg-ic below) so "bigger node" == "bigger glyph". */
 .map-node {
-  position: absolute; width: 44px; height: 44px; transform: translate(-50%, -50%);
-  border-radius: 50%; display: grid; place-items: center; font-size: 17px; color: var(--muted);
-  background:
-    repeating-radial-gradient(circle, transparent 0 5px, rgba(255,122,26,0.10) 5px 6px),
-    radial-gradient(circle at 50% 50%, #1a1009, #0a0604);
-  border: 1px solid var(--line-soft); cursor: default; transition: all 0.16s ease;
-  box-shadow: inset 0 0 8px rgba(0,0,0,0.6);
+  position: absolute; width: 50px; height: 50px; transform: translate(-50%, -50%);
+  display: grid; place-items: center; color: var(--muted); cursor: default;
+  transition: transform 0.16s ease, filter 0.16s ease, color 0.16s ease;
+  filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75));
 }
-.map-node.reachable { cursor: pointer; border-color: var(--orange); color: var(--cream); animation: nodePulse 1.8s ease-in-out infinite; }
-.map-node.reachable:hover { transform: translate(-50%, -50%) scale(1.2); }
-@keyframes nodePulse { 0%,100% { box-shadow: 0 0 9px rgba(255,106,26,0.4), inset 0 0 8px rgba(0,0,0,0.6); } 50% { box-shadow: 0 0 22px rgba(255,106,26,0.85), inset 0 0 8px rgba(0,0,0,0.6); } }
-.map-node.current { border-color: var(--cream); box-shadow: 0 0 20px rgba(255,210,160,0.7); }
-.node-monster { color: #ff8a5a; } .node-elite { color: var(--ember); border-color: rgba(232,67,26,0.5); }
-.node-boss { width: 56px; height: 56px; font-size: 26px; color: var(--orange); border-color: var(--ember);
-  background: repeating-radial-gradient(circle, transparent 0 6px, rgba(255,80,26,0.14) 6px 7px), radial-gradient(circle, #220d05, #0a0604);
-  animation: bossPulse 2.1s ease-in-out infinite; }
-@keyframes bossPulse { 0%,100% { box-shadow: 0 0 16px rgba(232,67,26,0.5); transform: translate(-50%,-50%) scale(1); } 50% { box-shadow: 0 0 36px rgba(232,67,26,0.95); transform: translate(-50%,-50%) scale(1.06); } }
+.map-node.reachable { cursor: pointer; color: var(--cream); animation: nodePulse 1.8s ease-in-out infinite; }
+.map-node.reachable:hover { transform: translate(-50%, -50%) scale(1.16); }
+@keyframes nodePulse {
+  0%,100% { filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 4px rgba(255,106,26,0.45)); }
+  50% { filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 13px rgba(255,106,26,0.9)); }
+}
+/* The player's current position reads as the largest glyph on the board. */
+.map-node.current { width: 72px; height: 72px; color: var(--cream); z-index: 2;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.8)) drop-shadow(0 0 16px rgba(255,210,160,0.85)); }
+.node-monster { color: #ff8a5a; } .node-elite { color: var(--ember); }
+.node-boss { width: 64px; height: 64px; color: var(--orange); animation: bossPulse 2.1s ease-in-out infinite; }
+@keyframes bossPulse {
+  0%,100% { filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 10px rgba(232,67,26,0.55)); transform: translate(-50%,-50%) scale(1); }
+  50% { filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 24px rgba(232,67,26,0.95)); transform: translate(-50%,-50%) scale(1.06); }
+}
 .node-rest { color: var(--ember); } .node-shop { color: var(--amber); } .node-treasure { color: var(--orange); } .node-event { color: var(--cream); }
-.map-legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 10px; color: var(--muted); font-size: 12px; letter-spacing: 0.05em; }
-.leg { display: inline-flex; align-items: center; gap: 6px; }
-.leg-ic { width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; background: rgba(0,0,0,0.4); border: 1px solid var(--line-soft); font-size: 11px; }
+
+/* Legend collapses into a hover/focus card pinned at the map header's right
+   edge — matches the reference's floating parchment scroll instead of a
+   permanent row eating vertical space. */
+.map-legend-wrap { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
+.map-legend-btn {
+  width: 64px; height: 30px; border-radius: 8px; cursor: pointer; padding: 0;
+  background: rgba(255,170,80,0.06); border: 1px solid var(--line); color: var(--orange);
+  font-family: var(--font-display); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.map-legend-btn:hover, .map-legend-btn:focus-visible { border-color: var(--orange); box-shadow: var(--glow); }
+.map-legend {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 20; width: max-content; max-width: 240px;
+  display: flex; flex-direction: column; gap: 8px; padding: 12px 16px;
+  background: linear-gradient(180deg, rgba(20,13,8,0.96), rgba(10,6,4,0.98));
+  border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow);
+  color: var(--muted); font-size: 12px; letter-spacing: 0.05em;
+  opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.map-legend-wrap:hover .map-legend, .map-legend-wrap:focus-within .map-legend {
+  opacity: 1; transform: none; pointer-events: auto;
+}
+.leg { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.leg-ic { width: 22px; height: 22px; display: inline-grid; place-items: center; flex: 0 0 auto; }
 
 /* ============================================================
    CARDS — black slab, ember double-frame, art panel, type pill
@@ -1304,7 +1342,11 @@ html { -webkit-text-size-adjust: 100%; }
 }
 
 /* Portrait phones / narrow: stack the battlefield, compact the chrome. Card and
-   combatant sizes come from the responsive --card-*/--med tokens above. */
+   combatant sizes come from the responsive --card-h, --card-w and --med tokens
+   above. (NOTE: keep a space between any asterisk and slash in this comment —
+   an asterisk immediately followed by a slash closes a CSS comment early and
+   silently swallows the whole @media block below into a bogus discarded
+   selector; that exact typo broke this block for a long time.) */
 @media (max-width: 760px) {
   .game-title { font-size: clamp(56px, 18vw, 88px); }
   .topbar { gap: 8px; padding: 6px 12px; } .tb-left, .tb-right { gap: 10px; } .tb-left > div { font-size: 14px; }
@@ -1312,7 +1354,12 @@ html { -webkit-text-size-adjust: 100%; }
   .player-side, .enemy-side { height: 50%; }
   .combatant-info { width: min(150px, 42vw); }
   .char-grid { grid-template-columns: 1fr; } .char-blurb { min-height: 0; }
-  .reward-list { max-width: 100%; } .map-legend { font-size: 11px; gap: 8px; }
+  .reward-list { max-width: 100%; } .map-legend { font-size: 11px; gap: 6px; padding: 10px 12px; }
+  /* Free the vertical space the headline used up so the board reaches
+     nearly to the top bar; the legend toggle stays put in the corner. */
+  .map-title { display: none; }
+  .map-header { min-height: 0; padding: 4px 60px; margin-bottom: 6px; }
+  .map-legend-btn { width: 52px; height: 26px; font-size: 10px; }
   .screen-pile {
     width: 60px;
     height: 72px;
@@ -1334,6 +1381,9 @@ html { -webkit-text-size-adjust: 100%; }
 @media (max-height: 560px) {
   .battlefield { grid-template-columns: 1fr 1.3fr; gap: 10px; padding-top: 20px; bottom: 26%; }
   .topbar { margin-bottom: 6px; padding: 4px 12px; } .tb-left > div { font-size: 13px; }
+  .map-title { display: none; }
+  .map-header { min-height: 0; padding: 4px 56px; margin-bottom: 6px; }
+  .map-legend-btn { width: 52px; height: 24px; font-size: 10px; }
   .relic, .potion { width: 28px; height: 28px; }
   .combatant { min-width: 84px; }
   .combatant-info { width: 120px; }
@@ -1416,9 +1466,8 @@ html { -webkit-text-size-adjust: 100%; }
 .relic .svg-ic { width: 76%; height: 76%; }
 .potion:not(.empty) { background: none; border: none; box-shadow: none; }
 .potion .svg-ic { width: 100%; height: 100%; }
-.map-node .svg-ic { width: 62%; height: 62%; }
-.node-boss .svg-ic { width: 66%; height: 66%; }
-.leg-ic .svg-ic { width: 82%; height: 82%; }
+.map-node .svg-ic { width: 84%; height: 84%; }
+.leg-ic .svg-ic { width: 90%; height: 90%; }
 .reward-icon { width: 38px; height: 38px; display: grid; place-items: center; filter: none; font-size: 0; }
 .reward-icon .svg-ic { width: 100%; height: 100%; }
 .event-art, .rest-fire { width: 92px; height: 92px; margin: 10px auto; font-size: 0; filter: none; }

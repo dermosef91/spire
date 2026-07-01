@@ -289,7 +289,7 @@ export class Game {
     const run = this.run;
     const map = run.map;
     const COLS = map.cols, ROWS = map.rows;
-    const colW = 64, rowH = 66, bossSpace = 80, pad = 28;
+    const colW = 72, rowH = 74, bossSpace = 86, pad = 30;
     const width = COLS * colW;
     const height = ROWS * rowH + bossSpace + pad;
 
@@ -298,13 +298,34 @@ export class Game {
       onPotion: (p, i) => this.usePotionOnMap(p, i),
       onHover: (o, n, on) => this.tooltip(o, n, on),
     }));
-    panel.appendChild(el('div', { class: 'map-header', html: `<b>${ACT_NAMES[run.act]}</b> — choose your path upward` }));
+    const header = el('div', { class: 'map-header' });
+    header.appendChild(el('div', { class: 'map-title', html: `<b>${ACT_NAMES[run.act]}</b> — choose your path upward` }));
+    header.appendChild(el('div', { class: 'map-legend-wrap' }, [
+      el('button', { class: 'map-legend-btn', type: 'button', text: 'Legend', attrs: { 'aria-label': 'Show map legend' } }),
+      el('div', { class: 'map-legend', html: legendHtml() }),
+    ]));
+    panel.appendChild(header);
 
     const scroller = el('div', { class: 'map-scroller' });
     const board = el('div', { class: 'map-board', style: { width: width + 'px', height: height + 'px' } });
 
     const X = (col) => col * colW + colW / 2;
     const Y = (row) => (ROWS - 1 - row) * rowH + rowH / 2 + bossSpace;
+    // Deterministic per-node offset so the layout reads as hand-drawn rather
+    // than gridded, while staying stable across re-renders (edges line up
+    // with the icons they connect) — no seed/RNG state to persist.
+    const JITTER_X = 13, JITTER_Y = 11;
+    const jitter = (row, col) => {
+      const h = ((row * 73856093) ^ (col * 19349663)) >>> 0;
+      return {
+        x: ((h % 1000) / 1000 - 0.5) * JITTER_X,
+        y: (((h >> 10) % 1000) / 1000 - 0.5) * JITTER_Y,
+      };
+    };
+    const posOf = (row, col) => {
+      const j = jitter(row, col);
+      return { x: X(col) + j.x, y: Y(row) + j.y };
+    };
 
     // edges (SVG)
     const NS = 'http://www.w3.org/2000/svg';
@@ -318,12 +339,13 @@ export class Game {
       for (let c = 0; c < COLS; c++) {
         const node = map.grid[r][c];
         if (!node) continue;
+        const from = posOf(r, c);
         const targets = r === ROWS - 1 ? [{ boss: true }] : node.next.map((nc) => ({ row: r + 1, col: nc }));
         for (const t of targets) {
+          const to = t.boss ? { x: width / 2, y: bossSpace / 2 } : posOf(t.row, t.col);
           const line = document.createElementNS(NS, 'line');
-          line.setAttribute('x1', X(c)); line.setAttribute('y1', Y(r));
-          line.setAttribute('x2', t.boss ? width / 2 : X(t.col));
-          line.setAttribute('y2', t.boss ? bossSpace / 2 : Y(t.row));
+          line.setAttribute('x1', from.x); line.setAttribute('y1', from.y);
+          line.setAttribute('x2', to.x); line.setAttribute('y2', to.y);
           line.setAttribute('class', 'edge');
           svg.appendChild(line);
         }
@@ -351,14 +373,14 @@ export class Game {
       for (let c = 0; c < COLS; c++) {
         const node = map.grid[r][c];
         if (!node) continue;
-        placeNode(node.type, X(c), Y(r), `${r}-${c}`, { row: r, col: c });
+        const p = posOf(r, c);
+        placeNode(node.type, p.x, p.y, `${r}-${c}`, { row: r, col: c });
       }
     }
     placeNode('boss', width / 2, bossSpace / 2, 'boss', { boss: true });
 
     scroller.appendChild(board);
     panel.appendChild(scroller);
-    panel.appendChild(el('div', { class: 'map-legend', html: legendHtml() }));
     this.setScene(panel, 'map');
 
     // Scroll to center the player's position if it's off-screen, otherwise scroll to the bottom
