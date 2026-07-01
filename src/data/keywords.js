@@ -9,7 +9,6 @@ export const POWERS = {
   block: {
     name: 'Block',
     type: 'buff',
-    icon: '🛡',
     desc: 'Absorbs incoming damage. Most Block fades at the start of your turn.',
   },
 
@@ -17,57 +16,48 @@ export const POWERS = {
   strength: {
     name: 'Resolve',
     type: 'buff',
-    icon: '💪',
     desc: 'Increases attack damage by {n} per hit.',
   },
   dexterity: {
     name: 'Grace',
     type: 'buff',
-    icon: '🌀',
     desc: 'Increases Block gained from cards by {n}.',
   },
   regen: {
     name: 'Regrowth',
     type: 'buff',
     duration: 'turn',
-    icon: '🌿',
     desc: 'Heal {n} HP at the end of your turn, then it decreases by 1.',
   },
   metallicize: {
     name: 'Bronzeplate',
     type: 'buff',
-    icon: '🥉',
     desc: 'At the end of your turn, gain {n} Block.',
   },
   thorns: {
     name: 'Backlash',
     type: 'buff',
-    icon: '🌵',
     desc: 'When attacked, deal {n} damage back to the attacker.',
   },
   artifact: {
     name: 'Charm',
     type: 'buff',
-    icon: '🔮',
     desc: 'Negates the next {n} debuffs applied to you.',
   },
   intangible: {
     name: 'Phase',
     type: 'buff',
     duration: 'turn',
-    icon: '👻',
     desc: 'Reduce ALL damage and HP loss to 1 this turn.',
   },
   rhythm: {
     name: 'Rhythm',
     type: 'buff',
-    icon: '🥁',
     desc: 'Each Verse played this combat adds power to your refrains.',
   },
   focus: {
     name: 'Focus',
     type: 'buff',
-    icon: '✨',
     desc: 'Increases the potency of channeled Spirits by {n}.',
   },
 
@@ -76,49 +66,42 @@ export const POWERS = {
     name: 'Exposed',
     type: 'debuff',
     duration: 'turn',
-    icon: '🎯',
     desc: 'Takes 50% more damage from attacks.',
   },
   weak: {
     name: 'Sapped',
     type: 'debuff',
     duration: 'turn',
-    icon: '🥀',
     desc: 'Deals 25% less attack damage.',
   },
   frail: {
     name: 'Brittle',
     type: 'debuff',
     duration: 'turn',
-    icon: '💔',
     desc: 'Gains 25% less Block from cards.',
   },
   poison: {
     name: 'Blight',
     type: 'debuff',
     duration: 'value',
-    icon: '☠',
     desc: 'Lose {n} HP at the start of turn, then it decreases by 1.',
   },
   entangle: {
     name: 'Snared',
     type: 'debuff',
     duration: 'turn',
-    icon: '🕸',
     desc: 'Cannot play Attacks this turn.',
   },
   strengthDown: {
     name: 'Resolve Down',
     type: 'debuff',
     duration: 'turn',
-    icon: '📉',
     desc: 'At end of turn, lose {n} Resolve.',
   },
   noBlock: {
     name: 'Sundered',
     type: 'debuff',
     duration: 'turn',
-    icon: '🚫',
     desc: 'Cannot gain Block this turn.',
   },
 };
@@ -136,7 +119,4 @@ export const KEYWORDS = {
 
 export function powerName(key) {
   return POWERS[key]?.name || key;
-}
-export function powerIcon(key) {
-  return POWERS[key]?.icon || '•';
 }

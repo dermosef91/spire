@@ -28,7 +28,6 @@ export class Combat {
     this.player = {
       isPlayer: true,
       name: run.character.name,
-      glyph: run.character.glyph,
       hp: run.hp,
       maxHp: run.maxHp,
       block: 0,
@@ -83,7 +82,7 @@ export class Combat {
     const block = bp.startBlock || 0;
     return {
       id, bp, idx,
-      name: bp.name, glyph: bp.glyph,
+      name: bp.name,
       hp, maxHp: hp, block,
       powers: {}, alive: true,
       isPlayer: false,

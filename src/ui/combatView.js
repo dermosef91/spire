@@ -6,7 +6,7 @@ import { el, clear } from '../core/util.js';
 import { renderCard, topBar } from './components.js';
 import { POWERS } from '../data/keywords.js';
 import { audio } from '../audio.js';
-import { ensureFxLayer, floatText, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine } from './fx.js';
+import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine } from './fx.js';
 import { combatModel, INTENT, UI, powerIcon } from './icons.js';
 import { spriteOrSvg, hasSprite } from './sprites.js';
 import { background } from '../fx/background.js';
@@ -726,7 +726,7 @@ export class CombatView {
     if (type === 'power') {
       const el2 = this.elFor(payload.target); if (!el2) return;
       const def = POWERS[payload.key]; if (!def) return;
-      floatText(layer, el2, `${def.icon}${payload.amount > 0 ? '+' : ''}${payload.amount}`, def.type === 'buff' ? 'buff' : 'debuff');
+      floatHTML(layer, el2, `<i class="pip-ic">${powerIcon(payload.key)}</i>${payload.amount > 0 ? '+' : ''}${payload.amount}`, def.type === 'buff' ? 'buff' : 'debuff');
       return;
     }
     if (type === 'death') {

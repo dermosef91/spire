@@ -30,6 +30,23 @@ export function floatText(layer, targetEl, text, kind = 'damage') {
   setTimeout(() => n.remove(), 1100);
 }
 
+// Like floatText, but the payload is markup (e.g. an inline SVG icon + a
+// number) rather than plain text.
+export function floatHTML(layer, targetEl, html, kind = 'damage') {
+  if (!layer || !targetEl) return;
+  const lr = layer.getBoundingClientRect();
+  const tr = targetEl.getBoundingClientRect();
+  const x = tr.left - lr.left + tr.width / 2 + (Math.random() * 36 - 18);
+  const y = tr.top - lr.top + tr.height * 0.32;
+  const n = document.createElement('div');
+  n.className = `float-num float-${kind}`;
+  n.innerHTML = html;
+  n.style.left = x + 'px';
+  n.style.top = y + 'px';
+  layer.appendChild(n);
+  setTimeout(() => n.remove(), 1100);
+}
+
 export function hitFlash(el, kind = 'damage') {
   if (!el) return;
   const cls = kind === 'block' ? 'flash-block' : kind === 'heal' ? 'flash-heal' : 'flash-hit';
