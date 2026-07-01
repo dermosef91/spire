@@ -676,7 +676,7 @@ export class Game {
       this.deckOverlay((c) => canUpgrade(c), (entry) => {
         run.deck[entry._i].upgraded = true;
         this.resultThenMap(ch.effect(run));
-      }, 'Upgrade which card?');
+      }, 'Upgrade which card?', 'cardflip');
       return;
     }
     if (ch.flow === 'removeForGold') {
@@ -802,7 +802,7 @@ export class Game {
   }
 
   // ----------------------------------------------------------- deck overlay (for upgrade/remove)
-  deckOverlay(filterFn, onPick, title) {
+  deckOverlay(filterFn, onPick, title, sound) {
     const run = this.run;
     const overlay = el('div', { class: 'overlay' });
     const box = el('div', { class: 'overlay-box deck-overlay' });
@@ -815,6 +815,7 @@ export class Game {
       const node = renderCard(inst, {
         disabled: !ok,
         onClick: ok ? () => {
+          if (sound) audio.play(sound);
           this.tooltip(null, null, false);
           document.body.removeChild(overlay);
           onPick(entry);
@@ -837,7 +838,7 @@ export class Game {
   smithUpgrade(onConfirm) {
     this.deckOverlay((c) => canUpgrade(c), (entry) => {
       this.upgradePreview(entry, () => onConfirm(entry), () => this.smithUpgrade(onConfirm));
-    }, 'Upgrade which card?');
+    }, 'Upgrade which card?', 'cardflip');
   }
 
   // Side-by-side preview of a card and its upgraded form, gated by a confirm.
