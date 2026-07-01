@@ -593,7 +593,12 @@ export class Combat {
 
     await this.enemyPhase();
 
-    if (!this.over) this.startPlayerTurn(false);
+    if (!this.over) {
+      // Brief pause after the enemy phase settles so "Your Turn" doesn't fire
+      // in the same instant the last enemy's hit lands.
+      await wait(600);
+      this.startPlayerTurn(false);
+    }
     this.animating = false;
     this.notify();
   }
@@ -602,7 +607,7 @@ export class Combat {
     // Announce the enemy turn and let the banner read before any foe acts, so
     // the first strike doesn't land in the same instant the phase begins.
     this.fx('announce', { text: 'Enemy Turn', kind: 'enemy' });
-    await wait(700);
+    await wait(850);
     for (const e of this.enemies) {
       if (!e.alive || this.over) continue;
       e.block = 0;
@@ -615,7 +620,7 @@ export class Combat {
       // Float the move name over the enemy, then give it a beat before the
       // action resolves so the attack/skill reads as a consequence of the name.
       this.fx('enemyMove', { source: e, name: move.name, isAttack });
-      await wait(600);
+      await wait(750);
       if (this.over || !e.alive) continue;
       if (!isAttack) {
         this.fx('skillstart', { source: e });
@@ -623,7 +628,7 @@ export class Combat {
 
       move.run(this, e);
       this.notify();
-      await wait(420);
+      await wait(550);
       e.history.push(e.move);
       e.last = e.move;
       e.turn += 1;
