@@ -1247,12 +1247,22 @@ html { -webkit-text-size-adjust: 100%; }
   .combat-log { min-height: 12px; font-size: 11px; margin: auto 0 1px; }
   .combat-controls { bottom: 56px; max-width: 780px; padding: 0 8px; --energy-shift: 50px; }
   .energy-orb { width: clamp(40px, 9vh, 56px); height: clamp(40px, 9vh, 56px); font-size: clamp(16px, 4vh, 22px); }
-  /* Bigger, legible hand in landscape: enlarge the cards and flatten the fan
-     (the rotation/downward dip pushes cards off the short bottom edge and
-     skews the text), so a tight landscape gets an upright, readable row. */
-  .combat-scene { --card-h: clamp(150px, 34vh, 196px); --card-w: calc(var(--card-h) * 0.7); }
-  .hand { padding-top: 4px; padding-bottom: 8px; gap: clamp(6px, 1vw, 14px); }
-  .hand .card.in-hand { --shift: 0px !important; --angle: 0deg !important; }
+  /* Bigger, legible hand in landscape: enlarge the cards (a bit less than
+     before so a normal-size hand still fits the narrower safe zone below).
+     The fan (rotation + downward dip) is kept, but .hand gets extra bottom
+     padding so the dip has room before combat-scene's overflow:hidden crops
+     it. Its side margins are carved out to match .combat-controls' geometry
+     (percentages resolve against the same containing block as .hand, so
+     these track it exactly: 780px cap, 8px padding, the energy orb's
+     shift+width on the left, the End Turn button's width on the right) so
+     the row can't slide under the pinned controls — overflow spills into
+     the existing horizontal scroll instead of hiding under a button. */
+  .combat-scene { --card-h: clamp(132px, 32vh, 180px); --card-w: calc(var(--card-h) * 0.7); }
+  .hand {
+    padding-top: 4px; padding-bottom: 60px; gap: clamp(6px, 1vw, 14px);
+    margin-left: calc(max(0px, (100% - 780px) / 2) + 102px);
+    margin-right: calc(max(0px, (100% - 780px) / 2) + 176px);
+  }
   .screen-pile {
     width: 50px;
     height: 60px;
@@ -1306,6 +1316,45 @@ html { -webkit-text-size-adjust: 100%; }
 /* character-select portrait */
 .char-glyph { position: relative; width: 156px; height: 156px; margin: 0 auto 2px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6)); }
 .char-glyph .svg-ic { width: 100%; height: 100%; }
+
+/* Short viewports (landscape phones): the title and character-select screens
+   are plain centered/stacked layouts sized for tall viewports, so on a short
+   landscape phone their content (title + up to 4 buttons, or 3 full char
+   cards) runs well past the fold. Compact both so the primary actions are
+   visible without scrolling. */
+@media (max-height: 560px) {
+  .title { min-height: 0; padding: 8px 16px; }
+  .title-screen { max-width: 640px; }
+  .game-title { font-size: clamp(30px, 15vh, 60px); text-indent: 0; }
+  .title-ornament { margin: 6px auto 8px; }
+  .game-subtitle { font-size: 14px; margin-bottom: 8px; }
+  .title-lore { font-size: 12px; line-height: 1.4; margin: 6px auto; }
+  .title-buttons {
+    flex-direction: row; flex-wrap: wrap; justify-content: center;
+    max-width: 480px; gap: 8px; margin: 10px auto;
+  }
+  .title-buttons .btn { flex: 1 1 calc(50% - 8px); min-width: 130px; min-height: 32px; padding: 6px 10px; font-size: 11px; }
+  .title-meta { font-size: 10px; margin-top: 4px; }
+
+  .charselect { padding-top: 2px; }
+  .charselect h2 { font-size: 18px; margin-bottom: 8px; }
+  .char-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
+  .char-card { padding: 8px; gap: 3px; }
+  .char-glyph { width: 56px; height: 56px; margin: 0 auto; }
+  .char-name { font-size: 15px; }
+  .char-title { font-size: 8px; }
+  .char-hp { font-size: 11px; }
+  .char-blurb {
+    min-height: 0; font-size: 10px; line-height: 1.25;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .char-relic {
+    min-height: 0; font-size: 9px; padding: 4px 6px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .char-card .btn { min-height: 28px; min-width: 0; padding: 4px 14px; font-size: 11px; }
+  .charselect > .btn { min-height: 30px; padding: 5px 20px; font-size: 12px; }
+}
 
 /* combat medallion model fills the disc; whole model floats, parts animate */
 .glyph { display: grid; place-items: center; overflow: visible; }

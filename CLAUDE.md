@@ -44,6 +44,32 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
 - Mobile + reduced-motion must keep working; test both orientations after UI work.
 - **Syntax Check**: Before committing or deploying, always verify modified JavaScript files using `node --check <path_to_file>` to catch syntax errors like unclosed blocks or brackets.
 - **Auto-Update Learnings**: On every action/task, if you discover a project-specific gotcha, solve a debugging issue, or establish a new convention/pattern, you must immediately update `CLAUDE.md` and `.agents/AGENTS.md` to persist this learning.
+- **Landscape-phone breakpoint (`@media (max-height: 560px)`)**: this is the
+  single hook for short viewports. `.title` and `.charselect` are plain
+  vertically-centered/stacked layouts sized for tall screens — on a short
+  landscape phone their content (title + up to 4 buttons; 3 full char cards)
+  overflows the fold, so compact overrides for them live in a **second**
+  `@media (max-height: 560px)` block placed after `.char-glyph`'s base rule
+  (styles.css, near the "character-select portrait" section) — a rule inside
+  a media query does **not** out-rank a later non-media rule of equal
+  specificity, so an override must be placed after what it overrides in
+  source order regardless of the media query. In `.combat-scene`, only
+  `.battlefield` is absolutely positioned; `.combat-topbar`/`.combat-log`/
+  `.hand` are normal flex-column children and `.combat-log`'s
+  `margin-top: auto` shoves the log+hand flush to the bottom, so `.hand`'s
+  bottom edge sits right at the viewport edge — the fanned card dip
+  (`--shift`/`--angle` from combatView.js, rotate+translateY) needs generous
+  `padding-bottom` on `.hand` or it gets cropped by `.combat-scene`'s
+  `overflow: hidden`. `.combat-controls` (energy orb + End Turn) is
+  absolutely positioned and pinned to fixed screen-relative spots regardless
+  of hand width, so a wide fanned hand can slide underneath it — give `.hand`
+  `margin-left`/`margin-right` (not `max-width` + `margin: auto`, which
+  centers instead of tracking the asymmetric energy-orb/End-Turn insets)
+  computed with the **same `%`-based `calc()`** pattern as
+  `.combat-controls` (e.g. `calc(max(0px, (100% - 780px) / 2) + Npx)`) so the
+  safe zone tracks exactly; using `100vw` instead of `100%` is wrong here
+  because `.combat-scene` is itself inset from the viewport by a few px, so
+  `100vw`-based math drifts from `.combat-controls`' real position.
 
 
 ## Asset Generation
