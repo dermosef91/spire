@@ -20,6 +20,7 @@ export class CombatView {
     this.root = null;
     this.scene = null;
     this.pendingCard = null;
+    this.previewCard = null; // first-tap preview; a second tap on it commits
     this.onEnd = null;
     this.ended = false;
     this.drag = null;
@@ -46,7 +47,22 @@ export class CombatView {
     this.combat.fx = (type, payload) => this.onFx(type, payload);
     this._lastHandCards = [];
     this.build();
-    this.combat.start();
+    // Slower combat open: show a "Battle Start" banner first, then let the
+    // opening draw play out after it so cards deal in one-by-one rather than
+    // appearing underneath the popup.
+    this.announce('Battle Start', { kind: 'battle' });
+    setTimeout(() => { if (this.scene && !this.combat.over) this.combat.start(); }, 650);
+  }
+
+  // Centered turn/battle announcement banner. Purely cosmetic — dropped into the
+  // fx layer and self-removes once its CSS animation finishes.
+  announce(text, opts = {}) {
+    const layer = this.fxLayer;
+    if (!layer) return;
+    const kind = opts.kind || 'turn';
+    const node = el('div', { class: `combat-announce announce-${kind}`, text });
+    layer.appendChild(node);
+    setTimeout(() => { node.remove(); }, opts.duration || 1150);
   }
 
   build() {
@@ -176,6 +192,9 @@ export class CombatView {
       const node = this.els[eidOf(e)];
       if (node) node.classList.toggle('targetable', targeting && e.alive);
     }
+
+    // Drop a stale preview if that card has left the hand (played/discarded).
+    if (this.previewCard && !c.hand.some((cd) => cd.uid === this.previewCard.uid)) this.previewCard = null;
 
     clear(this.logHolder).appendChild(el('div', { text: c.logs.slice(-2).join('   ·   ') }));
     this.renderControls();
@@ -401,15 +420,17 @@ export class CombatView {
       const playable = c.canPlay(card);
       const affordable = playable ? 'affordable ' : '';
       const combo = (playable && this.comboHint(card)) ? 'combo-ready ' : '';
+      const isPreview = this.previewCard && this.previewCard.uid === card.uid;
       const node = renderCard(card, {
         disabled: !playable,
-        class: 'in-hand ' + affordable + combo + (this.pendingCard === card ? 'selected' : ''),
+        class: 'in-hand ' + affordable + combo + (this.pendingCard === card ? 'selected ' : '') + (isPreview ? 'previewing' : ''),
         onHover: (cd, n, on) => { if (!this.drag) this.game.tooltip(cd, n, on, 'card'); },
       });
 
       const diff = idx - mid;
-      const angle = diff * Math.min(8, 32 / Math.max(1, N));
-      const shift = Math.pow(Math.abs(diff), 1.5) * 5;
+      // A previewed card sits straight and un-dipped so it reads as a clean preview.
+      const angle = isPreview ? 0 : diff * Math.min(8, 32 / Math.max(1, N));
+      const shift = isPreview ? 0 : Math.pow(Math.abs(diff), 1.5) * 5;
 
       node.style.setProperty('--angle', `${angle}deg`);
       node.style.setProperty('--shift', `${shift}px`);
@@ -443,7 +464,8 @@ export class CombatView {
               const dy = drawRect.top - nodeRect.top;
 
               const fannedTransform = window.getComputedStyle(node).transform;
-              const delay = Math.min(newIdx * 85, 400);
+              // Widen the stagger a touch so cards clearly deal in one-by-one.
+              const delay = Math.min(newIdx * 95, 520);
 
               const anim = node.animate([
                 {
@@ -459,6 +481,9 @@ export class CombatView {
                 easing: 'cubic-bezier(0.18, 0.89, 0.32, 1.12)',
                 delay: delay
               });
+
+              // Soft blip as each card lands, reinforcing the card-by-card deal.
+              setTimeout(() => { if (document.body.contains(node)) audio.play('draw'); }, delay);
 
               anim.onfinish = () => {
                 node.style.opacity = '';
@@ -485,11 +510,21 @@ export class CombatView {
   clickCard(card) {
     const c = this.combat;
     if (c.animating || c.over) return;
-    if (!c.canPlay(card)) { audio.play('error'); return; }
+    // First tap previews: the card straightens and grows so it can be read.
+    // A second tap on the same card commits it. Drag-to-play bypasses this.
+    if (this.previewCard !== card) {
+      this.previewCard = card;
+      this.pendingCard = null;
+      this.update();
+      return;
+    }
+    // Second tap on the previewed card → commit.
+    this.previewCard = null;
+    if (!c.canPlay(card)) { audio.play('error'); this.update(); return; }
     if (card.target === 'enemy') {
       const living = c.livingEnemies();
       if (living.length === 1) { this.playCard(card, living[0]); return; }
-      this.pendingCard = this.pendingCard === card ? null : card;
+      this.pendingCard = card;
       this.update();
     } else {
       this.playCard(card, c.randomEnemy());
@@ -500,6 +535,7 @@ export class CombatView {
     if (!this.pendingCard) return;
     const card = this.pendingCard;
     this.pendingCard = null;
+    this.previewCard = null;
     this.playCard(card, enemy);
   }
 
@@ -592,6 +628,7 @@ export class CombatView {
   }
 
   playCard(card, target) {
+    this.previewCard = null;
     audio.play(card.type === 'attack' ? 'attack' : 'skill');
     // brief play animation on the card element
     const cardEl = this.handHolder.querySelector(`.card[data-uid="${card.uid}"]`);
@@ -617,6 +654,7 @@ export class CombatView {
   endTurn() {
     audio.play('endturn');
     this.pendingCard = null;
+    this.previewCard = null;
     this.combat.endTurn();
   }
 
@@ -647,6 +685,15 @@ export class CombatView {
   onFx(type, payload) {
     const layer = this.fxLayer;
     if (!layer) return;
+    if (type === 'announce') {
+      this.announce(payload.text, { kind: payload.kind });
+      return;
+    }
+    if (type === 'enemyMove') {
+      const el2 = this.elFor(payload.source);
+      if (el2 && payload.name) floatText(layer, el2, payload.name, 'name');
+      return;
+    }
     if (type === 'attackstart') {
       const src = this.elFor(payload.source);
       lunge(src, payload.source && payload.source.isPlayer ? 'right' : 'left');

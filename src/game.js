@@ -97,6 +97,26 @@ export class Game {
     if (bg) bg.setAct(this.run ? this.run.act : 'title');
   }
 
+  // Fade a full-screen veil in, swap scenes underneath it at peak opacity, then
+  // fade it back out — a slower, less abrupt handoff when entering a map node.
+  // `swapFn` performs the actual scene change (usually a setScene call).
+  veilTransition(swapFn) {
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const inMs = reduce ? 140 : 280;
+    const holdMs = reduce ? 40 : 110;
+    const outMs = reduce ? 140 : 340;
+    const veil = el('div', { class: 'scene-veil' });
+    document.body.appendChild(veil);
+    requestAnimationFrame(() => veil.classList.add('veil-on'));
+    setTimeout(() => {
+      swapFn();
+      setTimeout(() => {
+        veil.classList.remove('veil-on');
+        setTimeout(() => veil.remove(), outMs + 60);
+      }, holdMs);
+    }, inMs);
+  }
+
   tooltip(obj, node, on, kind) {
     if (!on) { this.tip.style.display = 'none'; return; }
     let html = '';
@@ -371,17 +391,20 @@ export class Game {
     this.run.position = pos;
     const node = nodeAt(this.run.map, pos);
     const type = pos.boss ? 'boss' : node.type;
-    switch (type) {
-      case 'monster': this.startMonster(); break;
-      case 'elite': this.startElite(); break;
-      case 'boss': this.startBoss(); break;
-      case 'event': this.showEvent(); break;
-      case 'shop': this.showShop(); break;
-      case 'rest': this.showRest(); break;
-      case 'treasure': this.showTreasure(); break;
-      default: this.showMap();
-    }
     saveRun(this.run);
+    // Ease into the node behind a fade veil so combat/events don't snap in.
+    this.veilTransition(() => {
+      switch (type) {
+        case 'monster': this.startMonster(); break;
+        case 'elite': this.startElite(); break;
+        case 'boss': this.startBoss(); break;
+        case 'event': this.showEvent(); break;
+        case 'shop': this.showShop(); break;
+        case 'rest': this.showRest(); break;
+        case 'treasure': this.showTreasure(); break;
+        default: this.showMap();
+      }
+    });
   }
 
   // ----------------------------------------------------------- combat entry
@@ -418,7 +441,7 @@ export class Game {
       setTimeout(() => {
         if (combat.over) { finishTutorial(); return; }
         new CombatTutorial(this, combat, finishTutorial).start();
-      }, 800);
+      }, 1700); // after the Battle Start popup + deferred opening draw settle
     }
   }
 

@@ -34,6 +34,11 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   (horizontal overflow, controls clipped/off-screen, hand cards overlapping the
   pinned energy orb / End Turn). A clean run reports `0 issue(s)`; the committed
   `docs/qa/*.jpg` are the baseline. Regenerate + eyeball after any layout change.
+  **Gotcha**: the qa run wipes/recreates `docs/qa/`, which deletes the committed
+  `docs/qa/README.md` — `git checkout -- docs/qa/README.md` to restore it before
+  committing. Also, because combat now opens deferred (Battle Start banner, then
+  `combat.start()` ~650ms later), the qa combat capture already waits long enough
+  for the hand to settle; if you shorten those waits, re-check the combat shot.
 
 ## Architecture (src/)
 - `main.js` — bootstrap; mounts the animated background and the Game controller.
@@ -48,6 +53,19 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
 - `combat/combat.js` — the turn-based engine (energy, piles, powers, orbs,
   enemy AI, win/loss). Emits visual `fx(type, payload)` events that are
   **purely cosmetic** — never put game logic in the view's fx handler.
+  Cosmetic-pacing events: `announce` (`{text,kind}` → `CombatView.announce()`
+  centered banner: `battle`/`player`/`enemy` kinds for Battle Start / Your Turn /
+  Enemy Turn) and `enemyMove` (`{source,name}` → move name floated over the enemy
+  via `floatText(...,'name')`). `enemyPhase` deliberately `await`s after the
+  Enemy-Turn banner and after each move-name float so the strike never lands in
+  the same instant it's announced — keep those waits when editing the loop.
+  Combat also **opens deferred**: `CombatView.mount` shows the Battle Start banner
+  and calls `combat.start()` ~650ms later, so the opening draw plays *after* the
+  popup; `beginCombat`'s tutorial kickoff (game.js, ~1700ms) is timed to that.
+  Tap-to-play is **two-tap**: first tap sets `previewCard` (card straightens +
+  enlarges via `.previewing`, `--angle/--shift` zeroed), second tap commits;
+  drag-to-play bypasses the preview. Node entry runs through `Game.veilTransition`
+  (a `.scene-veil` fade) so combat/events don't snap in.
 - `map/mapgen.js` — branching seeded act maps.
 - `ui/` — `components` (cards/relics/potions/top bar), `combatView` (updates
   combatants **in place** so FX can animate), `fx` (floating numbers, shakes,
@@ -61,8 +79,9 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
 - `src/ui/tutorial.js` (`CombatTutorial`) is a single **coaching banner** pinned
   to the top of the screen, shown once on the **first-ever combat**, gated by
   `meta.tutorialDone` (persisted via `save.js`; set `true` when it finishes **or**
-  is skipped). `game.js`'s `beginCombat` kicks it off ~800ms after `view.mount`
-  (letting the opening draw settle) when `!meta.tutorialDone && kind==='monster'`.
+  is skipped). `game.js`'s `beginCombat` kicks it off ~1700ms after `view.mount`
+  (letting the deferred Battle-Start popup + opening draw settle) when
+  `!meta.tutorialDone && kind==='monster'`.
 - It never touches game logic and never blocks the board — the banner is small
   and the rest of the screen stays fully playable. It reads live combat state
   (`energy`, `hand`, `turn`, `over`) by **chaining** `combat.onUpdate` (restores

@@ -131,6 +131,7 @@ class Audio {
       case 'defeat': [330, 247, 196, 147].forEach((f, i) => this.tone(f, 0.3, 'sine', 0.12, i * 0.14)); break;
       case 'select': this.tone(587, 0.08, 'sine', 0.1); break;
       case 'cardflip': this.tone(720, 0.05, 'triangle', 0.09); this.tone(280, 0.07, 'triangle', 0.06, 0.035); break;
+      case 'draw': this.tone(660, 0.05, 'sine', 0.05); break;
       default: break;
     }
   }
