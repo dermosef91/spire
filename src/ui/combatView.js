@@ -785,6 +785,14 @@ export class CombatView {
       ring(layer, el2, 'rgba(94,169,230,0.9)');
       return;
     }
+    if (type === 'warded') {
+      // Per-turn damage cap reached (e.g. Heart of Static's Invincibility).
+      const el2 = this.elFor(payload.target); if (!el2) return;
+      floatText(layer, el2, 'WARDED', 'blocked');
+      hitFlash(el2, 'block');
+      ring(layer, el2, 'rgba(230,180,90,0.9)');
+      return;
+    }
     if (type === 'heal') {
       const el2 = this.elFor(payload.entity); if (!el2) return;
       floatText(layer, el2, `+${payload.amount}`, 'heal');

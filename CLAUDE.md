@@ -66,6 +66,13 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   enlarges via `.previewing`, `--angle/--shift` zeroed), second tap commits;
   drag-to-play bypasses the preview. Node entry runs through `Game.veilTransition`
   (a `.scene-veil` fade) so combat/events don't snap in.
+  Enemies choose moves via `bp.pick(s, c, rng)`; prefer `rng.weighted(...)` +
+  the player-state helpers in `enemies.js` (`playerLowHp`/`playerBlocked`/
+  `playerLacks`/`selfLowHp`) over fixed `turn % n` cycles. A blueprint
+  `dmgCapPerTurn` field caps damage taken per player turn (Heart of Static's
+  Invincibility) — enforced in `applyDamage`, reset in `startPlayerTurn`,
+  shown as a display-only `invincibility` pip. Ascension per-hit damage
+  scaling flows through `run.enemyDamageMult()` applied in `enemyAttack`.
 - `map/mapgen.js` — branching seeded act maps.
 - `ui/` — `components` (cards/relics/potions/top bar), `combatView` (updates
   combatants **in place** so FX can animate), `fx` (floating numbers, shakes,

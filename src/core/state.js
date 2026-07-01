@@ -19,6 +19,10 @@ export const ASCENSION_LEVELS = [
   { lvl: 6, name: 'Cruel Crowns', desc: 'Bosses have 25% more HP.' },
   { lvl: 7, name: 'Frayed Vessel', desc: 'Begin each run at 90% HP.' },
   { lvl: 8, name: 'Relentless Spire', desc: 'Elites and normal enemies gain a further 10% HP.' },
+  { lvl: 9, name: 'Sharpened Static', desc: 'All enemies deal 10% more damage.' },
+  { lvl: 10, name: 'Hoarded Reserves', desc: 'Carry one fewer potion (2 slots).' },
+  { lvl: 11, name: 'Crowned in Wrath', desc: 'Bosses begin combat with 2 Resolve.' },
+  { lvl: 12, name: 'The Spire Bites', desc: 'Enemies deal a further 10% more damage.' },
 ];
 export const MAX_ASCENSION = ASCENSION_LEVELS.length;
 
@@ -35,7 +39,7 @@ export class RunState {
     this.gold = ch.startGold;
     if (this.ascension >= 3) this.gold = Math.floor(this.gold * 0.75); // A3 Lean Purse
     this.act = 1;
-    this.maxPotions = 3;
+    this.maxPotions = (this.ascension >= 10) ? 2 : 3; // A10 Hoarded Reserves
     this.potions = [];
     this.relics = [];
     this.deck = ch.deck.map((id) => ({ id, upgraded: false }));
@@ -91,6 +95,15 @@ export class RunState {
     return m;
   }
   restHealFraction() { return (this.ascension >= 4) ? 0.20 : 0.30; } // A4 Shallow Rest
+
+  // Damage multiplier applied to every enemy attack (ascension scaling).
+  enemyDamageMult() {
+    const a = this.ascension || 0;
+    let m = 1;
+    if (a >= 9) m *= 1.10;   // A9 Sharpened Static
+    if (a >= 12) m *= 1.10;  // A12 The Spire Bites
+    return m;
+  }
 
   // -------- hp / gold --------
   heal(n) { this.hp = Math.min(this.maxHp, this.hp + n); }

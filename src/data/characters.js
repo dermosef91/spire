@@ -29,7 +29,7 @@ export const CHARACTERS = {
     startGold: 99,
     relic: 'griot_drum',
     blurb:
-      'Keeper of star-songs, he weaponizes memory and rhythm. His Verses stack Blight and tempo until the enemy unravels mid-chorus.',
+      'Keeper of star-songs, he weaponizes memory and song. His Verses stack Blight and tempo until the enemy unravels mid-chorus.',
     deck: ['jab', 'jab', 'jab', 'jab', 'jab', 'refrain', 'refrain', 'refrain', 'refrain', 'cutting_verse'],
     cardPool: [
       'blight_needle', 'quickstep', 'double_tap', 'crescendo', 'deflect', 'shard_burst', 'backbeat',

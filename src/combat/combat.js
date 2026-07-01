@@ -86,6 +86,8 @@ export class Combat {
       hp, maxHp: hp, block,
       powers: {}, alive: true,
       isPlayer: false,
+      dmgCapPerTurn: bp.dmgCapPerTurn || 0, // per-player-turn damage cap (0 = uncapped)
+      dmgTakenThisTurn: 0,
       turn: 1, history: [], last: null,
       move: null, intent: null,
       run: this.run,
@@ -112,6 +114,14 @@ export class Combat {
     // Innate cards to opening hand
     const innate = this.drawPile.filter((c) => c.innate);
     for (const c of innate) { this.drawPile.splice(this.drawPile.indexOf(c), 1); this.hand.push(c); }
+
+    // Ascension 11 (Crowned in Wrath): bosses begin combat with 2 Resolve.
+    if (this.run.ascension >= 11) {
+      for (const e of this.enemies) if (e.bp.boss) this.applyPower(e, 'strength', 2, e);
+    }
+
+    // Display the per-turn damage cap as an Invincibility pip (informational).
+    for (const e of this.enemies) if (e.dmgCapPerTurn > 0) e.powers.invincibility = e.dmgCapPerTurn;
 
     // Pick initial enemy intents
     for (const e of this.enemies) this.pickEnemyMove(e);
@@ -156,7 +166,14 @@ export class Combat {
     if (!target.alive) return 0;
     let dmg = amount;
     if (target.powers.intangible && dmg > 1) dmg = 1;
-    // Heart of Static caps single-hit damage taken? (only thematic — skip)
+    // Per-turn damage cap (Heart of Static's Invincibility): clamp what this
+    // enemy can take across a single player turn, then bank it. Resets each
+    // player turn in startPlayerTurn.
+    if (target.dmgCapPerTurn > 0) {
+      const allowance = Math.max(0, target.dmgCapPerTurn - target.dmgTakenThisTurn);
+      if (dmg > allowance) { dmg = allowance; this.fx('warded', { target }); }
+      target.dmgTakenThisTurn += dmg;
+    }
     let remaining = dmg;
     if (target.block > 0) {
       const blocked = Math.min(target.block, remaining);
@@ -248,7 +265,7 @@ export class Combat {
     this.fx('attackstart', { source: enemy, target: this.player });
     for (let i = 0; i < hits; i++) {
       if (!this.player.alive) break;
-      const dmg = this.calcAttackDamage(base, enemy, this.player);
+      const dmg = Math.round(this.calcAttackDamage(base, enemy, this.player) * this.run.enemyDamageMult());
       this.applyDamage(this.player, dmg, { isAttack: true, source: enemy });
     }
     this.notify();
@@ -496,6 +513,9 @@ export class Combat {
     this.versesThisTurn = 0;
     this.noMoreDraw = false;
 
+    // reset per-turn damage caps (e.g. Heart of Static's Invincibility)
+    for (const e of this.enemies) e.dmgTakenThisTurn = 0;
+
     // start-of-turn poison on player
     this.tickPoison(this.player);
 
@@ -533,6 +553,11 @@ export class Combat {
         entity.powers[key] -= 1;
         if (entity.powers[key] <= 0) delete entity.powers[key];
       }
+    }
+    // Resolve Down: at end of turn, sap Strength/Resolve by the stacked amount, then clear.
+    if (entity.powers.strengthDown) {
+      this.applyPower(entity, 'strength', -entity.powers.strengthDown, entity);
+      delete entity.powers.strengthDown;
     }
   }
 

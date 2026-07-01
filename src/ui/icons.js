@@ -130,6 +130,7 @@ const POWER_SVG = {
   artifact: `<path d="M50 22 L74 38 V62 L50 78 L26 62 V38Z" fill="none" stroke="${A}" stroke-width="5"/>`,
   intangible: `<path d="M32 76 V36 C32 18 68 18 68 36 V76 L60 68 L52 76 L44 68 L36 76Z" fill="#2a2a3a" stroke="${C}" stroke-width="3" opacity="0.8"/>`,
   focus: `<circle cx="50" cy="50" r="10" fill="${A}"/>${rays(50, 50, 16, 30, 8, O, 0.9, 4)}`,
+  invincibility: `<path d="M50 20 L78 32 V54 C78 72 65 82 50 88 C35 82 22 72 22 54 V32Z" fill="none" stroke="${A}" stroke-width="5"/><path d="M50 30 L68 38 V54 C68 66 60 73 50 78 C40 73 32 66 32 54 V38Z" fill="${O}" stroke="${C}" stroke-width="3"/>`,
   vulnerable: `<circle cx="50" cy="50" r="24" fill="none" stroke="${O}" stroke-width="5"/><circle cx="50" cy="50" r="10" fill="${E}"/>`,
   weak: `<path d="M34 36 C30 56 44 64 50 76 C56 64 70 56 66 36" stroke="${O}" stroke-width="6" fill="none"/>`,
   frail: `<path d="M50 22 V46 M50 46 L40 56 M50 46 L60 56 M50 56 V78" stroke="${O}" stroke-width="5"/>`,
