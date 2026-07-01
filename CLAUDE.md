@@ -40,25 +40,24 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
 - `ui/` — `components` (cards/relics/potions/top bar), `combatView` (updates
   combatants **in place** so FX can animate), `fx` (floating numbers, shakes,
   lunges, slashes, rings, particles, screen shake), `tutorial` (first-play
-  coach-mark overlay — see below).
+  coaching banner — see below).
 - `fx/background.js` — canvas starfield + nebula behind every scene.
 - `styles.css` — the entire theme; respects `prefers-reduced-motion` and scales
   for phones (portrait + landscape) using `dvh` and height/width breakpoints.
 
 ## First-play tutorial
-- `src/ui/tutorial.js` (`CombatTutorial`) is a self-contained coach-mark overlay
-  triggered once, on the **first-ever combat**, gated by `meta.tutorialDone`
-  (persisted via `save.js`; set `true` when the tutorial finishes **or** is
-  skipped). `game.js`'s `beginCombat` kicks it off ~800ms after `view.mount`
+- `src/ui/tutorial.js` (`CombatTutorial`) is a single **coaching banner** pinned
+  to the top of the screen, shown once on the **first-ever combat**, gated by
+  `meta.tutorialDone` (persisted via `save.js`; set `true` when it finishes **or**
+  is skipped). `game.js`'s `beginCombat` kicks it off ~800ms after `view.mount`
   (letting the opening draw settle) when `!meta.tutorialDone && kind==='monster'`.
-- It never touches game logic: it reads live combat state (`energy`, `hand`,
-  `turn`, `over`) by **chaining** `combat.onUpdate` (restores the original on
-  finish) and reads the board by CSS selector each step, so it survives the
-  in-place combatant re-renders. Steps are either **informational** (full-screen
-  `.tut-catch` freezes the board; a `Next` button advances) or **action** steps
-  (`await: 'play' | 'endturn'` — no catcher, board fully interactive, auto-advances
-  when the observed state changes; drag-to-play still works because pointer
-  capture + coordinate-based drop detection ignore the dimming overlay).
+- It never touches game logic and never blocks the board — the banner is small
+  and the rest of the screen stays fully playable. It reads live combat state
+  (`energy`, `hand`, `turn`, `over`) by **chaining** `combat.onUpdate` (restores
+  the original on finish). Steps are a short array: text plus either a `button`
+  (advance on click) or `await: 'play' | 'endturn'` (auto-advance when the
+  snapshotted energy/hand/turn changes). No spotlight, positioning math, or
+  click-catchers — deliberately minimal.
 - To re-test it, clear `localStorage` (or just the `spire_of_ase_meta_v1` key).
   Styles live under the "first-play tutorial" block in `styles.css` and honor
   `prefers-reduced-motion`.
