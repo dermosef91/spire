@@ -505,6 +505,10 @@ export class Combat {
 
     this.fire('turnStart');
 
+    // Announce the handoff back to the player. The first turn is covered by the
+    // Battle Start popup, so skip the banner there.
+    if (!first) this.fx('announce', { text: 'Your Turn', kind: 'player' });
+
     // draw
     const drawCount = 5 + (first ? this._extraOpenDraw : 0);
     this.draw(drawCount);
@@ -570,6 +574,10 @@ export class Combat {
   }
 
   async enemyPhase() {
+    // Announce the enemy turn and let the banner read before any foe acts, so
+    // the first strike doesn't land in the same instant the phase begins.
+    this.fx('announce', { text: 'Enemy Turn', kind: 'enemy' });
+    await wait(700);
     for (const e of this.enemies) {
       if (!e.alive || this.over) continue;
       e.block = 0;
@@ -577,12 +585,17 @@ export class Combat {
       if (!e.alive || this.over) continue;
       const move = e.bp.moves[e.move];
       this.log(`${e.name} uses ${move.name}.`);
-      
+
       const isAttack = e.intent && e.intent.type && e.intent.type.startsWith('attack');
+      // Float the move name over the enemy, then give it a beat before the
+      // action resolves so the attack/skill reads as a consequence of the name.
+      this.fx('enemyMove', { source: e, name: move.name, isAttack });
+      await wait(600);
+      if (this.over || !e.alive) continue;
       if (!isAttack) {
         this.fx('skillstart', { source: e });
       }
-      
+
       move.run(this, e);
       this.notify();
       await wait(420);
