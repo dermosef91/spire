@@ -650,7 +650,17 @@ export class CombatView {
     if (type === 'attackstart') {
       const src = this.elFor(payload.source);
       lunge(src, payload.source && payload.source.isPlayer ? 'right' : 'left');
-      
+
+      // Give the player's swing a beat to land before the enemy-side impact
+      // fx/sfx fire, so the hit reads as a consequence of the animation
+      // rather than landing in the same frame it starts. Cleared on the next
+      // tick so it only covers the damage fx fired synchronously by this
+      // same attack (including multi-hit loops), not unrelated later damage.
+      this._playerAttackHit = !!(payload.source && payload.source.isPlayer);
+      if (this._playerAttackHit) {
+        setTimeout(() => { this._playerAttackHit = false; }, 0);
+      }
+
       if (payload.source) {
         const eid = eidOf(payload.source);
         this.tempPoses[eid] = true;
@@ -692,22 +702,33 @@ export class CombatView {
     if (type === 'damage') {
       const el2 = this.elFor(payload.target);
       if (!el2) return;
-      if (payload.hpLost > 0) {
-        floatText(layer, el2, String(payload.hpLost), 'damage');
-        hitFlash(el2, 'damage');
-        const big = payload.hpLost >= 14;
-        shake(el2, big);
-        if (payload.isAttack) slash(layer, el2);
-        if (payload.target.isPlayer || big) screenShake(this.scene, big);
-        // Reactive backdrop pulse: red when the player is hurt, amber on big hits.
-        const bg = background();
-        if (bg) {
-          if (payload.target.isPlayer) bg.pulse('damage', Math.min(2, payload.hpLost / 12));
-          else if (big) bg.pulse('heavy', Math.min(2, payload.hpLost / 18));
+      const isDelayedPlayerHit = this._playerAttackHit && !payload.target.isPlayer;
+      const applyDamageFx = () => {
+        if (payload.hpLost > 0) {
+          floatText(layer, el2, String(payload.hpLost), 'damage');
+          hitFlash(el2, 'damage');
+          const big = payload.hpLost >= 14;
+          shake(el2, big);
+          if (payload.isAttack) slash(layer, el2);
+          if (payload.target.isPlayer || big) screenShake(this.scene, big);
+          // Reactive backdrop pulse: red when the player is hurt, amber on big hits.
+          const bg = background();
+          if (bg) {
+            if (payload.target.isPlayer) bg.pulse('damage', Math.min(2, payload.hpLost / 12));
+            else if (big) bg.pulse('heavy', Math.min(2, payload.hpLost / 18));
+          }
+          if (isDelayedPlayerHit) audio.play('hit');
+        } else if (payload.blocked > 0) {
+          floatText(layer, el2, 'BLOCK', 'blocked');
+          hitFlash(el2, 'block');
         }
-      } else if (payload.blocked > 0) {
-        floatText(layer, el2, 'BLOCK', 'blocked');
-        hitFlash(el2, 'block');
+      };
+      // Delay the impact fx/sfx on the enemy so it lands a beat after the
+      // player's attack sprite animation rather than in the same frame.
+      if (isDelayedPlayerHit) {
+        setTimeout(applyDamageFx, 300);
+      } else {
+        applyDamageFx();
       }
       return;
     }
@@ -731,9 +752,17 @@ export class CombatView {
     }
     if (type === 'death') {
       const el2 = this.elFor(payload.target); if (!el2) return;
-      burst(layer, el2, '#ffce5c', 18);
-      el2.classList.add('dying');
-      const bg = background(); if (bg) bg.pulse('gold', 1.2);
+      const applyDeathFx = () => {
+        burst(layer, el2, '#ffce5c', 18);
+        el2.classList.add('dying');
+        const bg = background(); if (bg) bg.pulse('gold', 1.2);
+      };
+      // Keep the death burst in step with the (possibly delayed) killing hit.
+      if (this._playerAttackHit && !payload.target.isPlayer) {
+        setTimeout(applyDeathFx, 300);
+      } else {
+        applyDeathFx();
+      }
       return;
     }
     if (type === 'useSkill') {
