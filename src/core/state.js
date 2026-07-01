@@ -35,7 +35,6 @@ export class RunState {
     this.gold = ch.startGold;
     if (this.ascension >= 3) this.gold = Math.floor(this.gold * 0.75); // A3 Lean Purse
     this.act = 1;
-    this.floor = 0;
     this.maxPotions = 3;
     this.potions = [];
     this.relics = [];
@@ -134,7 +133,7 @@ export class RunState {
       characterId: this.characterId,
       ascension: this.ascension,
       maxHp: this.maxHp, hp: this.hp, gold: this.gold,
-      act: this.act, floor: this.floor,
+      act: this.act,
       potions: this.potions, relics: this.relics, deck: this.deck,
       encountersCleared: this.encountersCleared, eliteCleared: this.eliteCleared,
       bossesDefeated: this.bossesDefeated, usedEvents: this.usedEvents,
@@ -151,7 +150,7 @@ export class RunState {
     run.character = CHARACTERS[data.characterId];
     run.ascension = data.ascension || 0;
     run.maxHp = data.maxHp; run.hp = data.hp; run.gold = data.gold;
-    run.act = data.act; run.floor = data.floor;
+    run.act = data.act;
     run.maxPotions = 3;
     run.potions = data.potions || [];
     run.relics = data.relics || [];

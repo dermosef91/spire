@@ -3,7 +3,7 @@ import { el } from '../core/util.js';
 import { cardDesc } from '../data/cards.js';
 import { RELICS } from '../data/relics.js';
 import { POTIONS } from '../data/potions.js';
-import { POWERS } from '../data/keywords.js';
+import { POWERS, KEYWORDS } from '../data/keywords.js';
 import { UI, cardArt, relicIcon, potionIcon, powerIcon } from './icons.js';
 import { fullscreenSupported, toggleFullscreen } from '../core/fullscreen.js';
 import { hasCardArt } from './card-art.js';
@@ -56,15 +56,25 @@ export function renderCard(card, opts = {}) {
   return node;
 }
 
+// Keywords to visually highlight in card and tooltip text. Derived from the
+// status-effect and glossary tables (the source of truth in keywords.js) plus a
+// few UI verbs and Spirit/orb names that aren't themselves POWERS/KEYWORDS
+// entries, so adding a status effect keeps it highlighted automatically.
+const EXTRA_KEYWORDS = ['Storm', 'Tide', 'Shade', 'Sun', 'Evoke', 'Channel', 'Max HP'];
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// Match longest names first (single-pass alternation) so multi-word names like
+// "Resolve Down" win over the "Resolve" that is a substring of them.
+const HIGHLIGHT_RE = new RegExp(
+  '\\b(' + [...new Set([
+    ...Object.values(POWERS).map((p) => p.name),
+    ...Object.keys(KEYWORDS),
+    ...EXTRA_KEYWORDS,
+  ])].sort((a, b) => b.length - a.length).map(escapeRe).join('|') + ')\\b',
+  'g'
+);
+
 export function highlightKeywords(text) {
-  const kws = ['Block', 'Resolve', 'Grace', 'Exposed', 'Sapped', 'Brittle', 'Blight', 'Phase',
-    'Verse', 'Spirit', 'Storm', 'Tide', 'Shade', 'Sun', 'Focus', 'Àṣẹ', 'Backlash', 'Bronzeplate',
-    'Exhaust', 'Ethereal', 'Innate', 'Retain', 'Regrowth', 'Charm', 'Evoke', 'Channel', 'Max HP'];
-  let out = text;
-  for (const k of kws) {
-    out = out.replace(new RegExp(`\\b(${k})\\b`, 'g'), '<span class="kw">$1</span>');
-  }
-  return out;
+  return text.replace(HIGHLIGHT_RE, '<span class="kw">$1</span>');
 }
 
 export function relicChip(relicId, onHover) {
