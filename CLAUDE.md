@@ -67,9 +67,29 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   and the rest of the screen stays fully playable. It reads live combat state
   (`energy`, `hand`, `turn`, `over`) by **chaining** `combat.onUpdate` (restores
   the original on finish). Steps are a short array: text plus either a `button`
-  (advance on click) or `await: 'play' | 'endturn'` (auto-advance when the
-  snapshotted energy/hand/turn changes). No spotlight, positioning math, or
+  (advance on click) or `await: 'block' | 'attack' | 'endturn'` (auto-advance
+  when the right thing happens — see below). No full-screen spotlight or
   click-catchers — deliberately minimal.
+- Six steps: (1) hand + Àṣẹ orb intro, (2) enemy intent, (3) play a Block
+  skill, (4) play an Attack card, (5) end turn, (6) wrap-up. Steps 1–5 point at
+  the relevant element with a lightweight `.tut-highlight` outline (CSS
+  `outline` + `box-shadow`, applied directly to the live DOM node by selector —
+  no manual position math, so it works on any shape: `.hand`, `.energy-orb`,
+  an enemy's `.intent` pill, a specific `.card[data-uid]`, `.end-turn`).
+  `applyHighlight()` re-runs on every chained `onUpdate()` since combatView
+  rebuilds the hand/controls/intent nodes from scratch each render.
+- Steps 3/4 snapshot the hand at render time, find the first card matching
+  `isBlockCard`/`isAttackCard` (`type==='skill'&&block>0` / `type==='attack'`),
+  and highlight it by `uid`; the step advances when that specific uid leaves
+  the hand (i.e. it got played — playing a different card first doesn't
+  advance early). If no matching card exists in that hand (rare, ~2-3% on a
+  5-card starter draw), it falls back to advancing on any card played so the
+  tutorial can't soft-lock.
+- `game.js`'s `startMonster()` pins the run's very first monster fight (when
+  `!meta.tutorialDone`) to `['husk_drone']` — a single enemy whose `pick()`
+  guarantees an attack (`zap`) on turn 1 — so step 3's "the foe is about to
+  strike" is always literally true, instead of depending on the normal
+  weighted encounter table.
 - To re-test it, clear `localStorage` (or just the `spire_of_ase_meta_v1` key).
   Styles live under the "first-play tutorial" block in `styles.css` and honor
   `prefers-reduced-motion`.
