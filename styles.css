@@ -1103,6 +1103,34 @@ body.scene-reward #bg-image.show {
 .end-text { max-width: 560px; color: var(--muted); line-height: 1.8; font-size: 17px; }
 .end-stats { color: var(--ink); font-size: 15px; font-family: var(--font-display); letter-spacing: 0.06em; } .end-stats b { color: var(--orange); }
 
+/* ----------------------------- first-play tutorial ----------------------------- */
+.tut-layer { position: fixed; inset: 0; z-index: 130; pointer-events: none; }
+.tut-layer.tut-out { animation: tutFade 0.24s ease forwards; }
+/* Full-screen catcher: freezes the board on informational steps. */
+.tut-catch { position: fixed; inset: 0; pointer-events: auto; background: transparent; }
+/* Spotlight: a soft cut-out whose huge box-shadow dims everything else. */
+.tut-spot { position: fixed; display: none; border-radius: 12px; pointer-events: none;
+  box-shadow: 0 0 0 4000px rgba(6, 3, 1, 0.74), 0 0 0 2px var(--orange), var(--glow);
+  transition: left 0.18s ease, top 0.18s ease, width 0.18s ease, height 0.18s ease; }
+.tut-spot.interactive { box-shadow: 0 0 0 4000px rgba(6, 3, 1, 0.42), 0 0 0 2px var(--amber), 0 0 26px rgba(255,171,71,0.6); animation: tutPulse 1.5s ease-in-out infinite; }
+.tut-card { position: fixed; pointer-events: auto; width: min(340px, 88vw); background: var(--panel-solid);
+  border: 1px solid var(--line); border-top: 3px solid var(--orange); border-radius: 8px; padding: 16px 18px 14px;
+  box-shadow: var(--shadow); animation: tutRise 0.24s ease both; }
+.tut-step { font-family: var(--font-display); font-size: 12px; letter-spacing: 0.22em; color: var(--amber); opacity: 0.85; }
+.tut-card h4 { font-family: var(--font-display); font-size: 20px; color: var(--orange); letter-spacing: 0.05em; text-transform: uppercase; margin: 4px 0 8px; }
+.tut-card p { font-size: 14.5px; line-height: 1.55; color: var(--ink); margin: 0 0 14px; }
+.tut-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tut-hint { font-family: var(--font-display); font-size: 13px; letter-spacing: 0.08em; color: var(--amber); text-transform: uppercase; animation: tutPulse 1.5s ease-in-out infinite; }
+.tut-skip { background: none; border: none; color: var(--muted); font-family: var(--font-body); font-size: 12.5px; letter-spacing: 0.04em; cursor: pointer; padding: 4px; text-decoration: underline; opacity: 0.8; }
+.tut-skip:hover { color: var(--ink); opacity: 1; }
+@keyframes tutRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes tutFade { to { opacity: 0; } }
+@keyframes tutPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) {
+  .tut-spot { transition: none; }
+  .tut-spot.interactive, .tut-hint, .tut-card { animation: none; }
+}
+
 /* ----------------------------- tooltip ----------------------------- */
 .tooltip { position: fixed; display: none; z-index: 200; background: #0a0503; border: 1px solid var(--orange); border-radius: 6px;
   padding: 10px 12px; font-size: 13px; line-height: 1.45; color: var(--ink); box-shadow: var(--shadow); pointer-events: none; }
