@@ -1,23 +1,44 @@
 // First-play combat tutorial: a single coaching banner that reacts to what the
-// player does. It never touches game logic — it reads live combat state
-// (energy, hand, turn, over) by chaining the view's `onUpdate` callback and
-// advances when the player actually plays a card or ends their turn.
+// player does, plus a lightweight outline (`.tut-highlight`) on whatever it is
+// currently talking about. It never touches game logic — it reads live combat
+// state (energy, hand, turn, over) by chaining the view's `onUpdate` callback
+// and advances when the player actually plays the right kind of card or ends
+// their turn. `game.js` pins the very first monster fight to a guaranteed
+// attack-opener (Husk Drone) so the "the foe is about to strike" step is
+// always true — see `startMonster()`.
 import { el } from '../core/util.js';
 import { button } from './components.js';
 import { audio } from '../audio.js';
 
+const isBlockCard = (c) => c.type === 'skill' && (c.block || 0) > 0;
+const isAttackCard = (c) => c.type === 'attack';
+
 const STEPS = [
   {
-    text: 'Cards win battles. Each costs Àṣẹ — your energy, refilled every turn. Above each foe, its intent shows what it will do next.',
-    button: 'Got it',
+    text: 'Cards win battles. Each costs Àṣẹ — your energy, refilled every turn.',
+    button: 'Next',
+    highlight: () => ['.hand', '.combat-controls .energy-orb'],
   },
   {
-    text: 'Your turn. Play a card by dragging it onto a foe — or simply tapping it.',
-    await: 'play',
+    text: 'Above each foe, its intent shows what it will do next.',
+    button: 'Next',
+    highlight: () => ['.combatant.enemy .intent'],
+  },
+  {
+    text: 'The foe is about to strike. Play a Block skill to shield yourself.',
+    await: 'block',
+    hint: 'Play the highlighted card',
+  },
+  {
+    text: 'Well shielded. Now hit back — play an Attack card.',
+    await: 'attack',
+    hint: 'Play the highlighted card',
   },
   {
     text: 'Well struck. Now end your turn and let your foe act.',
     await: 'endturn',
+    hint: 'End your turn →',
+    highlight: () => ['.end-turn'],
   },
   {
     text: 'That is the loop. Defeat every foe for rewards, then climb toward the Spire. Àṣẹ be with you.',
@@ -32,6 +53,7 @@ export class CombatTutorial {
     this.onDone = onDone || (() => {});
     this.i = 0;
     this.done = false;
+    this.targetUid = null;
   }
 
   start() {
@@ -53,27 +75,53 @@ export class CombatTutorial {
 
     const row = el('div', { class: 'tut-row' });
     if (step.await) {
-      row.appendChild(el('span', { class: 'tut-hint', text: step.await === 'play' ? 'Play a card ↓' : 'End your turn →' }));
-      // Snapshot state so we can tell when the player acts.
-      this.snap = { energy: this.combat.energy, hand: this.combat.hand.length, turn: this.combat.turn };
+      row.appendChild(el('span', { class: 'tut-hint', text: step.hint }));
     } else {
-      this.snap = null;
       row.appendChild(button(step.button, () => this.next(), 'primary'));
     }
     row.appendChild(el('button', { class: 'tut-skip', text: 'Skip', on: { click: () => this.finish() } }));
     this.banner.appendChild(row);
+
+    // Snapshot what we're waiting for, and which card (if any) to point at.
+    this.targetUid = null;
+    if (step.await === 'block' || step.await === 'attack') {
+      const match = this.combat.hand.find(step.await === 'block' ? isBlockCard : isAttackCard);
+      this.targetUid = match ? match.uid : null;
+      this.snap = { kind: step.await, matched: !!match, handLen: this.combat.hand.length };
+    } else if (step.await === 'endturn') {
+      this.snap = { kind: 'endturn', turn: this.combat.turn };
+    } else {
+      this.snap = null;
+    }
+
+    this.applyHighlight();
+  }
+
+  applyHighlight() {
+    document.querySelectorAll('.tut-highlight').forEach((el2) => el2.classList.remove('tut-highlight'));
+    const step = STEPS[this.i];
+    const selectors = step.highlight ? step.highlight() : [];
+    if (this.targetUid) selectors.push(`.hand .card[data-uid="${this.targetUid}"]`);
+    for (const sel of selectors) {
+      const el2 = document.querySelector(sel);
+      if (el2) el2.classList.add('tut-highlight');
+    }
   }
 
   onUpdate() {
     if (this.done) return;
     if (this.combat.over) { this.finish(); return; }
+    this.applyHighlight();
     const s = this.snap;
     if (!s) return;
-    const step = STEPS[this.i];
-    const acted = step.await === 'play'
-      ? (this.combat.energy < s.energy || this.combat.hand.length < s.hand)
-      : (this.combat.turn > s.turn);
-    if (acted) this.next();
+    let advanced = false;
+    if (s.kind === 'block' || s.kind === 'attack') {
+      if (s.matched) advanced = !this.combat.hand.some((c) => c.uid === this.targetUid);
+      else advanced = this.combat.hand.length < s.handLen; // no matching card was in hand — don't block progress
+    } else if (s.kind === 'endturn') {
+      advanced = this.combat.turn > s.turn;
+    }
+    if (advanced) this.next();
   }
 
   next() {
@@ -88,6 +136,7 @@ export class CombatTutorial {
     if (this.done) return;
     this.done = true;
     if (this._origUpdate) this.combat.onUpdate = this._origUpdate;
+    document.querySelectorAll('.tut-highlight').forEach((el2) => el2.classList.remove('tut-highlight'));
     if (this.banner) { this.banner.remove(); this.banner = null; }
     this.onDone();
   }

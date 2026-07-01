@@ -394,7 +394,11 @@ export class Game {
   startMonster() {
     this.run._actMonster = (this.run._actMonster || 0) + 1;
     const tier = this.run._actMonster <= 2 ? 'weak' : 'normal';
-    this.beginCombat(this.pickEncounter(tier), 'monster');
+    // Pin the very first monster fight to a guaranteed attack-opener so the
+    // tutorial's "the foe is about to strike" step is always true.
+    const isTutorialFight = !this.meta.tutorialDone && this.run._actMonster === 1;
+    const encounter = isTutorialFight ? ['husk_drone'] : this.pickEncounter(tier);
+    this.beginCombat(encounter, 'monster');
   }
   startElite() { this.beginCombat(this.pickEncounter('elite'), 'elite'); }
   startBoss() { this.beginCombat(this.pickEncounter('boss'), 'boss'); }
