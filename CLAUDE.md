@@ -68,6 +68,21 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
 - Mechanic names stay readable; afrofuturist flavor lives in card/enemy/relic
   text and the world, not in renaming core mechanics.
 - Mobile + reduced-motion must keep working; test both orientations after UI work.
+- **No emoji, anywhere in-game**: all iconography (enemy/character art, status
+  effects, intents, UI chrome) is custom line-art SVG from `src/ui/icons.js`
+  (`UI`, `INTENT`, `NODE`, `POWER_SVG`/`powerIcon()`, `RELIC_SVG`/`relicIcon()`,
+  `CARD_MOTIF`/`cardArt()`, `CHAR`/`characterModel()`, `ENE`/`enemyModel()`) or
+  a real sprite (`src/ui/sprites.js`). Data files (`enemies.js`, `characters.js`,
+  `keywords.js`) must **not** carry emoji fields (e.g. a `glyph: '👹'` or
+  `icon: '💪'`) even if nothing currently renders them — dead emoji data has a
+  way of getting wired up again by accident. When adding a floating combat
+  effect that needs an icon, use `floatHTML()` (fx.js) with a `<i
+  class="pip-ic">${powerIcon(key)}</i>` payload, not `floatText()` with a raw
+  icon character — `floatText` is for plain numbers/words only. This does not
+  apply to the handful of monochrome typographic dividers (`❖`, `❘`, `✦` in
+  `game.js`), which are dingbat punctuation, not pictographic emoji, and to
+  emoji used only in dev-tooling console logs (`tools/gen-*.js`), which never
+  reach the player.
 - **Syntax Check**: Before committing or deploying, always verify modified JavaScript files using `node --check <path_to_file>` to catch syntax errors like unclosed blocks or brackets.
 - **Auto-Update Learnings**: On every action/task, if you discover a project-specific gotcha, solve a debugging issue, or establish a new convention/pattern, you must immediately update `CLAUDE.md` and `.agents/AGENTS.md` to persist this learning.
 - **Landscape-phone breakpoint (`@media (max-height: 560px)`)**: this is the
