@@ -28,5 +28,6 @@ export function saveMeta(meta) {
   try { localStorage.setItem(META_KEY, JSON.stringify(meta)); } catch (e) {}
 }
 function defaultMeta() {
-  return { runs: 0, wins: 0, bestFloor: 0, ascensions: 0 };
+  // maxAscension: highest level unlocked; ascension: last-selected level.
+  return { runs: 0, wins: 0, bestFloor: 0, ascensions: 0, maxAscension: 0, ascension: 0 };
 }

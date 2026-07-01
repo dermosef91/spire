@@ -78,7 +78,8 @@ export class Combat {
   makeEnemy(id, idx) {
     const bp = ENEMIES[id];
     if (!bp) throw new Error('Unknown enemy ' + id);
-    const hp = this.rng.int(bp.hpMin, bp.hpMax);
+    let hp = this.rng.int(bp.hpMin, bp.hpMax);
+    hp = Math.round(hp * this.run.enemyHpMult(bp)); // ascension HP scaling
     const block = bp.startBlock || 0;
     return {
       id, bp, idx,

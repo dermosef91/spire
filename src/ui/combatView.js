@@ -9,6 +9,7 @@ import { audio } from '../audio.js';
 import { ensureFxLayer, floatText, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine } from './fx.js';
 import { combatModel, INTENT, UI, powerIcon } from './icons.js';
 import { spriteOrSvg, hasSprite } from './sprites.js';
+import { background } from '../fx/background.js';
 
 const eidOf = (ent) => (ent.isPlayer ? 'p' : 'e' + ent.idx);
 
@@ -27,7 +28,16 @@ export class CombatView {
     this.els = {};        // eid -> combatant element
     this.parts = {};      // eid -> { intent, glyph, hpfill, hptext, block, powers, medallion }
     this._lastHandCards = [];
+    this._lastEnergy = null; // for the energy-spent pulse
     this.tempPoses = {};  // locks pose updates during dynamic animations
+  }
+
+  // Does this card visibly synergize with the current board? (used to telegraph
+  // a "combo-ready" glow so players learn interactions). Kept intentionally
+  // conservative: attacks light up when a foe is Exposed (takes +50% damage).
+  comboHint(card) {
+    if (card.type !== 'attack') return false;
+    return this.combat.livingEnemies().some((e) => e.powers.vulnerable);
   }
 
   mount(root) {
@@ -244,7 +254,15 @@ export class CombatView {
     const c = this.combat;
     const bar = clear(this.controlsHolder);
     bar.className = 'combat-controls-holder combat-controls';
-    bar.appendChild(el('div', { class: 'energy', html: `<span class="energy-orb">${c.energy}</span><span class="energy-max">/${c.maxEnergy}</span>` }));
+    const energyEl = el('div', { class: 'energy', html: `<span class="energy-orb">${c.energy}</span><span class="energy-max">/${c.maxEnergy}</span>` });
+    // Pulse the orb when Àṣẹ is spent (down) or granted (up) this update.
+    if (this._lastEnergy != null && !c.over) {
+      const orb = energyEl.querySelector('.energy-orb');
+      if (c.energy < this._lastEnergy) orb.classList.add('spent');
+      else if (c.energy > this._lastEnergy) orb.classList.add('gained');
+    }
+    this._lastEnergy = c.energy;
+    bar.appendChild(energyEl);
 
     // Update screen piles (absolute positioned stacks)
     if (this.drawPileEl) {
@@ -381,9 +399,11 @@ export class CombatView {
 
     c.hand.forEach((card, idx) => {
       const playable = c.canPlay(card);
+      const affordable = playable ? 'affordable ' : '';
+      const combo = (playable && this.comboHint(card)) ? 'combo-ready ' : '';
       const node = renderCard(card, {
         disabled: !playable,
-        class: 'in-hand ' + (this.pendingCard === card ? 'selected' : ''),
+        class: 'in-hand ' + affordable + combo + (this.pendingCard === card ? 'selected' : ''),
         onHover: (cd, n, on) => { if (!this.drag) this.game.tooltip(cd, n, on, 'card'); },
       });
 
@@ -679,6 +699,12 @@ export class CombatView {
         shake(el2, big);
         if (payload.isAttack) slash(layer, el2);
         if (payload.target.isPlayer || big) screenShake(this.scene, big);
+        // Reactive backdrop pulse: red when the player is hurt, amber on big hits.
+        const bg = background();
+        if (bg) {
+          if (payload.target.isPlayer) bg.pulse('damage', Math.min(2, payload.hpLost / 12));
+          else if (big) bg.pulse('heavy', Math.min(2, payload.hpLost / 18));
+        }
       } else if (payload.blocked > 0) {
         floatText(layer, el2, 'WARD', 'blocked');
         hitFlash(el2, 'block');
@@ -707,6 +733,7 @@ export class CombatView {
       const el2 = this.elFor(payload.target); if (!el2) return;
       burst(layer, el2, '#ffce5c', 18);
       el2.classList.add('dying');
+      const bg = background(); if (bg) bg.pulse('gold', 1.2);
       return;
     }
     if (type === 'useSkill') {
