@@ -495,8 +495,12 @@ export class Game {
     if (run.rng.bool(potionChance) && run.potions.length < run.maxPotions) {
       rewards.push({ type: 'potion', id: this.randomPotion(), taken: false });
     }
-    // relic for elite/boss
-    if (kind === 'elite' || kind === 'boss') {
+    // relic for elite/boss. Bosses crown you with a boss-tier relic (the
+    // Ascendant Crown among them) — an offer you may take or leave on the map.
+    if (kind === 'boss') {
+      const bid = run.pickBossRelicId();
+      rewards.push(bid ? { type: 'bossrelic', id: bid, taken: false } : { type: 'relic', taken: false });
+    } else if (kind === 'elite') {
       rewards.push({ type: 'relic', taken: false });
     }
     // card reward
@@ -533,6 +537,14 @@ export class Game {
           row.appendChild(el('div', { class: 'reward-label', text: 'Ancestral Relic' }));
           row.addEventListener('click', () => {
             const name = run.grantRandomRelic();
+            rw.taken = true; audio.play('reward'); rebuild();
+          });
+        } else if (rw.type === 'bossrelic') {
+          const rel = RELICS[rw.id];
+          row.appendChild(el('div', { class: 'reward-icon', html: relicIcon('default') }));
+          row.appendChild(el('div', { class: 'reward-label', html: `<b>${rel.name}</b> — ${rel.desc}` }));
+          row.addEventListener('click', () => {
+            run.addRelic(rw.id);
             rw.taken = true; audio.play('reward'); rebuild();
           });
         } else if (rw.type === 'card') {
@@ -987,9 +999,61 @@ export class Game {
       this.selectedAscension = this.meta.maxAscension;
       unlocked = true;
     }
+    const firstAscent = !this.meta.ascendedOnce;
+    this.meta.ascendedOnce = true;
+    this.meta.timesAscended = (this.meta.timesAscended || 0) + 1;
     saveMeta(this.meta);
     this._ascJustUnlocked = unlocked ? this.meta.maxAscension : 0;
-    this.gameOver(true);
+    // The first climb to the Heart is always the complicit one — you cannot
+    // refuse a welcome you do not yet understand. Only after you have been
+    // taken up once, and only on a climb where you refused the Crown's claim,
+    // does the Heart lay itself open to be unwritten.
+    if (!firstAscent && this.run && !this.run.hasRelic('ascendant_crown')) {
+      this.showEndChoice();
+    } else {
+      this.endVictory('ascend');
+    }
+  }
+
+  // Offered only on a second-or-later ascent made without the Ascendant Crown:
+  // now that you know what the summit is, you choose what to do with the Heart.
+  showEndChoice() {
+    const panel = el('div', { class: 'end-scene' });
+    panel.appendChild(el('h1', { class: 'end-win', text: 'THE HEART LIES OPEN' }));
+    panel.appendChild(el('p', {
+      class: 'end-text',
+      text: 'The Static parts. Above waits the Crown, and the welcome of the Ancestors that took every climber before you. Below turns the Heart that renders them into song. You have climbed into that welcome once already. This time you know what it is made of.',
+    }));
+    const choices = el('div', { class: 'choices' });
+    choices.appendChild(button('Ascend — take your place among the kept', () => this.endVictory('ascend'), 'primary'));
+    choices.appendChild(button('Unwrite the engine — set the climbed free', () => this.endVictory('unwrite')));
+    panel.appendChild(choices);
+    this.setScene(panel, 'end');
+  }
+
+  endVictory(mode) {
+    const run = this.run;
+    clearSave();
+    audio.play('victory');
+    const unwrite = mode === 'unwrite';
+    if (unwrite && !this.meta.spireUnwritten) { this.meta.spireUnwritten = true; saveMeta(this.meta); }
+    const panel = el('div', { class: 'end-scene' });
+    panel.appendChild(el('h1', { class: 'end-win', text: unwrite ? 'THE SPIRE FALLS SILENT' : 'YOU ASCEND THE SPIRE' }));
+    panel.appendChild(el('p', {
+      class: 'end-text',
+      text: unwrite
+        ? 'You break the Heart instead of climbing into it. The Static unwinds, and the catalogued dead — every champion the Spire kept as a warden, a wraith, a wall — come loose from the brass and walk down into the light. No one is welcomed home today. No one is filed. The tower stands empty, and quiet, at last.'
+        : 'The Crown settles and the Ancestors open to receive you — warmth, welcome, home, and the slow kind pressure of being written down. Far below, a new climber sets foot in the Sunken Market, and a fresh brass sentinel lifts a visor that wears your face.',
+    }));
+    const ascStat = (run.ascension || 0) > 0 ? ` · Ascension <b>${run.ascension}</b>` : '';
+    panel.appendChild(el('div', { class: 'end-stats', html: `Act reached: <b>${run.act}</b> · Cards: <b>${run.deck.length}</b> · Relics: <b>${run.relics.length}</b> · Gold: <b>${run.gold}</b>${ascStat}` }));
+    if (this._ascJustUnlocked) {
+      const lv = ASCENSION_LEVELS[this._ascJustUnlocked - 1];
+      panel.appendChild(el('div', { class: 'end-unlock', html: `✦ Ascension ${this._ascJustUnlocked} unlocked — <b>${lv.name}</b> ✦` }));
+      this._ascJustUnlocked = 0;
+    }
+    panel.appendChild(button('Return to Title', () => this.showTitle(), 'primary'));
+    this.setScene(panel, 'end');
   }
 }
 

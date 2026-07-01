@@ -80,7 +80,7 @@ export const ACT_NAMES = {
 };
 
 export const ACT_BLURB = {
-  1: 'Below the Obsidian Spire sprawls a flooded bazaar of brass and bone, where corrupted guardians barter in static.',
-  2: 'Endless shelves of forgotten names spiral upward. The Archive remembers everything — and forgets you on purpose.',
-  3: 'At the summit the Static sings. Here the Ancestors once touched the cosmos. Cleanse the Heart, or be unwritten.',
+  1: 'They say the Spire lifts its champions home to the Ancestors. The climb begins in the flooded market at its root, where the old guardians bar the way — brass and bone that were, they whisper, climbers once themselves.',
+  2: 'The Archive files every name that ever climbed. It remembers all of them, shelf on shelf — and it already has a page for you, as though your ascent were long finished and only waiting to be read back.',
+  3: 'At the summit the Static sings in a thousand kept voices. This is where climbers are welcomed home. Reach the Heart that renders them, and learn what that welcome is made of.',
 };

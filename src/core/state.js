@@ -83,6 +83,15 @@ export class RunState {
     return r.name;
   }
 
+  // A boss-tier relic the run doesn't yet own (the Spire's crowning offer).
+  // Returns the id to display; the caller grants it via addRelic if taken.
+  pickBossRelicId() {
+    const pool = Object.values(RELICS).filter(
+      (r) => r.rarity === 'boss' && !this.relics.includes(r.id)
+    );
+    return pool.length ? this.rng.pick(pool).id : null;
+  }
+
   // -------- ascension modifiers --------
   // HP multiplier applied to an enemy blueprint when a fight begins.
   enemyHpMult(bp) {
