@@ -23,6 +23,7 @@ const STEPS = [
     text: 'Above each foe, its intent shows what it will do next.',
     button: 'Next',
     highlight: () => ['.combatant.enemy .intent'],
+    align: 'left', // keep the banner off the intent pill on small screens
   },
   {
     text: 'The foe is about to strike. Play a Block skill to shield yourself.',
@@ -70,6 +71,7 @@ export class CombatTutorial {
 
   render() {
     const step = STEPS[this.i];
+    this.banner.classList.toggle('tut-left', step.align === 'left');
     this.banner.innerHTML = '';
     this.banner.appendChild(el('p', { class: 'tut-text', text: step.text }));
 
