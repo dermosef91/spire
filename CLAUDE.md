@@ -72,12 +72,21 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   click-catchers — deliberately minimal.
 - Six steps: (1) hand + Àṣẹ orb intro, (2) enemy intent, (3) play a Block
   skill, (4) play an Attack card, (5) end turn, (6) wrap-up. Steps 1–5 point at
-  the relevant element with a lightweight `.tut-highlight` outline (CSS
-  `outline` + `box-shadow`, applied directly to the live DOM node by selector —
-  no manual position math, so it works on any shape: `.hand`, `.energy-orb`,
-  an enemy's `.intent` pill, a specific `.card[data-uid]`, `.end-turn`).
-  `applyHighlight()` re-runs on every chained `onUpdate()` since combatView
-  rebuilds the hand/controls/intent nodes from scratch each render.
+  the relevant element with a `.tut-highlight` class applied directly to the
+  live DOM node by selector — no manual position math, so it works on any
+  shape: `.hand`, `.energy-orb`, an enemy's `.intent` pill, a specific
+  `.card[data-uid]`, `.end-turn`. `.tut-highlight` is a bright pulsing
+  shine (`filter: brightness()/saturate()` + a soft glow `box-shadow`,
+  `@keyframes tutShine`) — deliberately **not** a static outline/border, so it
+  reads as "look here" rather than boxing the element in. `applyHighlight()`
+  re-runs on every chained `onUpdate()` since combatView rebuilds the
+  hand/controls/intent nodes from scratch each render.
+- Step 2 (enemy intent) sets `align: 'left'` on its step config, which
+  toggles `.tut-banner.tut-left` — the banner anchors to the left edge
+  instead of centering, so it doesn't sit on top of the very intent pill
+  it's pointing at on narrow/landscape-phone widths (verified: no bounding-box
+  overlap at 812×375, 700×780, and 390×780). Any future step that highlights
+  something near top-center should consider the same flag.
 - Steps 3/4 snapshot the hand at render time, find the first card matching
   `isBlockCard`/`isAttackCard` (`type==='skill'&&block>0` / `type==='attack'`),
   and highlight it by `uid`; the step advances when that specific uid leaves
