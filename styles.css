@@ -339,6 +339,25 @@ body.scene-reward #bg-image.show {
        heading is never clipped off the top edge. */
     justify-content: safe center;
   }
+  /* Desktop combat: keep the fanned hand out from under the pinned energy orb
+     and End Turn button. Two levers, because .hand uses justify-content:center
+     (so margins alone can't push a too-wide hand off a control — the overflow
+     just re-centers):
+       1. Cap the card size a touch (base maxes at 194px) so the whole fanned,
+          rotated hand's bounding box fits the ~736px band between the corner
+          controls at this breakpoint instead of overhanging both.
+       2. Add left/right safe-zone margins that track the controls' real
+          positions — same technique as the landscape-phone breakpoint, matched
+          to the desktop .combat-controls geometry (max-width 1060px, 12px
+          padding, --energy-shift 80px + 56px orb on the left, 164px End Turn on
+          the right). Percentages resolve against .hand's containing block — the
+          same .combat-scene .combat-controls is sized against — so the band
+          tracks the controls; the hand centers within it. */
+  .combat-scene { --card-h: clamp(108px, min(24vh, 32vw), 176px); --card-w: calc(var(--card-h) * 0.7); }
+  .combat-scene .hand {
+    margin-left: calc(max(0px, (100% - 1060px) / 2) + 150px);
+    margin-right: calc(max(0px, (100% - 1060px) / 2) + 178px);
+  }
 }
 .charselect { text-align: center; }
 .charselect h2 { font-size: 36px; margin-bottom: 18px; color: var(--orange); letter-spacing: 0.1em; }
@@ -447,7 +466,12 @@ body.scene-reward #bg-image.show {
 
 /* Fanning & Hand Placement */
 .card.in-hand {
-  transform: rotate(var(--angle, 0deg)) translateY(var(--shift, 0px));
+  /* Cap the resting fan dip so a wide hand's downward `--shift` (grows as
+     |diff|^1.5 in combatView.js, ~48px for a full 10-card hand) can't spill
+     past the viewport edge and get cropped by .combat-scene's overflow:hidden.
+     .hand's bottom padding (30px) leaves room for this capped dip; hover /
+     selected transforms keep their own !important lift. */
+  transform: rotate(var(--angle, 0deg)) translateY(min(var(--shift, 0px), 18px));
 }
 .card.in-hand:hover {
   transform: translateY(calc(var(--shift, 0px) - 38px)) rotate(var(--angle, 0deg)) scale(1.08) !important;
@@ -1039,7 +1063,7 @@ body.scene-reward #bg-image.show {
 }
 
 .hand { flex: 0 0 auto; display: flex; gap: clamp(8px, 1.4vw, 16px); justify-content: center; align-items: flex-end;
-  flex-wrap: nowrap; overflow-x: auto; overflow-y: visible; min-height: 0; padding: clamp(8px, 1.6vh, 18px) 10px 6px;
+  flex-wrap: nowrap; overflow-x: auto; overflow-y: visible; min-height: 0; padding: clamp(8px, 1.6vh, 18px) 10px 30px;
   scroll-snap-type: x proximity; scrollbar-width: none; position: relative; z-index: 10; }
 .hand::-webkit-scrollbar { display: none; }
 .hand .card { scroll-snap-align: center; }

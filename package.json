@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "serve": "node server.js",
+    "qa": "node tools/qa-screenshots.js",
     "sprites": "node tools/gen-sprites.js",
     "sprite-variations": "node tools/gen-sprite-variations.js",
     "backgrounds": "node tools/gen-backgrounds.js"

@@ -21,7 +21,19 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   `args: ['--no-sandbox']`. Do **not** wait on `networkidle` — the looping
   music/animation keeps the network "busy" forever; use `domcontentloaded` plus
   explicit `waitForTimeout`. `window.__ase` exposes the live Game for asserting
-  run state (e.g. `__ase.run.ascension`).
+  run state (e.g. `__ase.run.ascension`) **and for driving scenes directly** —
+  `__ase.showTitle()`, `__ase.showCharSelect()`, `__ase.startRun('amara')`
+  (lands on the act-intro), `__ase.showMap()`, `__ase.startMonster()` — far more
+  reliable than clicking through the UI. Set `localStorage`'s
+  `spire_of_ase_meta_v1` `tutorialDone:true` (via `addInitScript`) before combat
+  so the first-play tutorial overlay doesn't block the shot.
+- **QA screenshot / responsiveness audit**: `npm run qa`
+  (`node tools/qa-screenshots.js`) boots the game, drives title → char select →
+  map → combat at a landscape phone (812×375) **and** a desktop (1366×850)
+  viewport, screenshots each (JPEG, into `docs/qa/`), and flags layout problems
+  (horizontal overflow, controls clipped/off-screen, hand cards overlapping the
+  pinned energy orb / End Turn). A clean run reports `0 issue(s)`; the committed
+  `docs/qa/*.jpg` are the baseline. Regenerate + eyeball after any layout change.
 
 ## Architecture (src/)
 - `main.js` — bootstrap; mounts the animated background and the Game controller.
@@ -109,7 +121,20 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   `.combat-controls` (e.g. `calc(max(0px, (100% - 780px) / 2) + Npx)`) so the
   safe zone tracks exactly; using `100vw` instead of `100%` is wrong here
   because `.combat-scene` is itself inset from the viewport by a few px, so
-  `100vw`-based math drifts from `.combat-controls`' real position.
+  `100vw`-based math drifts from `.combat-controls`' real position. **The same
+  crop + overlap bites the *desktop* combat too** (the base `.hand` rule, used
+  by the `@media (min-width:1024px) and (min-height:650px)` block, originally
+  had only `6px` bottom padding and an uncapped dip): the fanned hand got
+  cropped at the bottom and its edge cards slid under the energy orb / End Turn.
+  Fixed by (a) bumping the base `.hand` `padding-bottom` to `30px` and capping
+  the base `.card.in-hand` resting dip at `translateY(min(var(--shift),18px))`,
+  and (b) in the desktop breakpoint, adding the same `%`-based `calc()`
+  safe-zone margins **plus** a slightly smaller `--card-h` cap (176px vs 194px).
+  The card-size cap is essential because `.hand` uses `justify-content:center`:
+  margins alone can't push a too-wide fanned hand off a corner control (the
+  overflow just re-centers) — the whole rotated hand bbox must actually *fit*
+  the band between the controls. `qa-screenshots.js` regression-tests all four
+  of these (bottom crop + both control overlaps) at both viewports.
 
 
 ## Asset Generation

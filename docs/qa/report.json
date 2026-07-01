@@ -1,0 +1,65 @@
+{
+  "generatedAt": "2026-07-01T18:06:28.064Z",
+  "viewports": [
+    {
+      "key": "mobile-landscape",
+      "label": "Mobile landscape (812×375)",
+      "scenes": [
+        {
+          "key": "title",
+          "label": "Title",
+          "screenshot": "mobile-landscape-title.jpg",
+          "issues": []
+        },
+        {
+          "key": "charselect",
+          "label": "Character select",
+          "screenshot": "mobile-landscape-charselect.jpg",
+          "issues": []
+        },
+        {
+          "key": "map",
+          "label": "Act map",
+          "screenshot": "mobile-landscape-map.jpg",
+          "issues": []
+        },
+        {
+          "key": "combat",
+          "label": "Combat",
+          "screenshot": "mobile-landscape-combat.jpg",
+          "issues": []
+        }
+      ]
+    },
+    {
+      "key": "desktop",
+      "label": "Desktop (1366×850)",
+      "scenes": [
+        {
+          "key": "title",
+          "label": "Title",
+          "screenshot": "desktop-title.jpg",
+          "issues": []
+        },
+        {
+          "key": "charselect",
+          "label": "Character select",
+          "screenshot": "desktop-charselect.jpg",
+          "issues": []
+        },
+        {
+          "key": "map",
+          "label": "Act map",
+          "screenshot": "desktop-map.jpg",
+          "issues": []
+        },
+        {
+          "key": "combat",
+          "label": "Combat",
+          "screenshot": "desktop-combat.jpg",
+          "issues": []
+        }
+      ]
+    }
+  ]
+}
