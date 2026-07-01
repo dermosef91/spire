@@ -57,8 +57,13 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   centered banner: `battle`/`player`/`enemy` kinds for Battle Start / Your Turn /
   Enemy Turn) and `enemyMove` (`{source,name}` → move name floated over the enemy
   via `floatText(...,'name')`). `enemyPhase` deliberately `await`s after the
-  Enemy-Turn banner and after each move-name float so the strike never lands in
-  the same instant it's announced — keep those waits when editing the loop.
+  Enemy-Turn banner (850ms), after each move-name float (750ms), and after each
+  action resolves (550ms) so the strike never lands in the same instant it's
+  announced — keep those waits when editing the loop. `endTurn` also `await`s
+  a further 600ms after `enemyPhase()` returns, before calling
+  `startPlayerTurn(false)`, so "Your Turn" doesn't fire in the same instant the
+  last enemy's hit lands; skipped when `this.over` (no point pausing before a
+  win/loss screen).
   Combat also **opens deferred**: `CombatView.mount` shows the Battle Start banner
   and calls `combat.start()` ~650ms later, so the opening draw plays *after* the
   popup; `beginCombat`'s tutorial kickoff (game.js, ~1700ms) is timed to that.
