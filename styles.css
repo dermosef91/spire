@@ -1270,8 +1270,7 @@ html { -webkit-text-size-adjust: 100%; }
   .hptext { font-size: 10px; }
   .combatant-badge { width: 14px; height: 14px; }
   .block-badge { min-width: 24px; height: 24px; font-size: 12px; bottom: 5px; left: -12px; }
-  .intent { bottom: calc(var(--med) * 1.85 + 16px); font-size: 14px; } .orbs { bottom: calc(25% + 42px); } .orbs .orb { width: 26px; height: 26px; }
-  .powers { bottom: calc(25% - 24px); }
+  .intent { bottom: calc(var(--med) * 1.85 + 8px); font-size: 14px; } .orbs { bottom: calc(25% + 42px); } .orbs .orb { width: 26px; height: 26px; }
   .combat-log { min-height: 12px; font-size: 11px; margin: auto 0 1px; }
   .combat-controls { bottom: 56px; max-width: 780px; padding: 0 8px; --energy-shift: 50px; }
   .energy-orb { width: clamp(40px, 9vh, 56px); height: clamp(40px, 9vh, 56px); font-size: clamp(16px, 4vh, 22px); }
@@ -1285,12 +1284,25 @@ html { -webkit-text-size-adjust: 100%; }
      shift+width on the left, the End Turn button's width on the right) so
      the row can't slide under the pinned controls — overflow spills into
      the existing horizontal scroll instead of hiding under a button. */
-  .combat-scene { --card-h: clamp(132px, 32vh, 180px); --card-w: calc(var(--card-h) * 0.7); }
+  .combat-scene { --card-h: clamp(132px, 32vh, 180px); --card-w: calc(var(--card-h) * 0.7); --med: clamp(64px, 23vh, 150px); }
   .hand {
-    padding-top: 4px; padding-bottom: 60px; gap: clamp(6px, 1vw, 14px);
+    padding-top: 4px; padding-bottom: 34px; gap: clamp(6px, 1vw, 14px);
     margin-left: calc(max(0px, (100% - 780px) / 2) + 102px);
     margin-right: calc(max(0px, (100% - 780px) / 2) + 176px);
   }
+  /* Characters are shorter in landscape and the (lowered) hand covers their
+     feet, so lift the name/HP block onto the torso where it clears the card
+     tops, and raise the power pips to sit just under it. */
+  .combatant-info { bottom: 44%; }
+  .powers { bottom: calc(44% - 34px); }
+  /* The resting fan's downward dip (--shift, set inline by combatView and
+     growing as |diff|^1.5 for wider hands) would reach ~48px on a full
+     10-card hand and, with the hand now sitting lower, get cropped by
+     .combat-scene's overflow:hidden. Cap the dip so every hand size rests at
+     the same shallow depth that fits above the viewport edge; the rotational
+     spread (--angle) is left intact so the fan still reads as a fan. Hover /
+     selected transforms (which lift cards upward) keep their own !important. */
+  .hand .card.in-hand { transform: rotate(var(--angle, 0deg)) translateY(min(var(--shift, 0px), 16px)); }
   .screen-pile {
     width: 50px;
     height: 60px;
