@@ -1123,6 +1123,13 @@ body.scene-reward #bg-image.show {
 .deck-grid { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; max-width: 1000px; margin-bottom: 16px; }
 .confirm-box { min-width: 280px; } .confirm-row { display: flex; gap: 12px; justify-content: center; margin-top: 12px; }
 
+/* Smith upgrade preview: current → reforged, side by side, gated by a confirm. */
+.smith-preview .smith-compare { display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; margin-bottom: 8px; }
+.smith-preview .smith-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.smith-preview .smith-label { font-family: var(--font-display); letter-spacing: 0.1em; font-size: 13px; color: var(--muted); text-transform: uppercase; }
+.smith-preview .smith-label.upgraded { color: var(--orange); }
+.smith-preview .smith-arrow { color: var(--orange); display: grid; place-items: center; flex: 0 0 auto; }
+
 /* ----------------------------- end ----------------------------- */
 .end-scene { min-height: 82vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
 .end-win { font-size: 60px; color: var(--orange); text-shadow: 0 0 44px rgba(255,106,26,0.6); letter-spacing: 0.08em; }
