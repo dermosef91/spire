@@ -129,6 +129,37 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   Styles live under the "first-play tutorial" block in `styles.css` and honor
   `prefers-reduced-motion`.
 
+## Act map
+- Restyled (2026-07) to read closer to Slay the Spire's own map: `showMap()`
+  in `game.js` + the "map" block in `styles.css`. Nodes are **plain line-art
+  glyphs, no circular badge** — `NODE`/`NODE_ICON` (`src/ui/icons.js`) render
+  straight onto the board; all sizing lives on the `.map-node` wrapper div
+  (`.map-node .svg-ic` just fills a percentage of it), so a bigger node is
+  simply a bigger wrapper. `.map-node.current` and `.node-boss` get larger
+  `width`/`height` rather than a `transform: scale()`, since scale is already
+  used by the `:hover`/pulse animations on the *reachable* state and the two
+  would fight.
+- Each node gets a small **deterministic pixel jitter** — `jitter(row, col)`
+  in `showMap()`, a hash of row/col (not `Math.random()`, so it's stable
+  across re-renders) — so the grid reads hand-drawn instead of gridded. Both
+  the node placement and the SVG `<line>` edges read positions through the
+  same `posOf()` helper, so edges always terminate exactly on the (jittered)
+  icon center they connect to.
+- The scene is a **fixed-height flex column** that fills the viewport and
+  scrolls internally: `.scene.map { height: 100dvh; overflow: hidden }` →
+  `.map-scene` (`flex: 1`) → `.map-scroller` (`flex: 1`, its own
+  `overflow-y: auto`). Use `height`, not `min-height`, on `.scene.map` — with
+  `min-height` the flex item is free to grow taller than the container
+  instead of scrolling internally, so the whole *page* scrolls (topbar and
+  header included) instead of just the map board.
+- The legend is a **hover/`:focus-within` popover** (`.map-legend-wrap` /
+  `.map-legend-btn`, pinned to the map header's right edge), not a permanent
+  always-visible row, so it doesn't cost vertical space. On narrow
+  (`max-width: 760px`) or short (`max-height: 560px`) screens, `.map-title`
+  (the act-name headline) is hidden via `display: none` while `.map-header`
+  itself stays (min-height/padding collapsed) so the Legend button remains
+  reachable and the board reclaims the freed space.
+
 ## Conventions
 - Keep it dependency-free and build-free. Don't introduce a bundler/framework.
 - Mechanic names stay readable; afrofuturist flavor lives in card/enemy/relic
@@ -172,6 +203,21 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   room for the hint + Skip row — confirmed by driving `box.scrollTop` in a
   Playwright check, not a new mechanism.
 - **Syntax Check**: Before committing or deploying, always verify modified JavaScript files using `node --check <path_to_file>` to catch syntax errors like unclosed blocks or brackets.
+- **CSS comment gotcha — never put `*` and `/` adjacent inside a `/* ... */` comment**
+  (e.g. writing `--card-*/--med` to reference two custom properties). The `*/`
+  closes the comment right there; every token from that point up to the *next*
+  `{` — including a real `@media (...) {` that follows the comment — gets
+  consumed as the prelude of one bogus selector, and the whole rule (comment
+  remainder + the entire next block) is silently discarded by the parser. No
+  console error, no visual crash, `node --check` can't catch it (it's CSS, not
+  JS) — the styles just silently do nothing. This exact typo dropped the whole
+  `@media (max-width: 760px)` narrow-portrait-phone block for a long time
+  before it was caught. If a breakpoint's rules seem to have zero effect even
+  though the media condition matches, suspect this first: check in a live page
+  via `[...document.styleSheets].flatMap(s => [...s.cssRules])` and look for
+  `CSSMediaRule`s with the expected `conditionText` — if the block you edited
+  is missing from that list entirely, walk backward through the preceding
+  comments for a stray `*/`.
 - **Auto-Update Learnings**: On every action/task, if you discover a project-specific gotcha, solve a debugging issue, or establish a new convention/pattern, you must immediately update `CLAUDE.md` and `.agents/AGENTS.md` to persist this learning.
 - **Landscape-phone breakpoint (`@media (max-height: 560px)`)**: this is the
   single hook for short viewports. `.title` and `.charselect` are plain
