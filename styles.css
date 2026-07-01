@@ -1511,6 +1511,31 @@ html { -webkit-text-size-adjust: 100%; }
 .overlay .card-desc, .shop-scene .card-desc { overflow: visible; padding-bottom: 4px; }
 .overlay .card-row, .overlay .deck-grid { max-height: 76vh; overflow-y: auto; align-items: stretch; }
 
+/* Card-choice ("pick a card") popup: bigger box that uses spare screen room,
+   and cards at their normal fixed w:h aspect ratio (not the auto-grow used by
+   the shop/deck overlays above) — a picker reads best when every option looks
+   like a real card, so this scales --card-h off vw (room to grow on desktop,
+   floors out on phones) and overrides the shared auto-height rule back to a
+   fixed height/width pair. */
+.overlay-box.card-picker { padding: 28px 32px; max-width: min(95vw, 980px); }
+.card-picker { --card-h: clamp(232px, 25vw, 320px); --card-w: calc(var(--card-h) * 0.7); }
+.card-picker .card-row { gap: 22px; }
+.card-picker .card { height: var(--card-h); width: var(--card-w); min-height: 0; }
+/* Top-align so a rare long description trims cleanly off the bottom edge
+   instead of centered overflow eating both the start and end of the text;
+   tapping the card still opens the full, unclipped tooltip. */
+.card-picker .card-desc { overflow: hidden; padding-bottom: 2px; align-items: flex-start; }
+.card-picker .card-desc-in { padding-top: 2px; }
+.card-picker .card.selected {
+  transform: translateY(-22px) scale(1.14) !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 0 34px var(--orange);
+  z-index: 5;
+}
+.card-picker-hint {
+  min-height: 1.4em; margin-top: 14px; color: var(--muted); font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
 
 /* ============================================================
    ASCENSION SELECTOR (character select) + unlock banner
