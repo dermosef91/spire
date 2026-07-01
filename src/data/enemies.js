@@ -52,6 +52,13 @@ const otherAlly = (c, self) => {
   return others.length ? c.rng.pick(others) : self;
 };
 
+// --- Player-state reads for context-aware AI. Enemies use these so their move
+// choice reacts to how the fight is actually going instead of a fixed cycle. ---
+const playerLowHp = (c, frac = 0.35) => c.player.hp <= c.player.maxHp * frac;
+const playerBlocked = (c, min = 1) => (c.player.block || 0) >= min;
+const playerLacks = (c, key) => !c.player.powers[key];
+const selfLowHp = (s, frac = 0.4) => s.hp <= s.maxHp * frac;
+
 // ===================== ACT 1 — The Sunken Market =====================
 
 // Basic attacker — light pressure, an occasional self-buff. The tutorial foe.
@@ -194,14 +201,18 @@ def('the_gatekeeper', {
 // ===================== ACT 2 — The Brass Archive =====================
 
 // Debuffer with bite — Rend hits hard, Soul Drain leeches back a little life
-// and stacks Brittle so your Block underperforms.
+// and stacks Brittle. Withers the Resolve of anyone leaning on Strength.
 def('sand_wraith', {
   name: 'Sand Wraith', act: 2, hpMin: 28, hpMax: 34,
   moves: {
     rend: atk('Rend', 11),
     drain: { name: 'Soul Drain', intent: { type: 'attackdebuff', dmg: 8 }, run: (c, s) => { c.enemyAttack(s, 8); c.applyPower(c.player, 'frail', 2, s); eHeal(c, s, 4); } },
+    wither: { name: 'Wither', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'strengthDown', 2, s) },
   },
-  pick: (s, c, rng) => rng.pick(['rend', 'drain']),
+  pick: (s, c, rng) => {
+    if ((c.player.powers.strength || 0) >= 3 && playerLacks(c, 'strengthDown')) return 'wither';
+    return rng.weighted([{ value: 'rend', weight: 2 }, { value: 'drain', weight: 3 }]);
+  },
 });
 
 // Retaliator — Reflect stacks heavy Backlash. Multi-hit decks shred themselves
@@ -325,14 +336,19 @@ def('the_archivist', {
 
 // ===================== ACT 3 — The Static Crown =====================
 
-// Debuffer — every other turn it hexes you with Exposed + Sapped, then wails.
+// Debuffer — hexes you with Exposed + Sapped, unnames your Resolve, then wails.
+// Prioritizes whichever debuff you're missing before it swings.
 def('void_chanter', {
   name: 'Void Chanter', act: 3, hpMin: 42, hpMax: 48,
   moves: {
     wail: atk('Wail', 13),
     hex: { name: 'Hex', intent: { type: 'debuff' }, run: (c, s) => { c.applyPower(c.player, 'vulnerable', 2, s); c.applyPower(c.player, 'weak', 2, s); } },
+    unname: { name: 'Unname', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'strengthDown', 2, s) },
   },
-  pick: (s, c, rng) => (s.turn % 2 === 0 ? 'hex' : 'wail'),
+  pick: (s, c, rng) => {
+    if (s.turn === 1 || playerLacks(c, 'vulnerable')) return 'hex';
+    return rng.weighted([{ value: 'unname', weight: 2 }, { value: 'wail', weight: 3 }]);
+  },
 });
 
 // Charger — beams and blesses itself, then a colossal Smite. High burst you must
@@ -344,7 +360,11 @@ def('static_seraph', {
     bless: { name: 'False Blessing', intent: { type: 'buffblock', block: 16 }, run: (c, s) => { c.gainBlockTo(s, 16); c.applyPower(s, 'strength', 3, s); } },
     smite: atk('Smite', 25),
   },
-  pick: (s, c, rng) => (s.turn % 3 === 0 ? 'smite' : rng.pick(['beam', 'bless'])),
+  // Telegraphs Smite every third turn; otherwise builds Resolve before it swings.
+  pick: (s, c, rng) => {
+    if (s.turn % 3 === 0) return 'smite';
+    return (s.powers.strength || 0) < 3 ? 'bless' : 'beam';
+  },
 });
 
 // Phaser — periodically slips into Phase, shrugging off a whole turn of damage.
@@ -356,9 +376,12 @@ def('echo_wraith', {
     rake: atk('Rake', 14),
     phase: { name: 'Phase Shift', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'intangible', 2, s); c.applyPower(c.player, 'weak', 1, s); } },
   },
+  // Phases on a cycle; when you're turtled up it punches through with the single
+  // big Rake instead of a flurry Block soaks.
   pick: (s, c, rng) => {
     if (s.turn % 3 === 0) return 'phase';
-    return rng.pick(['flurry', 'rake']);
+    if (playerBlocked(c, 10)) return 'rake';
+    return rng.weighted([{ value: 'flurry', weight: 2 }, { value: 'rake', weight: 2 }]);
   },
 });
 
@@ -417,15 +440,19 @@ def('chrome_archon', {
     swarm: atk('Nanoswarm', 6, 4),
     reweave: { name: 'Reweave', intent: { type: 'buffblock', block: 24 }, run: (c, s) => { c.gainBlockTo(s, 24); c.applyPower(s, 'strength', 3, s); c.applyPower(s, 'thorns', 6, s); } },
   },
+  // Reweaves its wall when wounded, drops Annihilate on an undefended hero (but
+  // never twice running), and chips with Nanoswarm otherwise.
   pick: (s, c, rng) => {
-    const cyc = ['swarm', 'reweave', 'annihilate'];
-    return cyc[(s.turn - 1) % cyc.length];
+    if (selfLowHp(s, 0.45) && s.last !== 'reweave') return 'reweave';
+    if (!playerBlocked(c, 15) && s.last !== 'annihilate') return 'annihilate';
+    return rng.weighted([{ value: 'swarm', weight: 2 }, { value: 'reweave', weight: 1 }]);
   },
 });
 
 // Act 3 final boss
 def('heart_of_static', {
   name: 'Heart of Static', act: 3, boss: true, finalBoss: true, hpMin: 800, hpMax: 800,
+  dmgCapPerTurn: 100, // Invincibility: absorbs at most 100 damage per player turn.
   moves: {
     blast: atk('Reality Blast', 42),
     multibeam: atk('Cascade', 5, 6),
@@ -433,10 +460,14 @@ def('heart_of_static', {
     rebuild: { name: 'Rebuild', intent: { type: 'buffblock', block: 30 }, run: (c, s) => { c.gainBlockTo(s, 30); c.applyPower(s, 'strength', 4, s); } },
   },
   buff: { name: 'Invincibility', desc: 'Caps the damage taken in a single turn.' },
+  // Reacts to the board: opens by clogging your deck, punishes an undefended hero
+  // with its big nuke, jams more Static when you have tempo, and rebuilds when hurt.
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'static_field';
-    const cyc = ['blast', 'multibeam', 'rebuild', 'static_field', 'multibeam', 'blast'];
-    return cyc[(s.turn - 2) % cyc.length];
+    if (s.last === 'rebuild') return 'blast'; // follow the wall with a swing
+    if (selfLowHp(s, 0.5) && s.last !== 'rebuild') return 'rebuild';
+    if (!playerBlocked(c, 20)) return rng.weighted([{ value: 'blast', weight: 3 }, { value: 'multibeam', weight: 1 }]);
+    return rng.weighted([{ value: 'multibeam', weight: 3 }, { value: 'static_field', weight: 2 }, { value: 'blast', weight: 1 }]);
   },
 });
 

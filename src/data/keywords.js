@@ -59,11 +59,10 @@ export const POWERS = {
     ticksDown: true,
     desc: 'Reduce ALL damage and HP loss to 1 this turn.',
   },
-  rhythm: {
-    name: 'Rhythm',
+  invincibility: {
+    name: 'Invincibility',
     type: 'buff',
-    signed: true,
-    desc: 'Each Verse played this combat adds power to your refrains.',
+    desc: 'Takes at most {n} damage per turn.',
   },
   focus: {
     name: 'Focus',
