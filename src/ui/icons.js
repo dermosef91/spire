@@ -438,6 +438,130 @@ const ENE = {
       <path d="M50 32 C62 44 62 44 50 50 C38 56 38 56 50 68" stroke="${A}" stroke-width="3" fill="none"/>
       <circle cx="50" cy="50" r="6.5" fill="${O}"/><circle cx="50" cy="50" r="2.6" fill="${C}"/>
     </g>`),
+
+  // ---- Act 1 additions ----
+  // Poisoner — a barbed clam with a dripping brine maw.
+  reef_spitter: S(`
+    <g class="m-breathe">
+      <path d="M22 62 Q50 40 78 62 Q64 74 50 74 Q36 74 22 62Z" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M24 60 Q50 44 76 60" stroke="${A}" stroke-width="1.6" fill="none" opacity="0.7"/>
+      <path d="M30 63 L28 55 M40 66 L39 57 M60 66 L61 57 M70 63 L72 55" stroke="${A}" stroke-width="1.6"/>
+      <path d="M40 66 Q50 58 60 66 Q50 72 40 66Z" fill="#0a1410" stroke="${E}" stroke-width="2"/>
+      <circle cx="50" cy="66" r="2.6" fill="${E}"/>
+      <path d="M42 74 q-1 8 0 10 M58 74 q1 8 0 10" stroke="#6ee0a0" stroke-width="2.2" fill="none" opacity="0.8"/>
+    </g>`),
+  // Support / healer — a robed conch that pours a mending aura.
+  tide_priest: S(`
+    <g class="m-spin" opacity="0.5">${rings(50, 44, 2, 12, A, 0.4)}</g>
+    <g class="m-drift">
+      <path d="M32 84 C32 54 68 54 68 84Z" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M32 84 C32 54 50 54 50 54 L50 84Z" fill="#000" opacity="0.26"/>
+      <path d="M40 54 C36 30 64 30 60 54Z" fill="${MD}" stroke="${A}" stroke-width="2.2"/>
+      <path d="M44 42 Q50 34 56 42 Q50 50 44 42Z" fill="#0d1a1c" stroke="${E}" stroke-width="1.8"/>
+      <circle cx="50" cy="42" r="2.2" fill="${E}"/>
+      <path d="M50 22 v6 M44 26 l4 3 M56 26 l-4 3" stroke="#7fe6c0" stroke-width="2" opacity="0.8"/>
+    </g>`),
+  // Glass cannon — a spark mote crackling with too much charge.
+  spark_imp: S(`
+    <g class="m-flicker">${rays(50, 52, 12, 24, 8, A, 0.7, 2)}</g>
+    <g class="m-bob">
+      <path d="M50 32 L60 52 L52 52 L58 70 L40 48 L48 48 Z" fill="${A}" stroke="${C}" stroke-width="2"/>
+      <circle cx="50" cy="50" r="12" fill="none" stroke="${O}" stroke-width="2" opacity="0.6"/>
+      <circle cx="46" cy="46" r="2" fill="${E}"/><circle cx="55" cy="47" r="2" fill="${E}"/>
+    </g>`),
+  // Elite charger — a coiled maw ringed with jagged rusted teeth.
+  rust_maw: S(`
+    <g class="m-breathe">
+      <circle cx="50" cy="54" r="26" fill="${DK}" stroke="${O}" stroke-width="2.8"/>
+      <circle cx="50" cy="54" r="26" fill="#000" opacity="0.2"/>
+      <path d="M28 46 L34 56 L40 46 L46 56 L52 46 L58 56 L64 46 L70 56" stroke="${A}" stroke-width="2.6" fill="none"/>
+      <path d="M30 62 L36 52 L42 62 L48 52 L54 62 L60 52 L66 62" stroke="${A}" stroke-width="2.6" fill="none"/>
+      <circle cx="50" cy="54" r="7" fill="#180a04" stroke="${E}" stroke-width="2.4"/>
+      <circle cx="50" cy="54" r="2.4" fill="${E}"/>
+    </g>`),
+
+  // ---- Act 2 additions ----
+  // Life-drain — a segmented leech with a barbed sucker.
+  ink_leech: S(`
+    <g class="m-coil">
+      <path d="M28 76 Q26 44 50 40 Q74 36 72 20" fill="none" stroke="${O}" stroke-width="7"/>
+      <path d="M28 76 Q26 44 50 40 Q74 36 72 20" fill="none" stroke="${DK}" stroke-width="4"/>
+      <circle cx="30" cy="72" r="7" fill="${DKv}" stroke="${E}" stroke-width="2.4"/>
+      <circle cx="30" cy="72" r="2.6" fill="${E}"/>
+      <path d="M40 58 h6 M44 48 h6 M56 40 h6" stroke="${A}" stroke-width="1.6" opacity="0.7"/>
+      <path d="M72 20 l-4 6 h8 Z" fill="${E}"/>
+    </g>`),
+  // Curse-flooder — a masked scribe unspooling a redacting scroll.
+  null_scribe: S(`
+    <g class="m-drift">
+      <rect x="34" y="26" width="32" height="52" rx="3" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M34 26 q-6 3 0 6 M66 26 q6 3 0 6 M34 72 q-6 3 0 6 M66 72 q6 3 0 6" stroke="${A}" stroke-width="2" fill="none"/>
+      <path d="M40 38 H60 M40 46 H60 M40 54 H54" stroke="#000" stroke-width="3" opacity="0.5"/>
+      <path d="M40 38 H60 M40 46 H60 M40 54 H54" stroke="${A}" stroke-width="1" opacity="0.6"/>
+      <circle cx="50" cy="62" r="6" fill="#0a0810" stroke="${E}" stroke-width="2"/><circle cx="50" cy="62" r="2" fill="${E}"/>
+    </g>`),
+  // Charger — a hovering rune-star charging to a bright core.
+  glyph_sentry: S(`
+    <g class="m-spin" opacity="0.6">${rings(50, 50, 2, 16, A, 0.5)}</g>
+    <g class="m-pulse">
+      <path d="M50 20 L58 42 L80 50 L58 58 L50 80 L42 58 L20 50 L42 42Z" fill="${DKv}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M50 30 L55 46 L70 50 L55 54 L50 70 L45 54 L30 50 L45 46Z" fill="none" stroke="${A}" stroke-width="1.4"/>
+      <circle cx="50" cy="50" r="7" fill="#0a0810" stroke="${E}" stroke-width="2.4"/><circle cx="50" cy="50" r="2.6" fill="${E}"/>
+    </g>`),
+  // Elite berserker — a jagged obsidian void with a gnashing seam.
+  obsidian_maw: S(`
+    <g class="m-breathe">
+      <polygon points="50,18 78,40 70,74 50,84 30,74 22,40" fill="#0d0714" stroke="${O}" stroke-width="2.8"/>
+      <polygon points="50,18 78,40 70,74 50,84" fill="#000" opacity="0.32"/>
+      <path d="M34 46 L42 54 L34 60 M66 46 L58 54 L66 60" stroke="${E}" stroke-width="3" fill="none"/>
+      <path d="M38 68 L44 62 L50 68 L56 62 L62 68" stroke="${A}" stroke-width="2.6" fill="none"/>
+      <circle cx="50" cy="40" r="3" fill="${E}"/>
+    </g>`),
+
+  // ---- Act 3 additions ----
+  // Phaser — a wraith flanked by flickering echoes of itself.
+  echo_wraith: S(`
+    <g class="m-flicker" opacity="0.35">
+      <path d="M40 82 C34 52 66 52 60 82Z" fill="none" stroke="${A}" stroke-width="2" transform="translate(-9 0)"/>
+      <path d="M40 82 C34 52 66 52 60 82Z" fill="none" stroke="${A}" stroke-width="2" transform="translate(9 0)"/>
+    </g>
+    <g class="m-drift">
+      <path d="M36 84 C30 50 70 50 64 84Z" fill="${DKv}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M36 84 C31 54 50 51 50 51 L50 84Z" fill="#000" opacity="0.3"/>
+      <path d="M40 50 C40 28 60 28 60 50 L54 56 H46Z" fill="${DKv}" stroke="${A}" stroke-width="2.2"/>
+      <circle cx="45" cy="44" r="2.4" fill="${E}"/><circle cx="55" cy="44" r="2.4" fill="${E}"/>
+    </g>`),
+  // Support / healer — a candle-crowned cantor pouring a warding light.
+  hollow_cantor: S(`
+    <g class="m-flicker">${rays(50, 22, 4, 12, 6, A, 0.6, 2)}</g>
+    <g class="m-drift">
+      <path d="M33 84 C33 52 67 52 67 84Z" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M33 84 C33 52 50 52 50 52 L50 84Z" fill="#000" opacity="0.26"/>
+      <rect x="42" y="30" width="16" height="22" rx="3" fill="${MD}" stroke="${A}" stroke-width="2"/>
+      <path d="M50 30 Q46 24 50 18 Q54 24 50 30Z" fill="${E}" stroke="${A}" stroke-width="1.4"/>
+      <circle cx="46" cy="42" r="2" fill="${E}"/><circle cx="54" cy="42" r="2" fill="${E}"/>
+    </g>`),
+  // Berserker — a hulking magma golem seamed with fire.
+  ember_colossus: S(`
+    <g class="m-breathe">
+      <path d="M26 84 L32 46 Q50 36 68 46 L74 84Z" fill="#160a06" stroke="${O}" stroke-width="2.8"/>
+      <path d="M26 84 L32 46 Q41 41 50 40 L50 84Z" fill="#000" opacity="0.28"/>
+      <path d="M40 50 L46 58 L40 64 M60 50 L54 58 L60 64" stroke="${E}" stroke-width="3" fill="none"/>
+      <path d="M36 72 Q50 66 64 72" stroke="${E}" stroke-width="2.6" fill="none"/>
+      <path d="M44 46 L48 54 L44 60 M56 46 L52 54 L56 60" stroke="${A}" stroke-width="1.4" opacity="0.7"/>
+      <path d="M30 40 L36 30 M70 40 L64 30" stroke="${E}" stroke-width="2.4"/>
+    </g>`),
+  // Swarm — a scattered cluster of charged static shards.
+  static_swarm: S(`
+    <g class="m-flicker">
+      <path d="M50 24 L56 40 L50 46 L44 40Z" fill="${A}" stroke="${C}" stroke-width="1.4"/>
+      <path d="M30 44 L38 50 L34 58 L26 54Z" fill="${DK}" stroke="${O}" stroke-width="1.8"/>
+      <path d="M70 44 L74 54 L66 58 L62 50Z" fill="${DK}" stroke="${O}" stroke-width="1.8"/>
+      <path d="M40 62 L48 66 L44 74 L36 70Z" fill="${DK}" stroke="${A}" stroke-width="1.8"/>
+      <path d="M60 62 L66 70 L58 74 L54 66Z" fill="${DK}" stroke="${A}" stroke-width="1.8"/>
+      <path d="M50 46 L34 54 M50 46 L66 54 M44 70 L50 60 L58 70" stroke="${E}" stroke-width="1.4" opacity="0.7"/>
+      <circle cx="50" cy="52" r="3" fill="${E}"/>
+    </g>`),
 };
 
 const GENERIC_ENEMY = S(`<g class="m-bob"><polygon points="50,26 72,48 50,74 28,48" fill="${DK}" stroke="${O}" stroke-width="2.6"/><circle cx="50" cy="48" r="7" fill="${E}"/><circle cx="50" cy="48" r="2.6" fill="${A}"/></g>`);
