@@ -2,8 +2,17 @@
 // afrofuturist language. Mechanic names are kept readable; flavor lives in the
 // descriptions and the world around them.
 
-// type: 'buff' | 'debuff'
-// duration: 'turn' (decrements each owner turn start) | 'persist' (stays) | 'value' (counts down by use)
+// Each power carries the metadata the combat engine reads directly, so the
+// "how does this status behave" knowledge lives here rather than in hardcoded
+// lists scattered through combat.js:
+//   type: 'buff' | 'debuff'          — Charm (artifact) only negates debuffs.
+//   ticksDown: true                  — decrements by 1 at the owner's turn boundary
+//                                       (tickTurnDebuffs). Omit for statuses cleared
+//                                       another way (poison ticks by value; regen
+//                                       decays at turn end; noBlock is re-applied).
+//   signed: true                     — may hold a negative value (e.g. Resolve), so
+//                                       it is removed only at exactly 0. Powers
+//                                       without this flag clamp away at <= 0.
 export const POWERS = {
   // --- Core combat resource ---
   block: {
@@ -16,6 +25,7 @@ export const POWERS = {
   strength: {
     name: 'Resolve',
     type: 'buff',
+    signed: true,
     desc: 'Increases attack damage by {n} per hit.',
   },
   dexterity: {
@@ -26,7 +36,6 @@ export const POWERS = {
   regen: {
     name: 'Regrowth',
     type: 'buff',
-    duration: 'turn',
     desc: 'Heal {n} HP at the end of your turn, then it decreases by 1.',
   },
   metallicize: {
@@ -47,12 +56,13 @@ export const POWERS = {
   intangible: {
     name: 'Phase',
     type: 'buff',
-    duration: 'turn',
+    ticksDown: true,
     desc: 'Reduce ALL damage and HP loss to 1 this turn.',
   },
   rhythm: {
     name: 'Rhythm',
     type: 'buff',
+    signed: true,
     desc: 'Each Verse played this combat adds power to your refrains.',
   },
   focus: {
@@ -65,43 +75,42 @@ export const POWERS = {
   vulnerable: {
     name: 'Exposed',
     type: 'debuff',
-    duration: 'turn',
+    ticksDown: true,
     desc: 'Takes 50% more damage from attacks.',
   },
   weak: {
     name: 'Sapped',
     type: 'debuff',
-    duration: 'turn',
+    ticksDown: true,
     desc: 'Deals 25% less attack damage.',
   },
   frail: {
     name: 'Brittle',
     type: 'debuff',
-    duration: 'turn',
+    ticksDown: true,
     desc: 'Gains 25% less Block from cards.',
   },
   poison: {
     name: 'Blight',
     type: 'debuff',
-    duration: 'value',
     desc: 'Lose {n} HP at the start of turn, then it decreases by 1.',
   },
   entangle: {
     name: 'Snared',
     type: 'debuff',
-    duration: 'turn',
+    signed: true,
     desc: 'Cannot play Attacks this turn.',
   },
   strengthDown: {
     name: 'Resolve Down',
     type: 'debuff',
-    duration: 'turn',
+    signed: true,
     desc: 'At end of turn, lose {n} Resolve.',
   },
   noBlock: {
     name: 'Sundered',
     type: 'debuff',
-    duration: 'turn',
+    signed: true,
     desc: 'Cannot gain Block this turn.',
   },
 };

@@ -308,10 +308,11 @@ export class Combat {
       return;
     }
     target.powers[key] = (target.powers[key] || 0) + amount;
-    // Clamp debuff-style stacks at 0 minimum
-    if (['vulnerable', 'weak', 'frail', 'poison', 'regen', 'metallicize', 'thorns', 'dexterity', 'focus', 'intangible', 'artifact'].includes(key)) {
-      if (target.powers[key] <= 0) delete target.powers[key];
-    } else if (target.powers[key] === 0) {
+    // 'signed' powers (e.g. Resolve) may hold a negative value and are removed
+    // only at exactly 0; everything else clamps away at <= 0. (See POWERS.)
+    if (def && def.signed) {
+      if (target.powers[key] === 0) delete target.powers[key];
+    } else if (target.powers[key] <= 0) {
       delete target.powers[key];
     }
     if (amount !== 0) this.fx('power', { target, key, amount });
@@ -522,8 +523,9 @@ export class Combat {
   }
 
   tickTurnDebuffs(entity) {
-    for (const key of ['vulnerable', 'weak', 'frail', 'intangible']) {
-      if (entity.powers[key]) {
+    // Decrement every active power flagged ticksDown at the owner's turn boundary.
+    for (const key of Object.keys(entity.powers)) {
+      if (POWERS[key]?.ticksDown) {
         entity.powers[key] -= 1;
         if (entity.powers[key] <= 0) delete entity.powers[key];
       }
