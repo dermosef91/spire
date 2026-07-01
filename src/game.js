@@ -528,21 +528,39 @@ export class Game {
 
   cardChoiceOverlay(options, onDone) {
     const overlay = el('div', { class: 'overlay' });
-    const box = el('div', { class: 'overlay-box' });
+    const box = el('div', { class: 'overlay-box card-picker' });
     box.appendChild(el('h3', { text: 'Choose a card' }));
+    const hint = el('div', { class: 'card-picker-hint', text: 'Tap a card to preview it, tap again to confirm' });
     const row = el('div', { class: 'card-row' });
+
+    const finish = (c) => {
+      this.tooltip(null, null, false);
+      audio.play('select');
+      document.body.removeChild(overlay);
+      onDone(c);
+    };
+
+    let selectedCard = null;
+    let selectedNode = null;
     for (const c of options) {
-      row.appendChild(renderCard(c, {
+      const node = renderCard(c, {
         onClick: () => {
-          this.tooltip(null, null, false);
-          audio.play('select');
-          document.body.removeChild(overlay);
-          onDone(c);
+          if (selectedCard === c) { finish(c); return; }
+          if (selectedNode) selectedNode.classList.remove('selected');
+          selectedCard = c;
+          selectedNode = node;
+          node.classList.add('selected');
+          hint.textContent = 'Tap again to confirm';
+          // Also drives the tooltip on tap, not just hover, so touch users
+          // (no mouseenter) still get the full, un-clipped card text.
+          this.tooltip(c, node, true, 'card');
         },
         onHover: (cd, n, on) => this.tooltip(cd, n, on, 'card'),
-      }));
+      });
+      row.appendChild(node);
     }
     box.appendChild(row);
+    box.appendChild(hint);
     box.appendChild(button('Skip', () => {
       this.tooltip(null, null, false);
       document.body.removeChild(overlay);

@@ -114,6 +114,28 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   `game.js`), which are dingbat punctuation, not pictographic emoji, and to
   emoji used only in dev-tooling console logs (`tools/gen-*.js`), which never
   reach the player.
+- **Card-choice ("pick a card") popup** (`Game.cardChoiceOverlay` in `game.js`,
+  `.card-picker` in `styles.css`) shows options at a fixed w:h card aspect
+  ratio (`--card-h: clamp(232px, 25vw, 320px)`, `--card-w: calc(var(--card-h) *
+  0.7)`) rather than the shop/deck overlays' `height:auto; min-height:`
+  grow-to-fit-text trick — that trick stretches every card in the row to match
+  the tallest via `align-items:stretch`, which looks fine for the shop's
+  shorter cards but reads as an odd tall slab with dead space for the picker's
+  three big cards. The floor (232px) is sized so even the longest card
+  description in the game (`the_long_song`, ~106 chars) fits without clipping
+  on a narrow phone; `.card-desc` is top-aligned there (not the usual
+  vertically-centered) so if some future longer text *does* overflow, it trims
+  cleanly off the bottom instead of a centered clip eating both the start and
+  end of the sentence. Selection is two-tap: first tap adds `.selected`
+  (bigger + glowing) and — since touch never fires `mouseenter` — also calls
+  `this.tooltip(c, node, true, 'card')` straight from the click handler so the
+  full text is always reachable even if it's visually truncated; tapping the
+  *same* card again confirms and closes the overlay, tapping a *different*
+  card switches the selection instead. The popup still relies on
+  `.overlay-box`'s existing `overflow-y:auto`/`max-height:88vh` to stay usable
+  on short landscape phones (812×375), where the fixed card height leaves no
+  room for the hint + Skip row — confirmed by driving `box.scrollTop` in a
+  Playwright check, not a new mechanism.
 - **Syntax Check**: Before committing or deploying, always verify modified JavaScript files using `node --check <path_to_file>` to catch syntax errors like unclosed blocks or brackets.
 - **Auto-Update Learnings**: On every action/task, if you discover a project-specific gotcha, solve a debugging issue, or establish a new convention/pattern, you must immediately update `CLAUDE.md` and `.agents/AGENTS.md` to persist this learning.
 - **Landscape-phone breakpoint (`@media (max-height: 560px)`)**: this is the
