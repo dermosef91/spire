@@ -189,7 +189,9 @@ export class Game {
       grid.appendChild(card);
     }
     panel.appendChild(grid);
-    panel.appendChild(this.ascensionSelector());
+    if ((this.meta.maxAscension || 0) > 0) {
+      panel.appendChild(this.ascensionSelector());
+    }
     panel.appendChild(button('← Back', () => this.showTitle()));
     this.setScene(panel, 'charselect');
   }
@@ -230,7 +232,7 @@ export class Game {
     const r = this._ascRefs;
     if (!r) return;
     const a = this.selectedAscension;
-    r.label.textContent = a === 0 ? 'Ascension 0' : `Ascension ${a}`;
+    r.label.textContent = a === 0 ? '' : `Ascension ${a}`;
     if (a === 0) {
       r.desc.innerHTML = '<span class="asc-base">Base difficulty — no modifiers.</span>';
     } else {
