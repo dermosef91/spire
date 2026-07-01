@@ -329,12 +329,15 @@ body.scene-reward #bg-image.show {
 
 
 /* ----------------------------- char select / map ----------------------------- */
-@media (min-width: 1024px) and (min-height: 650px) {
+@media (min-width: 1024px) and (min-height: 561px) {
   .scene.charselect, .scene.map {
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    /* Center vertically when there's room; fall back to top-aligned (and let
+       the page scroll) when the content is taller than the viewport, so the
+       heading is never clipped off the top edge. */
+    justify-content: safe center;
   }
 }
 .charselect { text-align: center; }
