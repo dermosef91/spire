@@ -78,7 +78,7 @@ def('static_jackal', {
 // Retaliator / turtle — parks Block and Backlash, then a heavy Slam. Flurries
 // hurt you back; answer it with one big hit or by holding your attacks.
 def('brass_sentinel', {
-  name: 'Brass Sentinel', act: 1, hpMin: 22, hpMax: 27, startBlock: 6,
+  name: 'Brass Sentinel', act: 1, hpMin: 44, hpMax: 54, startBlock: 6,
   moves: {
     slam: atk('Piston Slam', 10),
     barricade: { name: 'Barricade', intent: { type: 'buffblock', block: 8 }, run: (c, s) => { c.gainBlockTo(s, 8); c.applyPower(s, 'thorns', 3, s); } },
