@@ -38,9 +38,9 @@ const ID_FILTER = idsFlag
     : null;
 
 // ── Style bible (embedded in every prompt) ──────────────────────────────────
-const STYLE_BIBLE = `Afrofuturist dark graphic illustration of a scene or environment in a bold woodcut / risograph screen-print style. Wide landscape scene with a composition structured for a 3:2 aspect ratio. Pure black backgrounds and deep shadows, bold black ink linework, halftone dot shading, very high contrast, strictly limited palette of ember orange #ff6a1a, deep ember #e8431a, amber #ffab47, cream #f3e8d8 — absolutely no other hues. Concentric orbital circle sigils, geometric African-inspired ornamental patterns, and soundwave lines integrated into the landscape. High detail, textured grain, and halftone noise throughout. Empty background environment, no foreground characters, no text, no border, no UI chrome.`;
+const STYLE_BIBLE = `Afrofuturist dark graphic illustration of a scene or environment. Wide landscape scene with a composition structured for a 3:2 aspect ratio. Pure black backgrounds and deep shadows, high contrast, limited palette of ember orange #ff6a1a, deep ember #e8431a, amber #ffab47, cream #f3e8d8. Background environment, no foreground characters, no text, no border, no UI chrome.`;
 
-const STYLE_KEY_PROMPT = `${STYLE_BIBLE} Subject: A vast, empty ceremonial hall inside the Obsidian Spire. Giant concentric circular arches of carved black stone recede into a cosmic background, glowing amber soundwaves running along the floor. Tall stone pillars on the sides, high contrast, bold ember-orange highlights on the edges. Halftone grain and woodcut texture. Empty hall, no people. This is a style calibration reference image.`;
+const STYLE_KEY_PROMPT = `${STYLE_BIBLE} Subject: A vast, empty ceremonial hall inside the Obsidian Spire. Giant concentric circular arches of carved black stone recede into a cosmic background, glowing amber soundwaves running along the floor. Tall stone pillars on the sides, high contrast, bold ember-orange highlights on the edges. Empty hall, no people. This is a style calibration reference image.`;
 
 // ── Cost tracking ───────────────────────────────────────────────────────────
 let totalCost = 0;
@@ -115,7 +115,7 @@ async function generateStyleKey(openai, sharp) {
   console.log('  ✓ Style-key saved');
 }
 
-async function generateBackground(openai, sharp, bg) {
+async function generateBackground(openai, OpenAI, sharp, bg) {
   const { id, name, act, prompt } = bg;
   const outPath = join(BGS_DIR, `${id}.png`);
 
@@ -135,16 +135,44 @@ async function generateBackground(openai, sharp, bg) {
 
   const fullPrompt = `${STYLE_BIBLE} Subject: ${prompt}`;
 
+  // Read style-key as image input for consistency
+  let styleKeyBuf = readFileSync(STYLE_KEY_PATH);
+  // Since style-key-bg.png is post-processed to 1536x1024, we must resize it back to a square (1024x1024)
+  // for OpenAI's images.edit API which strictly requires square PNGs.
+  // We also make the image semi-transparent (10% opacity) so the edit API has full freedom to draw
+  // the new environment details while maintaining the color scheme and texture style from the style key.
+  const rawStyleKey = await sharp(styleKeyBuf)
+    .resize(1024, 1024, { fit: 'fill' })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const pixelData = rawStyleKey.data;
+  for (let i = 3; i < pixelData.length; i += 4) {
+    pixelData[i] = 25; // ~10% opacity
+  }
+
+  styleKeyBuf = await sharp(pixelData, {
+    raw: {
+      width: rawStyleKey.info.width,
+      height: rawStyleKey.info.height,
+      channels: 4
+    }
+  }).png().toBuffer();
+
+  const styleKeyFile = await OpenAI.toFile(styleKeyBuf, 'style-key-bg.png', { type: 'image/png' });
+
   const result = await withRetry(async () => {
-    return openai.images.generate({
+    return openai.images.edit({
       model: 'gpt-image-2',
+      image: styleKeyFile,
       prompt: fullPrompt,
       n: 1,
-      size: '1024x1024', // or '1792x1024' if widescreen model matches
+      size: '1024x1024',
     });
   });
 
-  logCost(id, 'generate', 'gpt-image-2');
+  logCost(id, 'edit', 'gpt-image-2');
 
   const b64 = result.data[0].b64_json;
   const rawBuf = Buffer.from(b64, 'base64');
@@ -212,6 +240,7 @@ async function main() {
 
   // Load OpenAI SDK (only if not dry-run)
   let openai = null;
+  let OpenAIClass = null;
   if (!DRY_RUN) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -222,6 +251,7 @@ async function main() {
     try {
       const { default: OpenAI } = await import('openai');
       openai = new OpenAI({ apiKey });
+      OpenAIClass = OpenAI;
     } catch (err) {
       console.error('❌ openai SDK not installed. Run: npm install openai inside tools/');
       process.exit(1);
@@ -229,7 +259,7 @@ async function main() {
   }
 
   // Step 1: Generate style-key reference
-  if (!existsSync(STYLE_KEY_PATH) || FORCE) {
+  if (!existsSync(STYLE_KEY_PATH)) {
     await generateStyleKey(openai, sharp);
   } else {
     console.log('🎨 Background style-key exists, reusing');
@@ -241,7 +271,7 @@ async function main() {
   const generated = [];
   for (const bg of bgs) {
     try {
-      const id = await generateBackground(openai, sharp, bg);
+      const id = await generateBackground(openai, OpenAIClass, sharp, bg);
       if (id) generated.push(id);
     } catch (err) {
       console.error(`  ❌ ${bg.id} failed: ${err.message}`);

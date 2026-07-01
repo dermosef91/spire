@@ -66,6 +66,21 @@ function getVariationPrompt(id, basePrompt, pose) {
         .replace('standing centered with both hands raised', 'in dynamic attacking pose, thrusting both hands forward')
         .replace('glowing spirit orbs floating between her fingers', 'projecting glowing spirit orbs and beams of star-fire');
     }
+    if (id === 'husk_drone') {
+      return basePrompt
+        .replace('A hovering diamond-shaped automaton drone', 'A hovering diamond-shaped automaton drone in dynamic attacking pose')
+        .replace('Orbiting concentric targeting rings around the eye', 'Firing a high-voltage beam of orange static electricity from its central eye, with orbiting targeting rings');
+    }
+    if (id === 'static_jackal') {
+      return basePrompt
+        .replace('in predatory standing pose', 'in dynamic attacking pose, lunging forward with extended glowing claws slashing through the air')
+        .replace('Clawed hands at the ready', 'Clawed hands striking in mid-air');
+    }
+    if (id === 'the_gatekeeper') {
+      return basePrompt
+        .replace('A monumental living stone archway entity', 'A monumental living stone archway entity in dynamic attacking pose')
+        .replace('colossal glowing eye floats above the stone lintel', 'colossal glowing eye firing a massive beam of dark void energy downwards');
+    }
     return basePrompt.replace('standing pose', 'dynamic attacking pose, lunging and striking');
   }
 
@@ -85,6 +100,21 @@ function getVariationPrompt(id, basePrompt, pose) {
         .replace('standing centered with both hands raised', 'in defensive blocking pose, hands held out to form a barrier')
         .replace('Orbiting energy rings around her torso', 'A dense glowing sphere of orbiting celestial shield rings protecting her');
     }
+    if (id === 'husk_drone') {
+      return basePrompt
+        .replace('A hovering diamond-shaped automaton drone', 'A hovering diamond-shaped automaton drone in defensive blocking pose')
+        .replace('Orbiting concentric targeting rings around the eye', 'Projecting a geometric orange energy dome shield around itself');
+    }
+    if (id === 'static_jackal') {
+      return basePrompt
+        .replace('in predatory standing pose', 'in defensive blocking pose, crossing clawed arms in front of its chest')
+        .replace('Clawed hands at the ready', 'Crossing arms to form a barrier of static-lightning shield');
+    }
+    if (id === 'the_gatekeeper') {
+      return basePrompt
+        .replace('A monumental living stone archway entity', 'A monumental living stone archway entity in defensive blocking pose')
+        .replace('Space-time warping and dark void energy visible inside the archway', 'A dense wall of ancient stone panels and defensive geometric runes sealing the archway');
+    }
     return basePrompt.replace('standing pose', 'defensive blocking pose, shielding and guarding');
   }
 
@@ -103,6 +133,21 @@ function getVariationPrompt(id, basePrompt, pose) {
       return basePrompt
         .replace('standing centered with both hands raised', 'in dynamic casting pose, floating slightly, both arms extended and weaving a web of glowing orange star-fire and celestial threads')
         .replace('glowing spirit orbs floating between her fingers', 'glowing spirit orbs orbiting rapidly like a solar storm');
+    }
+    if (id === 'husk_drone') {
+      return basePrompt
+        .replace('A hovering diamond-shaped automaton drone', 'A hovering diamond-shaped automaton drone in dynamic casting pose')
+        .replace('Orbiting concentric targeting rings around the eye', 'Central eye pulsing intensely as radar wave rings and diagnostic geometric HUD symbols orbit it');
+    }
+    if (id === 'static_jackal') {
+      return basePrompt
+        .replace('in predatory standing pose', 'in dynamic casting pose, head thrown back howling')
+        .replace('Clawed hands at the ready', 'Hands channeling geometric lightning storms and digital glitch waves pulsing outward');
+    }
+    if (id === 'the_gatekeeper') {
+      return basePrompt
+        .replace('A monumental living stone archway entity', 'A monumental living stone archway entity in dynamic casting pose')
+        .replace('spinning concentric orbital rings', 'spinning concentric orbital rings and ancient celestial key-and-lock sigils rotating rapidly');
     }
     return basePrompt.replace('standing pose', 'dynamic casting pose, channeling energy with geometric sigils floating around');
   }
@@ -146,50 +191,107 @@ async function postProcess(sharp, buf) {
   const baseImg = sharp(buf);
   const { data, info } = await baseImg.raw().toBuffer({ resolveWithObject: true });
   
-  const outputBuffer = Buffer.alloc(info.width * info.height * 4);
+  const width = info.width;
+  const height = info.height;
   const channels = info.channels;
   
-  for (let i = 0; i < info.width * info.height; i++) {
+  const outputBuffer = Buffer.alloc(width * height * 4);
+  for (let i = 0; i < width * height; i++) {
     const srcIdx = i * channels;
     const destIdx = i * 4;
+    outputBuffer[destIdx] = data[srcIdx];
+    outputBuffer[destIdx + 1] = data[srcIdx + 1];
+    outputBuffer[destIdx + 2] = data[srcIdx + 2];
+    outputBuffer[destIdx + 3] = channels === 4 ? data[srcIdx + 3] : 255;
+  }
+  
+  // Flood fill from edges to remove both checkerboard (neutral-bright) and pure dark backgrounds
+  const queue = [];
+  const visited = new Uint8Array(width * height);
+  
+  function isBgCandidate(r, g, b, a) {
+    if (a === 0) return true;
     
-    const r = data[srcIdx];
-    const g = data[srcIdx + 1];
-    const b = data[srcIdx + 2];
-    
-    // Check if pixel is neutral-bright (part of checkerboard background)
     const isNeutralBright = 
       r > 150 && 
       Math.abs(r - g) < 12 && 
       Math.abs(r - b) < 12 && 
       Math.abs(g - b) < 12;
       
-    if (isNeutralBright) {
-      outputBuffer[destIdx] = 0;
-      outputBuffer[destIdx + 1] = 0;
-      outputBuffer[destIdx + 2] = 0;
-      outputBuffer[destIdx + 3] = 0;
-    } else {
-      outputBuffer[destIdx] = r;
-      outputBuffer[destIdx + 1] = g;
-      outputBuffer[destIdx + 2] = b;
-      outputBuffer[destIdx + 3] = channels === 4 ? data[srcIdx + 3] : 255;
+    const isDark = r < 55 && g < 55 && b < 55;
+    
+    return isNeutralBright || isDark;
+  }
+  
+  // Border seeding
+  for (let x = 0; x < width; x++) {
+    let idx = x;
+    if (isBgCandidate(outputBuffer[idx*4], outputBuffer[idx*4+1], outputBuffer[idx*4+2], outputBuffer[idx*4+3])) {
+      queue.push(idx);
+      visited[idx] = 1;
+    }
+    idx = (height - 1) * width + x;
+    if (isBgCandidate(outputBuffer[idx*4], outputBuffer[idx*4+1], outputBuffer[idx*4+2], outputBuffer[idx*4+3])) {
+      queue.push(idx);
+      visited[idx] = 1;
+    }
+  }
+  
+  for (let y = 0; y < height; y++) {
+    let idx = y * width;
+    if (!visited[idx] && isBgCandidate(outputBuffer[idx*4], outputBuffer[idx*4+1], outputBuffer[idx*4+2], outputBuffer[idx*4+3])) {
+      queue.push(idx);
+      visited[idx] = 1;
+    }
+    idx = y * width + (width - 1);
+    if (!visited[idx] && isBgCandidate(outputBuffer[idx*4], outputBuffer[idx*4+1], outputBuffer[idx*4+2], outputBuffer[idx*4+3])) {
+      queue.push(idx);
+      visited[idx] = 1;
+    }
+  }
+  
+  // BFS
+  let head = 0;
+  while (head < queue.length) {
+    const idx = queue[head++];
+    outputBuffer[idx * 4] = 0;
+    outputBuffer[idx * 4 + 1] = 0;
+    outputBuffer[idx * 4 + 2] = 0;
+    outputBuffer[idx * 4 + 3] = 0;
+    
+    const x = idx % width;
+    const y = Math.floor(idx / width);
+    const neighbors = [];
+    if (x > 0) neighbors.push(idx - 1);
+    if (x < width - 1) neighbors.push(idx + 1);
+    if (y > 0) neighbors.push(idx - width);
+    if (y < height - 1) neighbors.push(idx + width);
+    
+    for (const nIdx of neighbors) {
+      if (!visited[nIdx]) {
+        const nr = outputBuffer[nIdx * 4];
+        const ng = outputBuffer[nIdx * 4 + 1];
+        const nb = outputBuffer[nIdx * 4 + 2];
+        const na = outputBuffer[nIdx * 4 + 3];
+        if (isBgCandidate(nr, ng, nb, na)) {
+          queue.push(nIdx);
+          visited[nIdx] = 1;
+        }
+      }
     }
   }
   
   let img = sharp(outputBuffer, {
     raw: {
-      width: info.width,
-      height: info.height,
+      width,
+      height,
       channels: 4
     }
   });
 
   try {
     img = img.trim();
-  } catch {
-    // trim fails on completely empty images or minor edge cases
-  }
+  } catch {}
 
   img = img.resize(1024, 1024, {
     fit: 'contain',
@@ -275,17 +377,19 @@ async function main() {
   const manifest = JSON.parse(readFileSync(MANIFEST_IN, 'utf8'));
   
   // Filter for champions only, and optionally apply ID filter
-  let champions = manifest.filter(e => e.kind === 'champion');
+  // Filter for champions and specified key enemies, and optionally apply ID filter
+  const targetIds = ['amara', 'kofi', 'zara', 'static_jackal', 'the_gatekeeper', 'husk_drone'];
+  let entities = manifest.filter(e => targetIds.includes(e.id));
   if (ID_FILTER) {
-    champions = champions.filter(e => ID_FILTER.includes(e.id));
+    entities = entities.filter(e => ID_FILTER.includes(e.id));
   }
 
-  if (champions.length === 0) {
-    console.log('❌ No champions found matching criteria.');
+  if (entities.length === 0) {
+    console.log('❌ No matching entities found.');
     process.exit(0);
   }
 
-  console.log(`  Found ${champions.length} champions to process: ${champions.map(c => c.id).join(', ')}`);
+  console.log(`  Found ${entities.length} entities to process: ${entities.map(e => e.id).join(', ')}`);
   console.log();
 
   // Ensure output directory
@@ -322,12 +426,12 @@ async function main() {
 
   const poses = ['attack', 'block', 'skill'];
 
-  console.log('━━━ Processing Champions ━━━');
-  for (const champion of champions) {
-    console.log(`• Champion: ${champion.id}`);
+  console.log('━━━ Processing Entities ━━━');
+  for (const entity of entities) {
+    console.log(`• Entity: ${entity.id}`);
     for (const pose of poses) {
       try {
-        await generateVariation(openai, OpenAIClass, sharp, champion, pose);
+        await generateVariation(openai, OpenAIClass, sharp, entity, pose);
       } catch (err) {
         console.error(`      ❌ Pose '${pose}' failed: ${err.message}`);
       }

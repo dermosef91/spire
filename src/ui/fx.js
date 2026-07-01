@@ -112,3 +112,50 @@ export function burst(layer, targetEl, color = '#ffce5c', n = 14) {
     setTimeout(() => p.remove(), 700);
   }
 }
+
+// Particle-based white/slightly blueish shine effect around character.
+export function shine(layer, targetEl, n = 24) {
+  if (!layer || !targetEl || reduce()) return;
+  const lr = layer.getBoundingClientRect();
+  const tr = targetEl.getBoundingClientRect();
+  const cx = tr.left - lr.left + tr.width / 2;
+  const cy = tr.top - lr.top + tr.height / 2;
+  
+  const colors = ['#ffffff', '#f2f9ff', '#d9efff', '#bfe3ff', '#e6f7ff', '#cbefff'];
+  
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement('div');
+    p.className = 'shine-particle';
+    
+    // Spawn distributed within/around target bounds
+    const rx = (Math.random() - 0.5) * tr.width * 0.95;
+    const ry = (Math.random() - 0.5) * tr.height * 0.95;
+    
+    p.style.left = (cx + rx) + 'px';
+    p.style.top = (cy + ry) + 'px';
+    
+    // Drift upwards and slightly horizontally
+    const dy = -(40 + Math.random() * 80);
+    const dx = (Math.random() - 0.5) * 50;
+    
+    p.style.setProperty('--dx', dx + 'px');
+    p.style.setProperty('--dy', dy + 'px');
+    
+    // Random sizes between 3px and 9px
+    const size = 3 + Math.random() * 6;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    p.style.background = color;
+    p.style.boxShadow = `0 0 10px ${color}, 0 0 4px #ffffff`;
+    
+    // Staggered launch delays for smooth flow
+    const delay = Math.random() * 400;
+    p.style.animationDelay = delay + 'ms';
+    
+    layer.appendChild(p);
+    setTimeout(() => p.remove(), 1600);
+  }
+}
+

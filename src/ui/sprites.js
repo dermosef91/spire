@@ -58,19 +58,24 @@ export function hasSprite(id) {
  */
 export function spriteOrSvg(id, svgFallbackHtml, extraClass = '') {
   if (hasSprite(id)) {
+    const container = document.createElement('div');
+    container.className = `sprite-container ${extraClass}`.trim();
+    
     const img = document.createElement('img');
-    img.className = `model-img ${extraClass}`.trim();
+    img.className = 'model-img active-pose';
     img.src = `assets/sprites/${id}.png`;
     img.alt = '';
     img.draggable = false;
-    // On error (404, corrupt), swap to SVG fallback
+    
     img.onerror = () => {
-      const wrapper = document.createElement('div');
-      wrapper.className = extraClass;
-      wrapper.innerHTML = svgFallbackHtml;
-      img.replaceWith(wrapper);
+      const fallback = document.createElement('div');
+      fallback.className = extraClass;
+      fallback.innerHTML = svgFallbackHtml;
+      container.replaceWith(fallback);
     };
-    return img;
+    
+    container.appendChild(img);
+    return container;
   }
   // No sprite available — return SVG directly
   const wrapper = document.createElement('div');

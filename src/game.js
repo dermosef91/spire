@@ -45,10 +45,11 @@ export class Game {
 
     if (this.touch) document.body.classList.add('is-touch');
 
-    // On touch, a tap anywhere that is not an inspectable chip dismisses the tooltip.
+    // A tap/click anywhere that is not an inspectable chip/card/tooltip dismisses the tooltip.
     document.addEventListener('pointerdown', (e) => {
-      if (!this.touch) return;
-      if (!e.target.closest('.relic, .potion, .tooltip')) this.tooltip(null, null, false);
+      if (!e.target.closest('.relic, .potion, .card, .tooltip')) {
+        this.tooltip(null, null, false);
+      }
     }, true);
   }
 
@@ -59,8 +60,15 @@ export class Game {
     box.appendChild(el('h3', { text: title }));
     if (desc) box.appendChild(el('p', { class: 'event-text', html: desc }));
     const row = el('div', { class: 'confirm-row' });
-    row.appendChild(button('Use', () => { document.body.removeChild(overlay); onYes(); }, 'primary'));
-    row.appendChild(button('Cancel', () => document.body.removeChild(overlay)));
+    row.appendChild(button('Use', () => {
+      this.tooltip(null, null, false);
+      document.body.removeChild(overlay);
+      onYes();
+    }, 'primary'));
+    row.appendChild(button('Cancel', () => {
+      this.tooltip(null, null, false);
+      document.body.removeChild(overlay);
+    }));
     box.appendChild(row);
     overlay.appendChild(box);
     document.body.appendChild(overlay);
@@ -68,6 +76,7 @@ export class Game {
 
   // ----------------------------------------------------------- scene helpers
   setScene(node, sceneClass = '') {
+    this.tooltip(null, null, false);
     clear(this.root);
     // Remove previous scene classes from body and add the current one
     document.body.className = document.body.className.replace(/\bscene-\S+/g, '');
@@ -244,6 +253,7 @@ export class Game {
     board.appendChild(svg);
 
     // nodes
+    let currentNodeEl = null;
     const placeNode = (type, x, y, key, posObj) => {
       const isReach = reachKey.has(key);
       const isCurrent = run.position && !posObj.boss && run.position.row === posObj.row && run.position.col === posObj.col;
@@ -254,6 +264,7 @@ export class Game {
         title: NODE_LABEL[type] || type,
       });
       if (isReach) n.addEventListener('click', () => this.enterNode(posObj));
+      if (isCurrent) currentNodeEl = n;
       board.appendChild(n);
     };
 
@@ -270,8 +281,30 @@ export class Game {
     panel.appendChild(scroller);
     panel.appendChild(el('div', { class: 'map-legend', html: legendHtml() }));
     this.setScene(panel, 'map');
-    // scroll so current position / bottom is visible
-    requestAnimationFrame(() => { scroller.scrollTop = scroller.scrollHeight; });
+
+    // Scroll to center the player's position if it's off-screen, otherwise scroll to the bottom
+    const adjustScroll = () => {
+      const viewportHeight = scroller.clientHeight;
+      if (currentNodeEl && viewportHeight > 0) {
+        const nodeY = currentNodeEl.offsetTop;
+        const defaultScrollTop = scroller.scrollHeight - viewportHeight;
+        // Check if the node is off-screen (above the visible area when scrolled to bottom)
+        const isOffScreen = (nodeY - 22 < defaultScrollTop);
+        if (isOffScreen) {
+          scroller.scrollTop = nodeY - (viewportHeight / 2);
+        } else {
+          scroller.scrollTop = scroller.scrollHeight;
+        }
+      } else {
+        scroller.scrollTop = scroller.scrollHeight;
+      }
+    };
+
+    requestAnimationFrame(() => {
+      adjustScroll();
+      // Second check in next event loop tick to ensure DOM layouts are fully computed
+      setTimeout(adjustScroll, 0);
+    });
   }
 
   enterNode(pos) {
@@ -359,8 +392,8 @@ export class Game {
     const run = this.run;
     const panel = el('div', { class: 'reward-scene' });
     panel.appendChild(topBar(run, { onHover: (o, n, on) => this.tooltip(o, n, on) }));
-    panel.appendChild(el('h2', { class: 'reward-title', text: kind === 'boss' ? 'Boss Vanquished!' : kind === 'elite' ? 'Elite Slain!' : 'Victory' }));
     const list = el('div', { class: 'reward-list' });
+    let autoProceedScheduled = false;
 
     const rebuild = () => {
       clear(list);
@@ -399,11 +432,25 @@ export class Game {
       }
       if (rewards.every((r) => r.taken)) {
         list.appendChild(el('div', { class: 'reward-done', text: 'All rewards collected.' }));
+        if (!autoProceedScheduled) {
+          autoProceedScheduled = true;
+          setTimeout(() => {
+            if (this.run && rewards.every((r) => r.taken)) {
+              this.afterNode(kind);
+            }
+          }, 300);
+        }
       }
     };
     rebuild();
-    panel.appendChild(list);
-    panel.appendChild(button('Proceed →', () => this.afterNode(kind), 'primary'));
+
+    const content = el('div', { class: 'reward-content' }, [
+      el('h2', { class: 'reward-title', text: kind === 'boss' ? 'Boss Vanquished!' : kind === 'elite' ? 'Elite Slain!' : 'Victory' }),
+      list,
+      button('Proceed →', () => this.afterNode(kind), 'primary')
+    ]);
+    panel.appendChild(content);
+
     this.setScene(panel, 'reward');
   }
 
@@ -414,12 +461,21 @@ export class Game {
     const row = el('div', { class: 'card-row' });
     for (const c of options) {
       row.appendChild(renderCard(c, {
-        onClick: () => { audio.play('select'); document.body.removeChild(overlay); onDone(c); },
+        onClick: () => {
+          this.tooltip(null, null, false);
+          audio.play('select');
+          document.body.removeChild(overlay);
+          onDone(c);
+        },
         onHover: (cd, n, on) => this.tooltip(cd, n, on, 'card'),
       }));
     }
     box.appendChild(row);
-    box.appendChild(button('Skip', () => { document.body.removeChild(overlay); onDone(null); }));
+    box.appendChild(button('Skip', () => {
+      this.tooltip(null, null, false);
+      document.body.removeChild(overlay);
+      onDone(null);
+    }));
     overlay.appendChild(box);
     document.body.appendChild(overlay);
   }
@@ -668,6 +724,7 @@ export class Game {
     else if (kind === 'relics') { run.addRelic(item.id); }
     else if (kind === 'potions') { if (!run.addPotion(item.id)) { audio.play('error'); return; } }
     run.gold -= item.price; item.sold = true;
+    this.tooltip(null, null, false);
     audio.play('reward');
     this.showShop();
   }
@@ -685,13 +742,20 @@ export class Game {
       const ok = filterFn(inst);
       const node = renderCard(inst, {
         disabled: !ok,
-        onClick: ok ? () => { document.body.removeChild(overlay); onPick(entry); } : null,
+        onClick: ok ? () => {
+          this.tooltip(null, null, false);
+          document.body.removeChild(overlay);
+          onPick(entry);
+        } : null,
         onHover: (cd, n, on) => this.tooltip(cd, n, on, 'card'),
       });
       grid.appendChild(node);
     });
     box.appendChild(grid);
-    box.appendChild(button('Cancel', () => document.body.removeChild(overlay)));
+    box.appendChild(button('Cancel', () => {
+      this.tooltip(null, null, false);
+      document.body.removeChild(overlay);
+    }));
     overlay.appendChild(box);
     document.body.appendChild(overlay);
   }

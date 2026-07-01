@@ -575,6 +575,12 @@ export class Combat {
       if (!e.alive || this.over) continue;
       const move = e.bp.moves[e.move];
       this.log(`${e.name} uses ${move.name}.`);
+      
+      const isAttack = e.intent && e.intent.type && e.intent.type.startsWith('attack');
+      if (!isAttack) {
+        this.fx('skillstart', { source: e });
+      }
+      
       move.run(this, e);
       this.notify();
       await wait(420);

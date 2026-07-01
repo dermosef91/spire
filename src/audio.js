@@ -2,6 +2,7 @@ const SOUNDS = {
   select: 'assets/sounds/select.wav',
   reward: 'assets/sounds/reward.wav',
   attack: 'assets/sounds/attack.wav',
+  skill: 'assets/sounds/skill.wav',
 };
 
 // Tiny procedural sound + ambient pad using WebAudio — no asset files required.
@@ -111,6 +112,7 @@ class Audio {
     if (name === 'select') gain = 0.35;
     if (name === 'reward') gain = 0.45;
     if (name === 'attack') gain = 0.45;
+    if (name === 'skill') gain = 0.45;
     
     // Try to play from user WAV/MP3 asset files first
     const played = this.playBuffer(name, gain);
