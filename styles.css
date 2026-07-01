@@ -1450,3 +1450,69 @@ html { -webkit-text-size-adjust: 100%; }
 .overlay .card-desc, .shop-scene .card-desc { overflow: visible; padding-bottom: 4px; }
 .overlay .card-row, .overlay .deck-grid { max-height: 76vh; overflow-y: auto; align-items: stretch; }
 
+
+/* ============================================================
+   ASCENSION SELECTOR (character select) + unlock banner
+   ============================================================ */
+.asc-select { margin: 10px auto 4px; max-width: 640px; text-align: center; }
+.asc-row { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.asc-row .btn { min-width: 52px; padding: 6px 10px; }
+.asc-row .btn.asc-off { opacity: 0.3; pointer-events: none; }
+.asc-label {
+  font-family: var(--font-display); font-size: 20px; font-weight: 700;
+  color: var(--amber); letter-spacing: 0.06em; min-width: 170px;
+  text-shadow: 0 0 14px rgba(255,170,60,0.5);
+}
+.asc-desc { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; align-items: center; min-height: 20px; }
+.asc-mod { font-size: 12px; color: var(--cream); opacity: 0.85; }
+.asc-mod b { color: var(--amber); }
+.asc-base { font-size: 13px; color: var(--cream); opacity: 0.7; font-style: italic; }
+.end-unlock {
+  margin: 12px auto 0; font-family: var(--font-display); font-size: 17px;
+  color: var(--amber); text-shadow: 0 0 18px rgba(255,170,60,0.7);
+  animation: ascUnlock 1.6s ease-in-out infinite;
+}
+@keyframes ascUnlock { 0%,100% { opacity: 0.8; } 50% { opacity: 1; text-shadow: 0 0 26px rgba(255,206,92,0.95); } }
+
+/* ============================================================
+   CARD-PLAY JUICE — energy pulse, cast glow, affordability & combo hints
+   ============================================================ */
+/* Energy orb reacts when Àṣẹ is spent (contract) or gained (bloom). */
+.energy-orb.spent { animation: energySpent 0.42s ease-out; }
+.energy-orb.gained { animation: energyGained 0.5s ease-out; }
+@keyframes energySpent {
+  0% { transform: scale(1.18); box-shadow: 0 0 34px rgba(255,120,40,0.95), inset 0 0 12px rgba(255,140,40,0.5); }
+  100% { transform: scale(1); }
+}
+@keyframes energyGained {
+  0% { transform: scale(0.82); box-shadow: 0 0 8px rgba(255,206,92,0.4); }
+  55% { transform: scale(1.16); box-shadow: 0 0 40px rgba(255,206,92,1), inset 0 0 14px rgba(255,206,92,0.6); }
+  100% { transform: scale(1); }
+}
+
+/* A colored bloom on the card as it is cast (also carried by the fly-to-pile clone). */
+.card.type-attack.playing { box-shadow: 0 0 34px rgba(255,90,60,0.9); }
+.card.type-skill.playing  { box-shadow: 0 0 34px rgba(94,169,230,0.9); }
+.card.type-power.playing  { box-shadow: 0 0 38px rgba(200,150,255,0.95); }
+
+/* Affordable cards carry a soft warm edge so "playable" reads as more than
+   just "not greyed out" (the disabled state stays desaturated). */
+.card.in-hand.affordable {
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,170,80,0.22), 0 0 14px rgba(255,140,40,0.18);
+}
+/* Combo-ready: a foe is Exposed and this attack can exploit it — pulse gold. */
+.card.in-hand.combo-ready {
+  box-shadow: 0 8px 22px rgba(0,0,0,0.55), 0 0 0 1.5px rgba(255,206,92,0.7), 0 0 22px rgba(255,206,92,0.5);
+  animation: comboPulse 1.3s ease-in-out infinite;
+}
+.card.in-hand.combo-ready .card-cost { color: #fff; text-shadow: 0 0 10px rgba(255,206,92,0.95); }
+@keyframes comboPulse {
+  0%,100% { box-shadow: 0 8px 22px rgba(0,0,0,0.55), 0 0 0 1.5px rgba(255,206,92,0.6), 0 0 18px rgba(255,206,92,0.4); }
+  50% { box-shadow: 0 8px 26px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,206,92,0.95), 0 0 30px rgba(255,206,92,0.75); }
+}
+/* Hover still wins visually; combo/affordable glows must not fight the lift. */
+.card.in-hand.affordable:hover, .card.in-hand.combo-ready:hover { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .end-unlock, .energy-orb.spent, .energy-orb.gained, .card.in-hand.combo-ready { animation: none !important; }
+}

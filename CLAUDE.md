@@ -15,6 +15,13 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   loading the game in a browser (Playwright/Chromium is available) and driving
   the real flow: title → character select → map → combat → rewards.
 - Sanity-check JS with `node --check <file>` before committing.
+- **Browser-test gotcha**: `playwright-core` can be installed on demand
+  (`npm install playwright-core --no-save`) and launched with
+  `executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'`,
+  `args: ['--no-sandbox']`. Do **not** wait on `networkidle` — the looping
+  music/animation keeps the network "busy" forever; use `domcontentloaded` plus
+  explicit `waitForTimeout`. `window.__ase` exposes the live Game for asserting
+  run state (e.g. `__ase.run.ascension`).
 
 ## Architecture (src/)
 - `main.js` — bootstrap; mounts the animated background and the Game controller.

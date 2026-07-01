@@ -1,7 +1,7 @@
 // Game controller: the scene state machine that ties together the title screen,
 // character select, the act map, combat, rewards, shops, rest sites and events.
 import { el, clear, wait } from './core/util.js';
-import { RunState } from './core/state.js';
+import { RunState, ASCENSION_LEVELS, MAX_ASCENSION } from './core/state.js';
 import { saveRun, loadRun, clearSave, hasSave, loadMeta, saveMeta } from './core/save.js';
 import { CHARACTERS, COLORLESS_POOL } from './data/characters.js';
 import { CARDS, createCard, upgradeCard, cardDesc, canUpgrade } from './data/cards.js';
@@ -18,6 +18,7 @@ import { POWERS } from './data/keywords.js';
 import { UI, NODE, relicIcon, potionIcon, characterModel } from './ui/icons.js';
 import { spriteOrSvg } from './ui/sprites.js';
 import { updateBackground } from './ui/backgrounds.js';
+import { background } from './fx/background.js';
 import { audio } from './audio.js';
 import { fullscreenSupported, isFullscreen, toggleFullscreen, onFullscreenChange, isTouchDevice } from './core/fullscreen.js';
 
@@ -31,6 +32,7 @@ export class Game {
     this.tip = el('div', { class: 'tooltip', id: 'tooltip' });
     document.body.appendChild(this.tip);
     this.meta = loadMeta();
+    this.selectedAscension = Math.min(this.meta.ascension || 0, this.meta.maxAscension || 0);
     this.setupMobile();
   }
 
@@ -89,6 +91,9 @@ export class Game {
     // Update dynamic background image based on active scene and act
     const actNum = this.run ? this.run.act : null;
     updateBackground(sceneClass, actNum);
+    // Shift the animated starfield palette to match the current act (or title).
+    const bg = background();
+    if (bg) bg.setAct(this.run ? this.run.act : 'title');
   }
 
   tooltip(obj, node, on, kind) {
@@ -157,7 +162,8 @@ export class Game {
       }));
     }
     panel.appendChild(btns);
-    panel.appendChild(el('div', { class: 'title-meta', text: `Runs: ${this.meta.runs}  ·  Victories: ${this.meta.wins}  ·  Best Floor: ${this.meta.bestFloor}` }));
+    const ascLabel = this.meta.maxAscension >= MAX_ASCENSION ? 'Ascension MAX' : `Ascension ${this.meta.maxAscension}`;
+    panel.appendChild(el('div', { class: 'title-meta', text: `Runs: ${this.meta.runs}  ·  Victories: ${this.meta.wins}  ·  Best Act: ${this.meta.bestFloor}  ·  ${ascLabel} unlocked` }));
     this.setScene(panel, 'title');
   }
 
@@ -182,12 +188,62 @@ export class Game {
       grid.appendChild(card);
     }
     panel.appendChild(grid);
+    panel.appendChild(this.ascensionSelector());
     panel.appendChild(button('← Back', () => this.showTitle()));
     this.setScene(panel, 'charselect');
   }
 
+  // A stepper for choosing the Ascension level, capped at what the player has
+  // unlocked. At level 0 there are no modifiers; higher levels stack them.
+  ascensionSelector() {
+    const wrap = el('div', { class: 'asc-select' });
+    const maxUnlocked = this.meta.maxAscension || 0;
+    this.selectedAscension = Math.min(this.selectedAscension, maxUnlocked);
+
+    const row = el('div', { class: 'asc-row' });
+    const dec = button('◀', () => this.setAscension(this.selectedAscension - 1));
+    const inc = button('▶', () => this.setAscension(this.selectedAscension + 1));
+    const label = el('div', { class: 'asc-label' });
+    row.appendChild(dec);
+    row.appendChild(label);
+    row.appendChild(inc);
+    wrap.appendChild(row);
+
+    const desc = el('div', { class: 'asc-desc' });
+    wrap.appendChild(desc);
+
+    this._ascRefs = { label, desc, dec, inc, maxUnlocked };
+    this.renderAscension();
+    return wrap;
+  }
+
+  setAscension(n) {
+    const maxUnlocked = this.meta.maxAscension || 0;
+    this.selectedAscension = Math.max(0, Math.min(maxUnlocked, n));
+    this.meta.ascension = this.selectedAscension; saveMeta(this.meta);
+    audio.play('select');
+    this.renderAscension();
+  }
+
+  renderAscension() {
+    const r = this._ascRefs;
+    if (!r) return;
+    const a = this.selectedAscension;
+    r.label.textContent = a === 0 ? 'Ascension 0' : `Ascension ${a}`;
+    if (a === 0) {
+      r.desc.innerHTML = '<span class="asc-base">Base difficulty — no modifiers.</span>';
+    } else {
+      // Show the modifiers active at this level (cumulative).
+      const active = ASCENSION_LEVELS.filter((l) => l.lvl <= a);
+      r.desc.innerHTML = active.map((l) => `<span class="asc-mod"><b>A${l.lvl} ${l.name}:</b> ${l.desc}</span>`).join('');
+    }
+    r.dec.classList.toggle('asc-off', a <= 0);
+    r.inc.classList.toggle('asc-off', a >= r.maxUnlocked);
+    if (r.maxUnlocked === 0) r.inc.title = 'Win a run to unlock Ascension 1';
+  }
+
   startRun(charId) {
-    this.run = new RunState(charId);
+    this.run = new RunState(charId, undefined, this.selectedAscension);
     this.meta.runs += 1; saveMeta(this.meta);
     saveRun(this.run);
     this.showActIntro();
@@ -342,6 +398,7 @@ export class Game {
 
   beginCombat(enemyIds, kind) {
     audio.setCombat(true, kind === 'boss');
+    const bg = background(); if (bg) bg.setCombat(true);
     const combat = new Combat(this.run, enemyIds, { kind });
     const view = new CombatView(this, combat);
     view.onEnd = (c) => this.afterCombat(c, kind);
@@ -352,6 +409,7 @@ export class Game {
 
   afterCombat(combat, kind) {
     audio.setCombat(false);
+    const bg = background(); if (bg) bg.setCombat(false);
     // Write HP back
     this.run.hp = Math.max(0, combat.player.hp);
     if (!combat.victory) { this.gameOver(false); return; }
@@ -564,7 +622,7 @@ export class Game {
     panel.appendChild(el('p', { class: 'event-text', text: 'Warmth in the cold throat of the Spire. You may tend your wounds or sharpen your craft.' }));
     const choices = el('div', { class: 'choices' });
     if (run.canRestHeal()) {
-      const amt = Math.floor(run.maxHp * 0.3) + run.restHealBonus();
+      const amt = Math.floor(run.maxHp * run.restHealFraction()) + run.restHealBonus();
       choices.appendChild(button(`Rest — heal ${amt} HP`, () => {
         run.heal(amt); audio.play('reward'); this.resultThenMap(`You rest and recover ${amt} HP.`);
       }, 'primary'));
@@ -786,12 +844,29 @@ export class Game {
         ? 'The Static unravels into song. The Ancestors welcome you home, champion of Nyumbani.'
         : `The ${run.character.name} is unwritten by the Static, lost on Act ${run.act}.`,
     }));
-    panel.appendChild(el('div', { class: 'end-stats', html: `Act reached: <b>${run.act}</b> · Cards: <b>${run.deck.length}</b> · Relics: <b>${run.relics.length}</b> · Gold: <b>${run.gold}</b>` }));
+    const ascStat = (run.ascension || 0) > 0 ? ` · Ascension <b>${run.ascension}</b>` : '';
+    panel.appendChild(el('div', { class: 'end-stats', html: `Act reached: <b>${run.act}</b> · Cards: <b>${run.deck.length}</b> · Relics: <b>${run.relics.length}</b> · Gold: <b>${run.gold}</b>${ascStat}` }));
+    if (this._ascJustUnlocked) {
+      const lv = ASCENSION_LEVELS[this._ascJustUnlocked - 1];
+      panel.appendChild(el('div', { class: 'end-unlock', html: `✦ Ascension ${this._ascJustUnlocked} unlocked — <b>${lv.name}</b> ✦` }));
+      this._ascJustUnlocked = 0;
+    }
     panel.appendChild(button('Return to Title', () => this.showTitle(), 'primary'));
     this.setScene(panel, 'end');
   }
   victory() {
-    this.meta.wins += 1; saveMeta(this.meta);
+    this.meta.wins += 1;
+    // Winning at the highest unlocked Ascension unlocks the next level.
+    const beat = this.run ? this.run.ascension : 0;
+    let unlocked = false;
+    if (beat >= (this.meta.maxAscension || 0) && this.meta.maxAscension < MAX_ASCENSION) {
+      this.meta.maxAscension = (this.meta.maxAscension || 0) + 1;
+      this.meta.ascension = this.meta.maxAscension;
+      this.selectedAscension = this.meta.maxAscension;
+      unlocked = true;
+    }
+    saveMeta(this.meta);
+    this._ascJustUnlocked = unlocked ? this.meta.maxAscension : 0;
     this.gameOver(true);
   }
 }
