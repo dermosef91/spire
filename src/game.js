@@ -428,7 +428,6 @@ export class Game {
       const r = RELICS[rid];
       if (r && r.combatEnd) r.combatEnd(this.run);
     }
-    if (this.run.act > this.meta.bestFloor) {} // floor tracking below
     this.showRewards(kind);
   }
 

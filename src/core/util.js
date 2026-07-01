@@ -22,23 +22,10 @@ export function clear(node) {
   return node;
 }
 
-export function clamp(v, min, max) {
-  return Math.max(min, Math.min(max, v));
-}
-
 export function wait(ms) {
   return new Promise((res) => setTimeout(res, ms));
 }
 
-export function deepClone(obj) {
-  return JSON.parse(JSON.stringify(obj));
-}
-
 export function uid() {
   return Math.random().toString(36).slice(2, 10);
-}
-
-// Replace {n} style tokens in a string
-export function fmt(str, vals) {
-  return str.replace(/\{(\w+)\}/g, (_, k) => (vals[k] != null ? vals[k] : `{${k}}`));
 }

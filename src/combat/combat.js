@@ -601,10 +601,6 @@ export class Combat {
     e.intent = e.bp.moves[id].intent;
   }
 
-  // After enemies finish acting we pick their next intent at the start of player turn?
-  // We pick at enemy-turn end for clarity:
-  // (called inside enemyPhase loop above is not — pick here so intent is shown next player turn)
-
   // ---------------------------------------------------------------- end states
   win() {
     if (this.over) return;
