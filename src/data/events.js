@@ -133,7 +133,7 @@ export const EVENTS = [
     acts: [3],
     art: 'static_choir',
     text:
-      'At the Crown, a choir of unwritten voices turns toward you as one. They do not sing words — they sing the shape of you, and offer to fold you into their harmony. Power, for a fracture let into the self.',
+      'At the Crown, a choir turns toward you as one — the kept voices of everyone who climbed before you and was welcomed home. They do not sing words; they sing the shape of you, and offer to fold you in early. Power now, for a fracture let into the self.',
     choices: [
       {
         label: 'Join the harmony (Gain a Relic, take 2 Static)',
@@ -152,7 +152,7 @@ export const EVENTS = [
     acts: [3],
     art: 'unwritten_pilgrim',
     text:
-      'A figure climbs beside you, features smeared to static where a face should be — a pilgrim the Archive already unwrote. It holds out cupped hands. "Carry my burden the last of the way," it whispers, "and I will carry some of yours."',
+      'A figure climbs beside you, features smeared to static where a face should be — a champion who reached the summit before you, ascended, and was kept. Now it has come loose, half-unwritten, climbing again. It holds out cupped hands. "Carry my burden the last of the way," it whispers, "and I will carry some of yours."',
     choices: [
       {
         label: 'Take its burden (Add a Regret, heal to full)',

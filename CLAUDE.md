@@ -160,6 +160,32 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   itself stays (min-height/padding collapsed) so the Legend button remains
   reachable and the board reclaims the freed space.
 
+## Story framing & endings (the Spire's lie)
+The world runs on one reveal: **the Spire "welcomes climbers home" by rendering
+winners into the enemies the next climber fights.** Ascension is extraction
+dressed as apotheosis. Keep new content consistent with this — enemies are
+former champions, the Archive catalogues/erases, "home" is the furnace.
+- **Two victory endings, gated across runs** (in `game.js`): `victory()` routes
+  the Act-3 boss kill. The **first ever** ascent (persisted `meta.ascendedOnce`)
+  is always the *complicit* ending (`endVictory('ascend')`) — you can't refuse a
+  welcome you don't yet understand. On any **later** clear reached **without**
+  the `ascendant_crown` relic, `showEndChoice()` offers *Ascend* vs *Unwrite the
+  engine* (`endVictory('unwrite')`, sets `meta.spireUnwritten`). Wearing the
+  Crown = already claimed = no choice. Meta flags live in `save.js` `defaultMeta`.
+- The **Ascendant Crown is the "weld"**: it's now a real boss reward
+  (`RunState.pickBossRelicId()` + the `bossrelic` reward row in `game.js`). Boss
+  relics were previously unobtainable — don't re-exclude them.
+- **Enemy backstory is baked into the sprite art, not icons/tooltips.** The
+  "former champion" tells (Agojie cowrie/star-iron on brass_sentinel &
+  gilded_warden; griot kora/brass-throat on hollow_cantor & void_chanter;
+  star-weaver diadem/dead orbs on sand_wraith, mirror_shade, echo_wraith) live
+  in `tools/sprites.manifest.json` prompts. Editing a prompt only takes effect
+  after a live `node tools/gen-sprites.js --ids <id>` run (needs `OPENAI_API_KEY`,
+  gpt-image-2); the committed PNGs do not update on their own.
+- Scratchpad browser-test gotcha: `playwright-core` installs into the **project**
+  `node_modules`, and ESM ignores `NODE_PATH`, so a script under the scratchpad
+  dir must `import pkg from '/home/user/spire/node_modules/playwright-core/index.js'; const { chromium } = pkg;` (CommonJS default export, absolute path).
+
 ## Conventions
 - Keep it dependency-free and build-free. Don't introduce a bundler/framework.
 - Mechanic names stay readable; afrofuturist flavor lives in card/enemy/relic

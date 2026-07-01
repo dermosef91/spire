@@ -29,5 +29,12 @@ export function saveMeta(meta) {
 }
 function defaultMeta() {
   // maxAscension: highest level unlocked; ascension: last-selected level.
-  return { runs: 0, wins: 0, bestFloor: 0, ascensions: 0, maxAscension: 0, ascension: 0, tutorialDone: false };
+  // ascendedOnce: has the climber reached the Heart and been taken up at least
+  //   once (the first ascent is always the complicit one — you cannot refuse
+  //   what you do not yet understand). timesAscended: how many climbs have
+  //   ended at the Heart. spireUnwritten: has the true ending been earned.
+  return {
+    runs: 0, wins: 0, bestFloor: 0, ascensions: 0, maxAscension: 0, ascension: 0,
+    tutorialDone: false, ascendedOnce: false, timesAscended: 0, spireUnwritten: false,
+  };
 }

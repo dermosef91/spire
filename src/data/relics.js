@@ -126,7 +126,7 @@ def('eternal_flame', {
 });
 def('ascendant_crown', {
   name: 'Ascendant Crown', rarity: 'boss',
-  desc: 'Gain 1 extra Àṣẹ each turn. You can no longer heal at fires (channel power instead).',
+  desc: 'Gain 1 extra Àṣẹ each turn. You can no longer rest at Ancestor Fires — the Spire has begun to claim its own.',
   energyBonus: 1,
   blockRestHeal: true,
 });
