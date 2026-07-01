@@ -11,7 +11,7 @@ function def(id, bp) { RELICS[id] = { id, ...bp }; }
 // --------- Starter relics (one per champion) ---------
 def('ancestral_cuirass', {
   name: 'Ancestral Cuirass', rarity: 'starter', char: 'amara',
-  desc: 'At the start of each combat, gain 3 Ward.',
+  desc: 'At the start of each combat, gain 3 Block.',
   startCombat: (combat) => combat.gainBlockTo(combat.player, 3, true),
 });
 def('griot_drum', {
@@ -33,7 +33,7 @@ def('brass_anklet', {
 });
 def('kente_wrap', {
   name: 'Kente Wrap', rarity: 'common',
-  desc: 'At the start of each combat, gain 4 Ward.',
+  desc: 'At the start of each combat, gain 4 Block.',
   startCombat: (combat) => combat.gainBlockTo(combat.player, 4, true),
 });
 def('cowrie_purse', {
@@ -90,7 +90,7 @@ def('mask_of_masks', {
 });
 def('iron_lattice', {
   name: 'Iron Lattice', rarity: 'uncommon',
-  desc: 'At the end of your turn, if you have 0 Ward, gain 6 Ward.',
+  desc: 'At the end of your turn, if you have 0 Block, gain 6 Block.',
   startCombat: (combat) => combat.addTrigger('turnEnd', () => {
     if (combat.player.block === 0) combat.gainBlockTo(combat.player, 6, true);
   }, 'Iron Lattice'),

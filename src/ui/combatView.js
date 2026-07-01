@@ -706,7 +706,7 @@ export class CombatView {
           else if (big) bg.pulse('heavy', Math.min(2, payload.hpLost / 18));
         }
       } else if (payload.blocked > 0) {
-        floatText(layer, el2, 'WARD', 'blocked');
+        floatText(layer, el2, 'BLOCK', 'blocked');
         hitFlash(el2, 'block');
       }
       return;
