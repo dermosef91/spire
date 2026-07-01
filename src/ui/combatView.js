@@ -409,7 +409,10 @@ export class CombatView {
 
       const diff = idx - mid;
       const angle = diff * Math.min(8, 32 / Math.max(1, N));
-      const shift = Math.pow(Math.abs(diff), 1.5) * 5;
+      // Capped so a big hand's outer cards don't dip further than a short
+      // landscape viewport has room for (.hand's padding-bottom is sized to
+      // this cap in styles.css's landscape-phone block).
+      const shift = Math.min(28, Math.pow(Math.abs(diff), 1.5) * 5);
 
       node.style.setProperty('--angle', `${angle}deg`);
       node.style.setProperty('--shift', `${shift}px`);

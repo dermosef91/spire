@@ -1259,8 +1259,18 @@ html { -webkit-text-size-adjust: 100%; }
 
 /* Short viewports (landscape phones): trim vertical chrome so it all fits. */
 @media (max-height: 560px) {
-  .battlefield { grid-template-columns: 1fr 1.3fr; gap: 10px; padding-top: 20px; bottom: 26%; }
-  .topbar { margin-bottom: 6px; padding: 4px 12px; } .tb-left > div { font-size: 13px; }
+  /* --med is shrunk here (its global floor of 115px is too tall for a short
+     landscape viewport): the whole combatant stack (intent + glyph + name/HP)
+     is anchored to .battlefield's bottom edge and scales off --med, so at the
+     old floor the intent tag's top edge landed above .combat-topbar's bottom
+     edge (getting visually cut by it) and the name/HP row landed low enough
+     for the fanned hand to cover it. Shrinking --med pulls both ends of the
+     stack inward at once. battlefield's reserved bottom % is also bumped
+     (with .orbs/.powers nudged the same amount to stay aligned to it) to buy
+     the fan more room without pushing the stack back up into the topbar. */
+  .battlefield { grid-template-columns: 1fr 1.3fr; gap: 10px; padding-top: 20px; bottom: 37%; --med: clamp(66px, 16vh, 100px); }
+  .topbar { margin-bottom: 4px; padding: 3px 10px; } .tb-left > div { font-size: 13px; }
+  .tb-fs, .tb-mute { width: 26px; height: 26px; }
   .relic, .potion { width: 28px; height: 28px; }
   .combatant { min-width: 84px; }
   .combatant-info { width: 120px; }
@@ -1270,8 +1280,8 @@ html { -webkit-text-size-adjust: 100%; }
   .hptext { font-size: 10px; }
   .combatant-badge { width: 14px; height: 14px; }
   .block-badge { min-width: 24px; height: 24px; font-size: 12px; bottom: 5px; left: -12px; }
-  .intent { bottom: calc(var(--med) * 1.85 + 16px); font-size: 14px; } .orbs { bottom: calc(25% + 42px); } .orbs .orb { width: 26px; height: 26px; }
-  .powers { bottom: calc(25% - 24px); }
+  .intent { bottom: calc(var(--med) * 1.85 + 16px); font-size: 14px; } .orbs { bottom: calc(37% + 42px); } .orbs .orb { width: 26px; height: 26px; }
+  .powers { bottom: calc(37% - 24px); }
   .combat-log { min-height: 12px; font-size: 11px; margin: auto 0 1px; }
   .combat-controls { bottom: 56px; max-width: 780px; padding: 0 8px; --energy-shift: 50px; }
   .energy-orb { width: clamp(40px, 9vh, 56px); height: clamp(40px, 9vh, 56px); font-size: clamp(16px, 4vh, 22px); }
@@ -1287,7 +1297,7 @@ html { -webkit-text-size-adjust: 100%; }
      the existing horizontal scroll instead of hiding under a button. */
   .combat-scene { --card-h: clamp(132px, 32vh, 180px); --card-w: calc(var(--card-h) * 0.7); }
   .hand {
-    padding-top: 4px; padding-bottom: 60px; gap: clamp(6px, 1vw, 14px);
+    padding-top: 4px; padding-bottom: 31px; gap: clamp(6px, 1vw, 14px);
     margin-left: calc(max(0px, (100% - 780px) / 2) + 102px);
     margin-right: calc(max(0px, (100% - 780px) / 2) + 176px);
   }

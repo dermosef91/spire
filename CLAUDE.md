@@ -111,6 +111,40 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   safe zone tracks exactly; using `100vw` instead of `100%` is wrong here
   because `.combat-scene` is itself inset from the viewport by a few px, so
   `100vw`-based math drifts from `.combat-controls`' real position.
+- **Landscape combatant sizing (`--med`)**: `.combatant`'s whole stack
+  (`.intent`, `.glyph`/medallion, `.combatant-info` name/HP) is bottom-anchored
+  to `.battlefield`'s bottom edge (itself `position:absolute; bottom:<pct>`)
+  and scales entirely off `--med` (global floor 115px). On a short landscape
+  phone that floor makes the stack taller than the viewport has room for:
+  `.intent`'s top edge lands above `.combat-topbar`'s bottom edge (visually
+  cut by it, since intent is `bottom: calc(var(--med)*1.85 + 16px)` off the
+  combatant's own bottom) while `.combatant-info`'s bottom (`bottom: 25%` of
+  the combatant's height) lands low enough for the fanned `.hand` to cover
+  the name/HP row. Fix is to shrink `--med` for landscape (smaller floor,
+  e.g. `clamp(66px, 16vh, 100px)`) — this pulls *both* ends of the stack
+  inward at once, unlike shrinking `.combat-topbar` or `.hand`'s padding
+  alone, which only fixes one end and can make the other worse. When
+  changing `.battlefield`'s `bottom: <pct>`, also nudge `.orbs`/`.powers`'s
+  hardcoded `25%` by the same delta — they're separate elements meant to
+  align with the battlefield's reserved zone but don't derive from it.
+  There's a real tension between "`.intent` clear of the topbar" (wants a
+  *smaller* reserved-bottom % so the stack sits lower/further from the
+  topbar) and "cards clear of `.combatant-info`" (wants a *larger* reserved
+  % so there's more room below the stack for the hand) — solve both at once
+  by shrinking `--med` first (frees room on both ends simultaneously), then
+  split the remainder between the battlefield %, `.tb-fs`/`.tb-mute`/topbar
+  padding (shrinking the topbar buys headroom too), and `.hand`'s
+  `padding-bottom`. Verify by measuring real `getBoundingClientRect()`s in
+  headless Chromium (`.intent.top` vs `.combat-topbar.bottom`;
+  `.hand .card` top vs `.combatant-info.bottom`) at the *smallest* realistic
+  height in range (~360–375px), not just one mid-size viewport — the fixed-px
+  terms (topbar height, the intent formula's `+16px`) don't scale with `vh`,
+  so a fix tuned only at e.g. 390px can still fail at 360px. combatView.js's
+  hand-fan `shift` (the dip) is uncapped by default and grows with hand size
+  (`HAND_LIMIT` is 10) — cap it (`Math.min(28, ...)`) so a big hand's dip
+  can't demand more `.hand` `padding-bottom` than the short viewport affords;
+  the cap barely affects typical 5–7-card hands (their natural shift is
+  already below it) and only softens clipping on the rare 9–10-card hand.
 
 
 ## Asset Generation
