@@ -29,5 +29,5 @@ export function saveMeta(meta) {
 }
 function defaultMeta() {
   // maxAscension: highest level unlocked; ascension: last-selected level.
-  return { runs: 0, wins: 0, bestFloor: 0, ascensions: 0, maxAscension: 0, ascension: 0 };
+  return { runs: 0, wins: 0, bestFloor: 0, ascensions: 0, maxAscension: 0, ascension: 0, tutorialDone: false };
 }

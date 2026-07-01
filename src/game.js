@@ -13,6 +13,7 @@ import { eventsForAct } from './data/events.js';
 import { generateMap, nextNodes, nodeAt } from './map/mapgen.js';
 import { Combat } from './combat/combat.js';
 import { CombatView } from './ui/combatView.js';
+import { CombatTutorial } from './ui/tutorial.js';
 import { renderCard, topBar, relicChip, button } from './ui/components.js';
 import { POWERS } from './data/keywords.js';
 import { UI, NODE, relicIcon, potionIcon, characterModel } from './ui/icons.js';
@@ -405,6 +406,14 @@ export class Game {
     const holder = el('div', { class: 'combat-holder' });
     this.setScene(holder, 'combat');
     view.mount(holder);
+    // First-ever combat: run the interactive tutorial once the opening draw settles.
+    if (!this.meta.tutorialDone && kind === 'monster') {
+      const finishTutorial = () => { this.meta.tutorialDone = true; saveMeta(this.meta); };
+      setTimeout(() => {
+        if (combat.over) { finishTutorial(); return; }
+        new CombatTutorial(this, combat, finishTutorial).start();
+      }, 800);
+    }
   }
 
   afterCombat(combat, kind) {
