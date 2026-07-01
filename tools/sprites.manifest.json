@@ -88,5 +88,65 @@
     "id": "heart_of_static",
     "kind": "enemy",
     "prompt": "A massive pulsating heart-shaped core of pure crackling static energy, surrounded by multiple concentric spinning orbital rings of increasing size. Radiating lightning rays and ember-orange energy bolts in all directions. Central bright glowing core with deep ember heart. The final boss — overwhelming cosmic scale, filling the frame. Centered."
+  },
+  {
+    "id": "reef_spitter",
+    "kind": "enemy",
+    "prompt": "A defensive oceanic reef spitter creature resembling a barbed metallic clam with its shell open. Spiked black obsidian shell plates with glowing orange circuit-line grooves and amber trim. The inner mouth is a dark pit glowing with intense ember-orange light and dripping luminous green brine. Intimidating and alien. Full figure centered."
+  },
+  {
+    "id": "tide_priest",
+    "kind": "enemy",
+    "prompt": "A mystical conch priest of the sunken market, standing centered. A spiraling conch-shell helm, wearing layered flowing ceremonial robes with geometric patterns in ember-orange and amber. Surrounded by a radiating energy aura and glowing concentric light rings. Serene yet powerful stance. Full figure head-to-feet."
+  },
+  {
+    "id": "spark_imp",
+    "kind": "enemy",
+    "prompt": "A crackling, hovering electric spark imp sprite. A jagged, energetic entity formed of golden lightning bolts and starburst rays in amber and orange. Intense glowing ember-orange eyes at its core, surrounded by crackling electrical static arcs. Dynamic and volatile. Full figure centered."
+  },
+  {
+    "id": "rust_maw",
+    "kind": "enemy",
+    "prompt": "A coiled mechanical maw ringed with jagged rusted teeth. The circular body is made of heavy plates of rusted black iron, gear-joints, and orange copper bands. The inner mouth has concentric rings of sharp brass teeth surrounding a glowing ember-orange energy core. Intimidating and robotic. Full figure centered."
+  },
+  {
+    "id": "ink_leech",
+    "kind": "enemy",
+    "prompt": "A sinuous segmented mechanical leech hovering in an elegant coiled S-shape. Glossy black obsidian body segments with glowing ember-orange circuit lines and connectors. A circular barbed sucker mouth at its head, radiating concentric energy rings. Parasitic and alien. Full figure centered."
+  },
+  {
+    "id": "null_scribe",
+    "kind": "enemy",
+    "prompt": "A scholarly robotic scribe hovering centered. The torso is an ornate frame made of dark iron and brass, holding a long unspooling parchment scroll with glowing geometric runes and blacked-out redactions. A featureless mask with a single glowing ember-orange eye is at its center. Full figure head-to-feet."
+  },
+  {
+    "id": "glyph_sentry",
+    "kind": "enemy",
+    "prompt": "A hovering geometric rune-star sentry. A sharp, eight-pointed star composed of layered obsidian plates and orange circuitry. A brilliant, pulsating ember-orange energy core at the center, surrounded by spinning concentric rings. Ancient and mechanical. Full figure centered."
+  },
+  {
+    "id": "obsidian_maw",
+    "kind": "enemy",
+    "prompt": "A hovering, jagged obsidian geode entity. A fragmented black crystalline stone body with sharp geometric angles. The body splits open down the center like a gnashing mouth, revealing a glowing rift of crackling ember-orange energy and jagged crystalline teeth. Impressive and geological. Full figure centered."
+  },
+  {
+    "id": "echo_wraith",
+    "kind": "enemy",
+    "prompt": "A spectral echo wraith figure. A slender, robed figure of dark shadow wisps with glowing amber eyes. Flanked on both sides by semi-transparent, glitching wireframe echoes of its own silhouette in glowing orange and cream. Digital static and halftone noise. Full figure head-to-feet, centered."
+  },
+  {
+    "id": "hollow_cantor",
+    "kind": "enemy",
+    "prompt": "A slender hollow cantor figure in a scholarly robe, standing centered. Dark heavy vestments with amber geometric embroidery. The head is topped with a burning candle casting flickering rays of orange and cream light. Serene glowing ember-orange eyes visible beneath a deep cowl. Full figure head-to-feet."
+  },
+  {
+    "id": "ember_colossus",
+    "kind": "enemy",
+    "prompt": "A hulking, massive magma colossus golem. Constructed from rough, blocky plates of dark volcanic basalt rock. Intense lava cracks and glowing veins of ember-orange magma web across its torso and arms. A wide face with glowing orange eyes and a bared magma grin. Imposing and powerful. Full figure head-to-feet, centered."
+  },
+  {
+    "id": "static_swarm",
+    "kind": "enemy",
+    "prompt": "A hovering swarm of geometric shards. A cluster of floating, sharp obsidian and copper crystals crackling with static electricity arcs. A central glowing ember-orange spark acts as the core of the swarm, with orange field lines connecting the fragments. Fragmented and volatile. Full figure centered."
   }
 ]
