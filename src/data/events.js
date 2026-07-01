@@ -1,122 +1,170 @@
 // Story events — the "?" nodes. Each event presents choices; a choice's
 // effect(run, ctx) mutates run state and returns a result string shown to the player.
-// ctx provides helpers: addCard(id), removeCardChoice(), upgradeCardChoice(), etc.,
-// handled by the event view. Here, effects return { text, reward } or trigger flows.
+// These encounters are original to ÀṢẸ — grown from the Spire's own world (the
+// Sunken Market, the Brass Archive, the Static Crown) rather than borrowed.
+//
+// Each event carries an `art` id. The event view looks for a custom image at
+// assets/event-art/<art>.png, falling back to a committed SVG placeholder and
+// finally to the generic "?" node glyph. See tools/gen-event-art.js.
+//
+// Choice fields:
+//   label      — button text
+//   effect(run)— mutates run, returns the result string
+//   condition  — optional (run) => bool gate for showing the choice
+//   flow       — 'upgrade' | 'removeForGold' (handled by the event view)
+//   gold       — cost consumed by the 'removeForGold' flow
 
 export const EVENTS = [
+  // ───────────────────────────── Act 1 — The Sunken Market ─────────────────
   {
-    id: 'ancestor_shrine',
-    name: 'The Ancestor Shrine',
-    acts: [1, 2, 3],
-    text:
-      'A shrine of cowrie shells and humming circuitry pulses in the dark. The Ancestors offer counsel — for a price in blood or memory.',
-    choices: [
-      {
-        label: 'Pray (Lose 8 HP, gain a random Relic)',
-        effect: (run) => { run.takeDamage(8); const r = run.grantRandomRelic(); return r ? `You bleed onto the shells. They grant you ${r}.` : 'The shrine has nothing left to give.'; },
-      },
-      {
-        label: 'Meditate (Heal 20% Max HP)',
-        effect: (run) => { const amt = Math.floor(run.maxHp * 0.2); run.heal(amt); return `Stillness. You recover ${amt} HP.`; },
-      },
-      { label: 'Leave', effect: () => 'You bow and move on.' },
-    ],
-  },
-  {
-    id: 'static_pool',
-    name: 'Pool of Static',
+    id: 'drowned_griot',
+    name: 'The Drowned Griot',
     acts: [1, 2],
+    art: 'drowned_griot',
     text:
-      'A still pool reflects a sky that is not above you. Voices whisper from the Static beneath its surface, promising power for a sliver of self.',
+      'A griot lies half-sunk between the market stalls, robes fanned across the black water. The brass throat grafted at their neck still hums a praise-song — but the last verse was never finished. It tugs at the songs already coiled in your deck.',
     choices: [
       {
-        label: 'Drink deep (+8 Max HP, gain a Static curse)',
-        effect: (run) => { run.maxHp += 8; run.hp += 8; run.addCardById('static_curse'); return 'Power floods you (+8 Max HP) — but Static lodges in your deck.'; },
+        label: 'Finish the verse (Upgrade a card)',
+        flow: 'upgrade',
+        effect: () => 'You sing the missing line. One of your cards remembers how it was meant to sound.',
       },
       {
-        label: 'Cup your hands (Heal 12 HP)',
-        effect: (run) => { run.heal(12); return 'Cool clarity. You heal 12 HP.'; },
+        label: 'Pry loose the brass throat (Gain 70 gold, lose 10 HP)',
+        effect: (run) => { run.gold += 70; run.takeDamage(10); return 'The throat comes free in a spray of trapped static (+70 gold) that bites back through your hands (−10 HP).'; },
       },
-      { label: 'Refuse', effect: () => 'You turn from the pool. The whispers fade.' },
+      {
+        label: 'Lay the griot to rest (Heal 15 HP)',
+        effect: (run) => { run.heal(15); return 'You close the singer’s eyes and press them beneath the tide. The market’s murmur quiets; you breathe easier (+15 HP).'; },
+      },
     ],
   },
   {
-    id: 'wandering_smith',
-    name: 'The Wandering Smith',
-    acts: [1, 2, 3],
+    id: 'bone_scale_merchant',
+    name: 'The Bone-Scale Merchant',
+    acts: [1],
+    art: 'bone_scale_merchant',
     text:
-      'A smith with arms of burnished bronze tends a forge of starfire. "Bring me a blade or a song," she says, "and I will make it sing truer."',
+      'A merchant of jointed brass and bleached bone waits behind a great balance scale, one pan for flesh, one for fortune. "Everything balances in the Market," it clicks. "Set something upon the scale, and the scale answers in kind."',
     choices: [
       {
-        label: 'Upgrade a card',
-        flow: 'upgrade',
-        effect: () => 'The smith hammers your card into a sharper form.',
+        label: 'Weigh your blood (Lose 8 HP, gain 60 gold)',
+        effect: (run) => { run.takeDamage(8); run.gold += 60; return 'The pan drinks a measure of you (−8 HP) and tips heavy with coin (+60 gold).'; },
       },
       {
-        label: 'Reforge (Remove a card for 25 gold)',
+        label: 'Weigh your coin (Lose 45 gold, gain a Relic)',
+        condition: (run) => run.gold >= 45,
+        effect: (run) => { run.gold -= 45; const r = run.grantRandomRelic(); return r ? `Your gold sinks away (−45) and the scale offers up ${r} in its place.` : 'Your gold sinks away — but the scale has nothing left to weigh against it.'; },
+      },
+      { label: 'Refuse to be weighed', effect: () => 'You keep your measure to yourself and move on.' },
+    ],
+  },
+  {
+    id: 'salt_shrine',
+    name: 'Shrine of Salt and Circuitry',
+    acts: [1, 2],
+    art: 'salt_shrine',
+    text:
+      'Cowrie shells and humming diodes ring a tidal pool where offerings dissolve into light. This is where the Sunken Market speaks to the Ancestors — and the Ancestors answer offerings in kind.',
+    choices: [
+      {
+        label: 'Offer blood (Lose 10 HP, gain a Relic)',
+        effect: (run) => { run.takeDamage(10); const r = run.grantRandomRelic(); return r ? `You bleed into the salt (−10 HP). The shells clatter and yield ${r}.` : 'You bleed into the salt (−10 HP), but the pool has nothing to give.'; },
+      },
+      {
+        label: 'Offer coin (Lose 55 gold, heal to full)',
+        condition: (run) => run.gold >= 55,
+        effect: (run) => { run.gold -= 55; run.hp = run.maxHp; return 'Your coin dissolves into the tide (−55 gold). The Ancestors knit you whole again (healed to full).'; },
+      },
+      { label: 'Offer only silence', effect: () => 'You bow to the pool and leave your wounds where they lie.' },
+    ],
+  },
+
+  // ───────────────────────────── Act 2 — The Brass Archive ─────────────────
+  {
+    id: 'archive_of_names',
+    name: 'The Archive of Your Name',
+    acts: [2, 3],
+    art: 'archive_of_names',
+    text:
+      'The shelves lean toward you, riffling through scrolls that bear your own deeds — every card you carry inscribed and cross-referenced. The Archive remembers everything, and it is willing to forget, or to remember, at a price.',
+    choices: [
+      {
+        label: 'Tear a page loose (Remove a card, lose 6 HP)',
+        flow: 'removeForGold',
+        gold: 0,
+        effect: (run) => { run.takeDamage(6); return 'The page rips free of you and of your deck alike. It stings where it tore away (−6 HP).'; },
+      },
+      {
+        label: 'Sell a memory (Lose 6 Max HP, gain 80 gold)',
+        effect: (run) => { run.maxHp = Math.max(1, run.maxHp - 6); run.hp = Math.min(run.hp, run.maxHp); run.gold += 80; return 'A shelf-clerk files a piece of you away forever (−6 Max HP) and slides a heavy purse across the desk (+80 gold).'; },
+      },
+      { label: 'Close the ledger and leave', effect: () => 'You refuse to be catalogued today. The shelves sigh shut.' },
+    ],
+  },
+  {
+    id: 'clockwork_scribe',
+    name: 'The Clockwork Scribe',
+    acts: [2, 3],
+    art: 'clockwork_scribe',
+    text:
+      'A brass automaton copies scrolls without end, its quill dripping molten gold. "I can set your hand down truer," it grinds, gears turning behind glass eyes. "The Archive keeps a tithe, but the work is honest."',
+    choices: [
+      {
+        label: 'Have a card rewritten truer (Upgrade a card)',
+        flow: 'upgrade',
+        effect: () => 'The quill scratches over your card in gold, and it stands sharper than before.',
+      },
+      {
+        label: 'Commission an erasure (Remove a card for 25 gold)',
         condition: (run) => run.gold >= 25,
         flow: 'removeForGold',
         gold: 25,
-        effect: () => 'The card is unmade in white fire.',
+        effect: () => 'The scribe strikes the card from the record. It unwrites itself from your deck.',
       },
-      { label: 'Decline', effect: () => 'You leave the forge glowing behind you.' },
+      { label: 'Leave the scribe to its scrolls', effect: () => 'The gears grind on without you.' },
+    ],
+  },
+
+  // ───────────────────────────── Act 3 — The Static Crown ──────────────────
+  {
+    id: 'static_choir',
+    name: 'The Choir of Static',
+    acts: [3],
+    art: 'static_choir',
+    text:
+      'At the Crown, a choir of unwritten voices turns toward you as one. They do not sing words — they sing the shape of you, and offer to fold you into their harmony. Power, for a fracture let into the self.',
+    choices: [
+      {
+        label: 'Join the harmony (Gain a Relic, take 2 Static)',
+        effect: (run) => { const r = run.grantRandomRelic(); run.addCardById('static_curse'); run.addCardById('static_curse'); return r ? `The choir opens and takes you in. You rise with ${r} — but two threads of Static now sing in your deck.` : 'The choir opens, yet finds nothing new to gift you. Two threads of Static lodge in your deck all the same.'; },
+      },
+      {
+        label: 'Hum a single note (Heal 25 HP)',
+        effect: (run) => { run.heal(25); return 'You answer with one steady note. The harmony steadies you in turn (+25 HP).'; },
+      },
+      { label: 'Cover your ears and climb', effect: () => 'You refuse the chorus and keep to your own silence.' },
     ],
   },
   {
-    id: 'masked_dancer',
-    name: 'The Masked Dancer',
-    acts: [1, 2, 3],
+    id: 'unwritten_pilgrim',
+    name: 'The Unwritten Pilgrim',
+    acts: [3],
+    art: 'unwritten_pilgrim',
     text:
-      'A figure in a towering Egungun mask dances between the pillars. They beckon: trade fortune for foresight, or coin for clarity.',
+      'A figure climbs beside you, features smeared to static where a face should be — a pilgrim the Archive already unwrote. It holds out cupped hands. "Carry my burden the last of the way," it whispers, "and I will carry some of yours."',
     choices: [
       {
-        label: 'Trade 40 gold for a card-removal',
-        condition: (run) => run.gold >= 40,
+        label: 'Take its burden (Add a Regret, heal to full)',
+        effect: (run) => { run.addCardById('regret'); run.hp = run.maxHp; return 'You take the weight into your deck (gain Regret) and the pilgrim pours its strength into you (healed to full).'; },
+      },
+      {
+        label: 'Trade it a memory for coin (Remove a card, gain 40 gold)',
         flow: 'removeForGold',
-        gold: 40,
-        effect: () => 'A card dissolves into ribbons of light.',
+        gold: 0,
+        effect: (run) => { run.gold += 40; return 'The pilgrim swallows the card whole and presses cold coins into your palm (+40 gold).'; },
       },
-      {
-        label: 'Gamble (50% gain 80 gold, 50% lose 30 gold)',
-        effect: (run) => { if (run.rng.bool()) { run.gold += 80; return 'The dance favors you (+80 gold).'; } run.gold = Math.max(0, run.gold - 30); return 'The mask laughs (−30 gold).'; },
-      },
-      { label: 'Watch and leave', effect: () => 'You memorize the steps and move on.' },
-    ],
-  },
-  {
-    id: 'golden_idol',
-    name: 'The Golden Idol',
-    acts: [1, 2],
-    text:
-      'A grinning idol of solid gold sits on a pressure plate. Greed and danger are the same color here.',
-    choices: [
-      {
-        label: 'Take the idol (Gain 90 gold, take 12 damage)',
-        effect: (run) => { run.gold += 90; run.takeDamage(12); return 'You snatch the idol (+90 gold) as darts fly (−12 HP).'; },
-      },
-      {
-        label: 'Take it carefully (Gain 90 gold, gain a curse)',
-        effect: (run) => { run.gold += 90; run.addCardById('regret'); return 'You take the idol (+90 gold). Regret follows you.'; },
-      },
-      { label: 'Leave it', effect: () => 'Some debts are not worth the coin.' },
-    ],
-  },
-  {
-    id: 'star_navigator',
-    name: 'The Star Navigator',
-    acts: [2, 3],
-    text:
-      'An old navigator charts the cosmos on a cracked astrolabe. "I can show you the swift path," she says, "but the sky always takes its toll."',
-    choices: [
-      {
-        label: 'Transcend (Heal to full, lose 10 Max HP)',
-        effect: (run) => { run.maxHp = Math.max(10, run.maxHp - 10); run.hp = run.maxHp; return 'You are remade whole, but lessened (−10 Max HP, healed to full).'; },
-      },
-      {
-        label: 'Chart fortune (Gain 70 gold)',
-        effect: (run) => { run.gold += 70; return 'She traces a route to coin (+70 gold).'; },
-      },
-      { label: 'Sail on', effect: () => 'You keep your own course.' },
+      { label: 'Walk on alone', effect: () => 'You leave the pilgrim to its unwriting and climb.' },
     ],
   },
 ];

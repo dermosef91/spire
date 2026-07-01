@@ -1,0 +1,44 @@
+[
+  {
+    "id": "drowned_griot",
+    "name": "The Drowned Griot",
+    "act": 1,
+    "prompt": "A griot musician lying half-submerged in black flooded market water, ceremonial robes fanned out across the surface, a brass mechanical throat-piece grafted at the neck still glowing and humming a song. Sunken bazaar stalls and hanging cowrie shells in the background. Mournful, sacred, still."
+  },
+  {
+    "id": "bone_scale_merchant",
+    "name": "The Bone-Scale Merchant",
+    "act": 1,
+    "prompt": "A tall skeletal merchant built of jointed brass and bleached bone standing behind an enormous ornate balance scale, one pan holding glowing gold coins, the other holding a drop of glowing red blood. A cluttered flooded market stall behind. Eerie, transactional, ominous."
+  },
+  {
+    "id": "salt_shrine",
+    "name": "Shrine of Salt and Circuitry",
+    "act": 1,
+    "prompt": "A small circular tidal shrine ringed with cowrie shells and humming electronic diodes, a still glowing pool of salt water at its center dissolving offerings into rising motes of amber light. Ancestral, sacred, luminous, half underwater."
+  },
+  {
+    "id": "archive_of_names",
+    "name": "The Archive of Your Name",
+    "act": 2,
+    "prompt": "Towering brass library shelves leaning inward around the viewer, crammed with glowing parchment scrolls that riffle and float loose in the air, each inscribed with sigils. A heavy stone clerk's desk in the foreground. Vast, watchful, bureaucratic, uncanny."
+  },
+  {
+    "id": "clockwork_scribe",
+    "name": "The Clockwork Scribe",
+    "act": 2,
+    "prompt": "A brass clockwork automaton hunched at a writing desk, glass eyes glowing, a quill dripping molten gold as it copies an endless scroll. Interlocking gears turn behind its chest. Warm ember light, mechanical, patient, precise."
+  },
+  {
+    "id": "static_choir",
+    "name": "The Choir of Static",
+    "act": 3,
+    "prompt": "A choir of tall faceless robed figures made of crackling static and starlight, turned toward the viewer in a cosmic cathedral of orbiting concentric rings at the summit of the spire. Their open mouths pour out light. Awe, dread, cosmic, overwhelming."
+  },
+  {
+    "id": "unwritten_pilgrim",
+    "name": "The Unwritten Pilgrim",
+    "act": 3,
+    "prompt": "A lone hooded pilgrim climbing a cosmic obsidian stair, its face smeared into crackling static where features should be, holding out cupped hands offering a faint glowing burden. Star-void background with orbiting glyph rings. Lonely, haunting, sacrificial."
+  }
+]

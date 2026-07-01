@@ -1,0 +1,10 @@
+<svg width="960" height="400" viewBox="0 0 960 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="960" height="400" fill="#0a0604"/>
+  <circle cx="480" cy="200" r="150" fill="none" stroke="#ff6a1a" stroke-width="3" opacity="0.35"/>
+  <circle cx="480" cy="200" r="96" fill="none" stroke="#ffab47" stroke-width="2" opacity="0.28"/>
+  <circle cx="480" cy="200" r="46" fill="none" stroke="#e8431a" stroke-width="2" opacity="0.5"/>
+  <text x="480" y="82" text-anchor="middle" fill="#ff6a1a" font-family="Georgia, serif" font-size="86" opacity="0.55">?</text>
+  <text x="480" y="206" text-anchor="middle" fill="#f3e8d8" font-family="Georgia, serif" font-size="40" font-weight="bold">The Choir of Static</text>
+  <text x="480" y="244" text-anchor="middle" fill="#ffab47" font-family="monospace" font-size="18" opacity="0.8">Act 3</text>
+  <text x="480" y="374" text-anchor="middle" fill="#ff6a1a" font-family="monospace" font-size="15" opacity="0.6">[ placeholder event art · static_choir ]</text>
+</svg>

@@ -1069,6 +1069,9 @@ body.scene-reward #bg-image.show {
 .reward-done { color: var(--muted); font-style: italic; }
 
 .event-art, .rest-fire { font-size: 78px; margin: 10px 0; filter: var(--duotone); }
+/* Event illustration (custom art / placeholder). Overrides the glyph sizing. */
+.event-art.event-art-img { width: min(460px, 84vw); height: auto; margin: 12px auto; filter: none; font-size: 0; }
+.event-illo { width: 100%; height: auto; display: block; border-radius: 12px; border: 2px solid var(--line, rgba(255,122,26,0.35)); box-shadow: 0 6px 26px rgba(0,0,0,0.55), 0 0 24px rgba(255,106,26,0.14); }
 .rest-fire { animation: flicker 1.4s infinite alternate; }
 @keyframes flicker { from { filter: var(--duotone) drop-shadow(0 0 12px var(--ember)); } to { filter: var(--duotone) drop-shadow(0 0 30px var(--orange)); } }
 .event-scene h2, .rest-scene h2, .shop-scene h2 { color: var(--orange); font-size: 32px; letter-spacing: 0.08em; }
