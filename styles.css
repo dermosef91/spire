@@ -321,7 +321,7 @@ body.scene-combat #bg-image.show {
   opacity: 0.25;
 }
 body.scene-map #bg-image.show {
-  opacity: 0.08;
+  opacity: 0.2;
 }
 body.scene-reward #bg-image.show {
   opacity: 0.15;
@@ -423,18 +423,17 @@ body.scene-reward #bg-image.show {
    bottom, so the board is never boxed into a fixed-height slice. */
 .scene.map { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 .map-scene { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
-.map-header {
-  flex: 0 0 auto; position: relative; display: flex; align-items: center; justify-content: center;
-  min-height: 30px; padding: 0 76px; margin-bottom: 8px;
-}
-.map-title { color: var(--muted); letter-spacing: 0.08em; text-align: center; }
-.map-title b { color: var(--orange); }
+/* Board on the left, always-on legend panel pinned to the right. */
+.map-body { flex: 1 1 auto; min-height: 0; display: flex; gap: 12px; align-items: stretch; }
 .map-scroller { flex: 1 1 auto; min-height: 0; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px;
-  background: linear-gradient(180deg, rgba(16,10,6,0.7), rgba(8,5,3,0.85)); padding: 10px 0; -webkit-overflow-scrolling: touch; }
+  background: linear-gradient(180deg, rgba(16,10,6,0.42), rgba(8,5,3,0.62)); padding: 10px 0; -webkit-overflow-scrolling: touch; }
 .map-board { position: relative; margin: 0 auto; }
 .map-edges { position: absolute; left: 0; top: 0; pointer-events: none; }
 .edge { stroke: rgba(255, 122, 26, 0.28); stroke-width: 2; stroke-dasharray: 4 7; animation: dashFlow 16s linear infinite; }
 @keyframes dashFlow { to { stroke-dashoffset: -220; } }
+/* Connector ornaments — deliberately faint so the paths read first. */
+.edge-dot { fill: rgba(255, 176, 70, 0.32); }
+.edge-arrow { fill: none; stroke: rgba(255, 176, 70, 0.42); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
 /* Plain line-art glyphs — no circular badge behind them — connected by the
    dashed edges above. Sizing is on the wrapper div; the icon fills most of
    it (see .map-node .svg-ic below) so "bigger node" == "bigger glyph". */
@@ -450,6 +449,25 @@ body.scene-reward #bg-image.show {
   0%,100% { filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 4px rgba(255,106,26,0.45)); }
   50% { filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 13px rgba(255,106,26,0.9)); }
 }
+/* Decorative concentric rings behind the current node and the boss (subtle —
+   a single thin ember ring that reads as a halo, not a badge). */
+.map-node.current::before, .node-boss::before {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 148%; height: 148%;
+  transform: translate(-50%, -50%); border-radius: 50%;
+  border: 1px solid rgba(255, 176, 70, 0.28); pointer-events: none;
+}
+.node-boss::before { width: 160%; height: 160%; border-color: rgba(232, 67, 26, 0.34); }
+/* Tiny four-point sparkle accent on the boss + reachable nodes. */
+.map-node.reachable::after, .node-boss::after {
+  content: ''; position: absolute; top: 4%; right: 2%; width: 9px; height: 9px; pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(255,224,180,0.9) 0.5px, transparent 1.5px) center/100% 100%,
+    linear-gradient(rgba(255,200,140,0.55), rgba(255,200,140,0.55)) center/1px 100% no-repeat,
+    linear-gradient(rgba(255,200,140,0.55), rgba(255,200,140,0.55)) center/100% 1px no-repeat;
+  opacity: 0.7; animation: sparkTwinkle 2.4s ease-in-out infinite;
+}
+.node-boss::after { top: 2%; right: 0; width: 11px; height: 11px; }
+@keyframes sparkTwinkle { 0%,100% { opacity: 0.35; transform: scale(0.85); } 50% { opacity: 0.85; transform: scale(1.1); } }
 /* The player's current position reads as the largest glyph on the board. */
 .map-node.current { width: 72px; height: 72px; color: var(--cream); z-index: 2;
   filter: drop-shadow(0 3px 6px rgba(0,0,0,0.8)) drop-shadow(0 0 16px rgba(255,210,160,0.85)); }
@@ -461,28 +479,29 @@ body.scene-reward #bg-image.show {
 }
 .node-rest { color: var(--ember); } .node-shop { color: var(--amber); } .node-treasure { color: var(--orange); } .node-event { color: var(--cream); }
 
-/* Legend collapses into a hover/focus card pinned at the map header's right
-   edge — matches the reference's floating parchment scroll instead of a
-   permanent row eating vertical space. */
-.map-legend-wrap { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
-.map-legend-btn {
-  width: 64px; height: 30px; border-radius: 8px; cursor: pointer; padding: 0;
-  background: rgba(255,170,80,0.06); border: 1px solid var(--line); color: var(--orange);
-  font-family: var(--font-display); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
-}
-.map-legend-btn:hover, .map-legend-btn:focus-visible { border-color: var(--orange); box-shadow: var(--glow); }
+/* Always-on legend panel pinned to the right of the board, framed with an
+   ornate double border + corner ticks. Simple icon+label rows (no long
+   descriptions). */
 .map-legend {
-  position: absolute; top: calc(100% + 8px); right: 0; z-index: 20; width: max-content; max-width: 240px;
-  display: flex; flex-direction: column; gap: 8px; padding: 12px 16px;
-  background: linear-gradient(180deg, rgba(20,13,8,0.96), rgba(10,6,4,0.98));
-  border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow);
-  color: var(--muted); font-size: 12px; letter-spacing: 0.05em;
-  opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity 0.15s ease, transform 0.15s ease;
+  flex: 0 0 auto; align-self: stretch; width: clamp(150px, 15vw, 194px); overflow-y: auto;
+  display: flex; flex-direction: column; gap: 11px; padding: 14px 15px;
+  background: linear-gradient(180deg, rgba(20,13,8,0.82), rgba(10,6,4,0.9));
+  border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: inset 0 0 0 3px rgba(8,5,3,0.9), inset 0 0 0 4px rgba(255,122,26,0.16), var(--shadow);
+  color: var(--muted); font-size: 12px; letter-spacing: 0.04em; position: relative;
 }
-.map-legend-wrap:hover .map-legend, .map-legend-wrap:focus-within .map-legend {
-  opacity: 1; transform: none; pointer-events: auto;
+.map-legend::before, .map-legend::after {
+  content: ''; position: absolute; width: 12px; height: 12px; border: 1px solid rgba(255,170,80,0.4); pointer-events: none;
 }
-.leg { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.map-legend::before { top: 5px; left: 5px; border-right: none; border-bottom: none; }
+.map-legend::after { bottom: 5px; right: 5px; border-left: none; border-top: none; }
+.map-legend-head {
+  font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--orange); font-size: 14px; text-align: center; padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.map-legend-list { display: flex; flex-direction: column; gap: 10px; }
+.leg { display: flex; align-items: center; gap: 9px; }
 .leg-ic { width: 22px; height: 22px; display: inline-grid; place-items: center; flex: 0 0 auto; }
 
 /* ============================================================
@@ -1354,12 +1373,21 @@ html { -webkit-text-size-adjust: 100%; }
   .player-side, .enemy-side { height: 50%; }
   .combatant-info { width: min(150px, 42vw); }
   .char-grid { grid-template-columns: 1fr; } .char-blurb { min-height: 0; }
-  .reward-list { max-width: 100%; } .map-legend { font-size: 11px; gap: 6px; padding: 10px 12px; }
-  /* Free the vertical space the headline used up so the board reaches
-     nearly to the top bar; the legend toggle stays put in the corner. */
-  .map-title { display: none; }
-  .map-header { min-height: 0; padding: 4px 60px; margin-bottom: 6px; }
-  .map-legend-btn { width: 52px; height: 26px; font-size: 10px; }
+  .reward-list { max-width: 100%; }
+  /* On narrow portrait phones a tall right-hand legend would steal too much
+     board width — stack it into a compact horizontal chip strip below the
+     board instead (still always-on, just reflowed). */
+  .map-body { flex-direction: column; gap: 8px; }
+  .map-legend {
+    width: auto; align-self: stretch; flex-direction: row; align-items: center;
+    gap: 6px 14px; padding: 8px 12px; overflow-x: auto; overflow-y: hidden; font-size: 11px;
+  }
+  .map-legend::before, .map-legend::after { display: none; }
+  .map-legend-head {
+    border-bottom: none; border-right: 1px solid var(--line-soft);
+    padding: 0 10px 0 0; font-size: 12px; flex: 0 0 auto;
+  }
+  .map-legend-list { flex-direction: row; flex-wrap: wrap; gap: 6px 14px; }
   .screen-pile {
     width: 60px;
     height: 72px;
@@ -1381,9 +1409,10 @@ html { -webkit-text-size-adjust: 100%; }
 @media (max-height: 560px) {
   .battlefield { grid-template-columns: 1fr 1.3fr; gap: 10px; padding-top: 20px; bottom: 26%; }
   .topbar { margin-bottom: 6px; padding: 4px 12px; } .tb-left > div { font-size: 13px; }
-  .map-title { display: none; }
-  .map-header { min-height: 0; padding: 4px 56px; margin-bottom: 6px; }
-  .map-legend-btn { width: 52px; height: 24px; font-size: 10px; }
+  /* Landscape phone: keep the legend a right-hand column but trim it. */
+  .map-legend { width: clamp(128px, 22vw, 158px); gap: 7px; padding: 9px 11px; font-size: 11px; }
+  .map-legend-head { font-size: 12px; padding-bottom: 6px; }
+  .map-legend-list { gap: 7px; }
   .relic, .potion { width: 28px; height: 28px; }
   .combatant { min-width: 84px; }
   .combatant-info { width: 120px; }
@@ -1447,6 +1476,7 @@ html { -webkit-text-size-adjust: 100%; }
 
 @media (prefers-reduced-motion: reduce) {
   .game-title, .glyph, .ground-shadow, .intent, .med-ring, .medallion::after, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene, .rest-fire { animation: none !important; }
+  .map-node.reachable::after, .node-boss::after { animation: none !important; }
   .scene { transform: none; }
   #bg-image { transition: none !important; }
 }
@@ -1590,11 +1620,16 @@ html { -webkit-text-size-adjust: 100%; }
   .imodel [class^="m-"], .imodel [class*=" m-"], .rest-fire { animation: none !important; }
 }
 
-/* fullscreen toggle and mute buttons in the top bar (replaces the floating one to avoid card overlap) */
-.tb-fs, .tb-mute { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; cursor: pointer; padding: 0;
-  background: rgba(255,170,80,0.06); border: 1px solid var(--line); color: var(--orange); }
-.tb-fs:hover, .tb-mute:hover { border-color: var(--orange); box-shadow: var(--glow); }
-.tb-fs .svg-ic, .tb-mute .svg-ic { width: 64%; height: 64%; }
+/* fullscreen toggle and mute buttons in the top bar (replaces the floating one
+   to avoid card overlap). Circular with a subtle ornamental inner ring, echoing
+   the reference's ringed sigil buttons — kept understated. */
+.tb-fs, .tb-mute { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; padding: 0;
+  background: rgba(255,170,80,0.06); border: 1px solid var(--line); color: var(--orange);
+  box-shadow: inset 0 0 0 3px rgba(8,5,3,0.6), inset 0 0 0 4px rgba(255,170,80,0.14);
+  transition: border-color 0.14s ease, box-shadow 0.14s ease; }
+.tb-fs:hover, .tb-mute:hover { border-color: var(--orange);
+  box-shadow: inset 0 0 0 3px rgba(8,5,3,0.6), inset 0 0 0 4px rgba(255,170,80,0.22), var(--glow); }
+.tb-fs .svg-ic, .tb-mute .svg-ic { width: 60%; height: 60%; }
 
 /* ============================================================
    DRAG & DROP to play cards (mouse + touch)

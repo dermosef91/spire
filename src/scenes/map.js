@@ -6,7 +6,7 @@
 import { el } from '../core/util.js';
 import { saveRun, saveMeta } from '../core/save.js';
 import { topBar } from '../ui/components.js';
-import { ACT_NAMES, ENCOUNTERS } from '../data/encounters.js';
+import { ENCOUNTERS } from '../data/encounters.js';
 import { generateMap, nextNodes, nodeAt } from '../map/mapgen.js';
 import { NODE } from '../ui/icons.js';
 import { audio } from '../audio.js';
@@ -36,15 +36,14 @@ export const MapScene = {
       onPotion: (p, i) => this.usePotionOnMap(p, i),
       onHover: (o, n, on) => this.tooltip(o, n, on),
     }));
-    const header = el('div', { class: 'map-header' });
-    header.appendChild(el('div', { class: 'map-title', html: `<b>${ACT_NAMES[run.act]}</b> — choose your path upward` }));
-    header.appendChild(el('div', { class: 'map-legend-wrap' }, [
-      el('button', { class: 'map-legend-btn', type: 'button', text: 'Legend', attrs: { 'aria-label': 'Show map legend' } }),
-      el('div', { class: 'map-legend', html: legendHtml() }),
-    ]));
-    panel.appendChild(header);
 
+    // Board + an always-on legend panel side by side (legend pinned right).
+    const body = el('div', { class: 'map-body' });
     const scroller = el('div', { class: 'map-scroller' });
+    const legend = el('aside', { class: 'map-legend' }, [
+      el('div', { class: 'map-legend-head', text: 'Legend' }),
+      el('div', { class: 'map-legend-list', html: legendHtml() }),
+    ]);
     const board = el('div', { class: 'map-board', style: { width: width + 'px', height: height + 'px' } });
 
     const X = (col) => col * colW + colW / 2;
@@ -86,6 +85,23 @@ export const MapScene = {
           line.setAttribute('x2', to.x); line.setAttribute('y2', to.y);
           line.setAttribute('class', 'edge');
           svg.appendChild(line);
+          // Subtle connector ornaments: a small diamond waypoint near the
+          // middle and a directional chevron pointing up the spire (toward
+          // the target). Kept small + faint via .edge-dot / .edge-arrow.
+          const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
+          const s = 2.6;
+          const dot = document.createElementNS(NS, 'path');
+          dot.setAttribute('d', `M ${mid.x} ${mid.y - s} L ${mid.x + s} ${mid.y} L ${mid.x} ${mid.y + s} L ${mid.x - s} ${mid.y} Z`);
+          dot.setAttribute('class', 'edge-dot');
+          svg.appendChild(dot);
+          const ax = from.x + (to.x - from.x) * 0.72;
+          const ay = from.y + (to.y - from.y) * 0.72;
+          const deg = Math.atan2(to.y - from.y, to.x - from.x) * 180 / Math.PI;
+          const arrow = document.createElementNS(NS, 'path');
+          arrow.setAttribute('d', 'M -2.6 -2.6 L 2 0 L -2.6 2.6');
+          arrow.setAttribute('transform', `translate(${ax} ${ay}) rotate(${deg})`);
+          arrow.setAttribute('class', 'edge-arrow');
+          svg.appendChild(arrow);
         }
       }
     }
@@ -118,7 +134,9 @@ export const MapScene = {
     placeNode('boss', width / 2, bossSpace / 2, 'boss', { boss: true });
 
     scroller.appendChild(board);
-    panel.appendChild(scroller);
+    body.appendChild(scroller);
+    body.appendChild(legend);
+    panel.appendChild(body);
     this.setScene(panel, 'map');
 
     // Scroll to center the player's position if it's off-screen, otherwise scroll to the bottom
