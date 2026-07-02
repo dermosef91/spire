@@ -484,9 +484,6 @@ export class CombatView {
                 delay: delay
               });
 
-              // Soft blip as each card lands, reinforcing the card-by-card deal.
-              setTimeout(() => { if (document.body.contains(node)) audio.play('draw'); }, delay);
-
               anim.onfinish = () => {
                 node.style.opacity = '';
                 node.style.pointerEvents = '';
@@ -515,6 +512,7 @@ export class CombatView {
     // First tap previews: the card straightens and grows so it can be read.
     // A second tap on the same card commits it. Drag-to-play bypasses this.
     if (this.previewCard !== card) {
+      audio.play('select');
       this.previewCard = card;
       this.pendingCard = null;
       this.update();
