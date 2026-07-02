@@ -25,6 +25,14 @@ export class Combat {
     this.animating = false;
     this._notifyScheduled = false; // coalesces same-tick notify() calls, see notify()
 
+    // Rhythm QTE seams. The view sets `_rhythmMult` (from the attack QTE)
+    // before playCard, and injects `parryPrompt` — an async fn resolving
+    // { success } — awaited during the enemy phase. Both default to inert so
+    // the engine runs unchanged without a view or with Rhythm Mode off.
+    this._rhythmMult = 1;
+    this.parryPrompt = null;
+    this._parried = false;
+
     // Player entity mirrors run state; HP is written back to run on combat end.
     this.player = {
       isPlayer: true,
@@ -242,11 +250,11 @@ export class Combat {
   deal(target, base, hits = 1) {
     if (!target || !target.alive) { target = this.randomEnemy(); if (!target) return 0; }
     let total = 0;
-    const mult = this._cardDamageMult || 1;
+    const mult = (this._cardDamageMult || 1) * (this._rhythmMult || 1);
     this.fx('attackstart', { source: this.player, target });
     for (let i = 0; i < hits; i++) {
       if (!target.alive) break;
-      const dmg = this.calcAttackDamage(base, this.player, target) * mult;
+      const dmg = Math.floor(this.calcAttackDamage(base, this.player, target) * mult);
       total += this.applyDamage(target, dmg, { isAttack: true, source: this.player });
     }
     this.notify();
@@ -255,9 +263,10 @@ export class Combat {
   dealAll(base, hits = 1) {
     let total = 0;
     this.fx('attackstart', { source: this.player });
+    const mult = (this._cardDamageMult || 1) * (this._rhythmMult || 1);
     for (let i = 0; i < hits; i++) {
       for (const e of this.livingEnemies()) {
-        const dmg = this.calcAttackDamage(base, this.player, e) * (this._cardDamageMult || 1);
+        const dmg = Math.floor(this.calcAttackDamage(base, this.player, e) * mult);
         total += this.applyDamage(e, dmg, { isAttack: true, source: this.player });
       }
     }
@@ -277,11 +286,23 @@ export class Combat {
   // Enemy attack on player
   enemyAttack(enemy, base, hits = 1) {
     this.fx('attackstart', { source: enemy, target: this.player });
+    // Parry: Ward counts double against this one attack. Modeled as phantom
+    // block that is consumed first and evaporates after the attack — a parry
+    // can never leave the player with more Ward than they started with.
+    const realBlock = this.player.block;
+    const parried = this._parried && realBlock > 0;
+    this._parried = false;
+    if (parried) {
+      this.player.block += realBlock;
+      this.fx('parry', { entity: this.player });
+      this.log('Parried! Your Ward counts double against the blow.');
+    }
     for (let i = 0; i < hits; i++) {
       if (!this.player.alive) break;
       const dmg = Math.round(this.calcAttackDamage(base, enemy, this.player) * this.run.enemyDamageMult());
       this.applyDamage(this.player, dmg, { isAttack: true, source: enemy });
     }
+    if (parried) this.player.block = Math.min(realBlock, this.player.block);
     this.notify();
   }
 
@@ -492,6 +513,7 @@ export class Combat {
     }
 
     this._cardDamageMult = 1;
+    this._rhythmMult = 1;
     this.fire('cardPlayed', { card });
     if (card.verse) this.fire('versePlayed', { card });
 
@@ -629,7 +651,6 @@ export class Combat {
       if (!e.alive || this.over) continue;
       const move = e.bp.moves[e.move];
       this.log(`${e.name} uses ${move.name}.`);
-
       const isAttack = e.intent && e.intent.type && e.intent.type.startsWith('attack');
       // Float the move name over the enemy, then give it a beat before the
       // action resolves so the attack/skill reads as a consequence of the name.
@@ -639,7 +660,11 @@ export class Combat {
       if (!isAttack) {
         this.fx('skillstart', { source: e });
       }
-
+      if (this.parryPrompt && isAttack && this.player.block > 0 && this.player.alive) {
+        let res = null;
+        try { res = await this.parryPrompt(e); } catch (_) { res = null; }
+        this._parried = !!(res && res.success);
+      }
       move.run(this, e);
       this.notify();
       await wait(550);

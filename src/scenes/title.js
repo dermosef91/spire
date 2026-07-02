@@ -44,6 +44,14 @@ export const TitleScene = {
       btns.appendChild(button('Continue Climb', () => { const r = loadRun(); if (r) { this.run = r; this.showMap(); } }, 'primary'));
     }
     btns.appendChild(button('New Run', () => this.showCharSelect(), hasSave() ? '' : 'primary'));
+    btns.appendChild(button(this.rhythmOn() ? 'Rhythm: On' : 'Rhythm: Off', (e) => {
+      this.meta.rhythm = !this.rhythmOn();
+      saveMeta(this.meta);
+      const label = this.rhythmOn() ? 'Rhythm: On' : 'Rhythm: Off';
+      const txt = e.currentTarget.querySelector('.btn-content');
+      if (txt) txt.textContent = label;
+      else e.target.textContent = label;
+    }));
     btns.appendChild(button(audio.musicOn ? 'Music: On' : 'Music: Off', (e) => {
       const on = audio.toggleMusic();
       const txt = e.currentTarget.querySelector('.btn-content');

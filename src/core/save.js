@@ -22,7 +22,8 @@ export function clearSave() {
 }
 
 export function loadMeta() {
-  try { return JSON.parse(localStorage.getItem(META_KEY)) || defaultMeta(); } catch (e) { return defaultMeta(); }
+  // Merge with defaults so saves from before a new field existed pick it up.
+  try { return { ...defaultMeta(), ...(JSON.parse(localStorage.getItem(META_KEY)) || {}) }; } catch (e) { return defaultMeta(); }
 }
 export function saveMeta(meta) {
   try { localStorage.setItem(META_KEY, JSON.stringify(meta)); } catch (e) {}
@@ -33,8 +34,10 @@ function defaultMeta() {
   //   once (the first ascent is always the complicit one — you cannot refuse
   //   what you do not yet understand). timesAscended: how many climbs have
   //   ended at the Heart. spireUnwritten: has the true ending been earned.
+  // rhythm: the timed-hit QTE mode on attacks/parries (off = classic combat).
   return {
     runs: 0, wins: 0, bestFloor: 0, ascensions: 0, maxAscension: 0, ascension: 0,
     tutorialDone: false, ascendedOnce: false, timesAscended: 0, spireUnwritten: false,
+    rhythm: true,
   };
 }

@@ -42,7 +42,7 @@ def('sunder', {
 });
 def('twin_fangs', {
   name: 'Twin Fangs', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
-  dmg: 5, hits: 2, target: 'enemy',
+  dmg: 5, hits: 2, target: 'enemy', qteMarks: 2,
   desc: (c) => `Deal ${c.dmg} damage twice.`,
   upgrade: (c) => { c.dmg = 7; },
   onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.c.dmg, ctx.c.hits),
@@ -321,7 +321,7 @@ def('the_long_song', {
 });
 def('grand_finale', {
   name: 'Grand Finale', char: 'kofi', type: 'attack', rarity: 'rare', cost: 0,
-  dmg: 50, target: 'all',
+  dmg: 50, target: 'all', qteMarks: 3,
   desc: (c) => `Can only be played if it is the last card in your hand. Deal ${c.dmg} damage to ALL enemies.`,
   upgrade: (c) => { c.dmg = 60; },
   playable: (ctx) => ctx.combat.hand.length === 1,
