@@ -175,13 +175,32 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   `min-height` the flex item is free to grow taller than the container
   instead of scrolling internally, so the whole *page* scrolls (topbar and
   header included) instead of just the map board.
-- The legend is a **hover/`:focus-within` popover** (`.map-legend-wrap` /
-  `.map-legend-btn`, pinned to the map header's right edge), not a permanent
-  always-visible row, so it doesn't cost vertical space. On narrow
-  (`max-width: 760px`) or short (`max-height: 560px`) screens, `.map-title`
-  (the act-name headline) is hidden via `display: none` while `.map-header`
-  itself stays (min-height/padding collapsed) so the Legend button remains
-  reachable and the board reclaims the freed space.
+- **Art-direction pass (2026-07):** the map now leans into the painted act
+  backdrop and reads like the reference concept art. There is **no headline**
+  anymore (the old "The Sunken Market — choose your path upward" and the whole
+  `.map-header`/`.map-title` are gone); the act name lives only in the top bar.
+  The scene backdrop (`body.scene-map #bg-image`) shows at `opacity: 0.2` (up
+  from 0.08) and `.map-scroller`'s gradient was made more translucent so the
+  painting shows through behind the board while nodes keep contrast.
+- The legend is an **always-on framed panel** (`.map-legend`, built as an
+  `<aside>` in `showMap()`), pinned to the **right** of the board inside a
+  `.map-body` flex row (`.map-scroller` flex:1, legend fixed width). It has a
+  `.map-legend-head` "LEGEND" title + `.map-legend-list` of simple icon+label
+  rows (no long descriptions) and an ornamental double-border/corner-tick frame
+  (inset box-shadows + `::before`/`::after` corner ticks). On narrow portrait
+  (`max-width: 760px`) `.map-body` stacks to a column and the legend reflows
+  into a compact horizontal chip strip **below** the board; on landscape phones
+  (`max-height: 560px`) it stays a right column, just trimmed.
+- **Connector ornaments** are drawn per-edge in `showMap()`'s edge loop: a small
+  diamond waypoint (`.edge-dot`) near the midpoint and a directional chevron
+  (`.edge-arrow`, rotated toward the target) at ~72% — both deliberately faint.
+- **Node accents:** `.map-node.current` and `.node-boss` get a subtle concentric
+  ring halo via `::before`; reachable nodes and the boss get a tiny twinkling
+  four-point sparkle via `::after` (`sparkTwinkle`, disabled under reduced
+  motion). Keep these subtle — they're accents, not badges.
+- The top-bar utility buttons (`.tb-fs`, `.tb-mute`) are **circular** with a
+  faint inset ornamental ring (they show on every scene's top bar, so this is a
+  global chrome tweak, not map-only — QA covers combat to catch regressions).
 
 ## Story framing & endings (the Spire's lie)
 The world runs on one reveal: **the Spire "welcomes climbers home" by rendering
