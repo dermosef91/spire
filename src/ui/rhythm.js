@@ -1,5 +1,5 @@
 // Rhythm QTE overlay (Expedition-33-style timed hits). Attacks present 1-3
-// directional marks — arrow keys on desktop, swipes on touch — graded
+// directional marks — arrow keys or WASD on desktop, swipes on touch — graded
 // perfect / good / miss against a note that closes on a target ring. Enemy
 // attacks can be parried with a single well-timed press of any direction.
 // The overlay is fully self-contained: it owns its DOM, its input listeners
@@ -24,7 +24,11 @@ export const MULT_MISS = 0.5;
 
 const DIRS = ['left', 'up', 'down', 'right'];
 const GLYPH = { left: '◀', up: '▲', down: '▼', right: '▶', tap: '✦' };
-const KEY_DIR = { ArrowLeft: 'left', ArrowUp: 'up', ArrowDown: 'down', ArrowRight: 'right' };
+const KEY_DIR = {
+  ArrowLeft: 'left', ArrowUp: 'up', ArrowDown: 'down', ArrowRight: 'right',
+  w: 'up', a: 'left', s: 'down', d: 'right',
+  W: 'up', A: 'left', S: 'down', D: 'right'
+};
 
 export const rhythmReduced = () =>
   window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -42,7 +46,7 @@ function buildQTE(kind, isTouch) {
   layer.appendChild(stage);
   const hintText = kind === 'parry'
     ? (isTouch ? 'Tap in time to parry!' : 'Press any key in time to parry!')
-    : (isTouch ? 'Swipe with the beat!' : 'Arrow keys with the beat!');
+    : (isTouch ? 'Swipe with the beat!' : 'Arrow keys or WASD with the beat!');
   layer.appendChild(el('div', { class: 'qte-hint', text: hintText }));
   document.body.appendChild(layer);
 

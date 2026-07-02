@@ -531,7 +531,24 @@ body.scene-reward #bg-image.show {
    stay unscoped. Size / rings / sparkle / pulse are board-only — scoped to
    `.map-node` so they don't leak onto the legend's `.leg-ic.node-*` icons
    (an unscoped `.node-boss` size+transform was displacing the legend row). */
-.node-monster { color: #ff8a5a; } .node-elite { color: var(--ember); } .node-boss { color: var(--orange); }
+.node-monster { color: #ff8a5a; }
+.map-node.node-monster img.svg-ic {
+  transform: scale(1.5);
+  transition: transform 0.16s ease, filter 0.16s ease;
+}
+.map-node.node-monster.reachable img.svg-ic {
+  transform: scale(2.25);
+  animation: combatActivePulse 1.7s ease-in-out infinite;
+}
+@keyframes combatActivePulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.45)) brightness(1.0);
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.95)) brightness(1.5);
+  }
+}
+.node-elite { color: var(--ember); } .node-boss { color: var(--orange); }
 .map-node.node-boss { width: 64px; height: 64px; animation: bossPulse 2.1s ease-in-out infinite; }
 @keyframes bossPulse {
   0%,100% { filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 10px rgba(232,67,26,0.55)); transform: translate(-50%,-50%) scale(1); }
@@ -1535,7 +1552,7 @@ html { -webkit-text-size-adjust: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .game-title, .glyph, .ground-shadow, .intent, .med-ring, .medallion::after, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene, .rest-fire { animation: none !important; }
+  .game-title, .glyph, .ground-shadow, .intent, .med-ring, .medallion::after, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene, .rest-fire, .map-node.node-monster.reachable img.svg-ic { animation: none !important; }
   .map-node.reachable::after, .node-boss::after { animation: none !important; }
   .scene { transform: none; }
   #bg-image { transition: none !important; }
@@ -1727,12 +1744,11 @@ img.svg-ic { object-fit: contain; }
   padding: 12px 16px; max-width: min(95vw, 980px);
 }
 .card-picker { --card-h: clamp(232px, 25vw, 320px); --card-w: calc(var(--card-h) * 0.7); }
-.card-picker .card-row { gap: 22px; }
+.card-picker .card-row { gap: 22px; overflow: visible; padding-top: 12px; }
 .card-picker .card { height: var(--card-h); width: var(--card-w); min-height: 0; }
-/* Top-align so a rare long description trims cleanly off the bottom edge
-   instead of centered overflow eating both the start and end of the text;
-   tapping the card still opens the full, unclipped tooltip. */
-.card-picker .card-desc { overflow: hidden; padding-bottom: 2px; align-items: flex-start; }
+/* Center text vertically; overflow:hidden trims the rare long description
+   at the edges — tapping the card still opens the full, unclipped tooltip. */
+.card-picker .card-desc { overflow: hidden; padding-bottom: 2px; align-items: center; }
 .card-picker .card-desc-in { padding-top: 2px; }
 .card-picker .card.selected {
   transform: translateY(-22px) scale(1.14) !important;
