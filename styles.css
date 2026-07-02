@@ -1284,3 +1284,44 @@ html { -webkit-text-size-adjust: 100%; }
 .overlay .card, .shop-scene .card { height: auto; min-height: var(--card-h); }
 .overlay .card-desc, .shop-scene .card-desc { overflow: visible; padding-bottom: 4px; }
 .overlay .card-row, .overlay .deck-grid { max-height: 76vh; overflow-y: auto; align-items: stretch; }
+
+/* ---------------------------------------------------------- boot loading */
+/* Shown while preloading assets at startup; replaced by the title screen. */
+.boot-loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+  padding: 24px;
+}
+.boot-title {
+  font-family: var(--font-display);
+  font-size: clamp(48px, 10vw, 84px);
+  letter-spacing: 0.12em;
+  color: var(--cream);
+  text-shadow: var(--glow);
+}
+.boot-status {
+  color: var(--muted);
+  font-size: 14px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.boot-bar {
+  width: min(320px, 70vw);
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-soft);
+  overflow: hidden;
+}
+.boot-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--ember), var(--orange-bright));
+  box-shadow: var(--glow);
+  transition: width 0.2s ease;
+}

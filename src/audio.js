@@ -3,7 +3,9 @@ class Audio {
   constructor() {
     this.ctx = null;
     this.enabled = true;
-    this.musicOn = false;
+    // Music defaults to on; it actually starts on the first user gesture
+    // (browser autoplay policy) via resumeMusic().
+    this.musicOn = true;
     this._music = null;
   }
   ensure() {
@@ -45,6 +47,22 @@ class Audio {
     this.musicOn = !this.musicOn;
     if (this.musicOn) this.startMusic(); else this.stopMusic();
     return this.musicOn;
+  }
+  // Start the music loop if it's enabled and not already playing. Waits for
+  // the AudioContext to actually be running: scheduling notes on a suspended
+  // context freezes them at the same timestamp and they all fire at once on
+  // resume. Safe to call repeatedly.
+  resumeMusic() {
+    if (!this.musicOn || this._masterGain) return;
+    this.ensure();
+    if (!this.ctx) return;
+    if (this.ctx.state === 'running') { this.startMusic(); return; }
+    const onState = () => {
+      if (this.ctx.state !== 'running') return;
+      this.ctx.removeEventListener('statechange', onState);
+      if (this.musicOn && !this._masterGain) this.startMusic();
+    };
+    this.ctx.addEventListener('statechange', onState);
   }
   startMusic() {
     this.ensure();

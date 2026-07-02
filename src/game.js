@@ -32,6 +32,12 @@ export class Game {
     document.body.appendChild(this.tip);
     this.meta = loadMeta();
     this.setupMobile();
+    // Fullscreen can change outside the title button (auto-enter on first
+    // gesture, Esc key) — keep its label truthful.
+    onFullscreenChange(() => {
+      const txt = document.querySelector('.title-buttons .fs-btn .btn-content');
+      if (txt) txt.textContent = isFullscreen() ? 'Exit Fullscreen' : 'Fullscreen';
+    });
   }
 
   isTouch() { return this.touch; }
@@ -143,12 +149,9 @@ export class Game {
       else e.target.textContent = on ? 'Music: On' : 'Music: Off';
     }));
     if (fullscreenSupported()) {
-      btns.appendChild(button(isFullscreen() ? 'Exit Fullscreen' : 'Fullscreen', async (e) => {
-        const on = await toggleFullscreen(document.documentElement);
-        const txt = e.currentTarget.querySelector('.btn-content');
-        if (txt) txt.textContent = on ? 'Exit Fullscreen' : 'Fullscreen';
-        else e.target.textContent = on ? 'Exit Fullscreen' : 'Fullscreen';
-      }));
+      // Label updates via the onFullscreenChange listener in the constructor.
+      btns.appendChild(button(isFullscreen() ? 'Exit Fullscreen' : 'Fullscreen',
+        () => toggleFullscreen(document.documentElement), 'fs-btn'));
     }
     panel.appendChild(btns);
     panel.appendChild(el('div', { class: 'title-meta', text: `Runs: ${this.meta.runs}  ·  Victories: ${this.meta.wins}  ·  Best Floor: ${this.meta.bestFloor}` }));
