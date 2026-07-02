@@ -32,13 +32,18 @@ export const CombatScene = {
     audio.setCombat(true, kind === 'boss');
     const bg = background(); if (bg) bg.setCombat(true);
     const combat = new Combat(this.run, enemyIds, { kind });
+    window.__combat = combat; // console debugging, like window.__ase
     const view = new CombatView(this, combat);
     view.onEnd = (c) => this.afterCombat(c, kind);
     const holder = el('div', { class: 'combat-holder' });
     this.setScene(holder, 'combat');
     view.mount(holder);
-    // First-ever combat: run the interactive tutorial once the opening draw settles.
+    // First-ever combat: run the interactive tutorial once the opening draw
+    // settles. Rhythm QTEs sit out this one fight so the tutorial's coaching
+    // isn't interrupted by an unexplained mini-game.
     if (!this.meta.tutorialDone && kind === 'monster') {
+      view.rhythmSuppressed = true;
+      combat.parryPrompt = null;
       const finishTutorial = () => { this.meta.tutorialDone = true; saveMeta(this.meta); };
       setTimeout(() => {
         if (combat.over) { finishTutorial(); return; }

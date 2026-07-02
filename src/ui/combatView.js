@@ -7,6 +7,7 @@ import { renderCard, topBar } from './components.js';
 import { POWERS } from '../data/keywords.js';
 import { audio } from '../audio.js';
 import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine } from './fx.js';
+import { runAttackQTE, runParryQTE } from './rhythm.js';
 import { combatModel, INTENT, UI, powerIcon } from './icons.js';
 import { spriteOrSvg, hasSprite } from './sprites.js';
 import { background } from '../fx/background.js';
@@ -45,6 +46,9 @@ export class CombatView {
     this.root = root;
     this.combat.onUpdate = () => this.update();
     this.combat.fx = (type, payload) => this.onFx(type, payload);
+    this.combat.parryPrompt = this.game.rhythmOn()
+      ? () => runParryQTE({ isTouch: this.game.isTouch() })
+      : null;
     this._lastHandCards = [];
     this.build();
     // Slower combat open: show a "Battle Start" banner first, then let the
@@ -202,6 +206,7 @@ export class CombatView {
 
     if (c.over && !this.ended) {
       this.ended = true;
+      c.parryPrompt = null;
       this.scene.classList.add(c.victory ? 'won' : 'lost');
       setTimeout(() => this.onEnd && this.onEnd(c), 850);
     }
@@ -627,8 +632,17 @@ export class CombatView {
     if (node) node.classList.add('drag-over');
   }
 
-  playCard(card, target) {
+  async playCard(card, target) {
     this.previewCard = null;
+    const c = this.combat;
+    if (this.game.rhythmOn() && !this.rhythmSuppressed && card.type === 'attack' && !c.over) {
+      c.animating = true; // blocks End Turn and further card input during the QTE
+      this.update();
+      const { grade, mult } = await runAttackQTE({ marks: this.marksFor(card), isTouch: this.game.isTouch() });
+      c.animating = false;
+      c._rhythmMult = mult;
+      c.fire('rhythm', { grade, card });
+    }
     audio.play(card.type === 'attack' ? 'attack' : 'skill');
     // brief play animation on the card element
     const cardEl = this.handHolder.querySelector(`.card[data-uid="${card.uid}"]`);
@@ -649,6 +663,13 @@ export class CombatView {
     }
 
     this.combat.playCard(card, target);
+  }
+
+  // 1-3 rhythm marks: blueprint override, else scaled by cost.
+  marksFor(card) {
+    if (card._bp.qteMarks) return Math.max(1, Math.min(3, card._bp.qteMarks));
+    const cost = card.cost === 'X' ? 3 : card.cost;
+    return cost >= 3 ? 3 : cost >= 2 ? 2 : 1;
   }
 
   endTurn() {
@@ -791,6 +812,13 @@ export class CombatView {
       floatText(layer, el2, 'WARDED', 'blocked');
       hitFlash(el2, 'block');
       ring(layer, el2, 'rgba(230,180,90,0.9)');
+      return;
+    }
+    if (type === 'parry') {
+      const el2 = this.elFor(payload.entity); if (!el2) return;
+      floatText(layer, el2, 'PARRY!', 'block');
+      ring(layer, el2, 'rgba(255,171,71,0.95)');
+      hitFlash(el2, 'block');
       return;
     }
     if (type === 'heal') {

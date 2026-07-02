@@ -41,6 +41,7 @@ export class Game {
   }
 
   isTouch() { return this.touch; }
+  rhythmOn() { return this.meta.rhythm !== false; }
 
   // ----------------------------------------------------------- mobile / fullscreen
   setupMobile() {
