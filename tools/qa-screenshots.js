@@ -32,7 +32,9 @@ const PORT = process.env.QA_PORT || 8091;
 const BASE = `http://localhost:${PORT}`;
 
 // Chromium shipped in this environment (see CLAUDE.md browser-test notes).
-const CHROMIUM = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+const CHROMIUM = existsSync('/opt/pw-browsers/chromium-1194/chrome-linux/chrome')
+  ? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
+  : '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
 // The two shapes we care about: a short landscape phone (trips the
 // `max-height: 560px` breakpoint) and a roomy desktop screen (trips the

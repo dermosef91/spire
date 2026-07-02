@@ -44,29 +44,50 @@ export const TitleScene = {
       btns.appendChild(button('Continue Climb', () => { const r = loadRun(); if (r) { this.run = r; this.showMap(); } }, 'primary'));
     }
     btns.appendChild(button('New Run', () => this.showCharSelect(), hasSave() ? '' : 'primary'));
-    btns.appendChild(button(this.rhythmOn() ? 'Rhythm: On' : 'Rhythm: Off', (e) => {
-      this.meta.rhythm = !this.rhythmOn();
-      saveMeta(this.meta);
-      const label = this.rhythmOn() ? 'Rhythm: On' : 'Rhythm: Off';
-      const txt = e.currentTarget.querySelector('.btn-content');
-      if (txt) txt.textContent = label;
-      else e.target.textContent = label;
-    }));
-    btns.appendChild(button(audio.musicOn ? 'Music: On' : 'Music: Off', (e) => {
-      const on = audio.toggleMusic();
-      const txt = e.currentTarget.querySelector('.btn-content');
-      if (txt) txt.textContent = on ? 'Music: On' : 'Music: Off';
-      else e.target.textContent = on ? 'Music: On' : 'Music: Off';
-    }));
+    panel.appendChild(btns);
+
+    // Less prominent settings toggles for Rhythm and Music
+    const settings = el('div', { class: 'title-settings' });
+    const rhythmBtn = el('button', {
+      class: 'title-setting-btn',
+      html: `Rhythm: <b>${this.rhythmOn() ? 'On' : 'Off'}</b>`,
+      on: {
+        click: () => {
+          this.meta.rhythm = !this.rhythmOn();
+          saveMeta(this.meta);
+          rhythmBtn.innerHTML = `Rhythm: <b>${this.rhythmOn() ? 'On' : 'Off'}</b>`;
+          audio.play('select');
+        }
+      }
+    });
+    settings.appendChild(rhythmBtn);
+
+    const musicBtn = el('button', {
+      class: 'title-setting-btn',
+      html: `Music: <b>${audio.musicOn ? 'On' : 'Off'}</b>`,
+      on: {
+        click: () => {
+          const on = audio.toggleMusic();
+          musicBtn.innerHTML = `Music: <b>${on ? 'On' : 'Off'}</b>`;
+          audio.play('select');
+        }
+      }
+    });
+    settings.appendChild(musicBtn);
+    panel.appendChild(settings);
+
+    // Fullscreen toggle positioned in the top-right corner of the title scene
+    const topActions = el('div', { class: 'title-top-actions' });
     if (fullscreenSupported()) {
-      btns.appendChild(button(isFullscreen() ? 'Exit Fullscreen' : 'Fullscreen', async (e) => {
-        const on = await toggleFullscreen(document.documentElement);
-        const txt = e.currentTarget.querySelector('.btn-content');
-        if (txt) txt.textContent = on ? 'Exit Fullscreen' : 'Fullscreen';
-        else e.target.textContent = on ? 'Exit Fullscreen' : 'Fullscreen';
+      topActions.appendChild(el('button', {
+        class: 'tb-fs',
+        html: UI.fullscreen,
+        attrs: { 'aria-label': 'Toggle fullscreen', title: 'Fullscreen' },
+        on: { click: () => toggleFullscreen(document.documentElement) }
       }));
     }
-    panel.appendChild(btns);
+    panel.appendChild(topActions);
+
     const ascLabel = this.meta.maxAscension >= MAX_ASCENSION ? 'Ascension MAX' : `Ascension ${this.meta.maxAscension}`;
     panel.appendChild(el('div', { class: 'title-meta', text: `Runs: ${this.meta.runs}  ·  Victories: ${this.meta.wins}  ·  Best Act: ${this.meta.bestFloor}  ·  ${ascLabel} unlocked` }));
     this.setScene(panel, 'title');
@@ -88,7 +109,7 @@ export const TitleScene = {
       card.appendChild(el('div', { class: 'char-hp', html: `<i class="tb-ic">${UI.heart}</i> ${ch.maxHp} HP` }));
       card.appendChild(el('div', { class: 'char-blurb', text: ch.blurb }));
       const starter = RELICS[ch.relic];
-      card.appendChild(el('div', { class: 'char-relic', html: `Starter: <b>${starter.name}</b> — ${starter.desc}` }));
+      card.appendChild(el('div', { class: 'char-relic', html: `Starter:<br><b>${starter.name}</b> — ${starter.desc}` }));
       card.appendChild(button('Begin', () => this.startRun(id), 'primary'));
       grid.appendChild(card);
     }
