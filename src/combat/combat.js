@@ -77,6 +77,7 @@ export class Combat {
     // counters
     this.cardsThisTurn = 0;
     this.versesThisTurn = 0;
+    this.versesThisCombat = 0;
     this.cardsPlayedTotal = 0;
     this.noMoreDraw = false;
     this._extraOpenDraw = 0;
@@ -497,7 +498,7 @@ export class Combat {
 
     this.cardsThisTurn += 1;
     this.cardsPlayedTotal += 1;
-    if (card.verse) this.versesThisTurn += 1;
+    if (card.verse) { this.versesThisTurn += 1; this.versesThisCombat += 1; }
 
     this.log(`You play ${card.name}.`);
     if (card.type === 'skill') {
