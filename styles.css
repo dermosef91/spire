@@ -1223,7 +1223,7 @@ body.scene-reward #bg-image.show {
 /* Points at whatever the current step is talking about (hand, energy orb,
    an enemy's intent, a specific card, End Turn): a bright pulsing shine, not
    a static outline, so it reads as "look here" rather than a boxed-in shape. */
-.tut-highlight { animation: tutShine 1.3s ease-in-out infinite; }
+.tut-highlight { animation: tutShine 1.3s ease-in-out infinite; z-index: 7; }
 @keyframes tutRise { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @keyframes tutRiseLeft { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes tutPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }

@@ -121,11 +121,14 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   click-catchers — deliberately minimal.
 - Six steps: (1) hand + Àṣẹ orb intro, (2) enemy intent, (3) play a Block
   skill, (4) play an Attack card, (5) end turn, (6) wrap-up. Steps 1–5 point at
-  the relevant element with a `.tut-highlight` class applied directly to the
-  live DOM node by selector — no manual position math, so it works on any
-  shape: `.hand`, `.energy-orb`, an enemy's `.intent` pill, a specific
-  `.card[data-uid]`, `.end-turn`. `.tut-highlight` is a bright pulsing
-  shine (`filter: brightness()/saturate()` + a soft glow `box-shadow`,
+  the relevant element(s) with a `.tut-highlight` class applied directly to
+  the live DOM node(s) by selector (`applyHighlight()` uses
+  `querySelectorAll`, so a selector matching several elements — e.g. step 1's
+  `.hand .card`, one glow per card rather than a single box around the whole
+  hand — highlights all of them) — no manual position math, so it works on
+  any shape: `.hand .card`, `.energy-orb`, an enemy's `.intent` pill, a
+  specific `.card[data-uid]`, `.end-turn`. `.tut-highlight` is a bright
+  pulsing shine (`filter: brightness()/saturate()` + a soft glow `box-shadow`,
   `@keyframes tutShine`) — deliberately **not** a static outline/border, so it
   reads as "look here" rather than boxing the element in. `applyHighlight()`
   re-runs on every chained `onUpdate()` since combatView rebuilds the

@@ -17,7 +17,7 @@ const STEPS = [
   {
     text: 'Cards win battles. Each costs Àṣẹ — your energy, refilled every turn.',
     button: 'Next',
-    highlight: () => ['.hand', '.combat-controls .energy-orb'],
+    highlight: () => ['.hand .card', '.combat-controls .energy-orb'],
   },
   {
     text: 'Above each foe, its intent shows what it will do next.',
@@ -105,8 +105,7 @@ export class CombatTutorial {
     const selectors = step.highlight ? step.highlight() : [];
     if (this.targetUid) selectors.push(`.hand .card[data-uid="${this.targetUid}"]`);
     for (const sel of selectors) {
-      const el2 = document.querySelector(sel);
-      if (el2) el2.classList.add('tut-highlight');
+      document.querySelectorAll(sel).forEach((el2) => el2.classList.add('tut-highlight'));
     }
   }
 
