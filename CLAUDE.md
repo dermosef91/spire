@@ -333,6 +333,9 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
   overflow just re-centers) — the whole rotated hand bbox must actually *fit*
   the band between the controls. `qa-screenshots.js` regression-tests all four
   of these (bottom crop + both control overlaps) at both viewports.
+- **Port conflicts (`EADDRINUSE`) during QA audit**: If the static server fails to bind to port 8091 because of lingering/zombie processes, run the audit specifying a different port prefix, e.g., `QA_PORT=8095 npm run qa`.
+- **Text contrast on title/scenic backgrounds**: Any overlay text or toggle buttons rendered over scenic background art (such as the bright lines on the title screen) must have a dark semi-transparent backing card/pill background (like `rgba(8, 5, 3, 0.85)`) to block out light lines and ensure contrast.
+
 
 
 ## Asset Generation
