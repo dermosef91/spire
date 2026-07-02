@@ -52,6 +52,7 @@ export const UI = {
   soundOn: S(`<path d="M36 40 H44 L56 28 V72 L44 60 H36 Z" stroke="${O}" stroke-width="5" fill="none"/><path d="M66 38 A18 18 0 0 1 66 62 M76 30 A30 30 0 0 1 76 70" stroke="${O}" stroke-width="5" fill="none"/>`),
   soundOff: S(`<path d="M36 40 H44 L56 28 V72 L44 60 H36 Z" stroke="${O}" stroke-width="5" fill="none"/><path d="M66 42 L78 58 M78 42 L66 58" stroke="${O}" stroke-width="5" fill="none"/>`),
   skull: S(`<path d="M50 22 C32 22 24 36 24 48 C24 58 30 62 32 68 L34 78 H66 L68 68 C70 62 76 58 76 48 C76 36 68 22 50 22Z" fill="#16100b" stroke="${O}" stroke-width="4"/><circle cx="40" cy="50" r="6" fill="${E}"/><circle cx="60" cy="50" r="6" fill="${E}"/>`),
+  lock: S(`<path d="M36 46 V36 C36 24 64 24 64 36 V46" fill="none" stroke="${O}" stroke-width="5"/><rect x="28" y="46" width="44" height="34" rx="4" fill="#16100b" stroke="${O}" stroke-width="4"/><circle cx="50" cy="62" r="5" fill="${A}"/>`),
 };
 
 /* ============================== INTENTS ============================== */

@@ -433,6 +433,24 @@ body.scene-reward #bg-image.show {
 .char-relic { font-size: 13px; color: var(--ink); background: rgba(0,0,0,0.35); border-radius: 4px; padding: 8px 10px; min-height: 58px; }
 .char-relic b { color: var(--amber); }
 
+/* Locked character cards */
+.char-card.char-locked {
+  filter: saturate(0.15) brightness(0.6);
+  pointer-events: none;
+  border-top-color: var(--line);
+}
+.char-card.char-locked:hover { transform: none; box-shadow: var(--shadow); border-color: var(--line); }
+.char-lock-overlay {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; flex: 1; padding: 12px 0;
+}
+.char-lock-ic { display: block; width: 48px; height: 48px; opacity: 0.7; }
+.char-lock-ic .svg-ic { width: 100%; height: 100%; }
+.char-lock-req {
+  font-size: 14px; color: var(--muted); letter-spacing: 0.08em;
+  text-align: center; font-weight: 600;
+}
+
 /* ----------------------------- act intro ----------------------------- */
 .act-intro { text-align: center; min-height: 82vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
 .act-num { font-family: var(--font-display); letter-spacing: 0.6em; color: var(--orange); font-size: 18px; }
@@ -538,15 +556,6 @@ body.scene-reward #bg-image.show {
 }
 .map-node.node-monster.reachable img.svg-ic {
   transform: scale(2.25);
-  animation: combatActivePulse 1.7s ease-in-out infinite;
-}
-@keyframes combatActivePulse {
-  0%, 100% {
-    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.45)) brightness(1.0);
-  }
-  50% {
-    filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.95)) brightness(1.5);
-  }
 }
 .node-elite { color: var(--ember); } .node-boss { color: var(--orange); }
 .map-node.node-boss { width: 64px; height: 64px; animation: bossPulse 2.1s ease-in-out infinite; }
@@ -1552,7 +1561,7 @@ html { -webkit-text-size-adjust: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .game-title, .glyph, .ground-shadow, .intent, .med-ring, .medallion::after, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene, .rest-fire, .map-node.node-monster.reachable img.svg-ic { animation: none !important; }
+  .game-title, .glyph, .ground-shadow, .intent, .med-ring, .medallion::after, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene, .rest-fire { animation: none !important; }
   .map-node.reachable::after, .node-boss::after { animation: none !important; }
   .scene { transform: none; }
   #bg-image { transition: none !important; }
@@ -1613,20 +1622,20 @@ img.svg-ic { object-fit: contain; }
   .charselect { padding-top: 2px; }
   .charselect h2 { font-size: 18px; margin-bottom: 8px; }
   .char-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
-  .char-card { padding: 8px; gap: 3px; }
-  .char-glyph { width: 56px; height: 56px; margin: 0 auto; }
-  .char-name { font-size: 15px; }
+  .char-card { padding: 6px; gap: 2px; }
+  .char-glyph { width: 44px; height: 44px; margin: 0 auto; }
+  .char-name { font-size: 14px; }
   .char-title { font-size: 8px; }
   .char-hp { font-size: 11px; }
   .char-blurb {
     min-height: 0; font-size: 10px; line-height: 1.25;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
   }
   .char-relic {
-    min-height: 0; font-size: 9px; padding: 4px 6px;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    min-height: 0; font-size: 9px; padding: 3px 5px;
+    display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .char-card .btn { min-height: 28px; min-width: 0; padding: 4px 14px; font-size: 11px; }
+  .char-card .btn { min-height: 24px; min-width: 0; padding: 3px 12px; font-size: 10.5px; }
   .charselect > .btn { min-height: 30px; padding: 5px 20px; font-size: 12px; }
 }
 

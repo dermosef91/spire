@@ -7,6 +7,8 @@ import { el } from '../core/util.js';
 import { clearSave, saveMeta } from '../core/save.js';
 import { button } from '../ui/components.js';
 import { ASCENSION_LEVELS, MAX_ASCENSION } from '../core/state.js';
+import { newlyUnlockedChars } from '../core/unlocks.js';
+import { CHARACTERS } from '../data/characters.js';
 import { audio } from '../audio.js';
 
 export const EndScene = {
@@ -29,11 +31,20 @@ export const EndScene = {
       panel.appendChild(el('div', { class: 'end-unlock', html: `✦ Ascension ${this._ascJustUnlocked} unlocked — <b>${lv.name}</b> ✦` }));
       this._ascJustUnlocked = 0;
     }
+    if (this._charsJustUnlocked && this._charsJustUnlocked.length) {
+      for (const cid of this._charsJustUnlocked) {
+        const ch = CHARACTERS[cid];
+        panel.appendChild(el('div', { class: 'end-unlock', html: `✦ <b>${ch.name}</b> — ${ch.title} — is now available ✦` }));
+      }
+      this._charsJustUnlocked = [];
+    }
     panel.appendChild(button('Return to Title', () => this.showTitle(), 'primary'));
     this.setScene(panel, 'end');
   },
   victory() {
     this.meta.wins += 1;
+    // Check if any characters just became unlocked at this win count.
+    this._charsJustUnlocked = newlyUnlockedChars(this.meta.wins);
     // Winning at the highest unlocked Ascension unlocks the next level.
     const beat = this.run ? this.run.ascension : 0;
     let unlocked = false;
@@ -95,6 +106,13 @@ export const EndScene = {
       const lv = ASCENSION_LEVELS[this._ascJustUnlocked - 1];
       panel.appendChild(el('div', { class: 'end-unlock', html: `✦ Ascension ${this._ascJustUnlocked} unlocked — <b>${lv.name}</b> ✦` }));
       this._ascJustUnlocked = 0;
+    }
+    if (this._charsJustUnlocked && this._charsJustUnlocked.length) {
+      for (const cid of this._charsJustUnlocked) {
+        const ch = CHARACTERS[cid];
+        panel.appendChild(el('div', { class: 'end-unlock', html: `✦ <b>${ch.name}</b> — ${ch.title} — is now available ✦` }));
+      }
+      this._charsJustUnlocked = [];
     }
     panel.appendChild(button('Return to Title', () => this.showTitle(), 'primary'));
     this.setScene(panel, 'end');

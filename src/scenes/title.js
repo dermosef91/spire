@@ -10,6 +10,7 @@ import { CHARACTERS } from '../data/characters.js';
 import { RELICS } from '../data/relics.js';
 import { button } from '../ui/components.js';
 import { UI, characterModel } from '../ui/icons.js';
+import { isCharUnlocked, charUnlockReq } from '../core/unlocks.js';
 import { spriteOrSvg } from '../ui/sprites.js';
 import { ACT_NAMES, ACT_BLURB } from '../data/encounters.js';
 import { audio } from '../audio.js';
@@ -115,16 +116,24 @@ export const TitleScene = {
     const grid = el('div', { class: 'char-grid' });
     for (const id of Object.keys(CHARACTERS)) {
       const ch = CHARACTERS[id];
-      const card = el('div', { class: 'char-card', style: { '--cc': ch.color, '--ca': ch.accent } });
+      const unlocked = isCharUnlocked(id, this.meta);
+      const card = el('div', { class: `char-card${unlocked ? '' : ' char-locked'}`, style: { '--cc': ch.color, '--ca': ch.accent } });
       const charGlyph = el('div', { class: 'char-glyph imodel' }, [spriteOrSvg(id, characterModel(id))]);
       card.appendChild(charGlyph);
       card.appendChild(el('div', { class: 'char-name', text: ch.name }));
       card.appendChild(el('div', { class: 'char-title', text: ch.title }));
-      card.appendChild(el('div', { class: 'char-hp', html: `<i class="tb-ic">${UI.heart}</i> ${ch.maxHp} HP` }));
-      card.appendChild(el('div', { class: 'char-blurb', text: ch.blurb }));
-      const starter = RELICS[ch.relic];
-      card.appendChild(el('div', { class: 'char-relic', html: `Starter:<br><b>${starter.name}</b> — ${starter.desc}` }));
-      card.appendChild(button('Begin', () => this.startRun(id), 'primary'));
+      if (unlocked) {
+        card.appendChild(el('div', { class: 'char-hp', html: `<i class="tb-ic">${UI.heart}</i> ${ch.maxHp} HP` }));
+        card.appendChild(el('div', { class: 'char-blurb', text: ch.blurb }));
+        const starter = RELICS[ch.relic];
+        card.appendChild(el('div', { class: 'char-relic', html: `Starter: <b>${starter.name}</b> — ${starter.desc}` }));
+        card.appendChild(button('Begin', () => this.startRun(id), 'primary'));
+      } else {
+        const lockOverlay = el('div', { class: 'char-lock-overlay' });
+        lockOverlay.appendChild(el('i', { class: 'char-lock-ic', html: UI.lock }));
+        lockOverlay.appendChild(el('div', { class: 'char-lock-req', text: charUnlockReq(id) }));
+        card.appendChild(lockOverlay);
+      }
       grid.appendChild(card);
     }
     panel.appendChild(grid);
