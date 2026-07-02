@@ -51,11 +51,46 @@ export class CombatView {
       : null;
     this._lastHandCards = [];
     this.build();
+
+    this._onKeydown = (e) => this.handleKeydown(e);
+    document.addEventListener('keydown', this._onKeydown);
+
     // Slower combat open: show a "Battle Start" banner first, then let the
     // opening draw play out after it so cards deal in one-by-one rather than
     // appearing underneath the popup.
     this.announce('Battle Start', { kind: 'battle' });
     setTimeout(() => { if (this.scene && !this.combat.over) this.combat.start(); }, 650);
+  }
+
+  handleKeydown(e) {
+    if (this.ended || this.combat.over || this.combat.animating) return;
+
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+      return;
+    }
+
+    const key = e.key;
+    if ((key >= '1' && key <= '9') || key === '0') {
+      const idx = key === '0' ? 9 : parseInt(key) - 1;
+      const hand = this.combat.hand;
+      if (idx >= 0 && idx < hand.length) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.clickCard(hand[idx]);
+      }
+    } else if ((key === ' ' || e.code === 'Space') && this.previewCard) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.clickCard(this.previewCard);
+    } else if (key === 'Escape' || key === 'Esc') {
+      if (this.previewCard || this.pendingCard) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.previewCard = null;
+        this.pendingCard = null;
+        this.update();
+      }
+    }
   }
 
   // Centered turn/battle announcement banner. Purely cosmetic — dropped into the
@@ -206,6 +241,10 @@ export class CombatView {
 
     if (c.over && !this.ended) {
       this.ended = true;
+      if (this._onKeydown) {
+        document.removeEventListener('keydown', this._onKeydown);
+        this._onKeydown = null;
+      }
       c.parryPrompt = null;
       this.scene.classList.add(c.victory ? 'won' : 'lost');
       setTimeout(() => this.onEnd && this.onEnd(c), 850);
@@ -432,6 +471,12 @@ export class CombatView {
         class: 'in-hand ' + affordable + combo + (this.pendingCard === card ? 'selected ' : '') + (isPreview ? 'previewing' : ''),
         onHover: (cd, n, on) => { if (!this.drag) this.game.tooltip(cd, n, on, 'card'); },
       });
+
+      // Add keyboard shortcut indicator badge (1-10)
+      if (idx < 10) {
+        const displayKey = idx === 9 ? '0' : String(idx + 1);
+        node.appendChild(el('div', { class: 'card-key-shortcut', text: displayKey }));
+      }
 
       const diff = idx - mid;
       // A previewed card sits straight and un-dipped so it reads as a clean preview.

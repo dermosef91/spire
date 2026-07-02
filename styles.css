@@ -667,6 +667,27 @@ body.scene-reward #bg-image.show {
   display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: clamp(13px, calc(var(--card-h) * 0.092), 18px); color: var(--cream);
   background: radial-gradient(circle at 50% 50%, #1c1008, #0a0604);
   border: 2px solid var(--c-border); box-shadow: 0 0 12px rgba(255,106,26,0.6), inset 0 0 6px rgba(255,140,40,0.4); }
+
+.card-key-shortcut {
+  position: absolute;
+  top: -11px;
+  right: -11px;
+  width: clamp(20px, calc(var(--card-h) * 0.13), 26px);
+  height: clamp(20px, calc(var(--card-h) * 0.13), 26px);
+  border-radius: 50%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(10px, calc(var(--card-h) * 0.07), 13px);
+  color: var(--amber);
+  background: radial-gradient(circle at 50% 50%, #16100b, #0c0806);
+  border: 1.5px solid var(--c-border);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 0 4px rgba(255,170,80,0.3);
+  pointer-events: none;
+}
+
 .card-cost::before {
   content: '';
   position: absolute;
