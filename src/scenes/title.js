@@ -13,7 +13,7 @@ import { UI, characterModel } from '../ui/icons.js';
 import { spriteOrSvg } from '../ui/sprites.js';
 import { ACT_NAMES, ACT_BLURB } from '../data/encounters.js';
 import { audio } from '../audio.js';
-import { fullscreenSupported, isFullscreen, toggleFullscreen } from '../core/fullscreen.js';
+import { fullscreenSupported, isFullscreen, toggleFullscreen, enterFullscreen } from '../core/fullscreen.js';
 
 export const TitleScene = {
   // ----------------------------------------------------------- title
@@ -41,9 +41,23 @@ export const TitleScene = {
     panel.appendChild(el('div', { class: 'game-subtitle', text: 'Ascend the Obsidian Spire' }));
     const btns = el('div', { class: 'title-buttons' });
     if (hasSave()) {
-      btns.appendChild(button('Continue Climb', () => { const r = loadRun(); if (r) { this.run = r; this.showMap(); } }, 'primary'));
+      btns.appendChild(button('Continue Climb', async () => {
+        if (fullscreenSupported() && !isFullscreen()) {
+          await enterFullscreen(document.documentElement);
+        }
+        const r = loadRun();
+        if (r) {
+          this.run = r;
+          this.showMap();
+        }
+      }, 'primary'));
     }
-    btns.appendChild(button('New Run', () => this.showCharSelect(), hasSave() ? '' : 'primary'));
+    btns.appendChild(button('New Run', async () => {
+      if (fullscreenSupported() && !isFullscreen()) {
+        await enterFullscreen(document.documentElement);
+      }
+      this.showCharSelect();
+    }, hasSave() ? '' : 'primary'));
     panel.appendChild(btns);
 
     // Less prominent settings toggles for Rhythm and Music

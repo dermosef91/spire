@@ -67,13 +67,8 @@ export const INTENT = {
 // Carved line-art glyphs themed via the per-node `color` (currentColor) with
 // ember/amber accents. Built to read as silhouettes at ~26px on the act map.
 export const NODE = {
-  // Combat — a fanged spirit-mask: spiked crown, fierce inward eyes, bared teeth.
-  monster: S(`
-    <path d="M30 30 Q50 23 70 30 Q73 46 64 62 Q56 80 50 82 Q44 80 36 62 Q27 46 30 30Z" fill="#16100b" stroke="currentColor" stroke-width="5"/>
-    <path d="M36 30 V22 M50 28 V19 M64 30 V22" stroke="currentColor" stroke-width="2.6"/>
-    <path d="M36 44 L47 47 L36 51 M64 44 L53 47 L64 51" stroke="currentColor" stroke-width="4" fill="none"/>
-    <path d="M50 52 V58" stroke="currentColor" stroke-width="2.6"/>
-    <path d="M41 64 L45 71 L50 64 L55 71 L59 64" stroke="currentColor" stroke-width="3.4" fill="none"/>`),
+  // Combat — a custom PNG icon.
+  monster: `<img src="assets/icons/combat.png" class="svg-ic" alt="Combat" />`,
   // Elite — a horned demon skull: curved horns, ember eyes, gnashing teeth.
   elite: S(`
     <path d="M31 42 Q22 30 20 22 Q30 26 36 38 M69 42 Q78 30 80 22 Q70 26 64 38" stroke="currentColor" stroke-width="4.5" fill="none"/>
