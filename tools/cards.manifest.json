@@ -14,7 +14,7 @@
   {
     "id": "sunder",
     "char": "amara",
-    "name": "Sunder",
+    "name": "Fault Line",
     "prompt": "A heavy energy blade shattering an obsidian wall, stone fragments and orange embers exploding outward."
   },
   {
@@ -26,19 +26,19 @@
   {
     "id": "ironwave",
     "char": "amara",
-    "name": "Ironwave",
+    "name": "Obsidian Tide",
     "prompt": "A wave of obsidian spikes rising from the ground, glowing with inner orange cracks."
   },
   {
     "id": "pommel",
     "char": "amara",
-    "name": "Pommel Strike",
+    "name": "Hilt Crack",
     "prompt": "A heavy sword hilt striking forward, surrounded by concentric impact rings."
   },
   {
     "id": "cleave",
     "char": "amara",
-    "name": "Cleave",
+    "name": "Ember Sweep",
     "prompt": "A wide horizontal blade sweep leaving a trailing arc of ember light."
   },
   {
@@ -50,37 +50,37 @@
   {
     "id": "shrug",
     "char": "amara",
-    "name": "Shrug It Off",
+    "name": "Weather the Blow",
     "prompt": "A heavy shield blocking a barrage of incoming energy arrows."
   },
   {
     "id": "thunderclap",
     "char": "amara",
-    "name": "Thunderclap",
+    "name": "Concussive Roar",
     "prompt": "A powerful shockwave expanding from a clenched fist, concentric soundwave rings."
   },
   {
     "id": "rising_strike",
     "char": "amara",
-    "name": "Rising Strike",
+    "name": "Rising Talon",
     "prompt": "An upward blade slash with trailing vertical light beams and embers."
   },
   {
     "id": "war_trance",
     "char": "amara",
-    "name": "War Trance",
+    "name": "Hunter's Calm",
     "prompt": "Concentric orbital circles surrounding a single focused eye, high contrast."
   },
   {
     "id": "ember_within",
     "char": "amara",
-    "name": "Ember Within",
+    "name": "Emberheart",
     "prompt": "A human heart glowing with molten orange embers and crackling energy lines."
   },
   {
     "id": "bulwark",
     "char": "amara",
-    "name": "Bulwark",
+    "name": "Obsidian Wall",
     "prompt": "A massive blocky obsidian wall shield with geometric patterns."
   },
   {
@@ -92,49 +92,49 @@
   {
     "id": "shockwave",
     "char": "amara",
-    "name": "Shockwave",
+    "name": "Seismic Fault",
     "prompt": "Ground cracking open with radiant orange energy lines, stone fragments hovering."
   },
   {
     "id": "disarm",
     "char": "amara",
-    "name": "Disarm",
+    "name": "Break the Spear",
     "prompt": "A broken sword falling in half, its blade shattered, surrounded by static interference."
   },
   {
     "id": "whirlwind",
     "char": "amara",
-    "name": "Whirlwind",
+    "name": "Cyclone Dance",
     "prompt": "A swirling vortex of wind and blade outlines in a concentric circle."
   },
   {
     "id": "ancestral_fury",
     "char": "amara",
-    "name": "Ancestral Fury",
+    "name": "Rite of Fury",
     "prompt": "A ghostly fist silhouette punching downward, surrounded by tribal sunburst rays."
   },
   {
     "id": "blood_offering",
     "char": "amara",
-    "name": "Blood Offering",
+    "name": "Crimson Rite",
     "prompt": "A glowing blood droplet dripping onto an ancient geometric stone altar."
   },
   {
     "id": "devour",
     "char": "amara",
-    "name": "Devour",
+    "name": "Sate",
     "prompt": "A dark silhouette of a monstrous mouth with sharp glowing orange teeth."
   },
   {
     "id": "harvest",
     "char": "amara",
-    "name": "Harvest",
+    "name": "Reaping Arc",
     "prompt": "A glowing curved scythe blade cutting through stalks of energy."
   },
   {
     "id": "skyfall",
     "char": "amara",
-    "name": "Skyfall",
+    "name": "Skyfall Hammer",
     "prompt": "A massive war hammer falling from a stormy cloud, struck by lightning."
   },
   {
@@ -170,7 +170,7 @@
   {
     "id": "double_tap",
     "char": "kofi",
-    "name": "Double Tap",
+    "name": "Off-Beat",
     "prompt": "Two tribal drums being struck simultaneously, soundwaves emanating."
   },
   {
@@ -182,7 +182,7 @@
   {
     "id": "deflect",
     "char": "kofi",
-    "name": "Deflect",
+    "name": "Backstop",
     "prompt": "A curved sound board blocking incoming projectiles, vibrational waves."
   },
   {
@@ -218,7 +218,7 @@
   {
     "id": "catalyst",
     "char": "kofi",
-    "name": "Catalyst",
+    "name": "Fester",
     "prompt": "A chemical flask bubbling with green and orange acid, steam rising."
   },
   {
@@ -230,7 +230,7 @@
   {
     "id": "veil",
     "char": "kofi",
-    "name": "Veil",
+    "name": "Nightveil",
     "prompt": "A crescent moon shrouded in cosmic smoke and star patterns."
   },
   {
@@ -248,7 +248,7 @@
   {
     "id": "grand_finale",
     "char": "kofi",
-    "name": "Grand Finale",
+    "name": "Final Chorus",
     "prompt": "A massive explosion of soundwaves and fireworks, filling the frame."
   },
   {
@@ -266,7 +266,7 @@
   {
     "id": "channel_storm",
     "char": "zara",
-    "name": "Storm Channel",
+    "name": "Call Lightning",
     "prompt": "Swirling vortex of cosmic energy orbs and lightning, sunburst patterns."
   },
   {
@@ -290,25 +290,25 @@
   {
     "id": "coolhead",
     "char": "zara",
-    "name": "Coolhead",
+    "name": "Still Waters",
     "prompt": "A calm silhouette of a head surrounded by circular energy lines."
   },
   {
     "id": "capacitor",
     "char": "zara",
-    "name": "Capacitor",
+    "name": "Reservoir",
     "prompt": "A glowing electrical cylinder battery with circuit overlays."
   },
   {
     "id": "chaos",
     "char": "zara",
-    "name": "Chaos",
+    "name": "Wild Spirit",
     "prompt": "Swirling random geometric shapes and electricity arcs."
   },
   {
     "id": "glacier",
     "char": "zara",
-    "name": "Glacier",
+    "name": "Icewall",
     "prompt": "A massive iceberg refracting orange and amber light lines."
   },
   {
@@ -326,13 +326,13 @@
   {
     "id": "doomgloom",
     "char": "zara",
-    "name": "Doom and Gloom",
+    "name": "Gathering Dark",
     "prompt": "A dark storm cloud raining down shadow particles."
   },
   {
     "id": "skim",
     "char": "zara",
-    "name": "Skim",
+    "name": "Stargaze",
     "prompt": "A hand scanning glowing card shapes in mid-air."
   },
   {
@@ -344,13 +344,13 @@
   {
     "id": "summon_sun",
     "char": "zara",
-    "name": "Summon Sun",
+    "name": "Kindle the Sun",
     "prompt": "A blazing sun orb radiating clean solar flares."
   },
   {
     "id": "overclock",
     "char": "zara",
-    "name": "Overclock",
+    "name": "Overdrive",
     "prompt": "An eye with gear patterns and circuit overlays."
   },
   {
@@ -362,7 +362,7 @@
   {
     "id": "echo_form",
     "char": "zara",
-    "name": "Echo Form",
+    "name": "Mirrorcast",
     "prompt": "Multiple glowing translucent silhouettes behind a figure."
   },
   {
@@ -374,49 +374,49 @@
   {
     "id": "shiv",
     "char": "colorless",
-    "name": "Shiv",
+    "name": "Shard",
     "prompt": "A small clean obsidian blade silhouette."
   },
   {
     "id": "flash",
     "char": "colorless",
-    "name": "Flash of Steel",
+    "name": "Flash of Insight",
     "prompt": "A bright starburst light, high contrast."
   },
   {
     "id": "panic_button",
     "char": "colorless",
-    "name": "Panic Button",
+    "name": "Last Resort",
     "prompt": "A large glowing hazard warning sign with geometric trim."
   },
   {
     "id": "apotheosis",
     "char": "colorless",
-    "name": "Apotheosis",
+    "name": "Transcendence",
     "prompt": "A figure ascending into a blinding circular starburst."
   },
   {
     "id": "wound",
     "char": "status",
-    "name": "Wound",
+    "name": "Scar",
     "prompt": "A jagged cut on a black surface, bleeding glowing orange embers."
   },
   {
     "id": "dazed",
     "char": "status",
-    "name": "Dazed",
+    "name": "Reeling",
     "prompt": "Swirling spiral lines above a silhouette of a head."
   },
   {
     "id": "static_curse",
     "char": "curse",
-    "name": "Static Curse",
+    "name": "Glitch",
     "prompt": "A skull surrounded by digital glitch static lines."
   },
   {
     "id": "regret",
     "char": "curse",
-    "name": "Regret",
+    "name": "Sorrow",
     "prompt": "A figure kneeling in darkness with head bowed."
   }
 ]
