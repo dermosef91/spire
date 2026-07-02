@@ -230,7 +230,9 @@ class Audio {
     if (isCombat) {
       this.setMusicMode(isBoss ? 'boss' : 'combat');
     } else {
-      this.setMusicMode('ambient');
+      // Back to the overworld → resume the regular title theme (not the
+      // procedural ambient drone) so map/reward/shop stay musically continuous.
+      this.setMusicMode('title');
     }
   }
 }

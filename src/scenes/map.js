@@ -22,7 +22,9 @@ function legendHtml() {
 export const MapScene = {
   // ----------------------------------------------------------- map
   showMap() {
-    audio.setMusicMode('ambient');
+    // The map (and the rest of the overworld) keeps the title theme playing
+    // rather than switching to the procedural ambient drone.
+    audio.setMusicMode('title');
     saveRun(this.run);
     const run = this.run;
     const map = run.map;

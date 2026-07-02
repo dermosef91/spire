@@ -425,8 +425,9 @@ body.scene-reward #bg-image.show {
 .map-scene { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
 /* Board on the left, always-on legend panel pinned to the right. */
 .map-body { flex: 1 1 auto; min-height: 0; display: flex; gap: 12px; align-items: stretch; }
-.map-scroller { flex: 1 1 auto; min-height: 0; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px;
-  background: linear-gradient(180deg, rgba(16,10,6,0.42), rgba(8,5,3,0.62)); padding: 10px 0; -webkit-overflow-scrolling: touch; }
+/* No framed box around the board — nodes sit directly on the act backdrop
+   (their own drop-shadows keep them legible). */
+.map-scroller { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 10px 0; -webkit-overflow-scrolling: touch; }
 .map-board { position: relative; margin: 0 auto; }
 .map-edges { position: absolute; left: 0; top: 0; pointer-events: none; }
 .edge { stroke: rgba(255, 122, 26, 0.28); stroke-width: 2; stroke-dasharray: 4 7; animation: dashFlow 16s linear infinite; }

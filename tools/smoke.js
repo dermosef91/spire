@@ -74,9 +74,12 @@ try {
   // Act intro → map
   await page.getByText('Enter', { exact: true }).first().click();
 
-  // Map → enter the first reachable node (row 0 is always a monster fight)
+  // Map → enter the first reachable node (row 0 is always a monster fight).
+  // Reachable nodes pulse (scale animation) so Playwright's "element is
+  // stable" actionability check never settles — force the click past it
+  // (a real user clicks fine; only the automated stability gate cares).
   await page.waitForSelector('.map-node.reachable', { timeout: 5000 });
-  await page.locator('.map-node.reachable').first().click();
+  await page.locator('.map-node.reachable').first().click({ force: true });
 
   // Combat must mount with a hand and an enemy present
   await page.waitForSelector('.battlefield', { timeout: 8000 });

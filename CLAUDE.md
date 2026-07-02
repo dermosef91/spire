@@ -183,8 +183,16 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   anymore (the old "The Sunken Market — choose your path upward" and the whole
   `.map-header`/`.map-title` are gone); the act name lives only in the top bar.
   The scene backdrop (`body.scene-map #bg-image`) shows at `opacity: 0.2` (up
-  from 0.08) and `.map-scroller`'s gradient was made more translucent so the
-  painting shows through behind the board while nodes keep contrast.
+  from 0.08) and `.map-scroller` has **no framed box** at all (no border /
+  radius / gradient) — the nodes sit directly on the painted act backdrop and
+  stay legible via their own drop-shadows.
+- **Overworld music:** the map (and the whole non-combat flow) keeps the
+  **title theme** playing rather than the procedural `ambient` drone —
+  `showMap()` calls `audio.setMusicMode('title')` and `audio.setCombat(false)`
+  (combat exit) also resumes `'title'`. Because the title/char-select screens
+  are already in `'title'` mode, `setMusicMode` early-returns and the track
+  plays continuously with no restart. The `'ambient'` branch in `audio.js` is
+  now unused but left in place.
 - The legend is an **always-on framed panel** (`.map-legend`, built as an
   `<aside>` in `showMap()`), pinned to the **right** of the board inside a
   `.map-body` flex row (`.map-scroller` flex:1, legend fixed width). It has a
@@ -201,6 +209,17 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   ring halo via `::before`; reachable nodes and the boss get a tiny twinkling
   four-point sparkle via `::after` (`sparkTwinkle`, disabled under reduced
   motion). Keep these subtle — they're accents, not badges.
+- **Selectable (`.map-node.reachable`) nodes are bigger (62px vs 50px) and
+  pulse via a `transform: scale` animation.** Board-only boss styling (size,
+  ring, sparkle, `bossPulse`) is scoped to `.map-node.node-boss` so it doesn't
+  leak onto the legend's `.leg-ic.node-boss` icon (only the unscoped *color*
+  rules are shared with the legend). **Playwright gotcha:** because reachable
+  nodes now animate their transform, Playwright's "element is stable"
+  actionability check never settles on them — a real `.click()` hangs and
+  retries forever. `tools/smoke.js` clicks a reachable node to enter combat, so
+  it uses `.click({ force: true })`; `tools/qa-screenshots.js` sidesteps it
+  entirely by driving combat via `__ase.startMonster()`. Any new automation
+  that clicks a map node must `force` it (or drive the scene via `__ase`).
 - The top-bar utility buttons (`.tb-fs`, `.tb-mute`) are **circular** with a
   faint inset ornamental ring (they show on every scene's top bar, so this is a
   global chrome tweak, not map-only — QA covers combat to catch regressions).
