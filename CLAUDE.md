@@ -11,10 +11,20 @@ Open `index.html` through any static server to play.
 ```bash
 npm start            # static server at http://localhost:8080 (server.js, zero deps)
 ```
-- There is **no build/compile step** and no test runner. Verify changes by
-  loading the game in a browser (Playwright/Chromium is available) and driving
-  the real flow: title → character select → map → combat → rewards.
-- Sanity-check JS with `node --check <file>` before committing.
+- There is **no build/compile step**. Two test suites exist (plain Node, the
+  game itself stays zero-dependency):
+  - `npm test` (`tools/test.js`) — fast headless **logic** tests for the
+    DOM-free core (rng, run-state, mapgen, cards, combat). Run this after any
+    engine/data change.
+  - `npm run smoke` (`tools/smoke.js`) — headless-browser **end-to-end** smoke
+    that boots the real site and drives title → New Run → character → map →
+    combat, failing on any uncaught JS/console error. Run this after touching
+    `game.js` / `scenes/` / `ui/`. Uses the ambient Playwright/Chromium; it is
+    **not** a project dependency.
+  - Both run in CI on every push/PR via `.github/workflows/check.yml` — keep
+    them green (and confirm the check run passed) before self-merging to `main`.
+- Beyond the suites, still eyeball the real flow in a browser for anything
+  visual, and sanity-check JS with `node --check <file>` before committing.
 - **Browser-test gotcha**: `playwright-core` can be installed on demand
   (`npm install playwright-core --no-save`) and launched with
   `executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'`,
@@ -337,12 +347,21 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
 
 ## Asset Generation
 - **Model Rules**: Always use the `gpt-image-2` model for all image, sprite, and background art generations. Never use Gemini or any other image models.
+- **Setup**: the generators have dev-only deps not used by the game — run
+  `cd tools && npm install` once (installs `openai`, `sharp`, `undici`). Live
+  runs need `OPENAI_API_KEY`; `--dry-run` needs neither install nor key.
 - **Sprites**: Run `node tools/gen-sprites.js` (reads `tools/sprites.manifest.json`, outputs to `assets/sprites/`).
 - **Sprite Variations**: Run `node tools/gen-sprite-variations.js` (reads `tools/sprites.manifest.json`, uses base champion sprites as inputs, outputs variations to `assets/sprites/`).
 - **Card Art**: Run `node tools/gen-card-art.js` (reads `tools/cards.manifest.json`, outputs to `assets/card-art/`).
 - **Backgrounds**: Run `node tools/gen-backgrounds.js` (reads `tools/backgrounds.manifest.json`, outputs to `assets/title screen and backgrounds/`).
 - **Event Art ("?" nodes)**: Run `node tools/gen-event-art.js` (reads `tools/events.manifest.json`, outputs to `assets/event-art/`). `--dry-run` writes SVG placeholders with ZERO deps. The event view (`eventArt()` in `game.js`) prefers `<id>.png`, falls back to the committed `<id>.svg` placeholder, then the generic "?" glyph. Events themselves (`src/data/events.js`) must be original to the ÀṢẸ world, never Slay the Spire reskins.
 - **Options**: The generator scripts support `--dry-run` (writes SVG/HTML placeholder files, no API keys needed), `--force` (regenerate existing), and `--ids id1,id2` (run specific assets). Requires `OPENAI_API_KEY` for live runs.
+- **GitHub workflow (preferred for live runs)**: the **Generate Assets**
+  workflow (`.github/workflows/sprites.yml`, `workflow_dispatch`) runs the
+  generators on an open-egress runner with the repo's `OPENAI_API_KEY` secret
+  and commits the PNGs back — no local key or `tools/` install needed. **Caveat**
+  (same as deploys below): this session's GitHub token cannot dispatch/rerun
+  workflows, so a human clicks **Actions → Generate Assets → Run workflow**.
 
 ## Deployment — ALWAYS MERGE & DEPLOY DIRECTLY
 The user's standing instruction: **do not leave finished work in a draft PR
