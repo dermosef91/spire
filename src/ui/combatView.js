@@ -413,6 +413,7 @@ export class CombatView {
     const hand = clear(this.handHolder);
     const N = c.hand.length;
     const mid = (N - 1) / 2;
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const newCardsToAnimate = [];
 
@@ -439,11 +440,12 @@ export class CombatView {
       node.addEventListener('pointerdown', (e) => this.onCardPointerDown(e, card, node));
       hand.appendChild(node);
 
-      // 2. Identify new cards to animate
+      // 2. Identify new cards to animate (skipped entirely under reduced motion,
+      // so those cards just render straight into place with no hide/fly step).
       const isNew = !prevHand.some(pc => pc.uid === card.uid);
-      if (isNew && this.drawPileEl) {
+      if (isNew && this.drawPileEl && !reduceMotion) {
         newCardsToAnimate.push({ node, newIdx: newCardsToAnimate.length });
-        
+
         // Hide card immediately before layout and animation
         node.style.opacity = '0';
         node.style.pointerEvents = 'none';
