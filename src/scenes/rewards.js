@@ -4,7 +4,7 @@
 // Mixed onto Game.prototype (see game.js).
 
 import { el, clear } from '../core/util.js';
-import { renderCard, topBar, button } from '../ui/components.js';
+import { renderCard, topBar, button, FLOURISH_LEFT, FLOURISH_RIGHT } from '../ui/components.js';
 import { CARDS, createCard, upgradeCard } from '../data/cards.js';
 import { RELICS } from '../data/relics.js';
 import { POTIONS } from '../data/potions.js';
@@ -50,36 +50,47 @@ export const RewardScene = {
       clear(list);
       for (const rw of rewards) {
         if (rw.taken) continue;
-        const row = el('div', { class: 'reward-row' });
+        const row = el('button', {
+          class: 'reward-row',
+          html: `
+            <span class="btn-decor border-outer"></span>
+            <span class="btn-decor border-inner"></span>
+            <span class="btn-body"></span>
+            <span class="btn-ornament left">${FLOURISH_LEFT}</span>
+            <span class="btn-ornament right">${FLOURISH_RIGHT}</span>
+            <span class="reward-row-content"></span>
+          `
+        });
+        const content = row.querySelector('.reward-row-content');
         if (rw.type === 'gold') {
-          row.appendChild(el('div', { class: 'reward-icon', html: UI.coin }));
-          row.appendChild(el('div', { class: 'reward-label', text: `${rw.amount} gold` }));
+          content.appendChild(el('div', { class: 'reward-icon', html: UI.coin }));
+          content.appendChild(el('div', { class: 'reward-label', text: `${rw.amount} gold` }));
           row.addEventListener('click', () => { run.gold += rw.amount; rw.taken = true; audio.play('select'); rebuild(); });
         } else if (rw.type === 'potion') {
           const p = POTIONS[rw.id];
-          row.appendChild(el('div', { class: 'reward-icon', style: { '--pcolor': p.color }, html: potionIcon() }));
-          row.appendChild(el('div', { class: 'reward-label', html: `<b>${p.name}</b> — ${p.desc}` }));
+          content.appendChild(el('div', { class: 'reward-icon', style: { '--pcolor': p.color }, html: potionIcon() }));
+          content.appendChild(el('div', { class: 'reward-label', html: `<b>${p.name}</b> — ${p.desc}` }));
           row.addEventListener('click', () => {
             if (run.addPotion(rw.id)) { rw.taken = true; audio.play('select'); rebuild(); }
           });
         } else if (rw.type === 'relic') {
-          row.appendChild(el('div', { class: 'reward-icon', html: relicIcon('default') }));
-          row.appendChild(el('div', { class: 'reward-label', text: 'Ancestral Relic' }));
+          content.appendChild(el('div', { class: 'reward-icon', html: relicIcon('default') }));
+          content.appendChild(el('div', { class: 'reward-label', text: 'Ancestral Relic' }));
           row.addEventListener('click', () => {
             const name = run.grantRandomRelic();
             rw.taken = true; audio.play('reward'); rebuild();
           });
         } else if (rw.type === 'bossrelic') {
           const rel = RELICS[rw.id];
-          row.appendChild(el('div', { class: 'reward-icon', html: relicIcon('default') }));
-          row.appendChild(el('div', { class: 'reward-label', html: `<b>${rel.name}</b> — ${rel.desc}` }));
+          content.appendChild(el('div', { class: 'reward-icon', html: relicIcon('default') }));
+          content.appendChild(el('div', { class: 'reward-label', html: `<b>${rel.name}</b> — ${rel.desc}` }));
           row.addEventListener('click', () => {
             run.addRelic(rw.id);
             rw.taken = true; audio.play('reward'); rebuild();
           });
         } else if (rw.type === 'card') {
-          row.appendChild(el('div', { class: 'reward-icon', html: UI.draw }));
-          row.appendChild(el('div', { class: 'reward-label', text: 'Add a card to your deck' }));
+          content.appendChild(el('div', { class: 'reward-icon', html: UI.draw }));
+          content.appendChild(el('div', { class: 'reward-label', text: 'Add a card to your deck' }));
           row.addEventListener('click', () => {
             this.cardChoiceOverlay(rw.options, (picked) => {
               if (picked) run.addCardById(picked.id, picked.upgraded);

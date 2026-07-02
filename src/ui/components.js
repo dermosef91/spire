@@ -165,6 +165,16 @@ export function powerPips(entity) {
   return wrap;
 }
 
+export const FLOURISH_LEFT = `<svg class="btn-svg-flourish-left" viewBox="0 0 24 24" width="18" height="18">
+        <path d="M18 6 L10 12 L18 18 M12 6 L4 12 L12 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <line x1="22" y1="8" x2="22" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+       </svg>`;
+
+export const FLOURISH_RIGHT = `<svg class="btn-svg-flourish-right" viewBox="0 0 24 24" width="18" height="18">
+        <path d="M6 6 L14 12 L6 18 M12 6 L20 12 L12 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <line x1="2" y1="8" x2="2" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+       </svg>`;
+
 export function button(label, onClick, cls = '') {
   const isPrimary = cls.split(' ').includes('primary');
   
@@ -177,19 +187,13 @@ export function button(label, onClick, cls = '') {
         <circle cx="22" cy="22" r="7" fill="#ff5a00" />
         <circle cx="22" cy="22" r="2.5" fill="#fff" />
        </svg>`
-    : `<svg class="btn-svg-flourish-left" viewBox="0 0 24 24" width="18" height="18">
-        <path d="M18 6 L10 12 L18 18 M12 6 L4 12 L12 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-        <line x1="22" y1="8" x2="22" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-       </svg>`;
+    : FLOURISH_LEFT;
 
   const rightOrn = isPrimary
     ? `<svg class="btn-svg-chevron-right" viewBox="0 0 16 16" width="16" height="16">
         <path d="M3 3 L9 8 L3 13 M8 3 L14 8 L8 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
        </svg>`
-    : `<svg class="btn-svg-flourish-right" viewBox="0 0 24 24" width="18" height="18">
-        <path d="M6 6 L14 12 L6 18 M12 6 L20 12 L12 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-        <line x1="2" y1="8" x2="2" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-       </svg>`;
+    : FLOURISH_RIGHT;
 
   return el('button', {
     class: `btn ${cls}`,

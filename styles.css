@@ -1244,9 +1244,56 @@ body.scene-reward #bg-image.show {
 }
 .reward-title { color: var(--orange); font-size: 34px; margin: 8px 0 18px; letter-spacing: 0.1em; }
 .reward-list { width: 100%; max-width: 560px; margin: 0 0 18px; display: flex; flex-direction: column; gap: 10px; }
-.reward-row { display: flex; align-items: center; gap: 14px; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--orange);
-  border-radius: 5px; padding: 13px 16px; cursor: pointer; transition: all 0.14s; text-align: left; }
-.reward-row:hover { border-color: var(--orange); transform: translateX(5px); box-shadow: var(--glow); }
+.reward-row {
+  position: relative;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  padding: 13px 40px;
+  text-align: left;
+  color: #dfd5c6;
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.2s ease, color 0.2s ease;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.65));
+  overflow: visible;
+}
+.reward-row:hover {
+  color: #fff;
+  transform: translateY(-1px);
+  filter: drop-shadow(0 0 6px rgba(204, 163, 114, 0.3)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8));
+}
+.reward-row:active {
+  transform: translateY(0);
+}
+.reward-row:hover .btn-decor.border-outer {
+  background: #8e7660;
+}
+.reward-row:hover .btn-decor.border-inner {
+  background: #bfa181;
+}
+.reward-row:hover .btn-body {
+  background: radial-gradient(circle at center, #1c1510, #090605 95%);
+}
+.reward-row:hover .btn-ornament.left {
+  color: #bfa181;
+  transform: translate(-3px, -50%);
+}
+.reward-row:hover .btn-ornament.right {
+  color: #bfa181;
+  transform: translate(3px, -50%);
+}
+.reward-row-content {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  height: 100%;
+}
 .reward-icon { font-size: 26px; filter: var(--duotone); } .reward-label { font-size: 15px; } .reward-label b { color: var(--amber); }
 .reward-done { color: var(--muted); font-style: italic; }
 
