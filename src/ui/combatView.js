@@ -366,7 +366,21 @@ export class CombatView {
           `}
         </span>
       `,
-      on: { click: () => { if (this.pendingCard) { this.pendingCard = null; this.update(); } else this.endTurn(); } },
+      on: {
+        click: () => { if (this.pendingCard) { this.pendingCard = null; this.update(); } else this.endTurn(); },
+        mousemove: (e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) return;
+          const px = ((e.clientX - rect.left) / rect.width) - 0.5;
+          const py = ((e.clientY - rect.top) / rect.height) - 0.5;
+          e.currentTarget.style.setProperty('--mx', String(px));
+          e.currentTarget.style.setProperty('--my', String(py));
+        },
+        mouseleave: (e) => {
+          e.currentTarget.style.removeProperty('--mx');
+          e.currentTarget.style.removeProperty('--my');
+        }
+      },
     });
     if (c.animating) endBtn.disabled = true;
     bar.appendChild(endBtn);
@@ -851,13 +865,6 @@ export class CombatView {
       floatText(layer, el2, 'WARDED', 'blocked');
       hitFlash(el2, 'block');
       ring(layer, el2, 'rgba(230,180,90,0.9)');
-      return;
-    }
-    if (type === 'parry') {
-      const el2 = this.elFor(payload.entity); if (!el2) return;
-      floatText(layer, el2, 'PARRY!', 'block');
-      ring(layer, el2, 'rgba(255,171,71,0.95)');
-      hitFlash(el2, 'block');
       return;
     }
     if (type === 'heal') {

@@ -32,6 +32,7 @@ export class Combat {
     this._rhythmMult = 1;
     this.parryPrompt = null;
     this._parried = false;
+    this._qtePrompted = false;
 
     // Player entity mirrors run state; HP is written back to run on combat end.
     this.player = {
@@ -287,23 +288,26 @@ export class Combat {
   // Enemy attack on player
   enemyAttack(enemy, base, hits = 1) {
     this.fx('attackstart', { source: enemy, target: this.player });
-    // Parry: Ward counts double against this one attack. Modeled as phantom
-    // block that is consumed first and evaporates after the attack — a parry
-    // can never leave the player with more Ward than they started with.
     const realBlock = this.player.block;
-    const parried = this._parried && realBlock > 0;
+    const qtePrompted = this._qtePrompted;
+    const parried = this._parried;
+
+    this._qtePrompted = false;
     this._parried = false;
-    if (parried) {
-      this.player.block += realBlock;
-      this.fx('parry', { entity: this.player });
-      this.log('Parried! Your Ward counts double against the blow.');
+
+    if (qtePrompted && !parried) {
+      this.player.block = 0;
     }
+
     for (let i = 0; i < hits; i++) {
       if (!this.player.alive) break;
       const dmg = Math.round(this.calcAttackDamage(base, enemy, this.player) * this.run.enemyDamageMult());
       this.applyDamage(this.player, dmg, { isAttack: true, source: enemy });
     }
-    if (parried) this.player.block = Math.min(realBlock, this.player.block);
+
+    if (qtePrompted && !parried) {
+      this.player.block = realBlock;
+    }
     this.notify();
   }
 
@@ -665,8 +669,11 @@ export class Combat {
         let res = null;
         try { res = await this.parryPrompt(e); } catch (_) { res = null; }
         this._parried = !!(res && res.success);
+        this._qtePrompted = true;
       }
       move.run(this, e);
+      this._qtePrompted = false;
+      this._parried = false;
       this.notify();
       await wait(550);
       e.history.push(e.move);

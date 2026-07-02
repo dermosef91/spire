@@ -125,6 +125,32 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
 .btn:not(.end-turn):active {
   transform: translateY(0);
 }
+.btn:not(.end-turn)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  clip-path: polygon(15px 0%, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 15px 100%, 0% 50%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 150, 0) 30%,
+    rgba(255, 215, 150, 0.03) 45%,
+    rgba(255, 240, 210, 0.12) 50%,
+    rgba(255, 215, 150, 0.03) 55%,
+    rgba(255, 215, 150, 0) 70%
+  );
+  background-size: 300% 300%;
+  background-position: calc(50% + var(--mx, 0) * -150%) calc(50% + var(--my, 0) * -150%);
+  mix-blend-mode: screen;
+  transition: opacity 0.3s ease, background-position 0.2s ease;
+  z-index: 4;
+}
+@media (hover: hover) {
+  .btn:not(.end-turn):hover::after {
+    opacity: 1;
+  }
+}
 .btn:not(.end-turn):disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -550,11 +576,11 @@ body.scene-reward #bg-image.show {
    `.map-node` so they don't leak onto the legend's `.leg-ic.node-*` icons
    (an unscoped `.node-boss` size+transform was displacing the legend row). */
 .node-monster { color: #ff8a5a; }
-.map-node.node-monster img.svg-ic {
+.map-node:not(.node-boss) .svg-ic {
   transform: scale(1.5);
   transition: transform 0.16s ease, filter 0.16s ease;
 }
-.map-node.node-monster.reachable img.svg-ic {
+.map-node.reachable:not(.node-boss) .svg-ic {
   transform: scale(2.25);
 }
 .node-elite { color: var(--ember); } .node-boss { color: var(--orange); }
@@ -617,7 +643,7 @@ body.scene-reward #bg-image.show {
   transform: rotate(var(--angle, 0deg)) translateY(min(var(--shift, 0px), 18px));
 }
 .card.in-hand:hover {
-  transform: translateY(calc(var(--shift, 0px) - 38px)) rotate(var(--angle, 0deg)) scale(1.08) !important;
+  transform: perspective(1000px) translateY(calc(var(--shift, 0px) - 38px)) rotate(var(--angle, 0deg)) rotateY(calc(var(--mx, 0) * 20deg)) rotateX(calc(var(--my, 0) * -20deg)) scale(1.08) !important;
   box-shadow: 0 22px 46px rgba(0,0,0,0.7), 0 0 26px rgba(255,106,26,0.5);
   z-index: 20 !important;
 }
@@ -636,11 +662,30 @@ body.scene-reward #bg-image.show {
 }
 
 .card::before { content: ''; position: absolute; inset: 2px; border-radius: 7px; pointer-events: none; border: 1px solid rgba(255,170,80,0.1); }
-.card::after { content: ''; position: absolute; inset: 0; border-radius: 8px; pointer-events: none; opacity: 0;
-  background: linear-gradient(115deg, transparent 32%, rgba(255,190,110,0.22) 48%, transparent 64%); background-size: 220% 220%; transition: opacity 0.2s ease; }
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 150, 0) 30%,
+    rgba(255, 215, 150, 0.03) 45%,
+    rgba(255, 240, 210, 0.12) 50%,
+    rgba(255, 215, 150, 0.03) 55%,
+    rgba(255, 215, 150, 0) 70%
+  );
+  background-size: 300% 300%;
+  background-position: calc(50% + var(--mx, 0) * -150%) calc(50% + var(--my, 0) * -150%);
+  mix-blend-mode: screen;
+  transition: opacity 0.3s ease, background-position 0.2s ease;
+  z-index: 5;
+}
 @media (hover: hover) {
-  .card:hover { transform: translateY(-14px) scale(1.05); box-shadow: 0 22px 46px rgba(0,0,0,0.7), 0 0 26px rgba(255,106,26,0.5); z-index: 6; }
-  .card:hover::after { opacity: 1; animation: foil 0.7s ease; }
+  .card:hover { transform: perspective(1000px) translateY(-14px) rotateY(calc(var(--mx, 0) * 20deg)) rotateX(calc(var(--my, 0) * -20deg)) scale(1.05); box-shadow: 0 22px 46px rgba(0,0,0,0.7), 0 0 26px rgba(255,106,26,0.5); z-index: 6; }
+  .card:hover::after { opacity: 1; }
 }
 .card.disabled { filter: grayscale(0.7) brightness(0.6); cursor: not-allowed; }
 .card.disabled:hover { transform: none; }
@@ -1101,7 +1146,32 @@ body.scene-reward #bg-image.show {
   transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.25s ease;
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7));
 }
-.end-turn::after { content: none; }
+.end-turn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  clip-path: polygon(12% 0, 88% 0, 100% 50%, 88% 100%, 12% 100%, 0 50%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 150, 0) 30%,
+    rgba(255, 215, 150, 0.03) 45%,
+    rgba(255, 240, 210, 0.12) 50%,
+    rgba(255, 215, 150, 0.03) 55%,
+    rgba(255, 215, 150, 0) 70%
+  );
+  background-size: 300% 300%;
+  background-position: calc(50% + var(--mx, 0) * -150%) calc(50% + var(--my, 0) * -150%);
+  mix-blend-mode: screen;
+  transition: opacity 0.3s ease, background-position 0.2s ease;
+  z-index: 4;
+}
+@media (hover: hover) {
+  .end-turn:hover::after {
+    opacity: 1;
+  }
+}
 
 .end-turn-decor {
   position: absolute;
@@ -1440,6 +1510,17 @@ body.scene-reward #bg-image.show {
   }
 }
 
+@keyframes foil {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
 
 .combatant.flash-hit .stage { animation: flashHit 0.4s ease; }
 .combatant.flash-block .stage { animation: flashBlock 0.4s ease; }
@@ -1610,6 +1691,8 @@ html { -webkit-text-size-adjust: 100%; }
 @media (prefers-reduced-motion: reduce) {
   .game-title, .glyph, .ground-shadow, .intent, .med-ring, .medallion::after, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene, .rest-fire { animation: none !important; }
   .map-node.reachable::after, .node-boss::after { animation: none !important; }
+  .card::after, .btn::after, .end-turn::after { animation: none !important; }
+  .card:hover, .card.in-hand:hover { transform: none !important; }
   .scene { transform: none; }
   #bg-image { transition: none !important; }
 }

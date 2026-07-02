@@ -230,7 +230,7 @@ class Audio {
     if (isCombat) {
       this.setMusicMode(isBoss ? 'boss' : 'combat');
     } else {
-      this.setMusicMode('ambient');
+      this.setMusicMode('title');
     }
   }
 }

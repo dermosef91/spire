@@ -53,6 +53,18 @@ export function renderCard(card, opts = {}) {
     node.addEventListener('mouseenter', () => opts.onHover(card, node, true));
     node.addEventListener('mouseleave', () => opts.onHover(card, node, false));
   }
+  node.addEventListener('mousemove', (e) => {
+    const rect = node.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const px = ((e.clientX - rect.left) / rect.width) - 0.5;
+    const py = ((e.clientY - rect.top) / rect.height) - 0.5;
+    node.style.setProperty('--mx', String(px));
+    node.style.setProperty('--my', String(py));
+  });
+  node.addEventListener('mouseleave', () => {
+    node.style.removeProperty('--mx');
+    node.style.removeProperty('--my');
+  });
   return node;
 }
 
@@ -205,6 +217,20 @@ export function button(label, onClick, cls = '') {
       <span class="btn-ornament left">${leftOrn}</span>
       <span class="btn-ornament right">${rightOrn}</span>
     `,
-    on: { click: onClick }
+    on: {
+      click: onClick,
+      mousemove: (e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+        const px = ((e.clientX - rect.left) / rect.width) - 0.5;
+        const py = ((e.clientY - rect.top) / rect.height) - 0.5;
+        e.currentTarget.style.setProperty('--mx', String(px));
+        e.currentTarget.style.setProperty('--my', String(py));
+      },
+      mouseleave: (e) => {
+        e.currentTarget.style.removeProperty('--mx');
+        e.currentTarget.style.removeProperty('--my');
+      }
+    }
   });
 }

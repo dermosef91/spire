@@ -22,7 +22,7 @@ function legendHtml() {
 export const MapScene = {
   // ----------------------------------------------------------- map
   showMap() {
-    audio.setMusicMode('ambient');
+    audio.setMusicMode('title');
     saveRun(this.run);
     const run = this.run;
     const map = run.map;

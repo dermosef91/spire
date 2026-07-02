@@ -293,6 +293,7 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
   `CSSMediaRule`s with the expected `conditionText` — if the block you edited
   is missing from that list entirely, walk backward through the preceding
   comments for a stray `*/`.
+- **Holographic / Iridescent Sheen**: Cards and customized clipped buttons (`.btn` and `.end-turn`) feature a dynamic iridescent sweep on hover. This is implemented via an absolute `::after` overlay utilizing a screen blending linear-gradient and a looping `@keyframes foil` position animation. For custom button shapes with non-rectangular bounds (polygons), the `::after` overlay must match the exact parent `clip-path` polygon. Disable these hover animations in the `@media (prefers-reduced-motion: reduce)` block.
 - **Auto-Update Learnings**: On every action/task, if you discover a project-specific gotcha, solve a debugging issue, or establish a new convention/pattern, you must immediately update `CLAUDE.md` and `.agents/AGENTS.md` to persist this learning.
 - **Landscape-phone breakpoint (`@media (max-height: 560px)`)**: this is the
   single hook for short viewports. `.title` and `.charselect` are plain

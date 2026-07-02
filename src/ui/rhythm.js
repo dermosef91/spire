@@ -175,7 +175,6 @@ export async function runParryQTE({ isTouch = false } = {}) {
     const grade = await playMark(ui, null, { perfectMs: PARRY_WINDOW_MS, goodMs: PARRY_WINDOW_MS });
     const success = grade !== 'miss';
     if (success) audio.play('skill');
-    await showResult(ui.layer, success ? 'PARRIED!' : 'TOO SLOW', success ? 'perfect' : 'miss');
     return { success };
   } finally {
     ui.destroy();
