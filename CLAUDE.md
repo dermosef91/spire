@@ -230,9 +230,13 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
   emoji used only in dev-tooling console logs (`tools/gen-*.js`), which never
   reach the player.
 - **Card-choice ("pick a card") popup** (`Game.cardChoiceOverlay` in `game.js`,
-  `.card-picker` in `styles.css`) shows options at a fixed w:h card aspect
-  ratio (`--card-h: clamp(232px, 25vw, 320px)`, `--card-w: calc(var(--card-h) *
-  0.7)`) rather than the shop/deck overlays' `height:auto; min-height:`
+  `.card-picker` in `styles.css`) has no boxed panel — `.overlay-box.card-picker`
+  strips the shared `.overlay-box` background/border/border-radius/box-shadow
+  back to `none`, so the title, cards, hint and Skip button sit directly on the
+  dimmed/blurred `.overlay` backdrop instead of inside a sub-panel. It shows
+  options at a fixed w:h card aspect ratio (`--card-h: clamp(232px, 25vw,
+  320px)`, `--card-w: calc(var(--card-h) * 0.7)`) rather than the shop/deck
+  overlays' `height:auto; min-height:`
   grow-to-fit-text trick — that trick stretches every card in the row to match
   the tallest via `align-items:stretch`, which looks fine for the shop's
   shorter cards but reads as an odd tall slab with dead space for the picker's
