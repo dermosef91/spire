@@ -10,6 +10,8 @@ class Audio {
   constructor() {
     this.ctx = null;
     this.enabled = true;
+    // Music defaults to on; it actually starts on the first user gesture
+    // (browser autoplay policy) via the unlock handler in main.js.
     this.musicOn = true;
     this.muted = false;
     this._music = null;
