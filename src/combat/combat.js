@@ -23,6 +23,7 @@ export class Combat {
     this.over = false;
     this.victory = false;
     this.animating = false;
+    this._notifyScheduled = false; // coalesces same-tick notify() calls, see notify()
 
     // Player entity mirrors run state; HP is written back to run on combat end.
     this.player = {
@@ -131,7 +132,20 @@ export class Combat {
 
   // ---------------------------------------------------------------- logging / notify
   log(msg) { this.logs.push(msg); if (this.logs.length > 60) this.logs.shift(); this.onLog(msg); }
-  notify() { this.onUpdate(); }
+  // Coalesce multiple synchronous notify() calls (e.g. draw() firing one,
+  // then a caller firing another right after to refresh the log) into a
+  // single deferred onUpdate(). Without this, a second same-tick render tears
+  // down and rebuilds the hand's DOM nodes before the first render's
+  // requestAnimationFrame-scheduled draw-in animation gets to run on them,
+  // silently killing the card-fly-in-from-draw-pile animation.
+  notify() {
+    if (this._notifyScheduled) return;
+    this._notifyScheduled = true;
+    Promise.resolve().then(() => {
+      this._notifyScheduled = false;
+      this.onUpdate();
+    });
+  }
 
   // ---------------------------------------------------------------- triggers
   addTrigger(event, fn, name, once = false) {

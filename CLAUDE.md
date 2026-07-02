@@ -37,8 +37,11 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   **Gotcha**: the qa run wipes/recreates `docs/qa/`, which deletes the committed
   `docs/qa/README.md` — `git checkout -- docs/qa/README.md` to restore it before
   committing. Also, because combat now opens deferred (Battle Start banner, then
-  `combat.start()` ~650ms later), the qa combat capture already waits long enough
-  for the hand to settle; if you shorten those waits, re-check the combat shot.
+  `combat.start()` ~650ms later) and the opening 5-card draw itself takes up to
+  ~830ms more to fully fan in (see the `notify()` coalescing note below), the
+  `combat` scene's `settle` in `tools/qa-screenshots.js` needs ~1800ms total —
+  if you touch either of those timings, re-check the combat shot for a card
+  still mid-flight overlapping the End Turn button.
 
 ## Architecture (src/)
 - `main.js` — bootstrap; mounts the animated background and the Game controller.
@@ -67,6 +70,21 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   Combat also **opens deferred**: `CombatView.mount` shows the Battle Start banner
   and calls `combat.start()` ~650ms later, so the opening draw plays *after* the
   popup; `beginCombat`'s tutorial kickoff (game.js, ~1700ms) is timed to that.
+  `Combat.notify()` **coalesces same-tick calls** via a microtask
+  (`Promise.resolve().then(...)`, guarded by `_notifyScheduled`) into one
+  deferred `onUpdate()` — added because several call sites (e.g.
+  `startPlayerTurn`: `draw()` fires a `notify()` internally, then the method
+  fires another right after to refresh the log) used to trigger **two**
+  synchronous `renderHand()` calls in the same tick. `renderHand()` fully
+  tears down and rebuilds the hand's DOM on every call, so the second render
+  destroyed the first render's newly-hidden card nodes before their
+  `requestAnimationFrame`-scheduled draw-pile-fly-in animation (`combatView.js`
+  `renderHand`) could run — the cards still ended up in the right place, just
+  silently teleported instead of animated, on *every* draw (opening hand
+  included) since the fly-in was added. If you ever see a new cosmetic
+  per-card animation silently not play despite the state change definitely
+  happening, suspect a same-tick double-render racing an `requestAnimationFrame`
+  callback before reaching for a bigger fix.
   Tap-to-play is **two-tap**: first tap sets `previewCard` (card straightens +
   enlarges via `.previewing`, `--angle/--shift` zeroed), second tap commits;
   drag-to-play bypasses the preview. Node entry runs through `Game.veilTransition`

@@ -84,7 +84,11 @@ const SCENES = [
   {
     key: 'combat',
     label: 'Combat',
-    settle: 1100,
+    // Opening draw is deferred ~650ms behind the Battle Start popup, then the
+    // 5-card fly-in stagger itself takes up to ~830ms to fully land (a
+    // notify()-coalescing fix made this animation actually run instead of
+    // silently no-op'ing) — 1100ms caught it mid-flight. 1800ms clears it.
+    settle: 1800,
     // A run must exist first (map scene sets it up). Start a normal fight.
     drive: () => { window.__ase.startMonster(); },
   },
