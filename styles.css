@@ -443,22 +443,27 @@ body.scene-reward #bg-image.show {
   transition: transform 0.16s ease, filter 0.16s ease, color 0.16s ease;
   filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75));
 }
-.map-node.reachable { cursor: pointer; color: var(--cream); animation: nodePulse 1.8s ease-in-out infinite; }
-.map-node.reachable:hover { transform: translate(-50%, -50%) scale(1.16); }
+/* Selectable next nodes read noticeably larger than the rest and pulse
+   (scale + glow) so the eye goes straight to where you can move. */
+.map-node.reachable { width: 62px; height: 62px; cursor: pointer; color: var(--cream);
+  animation: nodePulse 1.7s ease-in-out infinite; }
+.map-node.reachable:hover { animation-play-state: paused; transform: translate(-50%, -50%) scale(1.2); }
 @keyframes nodePulse {
-  0%,100% { filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 4px rgba(255,106,26,0.45)); }
-  50% { filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 13px rgba(255,106,26,0.9)); }
+  0%,100% { transform: translate(-50%,-50%) scale(1);
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 5px rgba(255,106,26,0.5)); }
+  50% { transform: translate(-50%,-50%) scale(1.12);
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 16px rgba(255,106,26,0.95)); }
 }
 /* Decorative concentric rings behind the current node and the boss (subtle —
    a single thin ember ring that reads as a halo, not a badge). */
-.map-node.current::before, .node-boss::before {
+.map-node.current::before, .map-node.node-boss::before {
   content: ''; position: absolute; left: 50%; top: 50%; width: 148%; height: 148%;
   transform: translate(-50%, -50%); border-radius: 50%;
   border: 1px solid rgba(255, 176, 70, 0.28); pointer-events: none;
 }
-.node-boss::before { width: 160%; height: 160%; border-color: rgba(232, 67, 26, 0.34); }
+.map-node.node-boss::before { width: 160%; height: 160%; border-color: rgba(232, 67, 26, 0.34); }
 /* Tiny four-point sparkle accent on the boss + reachable nodes. */
-.map-node.reachable::after, .node-boss::after {
+.map-node.reachable::after, .map-node.node-boss::after {
   content: ''; position: absolute; top: 4%; right: 2%; width: 9px; height: 9px; pointer-events: none;
   background:
     radial-gradient(circle, rgba(255,224,180,0.9) 0.5px, transparent 1.5px) center/100% 100%,
@@ -466,13 +471,17 @@ body.scene-reward #bg-image.show {
     linear-gradient(rgba(255,200,140,0.55), rgba(255,200,140,0.55)) center/100% 1px no-repeat;
   opacity: 0.7; animation: sparkTwinkle 2.4s ease-in-out infinite;
 }
-.node-boss::after { top: 2%; right: 0; width: 11px; height: 11px; }
+.map-node.node-boss::after { top: 2%; right: 0; width: 11px; height: 11px; }
 @keyframes sparkTwinkle { 0%,100% { opacity: 0.35; transform: scale(0.85); } 50% { opacity: 0.85; transform: scale(1.1); } }
 /* The player's current position reads as the largest glyph on the board. */
 .map-node.current { width: 72px; height: 72px; color: var(--cream); z-index: 2;
   filter: drop-shadow(0 3px 6px rgba(0,0,0,0.8)) drop-shadow(0 0 16px rgba(255,210,160,0.85)); }
-.node-monster { color: #ff8a5a; } .node-elite { color: var(--ember); }
-.node-boss { width: 64px; height: 64px; color: var(--orange); animation: bossPulse 2.1s ease-in-out infinite; }
+/* Node colors are shared by the board glyphs AND the legend icons, so they
+   stay unscoped. Size / rings / sparkle / pulse are board-only — scoped to
+   `.map-node` so they don't leak onto the legend's `.leg-ic.node-*` icons
+   (an unscoped `.node-boss` size+transform was displacing the legend row). */
+.node-monster { color: #ff8a5a; } .node-elite { color: var(--ember); } .node-boss { color: var(--orange); }
+.map-node.node-boss { width: 64px; height: 64px; animation: bossPulse 2.1s ease-in-out infinite; }
 @keyframes bossPulse {
   0%,100% { filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 10px rgba(232,67,26,0.55)); transform: translate(-50%,-50%) scale(1); }
   50% { filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 24px rgba(232,67,26,0.95)); transform: translate(-50%,-50%) scale(1.06); }
