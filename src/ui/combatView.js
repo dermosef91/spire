@@ -472,12 +472,6 @@ export class CombatView {
         onHover: (cd, n, on) => { if (!this.drag) this.game.tooltip(cd, n, on, 'card'); },
       });
 
-      // Add keyboard shortcut indicator badge (1-10)
-      if (idx < 10) {
-        const displayKey = idx === 9 ? '0' : String(idx + 1);
-        node.appendChild(el('div', { class: 'card-key-shortcut', text: displayKey }));
-      }
-
       const diff = idx - mid;
       // A previewed card sits straight and un-dipped so it reads as a clean preview.
       const angle = isPreview ? 0 : diff * Math.min(8, 32 / Math.max(1, N));
