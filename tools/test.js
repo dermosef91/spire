@@ -149,6 +149,15 @@ test('nextNodes/nodeAt agree and the top row leads to the boss', () => {
   assert.deepEqual(top, [{ boss: true }]);
 });
 
+test('the bottom row has 1-3 nodes, never more', () => {
+  for (let seed = 1; seed <= 200; seed++) {
+    const map = generateMap(new RNG(seed), 1);
+    const bottom = map.grid[0].filter(Boolean).length;
+    assert.ok(bottom >= 1 && bottom <= 3, `seed ${seed}: bottom row has ${bottom} nodes`);
+    assert.equal(map.starts.length, bottom, `seed ${seed}: starts match bottom-row nodes`);
+  }
+});
+
 test('same seed produces an identical map', () => {
   const a = generateMap(new RNG(1234), 1);
   const b = generateMap(new RNG(1234), 1);
