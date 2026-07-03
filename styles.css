@@ -500,12 +500,30 @@ body.scene-reward #bg-image.show {
 
 .relic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 17px;
   background: radial-gradient(circle at 50% 50%, #1c1109, #0a0604); border: 2px solid var(--line); cursor: help; transition: transform 0.12s;
-  box-shadow: inset 0 0 8px rgba(255,122,26,0.25); }
+  box-shadow: inset 0 0 8px rgba(255,122,26,0.25); position: relative; overflow: hidden; }
 .relic:hover { transform: scale(1.14); border-color: var(--orange); box-shadow: var(--glow); }
 .relic-rare { border-color: var(--orange); box-shadow: 0 0 10px rgba(255,106,26,0.5); }
 .relic-boss { border-color: var(--ember); box-shadow: 0 0 12px rgba(232,67,26,0.6); }
 .relic-uncommon { border-color: var(--amber); }
 .relic-starter { border-color: var(--cream); }
+.relic-art-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 2; }
+
+/* Image-based relics override */
+.relic:has(.relic-art-img) {
+  width: 44px;
+  height: 44px;
+  border: none !important;
+  background: none !important;
+  box-shadow: none !important;
+  border-radius: 0;
+  overflow: visible;
+  display: block;
+}
+.relic-rare:has(.relic-art-img) { filter: drop-shadow(0 0 4px var(--orange)); }
+.relic-boss:has(.relic-art-img) { filter: drop-shadow(0 0 5px var(--ember)); }
+.relic-uncommon:has(.relic-art-img) { filter: drop-shadow(0 0 3px var(--amber)); }
+.relic-starter:has(.relic-art-img) { filter: drop-shadow(0 0 3px rgba(243,232,216,0.4)); }
+.relic:has(.relic-art-img):hover { transform: scale(1.16); filter: drop-shadow(0 0 8px var(--orange)) !important; }
 
 .potion { width: 30px; height: 34px; border-radius: 7px 7px 12px 12px; display: grid; place-items: center; font-size: 15px; cursor: pointer;
   background: linear-gradient(180deg, rgba(255,200,140,0.25), var(--pcolor, #b5602a)); border: 1px solid rgba(255,210,160,0.5); color: #1a0c04; transition: transform 0.12s; }
@@ -1023,6 +1041,76 @@ body.scene-reward #bg-image.show {
 .combat-scene.targeting .enemy.targetable { cursor: pointer; }
 .combat-scene.targeting .enemy.targetable .med-core { animation: targetPulse 1s ease-in-out infinite; }
 @keyframes targetPulse { 0%,100% { box-shadow: inset 0 0 22px rgba(0,0,0,0.7), 0 0 18px rgba(255,106,26,0.5); } 50% { box-shadow: inset 0 0 22px rgba(0,0,0,0.7), 0 0 36px rgba(255,176,80,0.95); } }
+
+/* Dim player, orbs, hand cards (except previewed), and non-targetable enemies during targeting */
+.combat-scene.targeting .combatant.player,
+.combat-scene.targeting .orbs,
+.combat-scene.targeting .hand .card:not(.previewing),
+.combat-scene.targeting .enemy:not(.targetable) {
+  opacity: 0.35;
+  filter: grayscale(40%);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* Highlight targetable enemies */
+.combat-scene.targeting .enemy.targetable {
+  opacity: 1;
+  filter: none;
+  transition: opacity 0.3s ease;
+}
+
+.combat-scene.targeting .enemy.targetable .stage {
+  transform: scale(1.08);
+  filter: drop-shadow(0 0 18px rgba(255, 106, 26, 0.75));
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.combat-scene.targeting .enemy.targetable:hover .stage {
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 28px rgba(255, 176, 80, 0.95));
+}
+
+/* Floating target selection prompt */
+.targeting-prompt {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8, 5, 3, 0.85);
+  border: 1px solid var(--orange);
+  color: var(--amber);
+  padding: 8px 24px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  border-radius: 4px;
+  box-shadow: 0 0 20px rgba(255, 106, 26, 0.4), inset 0 0 10px rgba(255, 140, 40, 0.25);
+  z-index: 100;
+  animation: promptPulse 1.8s ease-in-out infinite, promptBounce 1.8s ease-in-out infinite;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+@keyframes promptPulse {
+  0%, 100% {
+    opacity: 0.85;
+    box-shadow: 0 0 15px rgba(255, 106, 26, 0.3);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 25px rgba(255, 176, 80, 0.6);
+  }
+}
+
+@keyframes promptBounce {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-5px);
+  }
+}
 
 /* orbs (Zara) */
 .orbs {
@@ -1628,6 +1716,7 @@ html { -webkit-text-size-adjust: 100%; }
   .map-legend-head { font-size: 12px; padding-bottom: 6px; }
   .map-legend-list { gap: 7px; }
   .relic, .potion { width: 28px; height: 28px; }
+  .relic:has(.relic-art-img) { width: 34px; height: 34px; }
   .combatant { min-width: 84px; }
   .combatant-info { width: 120px; }
   .combatant-name { font-size: 13px; }
@@ -1689,12 +1778,17 @@ html { -webkit-text-size-adjust: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .game-title, .glyph, .ground-shadow, .intent, .med-ring, .medallion::after, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene, .rest-fire { animation: none !important; }
+  .game-title, .glyph, .ground-shadow, .intent, .med-ring, .medallion::after, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene, .rest-fire, .targeting-prompt { animation: none !important; }
   .map-node.reachable::after, .node-boss::after { animation: none !important; }
   .card::after, .btn::after, .end-turn::after { animation: none !important; }
   .card:hover, .card.in-hand:hover { transform: none !important; }
   .scene { transform: none; }
   #bg-image { transition: none !important; }
+  .combat-scene.targeting .enemy.targetable .stage,
+  .combat-scene.targeting .enemy.targetable:hover .stage {
+    transform: none !important;
+    filter: none !important;
+  }
 }
 
 /* ============================================================
@@ -2107,4 +2201,72 @@ img.svg-ic { object-fit: contain; }
   background: linear-gradient(90deg, var(--ember), var(--orange-bright));
   box-shadow: var(--glow);
   transition: width 0.2s ease;
+}
+
+/* ============================================================
+   KEYBOARD FOCUS HIGHLIGHTS (.kb-focus)
+   ============================================================ */
+.kb-focus {
+  outline: none !important;
+  border-color: var(--orange) !important;
+  box-shadow: 0 0 16px var(--orange), inset 0 0 8px rgba(255, 106, 26, 0.4) !important;
+  transform: scale(1.05) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  z-index: 10 !important;
+}
+
+.kb-focus.btn, .kb-focus.title-setting-btn, .kb-focus.tb-fs, .kb-focus.tb-mute {
+  transform: scale(1.04) !important;
+}
+
+.kb-focus .btn-decor.border-outer,
+.kb-focus .end-turn-decor.border-outer {
+  border-color: var(--orange) !important;
+  box-shadow: 0 0 8px var(--orange) !important;
+}
+
+.kb-focus .btn-decor.border-inner,
+.kb-focus .end-turn-decor.border-inner {
+  border-color: var(--orange-bright) !important;
+}
+
+.kb-focus.card {
+  transform: perspective(1000px) translateY(-14px) scale(1.06) !important;
+  box-shadow: 0 22px 46px rgba(0,0,0,0.7), 0 0 26px var(--orange) !important;
+}
+
+.kb-focus.card.in-hand {
+  transform: translateY(-38px) rotate(0deg) scale(1.14) !important;
+  box-shadow: 0 22px 46px rgba(0,0,0,0.7), 0 0 26px var(--orange) !important;
+}
+
+.kb-focus.map-node {
+  transform: translate(-50%, -50%) scale(1.35) !important;
+  box-shadow: 0 0 12px var(--orange) !important;
+}
+
+.kb-focus.char-card {
+  border-color: var(--orange) !important;
+  box-shadow: 0 16px 50px rgba(0,0,0,0.7), var(--glow) !important;
+}
+
+.kb-focus.shop-mini, .kb-focus.shop-item, .kb-focus.reward-row {
+  border-color: var(--orange) !important;
+  box-shadow: var(--glow) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kb-focus {
+    transform: none !important;
+    transition: none !important;
+  }
+  .kb-focus.card {
+    transform: translateY(-8px) !important;
+  }
+  .kb-focus.card.in-hand {
+    transform: translateY(-16px) !important;
+  }
+  .kb-focus.map-node {
+    transform: translate(-50%, -50%) !important;
+  }
 }

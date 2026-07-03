@@ -17,6 +17,7 @@ import { updateBackground } from './ui/backgrounds.js';
 import { background } from './fx/background.js';
 import { audio } from './audio.js';
 import { isTouchDevice } from './core/fullscreen.js';
+import { KeyboardController } from './core/keyboard.js';
 
 import { TitleScene } from './scenes/title.js';
 import { MapScene } from './scenes/map.js';
@@ -38,6 +39,7 @@ export class Game {
     this.meta = loadMeta();
     this.selectedAscension = Math.min(this.meta.ascension || 0, this.meta.maxAscension || 0);
     this.setupMobile();
+    this.keyboard = new KeyboardController(this);
   }
 
   isTouch() { return this.touch; }
@@ -84,6 +86,7 @@ export class Game {
   // ----------------------------------------------------------- scene helpers
   setScene(node, sceneClass = '') {
     this.tooltip(null, null, false);
+    if (this.keyboard) this.keyboard.clearFocus();
     clear(this.root);
     // Remove previous scene classes from body and add the current one
     document.body.className = document.body.className.replace(/\bscene-\S+/g, '');

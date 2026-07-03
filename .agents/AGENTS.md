@@ -27,4 +27,7 @@
 - **Card Selection UID Comparison**: Always compare active preview or pending cards (`this.previewCard` / `this.pendingCard`) against hand card items using `.uid` (e.g. `this.previewCard && this.previewCard.uid === card.uid`) rather than strict object reference comparison (`!==` or `===`). This prevents keyboard selection issues where different card object references representing the same card would fail to play or toggle state correctly.
 
 
+- **Relic Custom Art**: Relics can load custom PNG illustrations generated using the `gpt-image-2` model via `tools/gen-relic-art.js`. To ensure correct transparency masking without losing the dark linework inside the woodcut illustrations, prompt the model with "Transparent background" (avoiding "Pure black background") and rely on the default `isNeutralBright` filter (checking RGB balance > 150) in `postProcess`. Do not use flood-fill or dark threshold key-outs.
+
+- **Keyboard Navigation**: Global keyboard navigation is managed by `KeyboardController` in `src/core/keyboard.js`. Interactive elements are queried dynamically across overlays and scenes. Supports arrow/WASD/Tab navigation, Escape for canceling, and numbers `1`-`9` as direct shortcuts (except during combat hand play). Emits synthetic `mouseenter`/`mouseleave` to drive tooltips/hover states. Focus class is `.kb-focus`. Keyboard focus must be bypassed/disabled during rhythm QTEs (`.qte-layer` exists) so directional commands correctly drive the mini-game.
 

@@ -34,6 +34,7 @@ export const CombatScene = {
     const combat = new Combat(this.run, enemyIds, { kind });
     window.__combat = combat; // console debugging, like window.__ase
     const view = new CombatView(this, combat);
+    this.combatView = view;
     view.onEnd = (c) => this.afterCombat(c, kind);
     const holder = el('div', { class: 'combat-holder' });
     this.setScene(holder, 'combat');
@@ -53,6 +54,7 @@ export const CombatScene = {
   },
 
   afterCombat(combat, kind) {
+    this.combatView = null;
     audio.setCombat(false);
     const bg = background(); if (bg) bg.setCombat(false);
     // Write HP back
