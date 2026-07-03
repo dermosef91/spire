@@ -15,6 +15,8 @@ import { RunState } from '../src/core/state.js';
 import { generateMap, nextNodes, nodeAt } from '../src/map/mapgen.js';
 import { createCard, upgradeCard, canUpgrade } from '../src/data/cards.js';
 import { Combat } from '../src/combat/combat.js';
+import { ENCOUNTERS } from '../src/data/encounters.js';
+import { ENEMIES } from '../src/data/enemies.js';
 import { EVENTS } from '../src/data/events.js';
 import { EventScene } from '../src/scenes/event.js';
 import { audio } from '../src/audio.js';
@@ -103,7 +105,11 @@ test('toJSON / fromJSON round-trips run state', () => {
   // advance the rng so state differs from the seed
   run.rng.int(0, 1000);
   run.rng.int(0, 1000);
+  // the per-act fight counter drives the weak/normal/hard encounter tiers and
+  // must survive a save/reload mid-act
+  run._actMonster = 4;
   const clone = RunState.fromJSON(JSON.parse(JSON.stringify(run.toJSON())));
+  assert.equal(clone._actMonster, 4, 'per-act fight counter persisted');
 
   assert.equal(clone.characterId, run.characterId);
   assert.equal(clone.hp, run.hp);
@@ -212,6 +218,31 @@ test('gold-changing event choices resolve without throwing', () => {
   assert.equal(run.gold, 54, 'gold cost applied once');
   assert.ok(run.relics.length > 1, 'relic granted');
   assert.match(result, /gold sinks away/i);
+});
+
+// ----------------------------------------------------------------- encounters
+console.log('Encounter tables (data/encounters.js)');
+
+test('every encounter references only real enemies of the right act', () => {
+  for (const [act, table] of Object.entries(ENCOUNTERS)) {
+    for (const [tier, list] of Object.entries(table)) {
+      assert.ok(list.length > 0, `act ${act} ${tier} pool is non-empty`);
+      for (const group of list) {
+        for (const id of group) {
+          const bp = ENEMIES[id];
+          assert.ok(bp, `act ${act} ${tier}: unknown enemy '${id}'`);
+          assert.ok(bp.act <= Number(act), `act ${act} ${tier}: '${id}' belongs to a later act`);
+        }
+      }
+    }
+  }
+});
+
+test('act 1 defines a hard tier for late-act escalation', () => {
+  assert.ok(Array.isArray(ENCOUNTERS[1].hard) && ENCOUNTERS[1].hard.length >= 3);
+  // acts without a hard pool fall back to normal in pickEncounter
+  const table = ENCOUNTERS[2];
+  assert.ok((table.hard || table.normal).length > 0);
 });
 
 // ----------------------------------------------------------------- Combat
