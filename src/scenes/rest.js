@@ -6,7 +6,7 @@
 
 import { el } from '../core/util.js';
 import { topBar, button, renderCard } from '../ui/components.js';
-import { canUpgrade, upgradeCard } from '../data/cards.js';
+import { canUpgrade } from '../data/cards.js';
 import { NODE } from '../ui/icons.js';
 import { audio } from '../audio.js';
 
@@ -40,41 +40,5 @@ export const RestScene = {
     this.deckOverlay((c) => canUpgrade(c), (entry) => {
       this.upgradePreview(entry, () => onConfirm(entry), () => this.smithUpgrade(onConfirm));
     }, 'Upgrade which card?', 'cardflip');
-  },
-
-  // Side-by-side preview of a card and its upgraded form, gated by a confirm.
-  upgradePreview(entry, onConfirm, onCancel) {
-    const run = this.run;
-    const before = run.instance(entry);
-    const after = run.instance(entry);
-    upgradeCard(after);
-    const overlay = el('div', { class: 'overlay' });
-    const box = el('div', { class: 'overlay-box smith-preview' });
-    box.appendChild(el('h3', { text: 'Reforge this card?' }));
-    const compare = el('div', { class: 'smith-compare' });
-    const beforeCol = el('div', { class: 'smith-col' });
-    beforeCol.appendChild(el('div', { class: 'smith-label', text: 'Current' }));
-    beforeCol.appendChild(renderCard(before, { onHover: (cd, n, on) => this.tooltip(cd, n, on, 'card') }));
-    compare.appendChild(beforeCol);
-    compare.appendChild(el('div', { class: 'smith-arrow', html: '<svg viewBox="0 0 32 24" width="32" height="24" aria-hidden="true"><path d="M2 12h24M18 4l10 8-10 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' }));
-    const afterCol = el('div', { class: 'smith-col' });
-    afterCol.appendChild(el('div', { class: 'smith-label upgraded', text: 'Reforged' }));
-    afterCol.appendChild(renderCard(after, { onHover: (cd, n, on) => this.tooltip(cd, n, on, 'card') }));
-    compare.appendChild(afterCol);
-    box.appendChild(compare);
-    const controls = el('div', { class: 'confirm-row' });
-    controls.appendChild(button('Reforge', () => {
-      this.tooltip(null, null, false);
-      document.body.removeChild(overlay);
-      onConfirm();
-    }, 'primary'));
-    controls.appendChild(button('Cancel', () => {
-      this.tooltip(null, null, false);
-      document.body.removeChild(overlay);
-      if (onCancel) onCancel();
-    }));
-    box.appendChild(controls);
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
   },
 };

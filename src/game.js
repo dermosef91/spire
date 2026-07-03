@@ -10,7 +10,7 @@
 
 import { el, clear } from './core/util.js';
 import { saveRun, loadMeta } from './core/save.js';
-import { cardDesc } from './data/cards.js';
+import { cardDesc, upgradeCard } from './data/cards.js';
 import { POTIONS } from './data/potions.js';
 import { renderCard, topBar, button } from './ui/components.js';
 import { updateBackground } from './ui/backgrounds.js';
@@ -174,6 +174,69 @@ export class Game {
       this.tooltip(null, null, false);
       document.body.removeChild(overlay);
     }));
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  }
+
+  // View cards in a pile (e.g. draw or discard pile) in a random order
+  viewCardsOverlay(cards, title) {
+    const shuffled = cards.slice();
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    const overlay = el('div', { class: 'overlay' });
+    const box = el('div', { class: 'overlay-box deck-overlay' });
+    box.appendChild(el('h3', { text: title }));
+    const grid = el('div', { class: 'deck-grid' });
+    shuffled.forEach((c) => {
+      const node = renderCard(c, {
+        onClick: (cd, n) => this.tooltip(cd, n, true, 'card'),
+        onHover: (cd, n, on) => this.tooltip(cd, n, on, 'card'),
+      });
+      grid.appendChild(node);
+    });
+    box.appendChild(grid);
+    box.appendChild(button('Close', () => {
+      this.tooltip(null, null, false);
+      document.body.removeChild(overlay);
+    }));
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  }
+
+  // Side-by-side preview of a card and its upgraded form, gated by a confirm.
+  upgradePreview(entry, onConfirm, onCancel, options = {}) {
+    const run = this.run;
+    const before = run.instance(entry);
+    const after = run.instance(entry);
+    upgradeCard(after);
+    const overlay = el('div', { class: 'overlay' });
+    const box = el('div', { class: 'overlay-box smith-preview' });
+    box.appendChild(el('h3', { text: options.title || 'Reforge this card?' }));
+    const compare = el('div', { class: 'smith-compare' });
+    const beforeCol = el('div', { class: 'smith-col' });
+    beforeCol.appendChild(el('div', { class: 'smith-label', text: options.labelBefore || 'Current' }));
+    beforeCol.appendChild(renderCard(before, { onHover: (cd, n, on) => this.tooltip(cd, n, on, 'card') }));
+    compare.appendChild(beforeCol);
+    compare.appendChild(el('div', { class: 'smith-arrow', html: '<svg viewBox="0 0 32 24" width="32" height="24" aria-hidden="true"><path d="M2 12h24M18 4l10 8-10 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' }));
+    const afterCol = el('div', { class: 'smith-col' });
+    afterCol.appendChild(el('div', { class: 'smith-label upgraded', text: options.labelAfter || 'Reforged' }));
+    afterCol.appendChild(renderCard(after, { onHover: (cd, n, on) => this.tooltip(cd, n, on, 'card') }));
+    compare.appendChild(afterCol);
+    box.appendChild(compare);
+    const controls = el('div', { class: 'confirm-row' });
+    controls.appendChild(button(options.confirmText || 'Reforge', () => {
+      this.tooltip(null, null, false);
+      document.body.removeChild(overlay);
+      onConfirm();
+    }, 'primary'));
+    controls.appendChild(button('Cancel', () => {
+      this.tooltip(null, null, false);
+      document.body.removeChild(overlay);
+      if (onCancel) onCancel();
+    }));
+    box.appendChild(controls);
     overlay.appendChild(box);
     document.body.appendChild(overlay);
   }

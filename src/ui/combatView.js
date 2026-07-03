@@ -141,8 +141,19 @@ export class CombatView {
     scene.appendChild(this.handHolder);
 
     this.drawPileEl = el('div', { class: 'screen-pile draw-pile', title: 'Draw Pile' });
+    this.drawPileEl.addEventListener('click', () => {
+      if (this.ended || this.combat.over) return;
+      audio.play('select');
+      this.game.viewCardsOverlay(this.combat.drawPile, `Draw Pile (${this.combat.drawPile.length})`);
+    });
     scene.appendChild(this.drawPileEl);
+
     this.discardPileEl = el('div', { class: 'screen-pile discard-pile', title: 'Discard Pile' });
+    this.discardPileEl.addEventListener('click', () => {
+      if (this.ended || this.combat.over) return;
+      audio.play('select');
+      this.game.viewCardsOverlay(this.combat.discardPile, `Discard Pile (${this.combat.discardPile.length})`);
+    });
     scene.appendChild(this.discardPileEl);
     this.exhaustPileEl = el('div', { class: 'screen-pile exhaust-pile', title: 'Exhaust Pile', style: { display: 'none' } });
     scene.appendChild(this.exhaustPileEl);
@@ -482,7 +493,7 @@ export class CombatView {
       const isPreview = this.previewCard && this.previewCard.uid === card.uid;
       const node = renderCard(card, {
         disabled: !playable,
-        class: 'in-hand ' + affordable + combo + (this.pendingCard === card ? 'selected ' : '') + (isPreview ? 'previewing' : ''),
+        class: 'in-hand ' + affordable + combo + (this.pendingCard && this.pendingCard.uid === card.uid ? 'selected ' : '') + (isPreview ? 'previewing' : ''),
         onHover: (cd, n, on) => { if (!this.drag) this.game.tooltip(cd, n, on, 'card'); },
       });
 
@@ -569,7 +580,7 @@ export class CombatView {
     if (c.animating || c.over) return;
     // First tap previews: the card straightens and grows so it can be read.
     // A second tap on the same card commits it. Drag-to-play bypasses this.
-    if (this.previewCard !== card) {
+    if (!this.previewCard || this.previewCard.uid !== card.uid) {
       audio.play('select');
       this.previewCard = card;
       this.pendingCard = null;

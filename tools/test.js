@@ -122,6 +122,15 @@ test('generates a 15-row map with a boss and starts', () => {
   assert.ok(map.cols >= 1, 'has columns');
   assert.ok(map.boss && map.boss.type === 'boss');
   assert.ok(map.starts.length >= 1, 'has start columns');
+  assert.ok(map.starts.length <= 3, 'has at most 3 start columns');
+});
+
+test('bottom row never contains more than 3 options across many seeds', () => {
+  for (let i = 0; i < 100; i++) {
+    const map = generateMap(new RNG(i), 1);
+    assert.ok(map.starts.length >= 1, 'has at least 1 start column');
+    assert.ok(map.starts.length <= 3, 'has at most 3 start columns');
+  }
 });
 
 test('every non-final node has at least one outgoing edge', () => {

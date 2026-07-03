@@ -27,7 +27,7 @@ export const MapScene = {
     const run = this.run;
     const map = run.map;
     const COLS = map.cols, ROWS = map.rows;
-    const colW = 72, rowH = 74, bossSpace = 86, pad = 30;
+    const colW = 120, rowH = 124, bossSpace = 320, pad = 30;
     const width = COLS * colW;
     const height = ROWS * rowH + bossSpace + pad;
 

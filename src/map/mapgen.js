@@ -15,10 +15,11 @@ export function generateMap(rng, act) {
   };
 
   // Carve paths
+  const allowedStartsCount = Math.min(COLS, 3);
+  const allowedStarts = rng.sample(Array.from({ length: COLS }, (_, i) => i), allowedStartsCount);
   const starts = [];
   for (let p = 0; p < PATHS; p++) {
-    let cur = p < COLS ? p % COLS : rng.int(0, COLS - 1);
-    if (p === 0) cur = rng.int(0, COLS - 1);
+    let cur = p < allowedStartsCount ? allowedStarts[p] : rng.pick(allowedStarts);
     ensure(0, cur);
     if (!starts.includes(cur)) starts.push(cur);
     for (let r = 1; r < ROWS; r++) {

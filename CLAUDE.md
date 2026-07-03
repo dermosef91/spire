@@ -97,7 +97,7 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   callback before reaching for a bigger fix.
   Tap-to-play is **two-tap**: first tap sets `previewCard` (card straightens +
   enlarges via `.previewing`, `--angle/--shift` zeroed), second tap commits;
-  drag-to-play bypasses the preview. Node entry runs through `Game.veilTransition`
+  drag-to-play bypasses the preview. Always compare `previewCard` / `pendingCard` against hand card items using `.uid` (not strict reference inequality/equality), as reference mismatches will break keyboard selectors and trigger redundant highlights. Node entry runs through `Game.veilTransition`
   (a `.scene-veil` fade) so combat/events don't snap in.
   Enemies choose moves via `bp.pick(s, c, rng)`; prefer `rng.weighted(...)` +
   the player-state helpers in `enemies.js` (`playerLowHp`/`playerBlocked`/
@@ -175,6 +175,7 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   `width`/`height` rather than a `transform: scale()`, since scale is already
   used by the `:hover`/pulse animations on the *reachable* state and the two
   would fight.
+- **Bottom row constraint**: The bottom row (row 0) must never contain more than 3 starting options. This is enforced during map generation in `src/map/mapgen.js` by sampling at most 3 starting columns (`Math.min(COLS, 3)`) using `rng.sample`, ensuring all carved paths start from one of these sampled columns.
 - Each node gets a small **deterministic pixel jitter** — `jitter(row, col)`
   in `showMap()`, a hash of row/col (not `Math.random()`, so it's stable
   across re-renders) — so the grid reads hand-drawn instead of gridded. Both
@@ -303,7 +304,7 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
   `CSSMediaRule`s with the expected `conditionText` — if the block you edited
   is missing from that list entirely, walk backward through the preceding
   comments for a stray `*/`.
-- **Holographic / Iridescent Sheen**: Cards and customized clipped buttons (`.btn` and `.end-turn`) feature a dynamic iridescent sweep on hover. This is implemented via an absolute `::after` overlay utilizing a screen blending linear-gradient and a looping `@keyframes foil` position animation. For custom button shapes with non-rectangular bounds (polygons), the `::after` overlay must match the exact parent `clip-path` polygon. Disable these hover animations in the `@media (prefers-reduced-motion: reduce)` block.
+- **Holographic / Iridescent Sheen**: Cards and customized clipped buttons (`.btn` and `.end-turn`) feature a dynamic iridescent sweep on hover. This is implemented via an absolute `::after` overlay utilizing a screen blending radial-gradient (bent sphere reflection) and a smooth position tracking transition linked to the mouse cursor position. For custom button shapes with non-rectangular bounds (polygons), the `::after` overlay must match the exact parent `clip-path` polygon. Disable these hover animations in the `@media (prefers-reduced-motion: reduce)` block.
 - **Auto-Update Learnings**: On every action/task, if you discover a project-specific gotcha, solve a debugging issue, or establish a new convention/pattern, you must immediately update `CLAUDE.md` and `.agents/AGENTS.md` to persist this learning.
 - **Landscape-phone breakpoint (`@media (max-height: 560px)`)**: this is the
   single hook for short viewports. `.title` and `.charselect` are plain

@@ -132,16 +132,15 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
   pointer-events: none;
   opacity: 0;
   clip-path: polygon(15px 0%, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 15px 100%, 0% 50%);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 215, 150, 0) 30%,
-    rgba(255, 215, 150, 0.03) 45%,
-    rgba(255, 240, 210, 0.12) 50%,
-    rgba(255, 215, 150, 0.03) 55%,
-    rgba(255, 215, 150, 0) 70%
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 240, 210, 0.16) 0%,
+    rgba(255, 215, 150, 0.04) 30%,
+    transparent 65%
   );
-  background-size: 300% 300%;
-  background-position: calc(50% + var(--mx, 0) * -150%) calc(50% + var(--my, 0) * -150%);
+  background-size: 200% 200%;
+  background-position: calc(50% + var(--mx, 0) * -100%) calc(50% + var(--my, 0) * -100%);
+  background-repeat: no-repeat;
   mix-blend-mode: screen;
   transition: opacity 0.3s ease, background-position 0.2s ease;
   z-index: 4;
@@ -549,16 +548,13 @@ body.scene-reward #bg-image.show {
   50% { transform: translate(-50%,-50%) scale(1.12);
     filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 16px rgba(255,106,26,0.95)); }
 }
-/* Decorative concentric rings behind the current node and the boss (subtle —
-   a single thin ember ring that reads as a halo, not a badge). */
-.map-node.current::before, .map-node.node-boss::before {
-  content: ''; position: absolute; left: 50%; top: 50%; width: 148%; height: 148%;
+.map-node.node-boss::before {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 112%; height: 112%;
   transform: translate(-50%, -50%); border-radius: 50%;
-  border: 1px solid rgba(255, 176, 70, 0.28); pointer-events: none;
+  border: 1px solid rgba(232, 67, 26, 0.34); pointer-events: none;
 }
-.map-node.node-boss::before { width: 160%; height: 160%; border-color: rgba(232, 67, 26, 0.34); }
 /* Tiny four-point sparkle accent on the boss + reachable nodes. */
-.map-node.reachable::after, .map-node.node-boss::after {
+.map-node.reachable::after, .map-node.node-boss.reachable::after {
   content: ''; position: absolute; top: 4%; right: 2%; width: 9px; height: 9px; pointer-events: none;
   background:
     radial-gradient(circle, rgba(255,224,180,0.9) 0.5px, transparent 1.5px) center/100% 100%,
@@ -566,7 +562,7 @@ body.scene-reward #bg-image.show {
     linear-gradient(rgba(255,200,140,0.55), rgba(255,200,140,0.55)) center/100% 1px no-repeat;
   opacity: 0.7; animation: sparkTwinkle 2.4s ease-in-out infinite;
 }
-.map-node.node-boss::after { top: 2%; right: 0; width: 11px; height: 11px; }
+.map-node.node-boss.reachable::after { top: 2%; right: 0; width: 11px; height: 11px; }
 @keyframes sparkTwinkle { 0%,100% { opacity: 0.35; transform: scale(0.85); } 50% { opacity: 0.85; transform: scale(1.1); } }
 /* The player's current position reads as the largest glyph on the board. */
 .map-node.current { width: 72px; height: 72px; color: var(--cream); z-index: 2;
@@ -584,7 +580,8 @@ body.scene-reward #bg-image.show {
   transform: scale(2.25);
 }
 .node-elite { color: var(--ember); } .node-boss { color: var(--orange); }
-.map-node.node-boss { width: 64px; height: 64px; animation: bossPulse 2.1s ease-in-out infinite; }
+.map-node.node-boss { width: 256px; height: 256px; transform: translate(-50%, -50%); }
+.map-node.node-boss.reachable { animation: bossPulse 2.1s ease-in-out infinite; }
 @keyframes bossPulse {
   0%,100% { filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 10px rgba(232,67,26,0.55)); transform: translate(-50%,-50%) scale(1); }
   50% { filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) drop-shadow(0 0 24px rgba(232,67,26,0.95)); transform: translate(-50%,-50%) scale(1.06); }
@@ -632,6 +629,8 @@ body.scene-reward #bg-image.show {
 .card.type-skill { --c-border: #9fb0c4; }
 .card.type-power { --c-border: var(--c-power); }
 .card.upgraded { --c-border: var(--amber); box-shadow: 0 12px 28px rgba(0,0,0,0.6), 0 0 18px rgba(255,176,46,0.5); }
+.card.type-skill.upgraded { --c-border: #bcd6ff; box-shadow: 0 12px 28px rgba(0,0,0,0.6), 0 0 18px rgba(120,180,255,0.55); }
+.card.type-skill.upgraded::before { border-color: rgba(140,190,255,0.15); }
 
 /* Fanning & Hand Placement */
 .card.in-hand {
@@ -669,16 +668,15 @@ body.scene-reward #bg-image.show {
   border-radius: 8px;
   pointer-events: none;
   opacity: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 215, 150, 0) 30%,
-    rgba(255, 215, 150, 0.03) 45%,
-    rgba(255, 240, 210, 0.12) 50%,
-    rgba(255, 215, 150, 0.03) 55%,
-    rgba(255, 215, 150, 0) 70%
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 240, 210, 0.16) 0%,
+    rgba(255, 215, 150, 0.04) 30%,
+    transparent 65%
   );
-  background-size: 300% 300%;
-  background-position: calc(50% + var(--mx, 0) * -150%) calc(50% + var(--my, 0) * -150%);
+  background-size: 200% 200%;
+  background-position: calc(50% + var(--mx, 0) * -100%) calc(50% + var(--my, 0) * -100%);
+  background-repeat: no-repeat;
   mix-blend-mode: screen;
   transition: opacity 0.3s ease, background-position 0.2s ease;
   z-index: 5;
@@ -726,6 +724,9 @@ body.scene-reward #bg-image.show {
 .card-name { font-family: var(--font-display); font-size: clamp(10px, calc(var(--card-h) * 0.072), 24px); text-align: center; color: var(--cream); letter-spacing: 0.04em;
   text-transform: uppercase; line-height: 1.05; min-height: 1.1em; margin: 1px 0 3px; padding: 0 14px; text-shadow: 0 1px 3px #000; }
 .card.upgraded .card-name { color: var(--amber); }
+.card.type-skill.upgraded .card-name { color: #bcd6ff; }
+.card.type-skill.upgraded .card-cost { box-shadow: 0 0 12px rgba(120,180,255,0.6), inset 0 0 6px rgba(160,200,255,0.45); }
+.card.type-skill.upgraded .card-art { border-color: rgba(140,190,255,0.22); }
 .card-art { position: relative; height: clamp(38px, calc(var(--card-h) * 0.36), 116px); border-radius: 4px; margin: 0 1px 2px; overflow: hidden;
   background: radial-gradient(circle at 50% 48%, #241307 0%, #0a0604 78%);
   border: 1px solid rgba(255,170,80,0.18); display: grid; place-items: center; }
@@ -1153,16 +1154,15 @@ body.scene-reward #bg-image.show {
   pointer-events: none;
   opacity: 0;
   clip-path: polygon(12% 0, 88% 0, 100% 50%, 88% 100%, 12% 100%, 0 50%);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 215, 150, 0) 30%,
-    rgba(255, 215, 150, 0.03) 45%,
-    rgba(255, 240, 210, 0.12) 50%,
-    rgba(255, 215, 150, 0.03) 55%,
-    rgba(255, 215, 150, 0) 70%
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 240, 210, 0.16) 0%,
+    rgba(255, 215, 150, 0.04) 30%,
+    transparent 65%
   );
-  background-size: 300% 300%;
-  background-position: calc(50% + var(--mx, 0) * -150%) calc(50% + var(--my, 0) * -150%);
+  background-size: 200% 200%;
+  background-position: calc(50% + var(--mx, 0) * -100%) calc(50% + var(--my, 0) * -100%);
+  background-repeat: no-repeat;
   mix-blend-mode: screen;
   transition: opacity 0.3s ease, background-position 0.2s ease;
   z-index: 4;

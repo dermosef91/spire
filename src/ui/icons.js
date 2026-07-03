@@ -41,7 +41,7 @@ export const UI = {
   coin: S(`<circle cx="50" cy="50" r="30" fill="${A}" stroke="${C}" stroke-width="3"/><circle cx="50" cy="50" r="22" fill="none" stroke="#6a3a10" stroke-width="2"/><path d="M44 40 q12 10 0 20 M56 40 q-12 10 0 20" stroke="#6a3a10" stroke-width="3"/>`),
   energy: S(`${rays(50, 50, 30, 42, 12, O, 0.6, 2)}<circle cx="50" cy="50" r="26" fill="none" stroke="${O}" stroke-width="4"/><path d="M54 30 L40 54 H50 L46 70 L62 44 H52 Z" fill="${A}" stroke="${C}" stroke-width="2"/>`),
   shield: S(`<path d="M50 18 L78 28 V52 C78 70 64 80 50 84 C36 80 22 70 22 52 V28 Z" fill="#123" stroke="#9fc2ff" stroke-width="4"/><path d="M50 30 V72" stroke="#9fc2ff" stroke-width="3" opacity="0.7"/>`),
-  draw: S(`<rect x="30" y="26" width="34" height="48" rx="4" transform="rotate(-10 47 50)" fill="#16100b" stroke="${O}" stroke-width="4"/><circle cx="47" cy="50" r="9" fill="none" stroke="${A}" stroke-width="3"/>`),
+  draw: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115 135" class="svg-ic" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="12" y="12" width="68" height="100" rx="5" fill="#0c0806" stroke="#5c544a" stroke-width="1.5" opacity="0.4" transform="rotate(-10 46 62)"/><rect x="17" y="15" width="68" height="100" rx="5" fill="#0d0805" stroke="#7e746a" stroke-width="1.8" opacity="0.8" transform="rotate(-7 51 65)"/><g transform="rotate(-4 56 68)"><rect x="22" y="18" width="68" height="100" rx="5" fill="#0f0906" stroke="#dcd4cc" stroke-width="2"/><rect x="26" y="22" width="60" height="92" rx="3.5" stroke="#ffab47" stroke-width="0.8" opacity="0.3"/><path d="M 28 28 L 28 24 L 32 24" stroke="#ffab47" stroke-width="1"/><path d="M 84 28 L 84 24 L 80 24" stroke="#ffab47" stroke-width="1"/><path d="M 28 104 L 28 108 L 32 108" stroke="#ffab47" stroke-width="1"/><path d="M 84 104 L 84 108 L 80 108" stroke="#ffab47" stroke-width="1"/><line x1="29" y1="68" x2="83" y2="68" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><line x1="56" y1="36" x2="56" y2="100" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><circle cx="29" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="83" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="36" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="100" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="68" r="22" stroke="#dcd4cc" stroke-width="1.2"/><circle cx="56" cy="68" r="17" stroke="#ffab47" stroke-width="0.8" stroke-dasharray="1 2"/><circle cx="56" cy="68" r="13" stroke="#ff6a1a" stroke-width="2"/><circle cx="56" cy="68" r="8" stroke="#ffab47" stroke-width="1" fill="#130b07"/><circle cx="56" cy="68" r="3" fill="#ffab47"/></g></svg>`,
   discard: S(`<rect x="30" y="30" width="40" height="44" rx="4" fill="#16100b" stroke="${O}" stroke-width="4"/><path d="M38 44 L62 64 M62 44 L38 64" stroke="${E}" stroke-width="4"/>`),
   exhaust: S(`<rect x="32" y="30" width="36" height="44" rx="4" fill="#16100b" stroke="${O}" stroke-width="4" opacity="0.8"/><path d="M50 26 C60 36 40 40 50 52 C60 64 40 68 50 78" stroke="${A}" stroke-width="3" fill="none"/>`),
   drawStack: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115 135" class="svg-ic" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="12" y="12" width="68" height="100" rx="5" fill="#0c0806" stroke="#5c544a" stroke-width="1.5" opacity="0.4" transform="rotate(-10 46 62)"/><rect x="17" y="15" width="68" height="100" rx="5" fill="#0d0805" stroke="#7e746a" stroke-width="1.8" opacity="0.8" transform="rotate(-7 51 65)"/><g transform="rotate(-4 56 68)"><rect x="22" y="18" width="68" height="100" rx="5" fill="#0f0906" stroke="#dcd4cc" stroke-width="2"/><rect x="26" y="22" width="60" height="92" rx="3.5" stroke="#ffab47" stroke-width="0.8" opacity="0.3"/><path d="M 28 28 L 28 24 L 32 24" stroke="#ffab47" stroke-width="1"/><path d="M 84 28 L 84 24 L 80 24" stroke="#ffab47" stroke-width="1"/><path d="M 28 104 L 28 108 L 32 108" stroke="#ffab47" stroke-width="1"/><path d="M 84 104 L 84 108 L 80 108" stroke="#ffab47" stroke-width="1"/><line x1="29" y1="68" x2="83" y2="68" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><line x1="56" y1="36" x2="56" y2="100" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><circle cx="29" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="83" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="36" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="100" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="68" r="22" stroke="#dcd4cc" stroke-width="1.2"/><circle cx="56" cy="68" r="17" stroke="#ffab47" stroke-width="0.8" stroke-dasharray="1 2"/><circle cx="56" cy="68" r="13" stroke="#ff6a1a" stroke-width="2"/><circle cx="56" cy="68" r="8" stroke="#ffab47" stroke-width="1" fill="#130b07"/><circle cx="56" cy="68" r="3" fill="#ffab47"/></g></svg>`,
@@ -70,22 +70,10 @@ export const INTENT = {
 export const NODE = {
   // Combat — a custom PNG icon.
   monster: `<img src="assets/icons/combat.png" class="svg-ic" alt="Combat" />`,
-  // Elite — a horned demon skull: curved horns, ember eyes, gnashing teeth.
-  elite: S(`
-    <path d="M31 42 Q22 30 20 22 Q30 26 36 38 M69 42 Q78 30 80 22 Q70 26 64 38" stroke="currentColor" stroke-width="4.5" fill="none"/>
-    <path d="M50 28 C34 28 28 42 28 54 C28 62 33 66 35 72 L37 80 H63 L65 72 C67 66 72 62 72 54 C72 42 66 28 50 28Z" fill="#16100b" stroke="currentColor" stroke-width="5"/>
-    <path d="M35 52 L46 47 L46 59Z M65 52 L54 47 L54 59Z" fill="${E}" stroke="currentColor" stroke-width="1.5"/>
-    <path d="M46 63 L50 69 L54 63" stroke="currentColor" stroke-width="2.6" fill="none"/>
-    <path d="M43 73 V80 M50 72 V80 M57 73 V80" stroke="currentColor" stroke-width="2.6"/>`),
-  // Boss — a crowned, horned warlord skull on a halo of rings.
-  boss: S(`
-    ${rings(50, 50, 2, 17, 'currentColor', 0.3)}
-    <path d="M28 44 Q15 30 12 20 Q26 26 33 40 M72 44 Q85 30 88 20 Q74 26 67 40" stroke="currentColor" stroke-width="4" fill="none"/>
-    <path d="M50 24 L45 11 M50 24 L55 11" stroke="currentColor" stroke-width="3.4"/>
-    <path d="M50 26 C31 26 23 42 23 56 C23 66 29 70 31 78 L34 88 H66 L69 78 C71 70 77 66 77 56 C77 42 69 26 50 26Z" fill="#1a0603" stroke="currentColor" stroke-width="5"/>
-    <path d="M33 54 L45 48 L45 62Z M67 54 L55 48 L55 62Z" fill="${E}" stroke="currentColor" stroke-width="1.6"/>
-    <path d="M45 65 L50 72 L55 65" stroke="currentColor" stroke-width="3" fill="none"/>
-    <path d="M41 80 V88 M50 79 V88 M59 80 V88" stroke="currentColor" stroke-width="3"/>`),
+  // Elite — a custom PNG icon.
+  elite: `<img src="assets/icons/elite.png" class="svg-ic" alt="Elite" />`,
+  // Boss — a custom PNG icon.
+  boss: `<img src="assets/icons/boss.png" class="svg-ic" alt="Boss" />`,
   // Unknown event — a glyph-question rising from a spark, with drifting motes.
   event: S(`
     <path d="M39 42 C39 27 65 29 63 44 C61 55 50 54 50 65" stroke="currentColor" stroke-width="8"/>
@@ -100,11 +88,8 @@ export const NODE = {
     <path d="M31 58 H69" stroke="currentColor" stroke-width="2.4" opacity="0.7"/>
     <circle cx="50" cy="65" r="6.5" fill="none" stroke="${A}" stroke-width="3"/>
     <path d="M50 61 V69 M47 63 q3.5 2 0 4" stroke="${A}" stroke-width="2" fill="none"/>`),
-  // Ancestor Fire — a campfire flame dancing over crossed logs.
-  rest: S(`
-    <path d="M50 24 C59 39 71 44 62 61 C58 71 42 71 38 61 C31 47 43 42 50 24Z" fill="${E}" stroke="currentColor" stroke-width="4"/>
-    <path d="M50 39 C54 47 59 50 54 60" stroke="${A}" stroke-width="3" fill="none"/>
-    <path d="M28 74 L72 66 M28 66 L72 74" stroke="currentColor" stroke-width="4"/>`),
+  // Rest — a custom PNG icon.
+  rest: `<img src="assets/icons/rest.png" class="svg-ic" alt="Rest" />`,
   // Treasure — a banded chest with a glinting lock and a sparkle.
   treasure: S(`
     <path d="M26 44 C26 30 74 30 74 44" fill="#16100b" stroke="currentColor" stroke-width="5"/>

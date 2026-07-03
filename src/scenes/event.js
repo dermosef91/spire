@@ -46,10 +46,24 @@ export const EventScene = {
   resolveEventChoice(ev, ch) {
     const run = this.run;
     if (ch.flow === 'upgrade') {
-      this.deckOverlay((c) => canUpgrade(c), (entry) => {
-        run.deck[entry._i].upgraded = true;
-        this.resultThenMap(ch.effect(run));
-      }, 'Upgrade which card?', 'cardflip');
+      const pickUpgrade = () => {
+        this.deckOverlay((c) => canUpgrade(c), (entry) => {
+          this.upgradePreview(
+            entry,
+            () => {
+              run.deck[entry._i].upgraded = true;
+              this.resultThenMap(ch.effect(run));
+            },
+            () => pickUpgrade(),
+            {
+              title: 'Upgrade this card?',
+              confirmText: 'Upgrade',
+              labelAfter: 'Upgraded',
+            }
+          );
+        }, 'Upgrade which card?', 'cardflip');
+      };
+      pickUpgrade();
       return;
     }
     if (ch.flow === 'removeForGold') {

@@ -1,0 +1,102 @@
+[
+  {
+    "id": "ancestral_cuirass",
+    "rarity": "starter",
+    "prompt": "An ancient ornate cuirass breastplate forged from dark iron and brass, decorated with cowrie shells and geometric tribal etchings. Ember-orange rim light. High contrast woodcut style, clean bold silhouette. Centered isolated object."
+  },
+  {
+    "id": "griot_drum",
+    "rarity": "starter",
+    "prompt": "A beautifully carved African djembe hand drum, adorned with woven ropes and geometric brass patterns. Ember-orange highlights. Afrofuturist woodcut illustration, distinct silhouette. Centered isolated object."
+  },
+  {
+    "id": "star_lens",
+    "rarity": "starter",
+    "prompt": "A stellar focus lens held in a bronze geometric frame, etched with clean geometric patterns. Inner amber light glowing from the lens. Risograph screen-print style, bold clear shape. Centered isolated object."
+  },
+  {
+    "id": "brass_anklet",
+    "rarity": "common",
+    "prompt": "A heavy burnished brass anklet ring with geometric African-inspired pattern carvings. Faint orange glow, high contrast black-ink linework, bold ring silhouette. Centered isolated object."
+  },
+  {
+    "id": "kente_wrap",
+    "rarity": "common",
+    "prompt": "A folded sash of beautifully patterned kente cloth, with vibrant stripes of amber, orange, and cream. Textured woodcut style, distinct rectangular wrap shape. Centered isolated object."
+  },
+  {
+    "id": "cowrie_purse",
+    "rarity": "common",
+    "prompt": "A small woven fiber pouch overflowing with shiny cream-colored cowrie shells. Textured risograph print, dark ink lines, clear pouch silhouette. Centered isolated object."
+  },
+  {
+    "id": "healing_gourd",
+    "rarity": "common",
+    "prompt": "A dried calabash gourd flask wrapped in protective fiber netting, glowing with a soft healing amber light. Afrofuturist woodcut, distinct hourglass-like gourd silhouette. Centered isolated object."
+  },
+  {
+    "id": "whetstone_idol",
+    "rarity": "common",
+    "prompt": "A stylized, carved stone idol representing ancestors, with one side of its head shaped like a sharp whetstone. Bold orange rim light, strong carved block silhouette. Centered isolated object."
+  },
+  {
+    "id": "ancestor_bead",
+    "rarity": "common",
+    "prompt": "A single ancient polished glass bead with simple geometric bands in black, orange, and cream. Highly reflective amber highlights, bold sphere silhouette. Centered isolated object."
+  },
+  {
+    "id": "sun_disk",
+    "rarity": "uncommon",
+    "prompt": "A brilliant golden disk representing the sun, with radiating geometric sunburst rays. Bold clean circular silhouette, woodcut print. Centered isolated object."
+  },
+  {
+    "id": "obsidian_charm",
+    "rarity": "uncommon",
+    "prompt": "A polished, sharp shard of dark volcanic obsidian, wrapped in copper wire with geometric charms. Ember-orange rim lighting, sharp triangular shard silhouette. Centered isolated object."
+  },
+  {
+    "id": "talking_drum",
+    "rarity": "uncommon",
+    "prompt": "A traditional talking drum (hourglass-shaped) with tense leather strings running along its sides. Graphic Afrofuturist woodcut, distinct hourglass shape. Centered isolated object."
+  },
+  {
+    "id": "mask_of_masks",
+    "rarity": "uncommon",
+    "prompt": "A ceremonial composite mask consisting of stylized wooden panels and brass plates, depicting a stylized face. Simple bold geometric accents. Centered isolated object."
+  },
+  {
+    "id": "iron_lattice",
+    "rarity": "uncommon",
+    "prompt": "An ornate wrought-iron grille or lattice plate featuring geometric interlocking bands. High contrast black ink lines and orange highlights, bold grid silhouette. Centered isolated object."
+  },
+  {
+    "id": "twin_serpent",
+    "rarity": "rare",
+    "prompt": "A heavy signet ring depicting two interlocked, stylized cosmic serpents eating each other's tails, crafted from star-iron and brass. Bold circular ring silhouette. Centered isolated object."
+  },
+  {
+    "id": "heart_of_nyumbani",
+    "rarity": "rare",
+    "prompt": "A pulsating mechanical heart construct made of dark iron casing and glowing ember-orange energy coils. Futuristic woodcut style, distinct heart shape. Centered isolated object."
+  },
+  {
+    "id": "ancestor_idol",
+    "rarity": "rare",
+    "prompt": "A tall, imposing wooden and bronze carved ancestral totem statue, radiating ancient authority. Strong vertical column silhouette. Centered isolated object."
+  },
+  {
+    "id": "cosmic_egg",
+    "rarity": "rare",
+    "prompt": "A smooth star-iron cosmic egg carved with glowing geometric constellation lines. Amber inner glow, bold oval silhouette. Centered isolated object."
+  },
+  {
+    "id": "eternal_flame",
+    "rarity": "boss",
+    "prompt": "A heavy bronze brazier holding an unquenchable, crackling fire of pure ember-orange flame. Woodcut textures, clear brazier and flame silhouette. Centered isolated object."
+  },
+  {
+    "id": "ascendant_crown",
+    "rarity": "boss",
+    "prompt": "A majestic, heavy crown forged from dark obsidian and radiating star-iron spikes, encrusted with glowing ember gems. Regal and imposing silhouette. Centered isolated object."
+  }
+]
