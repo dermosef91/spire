@@ -40,11 +40,8 @@ export const CombatScene = {
     this.setScene(holder, 'combat');
     view.mount(holder);
     // First-ever combat: run the interactive tutorial once the opening draw
-    // settles. Rhythm QTEs sit out this one fight so the tutorial's coaching
-    // isn't interrupted by an unexplained mini-game.
+    // settles.
     if (!this.meta.tutorialDone && kind === 'monster') {
-      view.rhythmSuppressed = true;
-      combat.parryPrompt = null;
       const finishTutorial = () => { this.meta.tutorialDone = true; saveMeta(this.meta); };
       setTimeout(() => {
         if (combat.over) { finishTutorial(); return; }

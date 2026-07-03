@@ -1979,25 +1979,66 @@ img.svg-ic { object-fit: contain; }
   .title-setting-btn { padding: 4px 12px; font-size: 11px; }
   .title-meta { font-size: 10px; margin: 6px auto; padding: 4px 14px; }
 
-  .charselect { padding-top: 2px; }
-  .charselect h2 { font-size: 18px; margin-bottom: 8px; }
-  .char-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
-  .char-card { padding: 6px; gap: 2px; --notch: 8px; }
-  .char-glyph { width: 44px; height: 44px; margin: 0 auto; }
-  .char-name { font-size: 14px; }
-  .char-title { font-size: 8px; }
+  .scene.charselect {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: safe center;
+    box-sizing: border-box;
+    padding: 8px 16px;
+  }
+
+  .charselect {
+    padding-top: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+  .charselect h2 { font-size: 18px; margin-top: 0; margin-bottom: 8px; }
+  .char-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+    width: 100%;
+    max-width: 960px;
+  }
+  .char-card {
+    padding: 10px 8px;
+    gap: 4px;
+    --notch: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    box-sizing: border-box;
+  }
+  .char-glyph { width: clamp(60px, 18vh, 100px); height: clamp(60px, 18vh, 100px); margin: 0 auto 2px; }
+  .char-name { font-size: clamp(14px, 4vh, 18px); line-height: 1.1; }
+  .char-title { font-size: 8.5px; letter-spacing: 0.1em; }
   .char-hp { font-size: 11px; }
   .char-blurb {
-    min-height: 0; font-size: 10px; line-height: 1.25;
-    display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+    min-height: 0; font-size: 10px; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
   }
   .char-relic {
-    min-height: 0; font-size: 9px; padding: 3px 5px;
-    display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+    min-height: 0; font-size: 9.5px; padding: 4px 6px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .char-relic-label { font-size: 8px; margin-bottom: 1px; }
-  .char-card .btn { min-height: 24px; min-width: 0; padding: 3px 12px; font-size: 10.5px; }
-  .charselect > .btn { min-height: 30px; padding: 5px 20px; font-size: 12px; }
+  .char-relic-label { font-size: 8px; margin-bottom: 2px; }
+  .char-card .btn { min-height: 26px; min-width: 0; padding: 4px 12px; font-size: 11px; margin-top: 4px; }
+  .charselect > .btn { min-height: 30px; padding: 5px 20px; font-size: 12px; margin-top: 4px; }
+
+  /* Compact Ascension Selector for mobile landscape */
+  .asc-select { margin: 4px auto 2px; }
+  .asc-row { gap: 8px; }
+  .asc-row .btn { min-width: 36px; padding: 3px 8px; font-size: 11px; }
+  .asc-label { font-size: 14px; min-width: 120px; text-shadow: 0 0 10px rgba(255,170,60,0.5); }
+  .asc-desc { margin-top: 2px; min-height: 12px; }
+  .asc-mod { font-size: 9.5px; }
+  .asc-base { font-size: 10px; }
 }
 
 /* combat medallion model fills the disc; whole model floats, parts animate */

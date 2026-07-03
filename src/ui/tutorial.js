@@ -13,40 +13,6 @@ import { audio } from '../audio.js';
 const isBlockCard = (c) => c.type === 'skill' && (c.block || 0) > 0;
 const isAttackCard = (c) => c.type === 'attack';
 
-const STEPS = [
-  {
-    text: 'Cards win battles. Each costs Àṣẹ — your energy, refilled every turn.',
-    button: 'Next',
-    highlight: () => ['.hand .card', '.combat-controls .energy-orb'],
-  },
-  {
-    text: 'Above each foe, its intent shows what it will do next.',
-    button: 'Next',
-    highlight: () => ['.combatant.enemy .intent'],
-    align: 'left', // keep the banner off the intent pill on small screens
-  },
-  {
-    text: 'The foe is about to strike. Play a Block skill to shield yourself.',
-    await: 'block',
-    hint: 'Play the highlighted card',
-  },
-  {
-    text: 'Well shielded. Now hit back — play an Attack card.',
-    await: 'attack',
-    hint: 'Play the highlighted card',
-  },
-  {
-    text: 'Well struck. Now end your turn and let your foe act.',
-    await: 'endturn',
-    hint: 'End your turn →',
-    highlight: () => ['.end-turn'],
-  },
-  {
-    text: 'That is the loop. Defeat every foe for rewards, then climb toward the Spire. Àṣẹ be with you.',
-    button: 'Begin',
-  },
-];
-
 export class CombatTutorial {
   constructor(game, combat, onDone) {
     this.game = game;
@@ -55,6 +21,47 @@ export class CombatTutorial {
     this.i = 0;
     this.done = false;
     this.targetUid = null;
+
+    const rhythm = this.game.rhythmOn();
+    const isTouch = this.game.isTouch();
+
+    this.steps = [
+      {
+        text: 'Cards win battles. Each costs Àṣẹ — your energy, refilled every turn.',
+        button: 'Next',
+        highlight: () => ['.hand .card', '.combat-controls .energy-orb'],
+      },
+      {
+        text: 'Above each foe, its intent shows what it will do next.',
+        button: 'Next',
+        highlight: () => ['.combatant.enemy .intent'],
+        align: 'left', // keep the banner off the intent pill on small screens
+      },
+      {
+        text: 'The foe is about to strike. Play a Block skill to shield yourself.',
+        await: 'block',
+        hint: 'Play the highlighted card',
+      },
+      {
+        text: rhythm
+          ? `Well shielded. Now play an Attack card. Time your ${isTouch ? 'swipe' : 'press'} when the ring matches the circle to strike harder!`
+          : 'Well shielded. Now hit back — play an Attack card.',
+        await: 'attack',
+        hint: 'Play the highlighted card',
+      },
+      {
+        text: rhythm
+          ? `Well struck. Now end your turn. When the foe attacks, time your ${isTouch ? 'tap' : 'press'} to PARRY and preserve your block!`
+          : 'Well struck. Now end your turn and let your foe act.',
+        await: 'endturn',
+        hint: 'End your turn →',
+        highlight: () => ['.end-turn'],
+      },
+      {
+        text: 'That is the loop. Defeat every foe for rewards, then climb toward the Spire. Àṣẹ be with you.',
+        button: 'Begin',
+      },
+    ];
   }
 
   start() {
@@ -70,7 +77,7 @@ export class CombatTutorial {
   }
 
   render() {
-    const step = STEPS[this.i];
+    const step = this.steps[this.i];
     this.banner.classList.toggle('tut-left', step.align === 'left');
     this.banner.innerHTML = '';
     this.banner.appendChild(el('p', { class: 'tut-text', text: step.text }));
@@ -101,7 +108,7 @@ export class CombatTutorial {
 
   applyHighlight() {
     document.querySelectorAll('.tut-highlight').forEach((el2) => el2.classList.remove('tut-highlight'));
-    const step = STEPS[this.i];
+    const step = this.steps[this.i];
     const selectors = step.highlight ? step.highlight() : [];
     if (this.targetUid) selectors.push(`.hand .card[data-uid="${this.targetUid}"]`);
     for (const sel of selectors) {
@@ -128,7 +135,7 @@ export class CombatTutorial {
   next() {
     if (this.done) return;
     audio.play('select');
-    if (this.i >= STEPS.length - 1) { this.finish(); return; }
+    if (this.i >= this.steps.length - 1) { this.finish(); return; }
     this.i += 1;
     this.render();
   }
