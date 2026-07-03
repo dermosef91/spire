@@ -80,14 +80,8 @@ export const NODE = {
     <circle cx="50" cy="79" r="5" fill="currentColor"/>
     <path d="M24 30 l2.4 5.4 5.4 2.4 -5.4 2.4 -2.4 5.4 -2.4 -5.4 -5.4 -2.4 5.4 -2.4Z" fill="${A}" opacity="0.85"/>
     <circle cx="74" cy="62" r="2.4" fill="${A}" opacity="0.7"/>`),
-  // Bazaar — a striped market awning over a stall counter and a coin.
-  shop: S(`
-    <path d="M30 40 L34 27 H66 L70 40 Z" fill="#16100b" stroke="currentColor" stroke-width="3.5"/>
-    <path d="M42 27 L41 40 M50 27 V40 M58 27 L59 40" stroke="currentColor" stroke-width="2" opacity="0.75"/>
-    <path d="M31 40 V74 H69 V40" fill="none" stroke="currentColor" stroke-width="3.4"/>
-    <path d="M31 58 H69" stroke="currentColor" stroke-width="2.4" opacity="0.7"/>
-    <circle cx="50" cy="65" r="6.5" fill="none" stroke="${A}" stroke-width="3"/>
-    <path d="M50 61 V69 M47 63 q3.5 2 0 4" stroke="${A}" stroke-width="2" fill="none"/>`),
+  // Bazaar — a custom PNG icon.
+  shop: `<img src="assets/icons/bazaar.png" class="svg-ic" alt="Bazaar" />`,
   // Rest — a custom PNG icon.
   rest: `<img src="assets/icons/rest.png" class="svg-ic" alt="Rest" />`,
   // Treasure — a banded chest with a glinting lock and a sparkle.

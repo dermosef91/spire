@@ -38,9 +38,9 @@ const ID_FILTER = idsFlag
     : null;
 
 // ── Style bible (embedded in every prompt) ──────────────────────────────────
-const STYLE_BIBLE = `Afrofuturist dark graphic illustration of a single relic object in a bold woodcut / risograph screen-print style. Pure black background, bold black ink linework, very high contrast, strictly limited palette of ember orange #ff6a1a, deep ember #e8431a, amber #ffab47, cream #f3e8d8 — absolutely no other hues. Focus on a clean, distinct silhouette with simple bold shapes, optimized for readability at a very small icon scale. Geometric African-inspired ornamental patterns. No glowing halos, no concentric floating circle sigils, no background star fields, no ground shadow, no text, no border, no UI chrome.`;
+const STYLE_BIBLE = `Afrofuturist dark graphic illustration of a single relic object in a bold woodcut / risograph screen-print style. Bold black ink linework, very high contrast, strictly limited palette of ember orange #ff6a1a, deep ember #e8431a, amber #ffab47, cream #f3e8d8 — absolutely no other hues. Focus on a clean, distinct silhouette with simple bold shapes, optimized for readability at a very small icon scale. Geometric African-inspired ornamental patterns. No glowing halos, no concentric floating circle sigils, no background star fields, no ground shadow, no text, no border, no UI chrome. Transparent background.`;
 
-const STYLE_KEY_PROMPT = `${STYLE_BIBLE} Subject: a neutral ceremonial brass vessel, centered in the exact afrofuturist dark graphic style. Geometric African-inspired trim bands, catching bold ember-orange rim lighting on pure black. Clean outline and silhouette. This is a style calibration reference image.`;
+const STYLE_KEY_PROMPT = `${STYLE_BIBLE} Subject: a neutral ceremonial brass vessel, centered on a transparent background in the exact afrofuturist dark graphic style. Geometric African-inspired trim bands, catching bold ember-orange rim lighting. Clean outline and silhouette. This is a style calibration reference image.`;
 
 // ── Cost tracking ───────────────────────────────────────────────────────────
 let totalCost = 0;
@@ -165,71 +165,35 @@ async function postProcess(sharp, buf) {
   const baseImg = sharp(buf);
   const { data, info } = await baseImg.raw().toBuffer({ resolveWithObject: true });
   
-  const channels = info.channels;
-  const visited = new Uint8Array(info.width * info.height);
-  const queue = [];
-  
-  // Helper to add pixel index to flood-fill queue
-  function enqueue(x, y) {
-    if (x < 0 || x >= info.width || y < 0 || y >= info.height) return;
-    const idx = y * info.width + x;
-    if (!visited[idx]) {
-      visited[idx] = 1;
-      queue.push(idx);
-    }
-  }
-  
-  // Initialize queue with all border pixels
-  for (let x = 0; x < info.width; x++) {
-    enqueue(x, 0);
-    enqueue(x, info.height - 1);
-  }
-  for (let y = 0; y < info.height; y++) {
-    enqueue(0, y);
-    enqueue(info.width - 1, y);
-  }
-  
-  // Create output buffer (RGBA, default to opaque copy of src)
   const outputBuffer = Buffer.alloc(info.width * info.height * 4);
+  const channels = info.channels;
+  
   for (let i = 0; i < info.width * info.height; i++) {
     const srcIdx = i * channels;
     const destIdx = i * 4;
-    outputBuffer[destIdx] = data[srcIdx];
-    outputBuffer[destIdx + 1] = data[srcIdx + 1];
-    outputBuffer[destIdx + 2] = data[srcIdx + 2];
-    outputBuffer[destIdx + 3] = channels === 4 ? data[srcIdx + 3] : 255;
-  }
-  
-  // Run flood-fill from borders
-  let head = 0;
-  while (head < queue.length) {
-    const idx = queue[head++];
-    const destIdx = idx * 4;
-    const r = outputBuffer[destIdx];
-    const g = outputBuffer[destIdx + 1];
-    const b = outputBuffer[destIdx + 2];
     
-    // Determine if background-like (very dark/black OR bright neutral checkerboard)
-    const isDark = r < 50 && g < 50 && b < 50;
-    const isBrightChecker = 
+    const r = data[srcIdx];
+    const g = data[srcIdx + 1];
+    const b = data[srcIdx + 2];
+    
+    // Check if pixel is neutral-bright (part of checkerboard background)
+    const isNeutralBright = 
       r > 150 && 
       Math.abs(r - g) < 12 && 
       Math.abs(r - b) < 12 && 
       Math.abs(g - b) < 12;
       
-    if (isDark || isBrightChecker) {
-      // Key out! Set alpha to 0 (fully transparent)
+    if (isNeutralBright) {
+      // Key out! Set alpha to 0
       outputBuffer[destIdx] = 0;
       outputBuffer[destIdx + 1] = 0;
       outputBuffer[destIdx + 2] = 0;
       outputBuffer[destIdx + 3] = 0;
-      
-      const x = idx % info.width;
-      const y = Math.floor(idx / info.width);
-      enqueue(x + 1, y);
-      enqueue(x - 1, y);
-      enqueue(x, y + 1);
-      enqueue(x, y - 1);
+    } else {
+      outputBuffer[destIdx] = r;
+      outputBuffer[destIdx + 1] = g;
+      outputBuffer[destIdx + 2] = b;
+      outputBuffer[destIdx + 3] = channels === 4 ? data[srcIdx + 3] : 255;
     }
   }
   
@@ -244,21 +208,22 @@ async function postProcess(sharp, buf) {
   try {
     img = img.trim();
   } catch {
-    // trim can fail if everything is transparent or on error
+    // trim can fail on some images, continue without
   }
 
-  // Pad back to 1024x1024
+  // Resize to 1024x1024 maintaining aspect ratio, pad with transparent
   img = img.resize(1024, 1024, {
     fit: 'contain',
     background: { r: 0, g: 0, b: 0, alpha: 0 },
   });
 
+  // Palette quantize toward our theme palette for color consistency
   img = img.png({
     compressionLevel: 9,
     adaptiveFiltering: true,
-    palette: true,
+    palette: true,  // Enable palette-based quantization
     quality: 85,
-    colours: 32,
+    colours: 32,    // Limit colors for woodcut/risograph feel
   });
 
   return img.toBuffer();

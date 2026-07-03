@@ -13,17 +13,26 @@
 import { spawn, execSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { existsSync } from 'node:fs';
+
+const CHROMIUM = existsSync('/opt/pw-browsers/chromium-1194/chrome-linux/chrome')
+  ? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
+  : '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
 const require = createRequire(import.meta.url);
 
 // Resolve the globally-installed Playwright without adding it to package.json.
 let chromium;
 try {
-  const globalRoot = execSync('npm root -g').toString().trim();
-  ({ chromium } = require(require.resolve('playwright', { paths: [globalRoot] })));
-} catch (err) {
-  console.error('Playwright is not available in this environment:', err.message);
-  process.exit(2);
+  ({ chromium } = require('playwright'));
+} catch (e) {
+  try {
+    const globalRoot = execSync('npm root -g').toString().trim();
+    ({ chromium } = require(require.resolve('playwright', { paths: [globalRoot] })));
+  } catch (err) {
+    console.error('Playwright is not available in this environment:', err.message);
+    process.exit(2);
+  }
 }
 
 const PORT = process.env.SMOKE_PORT || 8099;
@@ -53,7 +62,12 @@ const errors = [];
 
 try {
   await waitForServer();
-  browser = await chromium.launch({ headless: true });
+  const launchOptions = { headless: true };
+  if (existsSync(CHROMIUM)) {
+    launchOptions.executablePath = CHROMIUM;
+    launchOptions.args = ['--no-sandbox'];
+  }
+  browser = await chromium.launch(launchOptions);
   const page = await browser.newPage();
   page.on('console', (m) => { if (m.type() === 'error' && !IGNORE.test(m.text())) errors.push('console: ' + m.text()); });
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));

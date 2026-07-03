@@ -1,6 +1,6 @@
 # ÀṢẸ — QA screenshot & responsiveness audit
 
-Generated: 2026-07-03T07:05:46.433Z
+Generated: 2026-07-03T07:08:39.508Z
 
 Run with `node tools/qa-screenshots.js`. Screenshots and this report
 are written to `docs/qa/`.

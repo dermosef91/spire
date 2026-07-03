@@ -186,7 +186,7 @@ export class Game {
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     const overlay = el('div', { class: 'overlay' });
-    const box = el('div', { class: 'overlay-box deck-overlay' });
+    const box = el('div', { class: 'overlay-box pile-overlay' });
     box.appendChild(el('h3', { text: title }));
     const grid = el('div', { class: 'deck-grid' });
     shuffled.forEach((c) => {

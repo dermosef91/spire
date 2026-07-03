@@ -1882,6 +1882,14 @@ img.svg-ic { object-fit: contain; }
   background: none; border: none; border-radius: 0; box-shadow: none;
   padding: 12px 16px; max-width: min(95vw, 980px);
 }
+.overlay-box.pile-overlay {
+  background: none; border: none; border-radius: 0; box-shadow: none;
+  padding: 12px 16px; max-width: min(95vw, 1000px);
+  overflow: visible;
+}
+.pile-overlay .deck-grid {
+  padding: 16px;
+}
 .card-picker { --card-h: clamp(232px, 25vw, 320px); --card-w: calc(var(--card-h) * 0.7); }
 .card-picker .card-row { gap: 22px; overflow: visible; padding-top: 12px; }
 .card-picker .card { height: var(--card-h); width: var(--card-w); min-height: 0; }
