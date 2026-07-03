@@ -1010,7 +1010,8 @@ export class CombatView {
       const isDelayedPlayerHit = this._playerAttackHit && !payload.target.isPlayer;
       const applyDamageFx = () => {
         if (payload.hpLost > 0) {
-          floatText(layer, el2, String(payload.hpLost), 'damage');
+          const size = Math.round(Math.min(60, 26 + payload.hpLost * 1.4));
+          floatText(layer, el2, String(payload.hpLost), 'damage', { size });
           hitFlash(el2, 'damage');
           const big = payload.hpLost >= 14;
           shake(el2, big);

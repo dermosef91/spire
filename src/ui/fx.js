@@ -15,7 +15,7 @@ export function ensureFxLayer(scene) {
 }
 
 // Spawn a floating number/text at the given element's center.
-export function floatText(layer, targetEl, text, kind = 'damage') {
+export function floatText(layer, targetEl, text, kind = 'damage', opts = {}) {
   if (!layer || !targetEl) return;
   const lr = layer.getBoundingClientRect();
   const tr = targetEl.getBoundingClientRect();
@@ -26,6 +26,7 @@ export function floatText(layer, targetEl, text, kind = 'damage') {
   n.textContent = text;
   n.style.left = x + 'px';
   n.style.top = y + 'px';
+  if (opts.size) n.style.fontSize = opts.size + 'px';
   layer.appendChild(n);
   setTimeout(() => n.remove(), 1100);
 }
