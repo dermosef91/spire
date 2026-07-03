@@ -9,7 +9,7 @@
 //   ticksDown: true                  — decrements by 1 at the owner's turn boundary
 //                                       (tickTurnDebuffs). Omit for statuses cleared
 //                                       another way (poison ticks by value; regen
-//                                       decays at turn end; noBlock is re-applied).
+//                                       decays at turn end).
 //   signed: true                     — may hold a negative value (e.g. Resolve), so
 //                                       it is removed only at exactly 0. Powers
 //                                       without this flag clamp away at <= 0.
@@ -97,7 +97,7 @@ export const POWERS = {
   entangle: {
     name: 'Snared',
     type: 'debuff',
-    signed: true,
+    ticksDown: true,
     desc: 'Cannot play Attacks this turn.',
   },
   strengthDown: {
@@ -109,7 +109,7 @@ export const POWERS = {
   noBlock: {
     name: 'Sundered',
     type: 'debuff',
-    signed: true,
+    ticksDown: true,
     desc: 'Cannot gain Block this turn.',
   },
 };

@@ -93,7 +93,7 @@ def('rising_strike', {
   name: 'Rising Talon', char: 'amara', type: 'attack', rarity: 'uncommon', cost: 2,
   dmg: 13, magic: 1, target: 'enemy',
   desc: (c) => `Deal ${c.dmg} damage. Apply ${c.magic} Sapped and ${c.magic} Exposed.`,
-  upgrade: (c) => { c.dmg = 13; c.magic = 2; },
+  upgrade: (c) => { c.dmg = 16; c.magic = 2; },
   onPlay: (ctx) => { ctx.deal(ctx.enemy, ctx.c.dmg); ctx.applyEnemy('weak', ctx.c.magic); ctx.applyEnemy('vulnerable', ctx.c.magic); },
 });
 def('war_trance', {

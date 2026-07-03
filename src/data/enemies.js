@@ -103,7 +103,7 @@ def('market_thief', {
   name: 'Market Thief', act: 1, hpMin: 16, hpMax: 20,
   moves: {
     swipe: { name: 'Swipe', intent: { type: 'attack', dmg: 7 }, run: (c, s) => { c.enemyAttack(s, 7); if (!s.fled) c.run.gold = Math.max(0, c.run.gold - 8); } },
-    flee: { name: 'Flee', intent: { type: 'unknown' }, run: (c, s) => { s.alive = false; s.fled = true; } },
+    flee: { name: 'Flee', intent: { type: 'unknown' }, run: (c, s) => c.enemyFlee(s) },
   },
   pick: (s, c, rng) => (s.turn >= 4 ? 'flee' : 'swipe'),
 });

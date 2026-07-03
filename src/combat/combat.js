@@ -248,6 +248,18 @@ export class Combat {
     if (this.livingEnemies().length === 0) this.win();
   }
 
+  // An enemy leaves combat without dying (e.g. the Market Thief's Flee). No
+  // on-death effects fire, but the fight must still end if no one remains.
+  enemyFlee(enemy) {
+    if (!enemy.alive) return;
+    enemy.alive = false;
+    enemy.fled = true;
+    this.log(`${enemy.name} flees!`);
+    this.fx('death', { target: enemy });
+    if (this.livingEnemies().length === 0) this.win();
+    this.notify();
+  }
+
   // Player attack
   deal(target, base, hits = 1) {
     if (!target || !target.alive) { target = this.randomEnemy(); if (!target) return 0; }
