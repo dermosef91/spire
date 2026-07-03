@@ -174,6 +174,29 @@ export function topBar(run, extra = {}) {
   });
   right.appendChild(muteBtn);
 
+  // Rhythm (timed-hit QTE) toggle — mirrors the title-screen setting so it can
+  // be flipped mid-run without leaving the fight. Reads the live Game via the
+  // window.__ase handle (topBar has no game reference of its own).
+  const game = window.__ase;
+  if (game && typeof game.setRhythm === 'function') {
+    const rhythmTitle = (on) => (on ? 'Rhythm timing: On' : 'Rhythm timing: Off');
+    const rhythmBtn = el('button', {
+      class: `tb-rhythm${game.rhythmOn() ? '' : ' off'}`,
+      html: UI.qteRings,
+      attrs: { 'aria-label': rhythmTitle(game.rhythmOn()), title: rhythmTitle(game.rhythmOn()) },
+      on: {
+        click: () => {
+          const on = game.setRhythm(!game.rhythmOn());
+          rhythmBtn.classList.toggle('off', !on);
+          rhythmBtn.setAttribute('aria-label', rhythmTitle(on));
+          rhythmBtn.setAttribute('title', rhythmTitle(on));
+          audio.play('click');
+        }
+      }
+    });
+    right.appendChild(rhythmBtn);
+  }
+
   if (fullscreenSupported()) {
     right.appendChild(el('button', {
       class: 'tb-fs', html: UI.fullscreen, attrs: { 'aria-label': 'Toggle fullscreen', title: 'Fullscreen' },

@@ -1553,6 +1553,38 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   pointer-events: none;
 }
 
+/* Suggested: nothing left in hand can be played this turn (empty hand, or
+   too little Àṣẹ for what remains) — pulse the button so the only legal
+   action is obvious instead of the player wondering why cards won't respond.
+   Animated properties (filter / background) win over the plain :hover
+   declarations above regardless of hover state — CSS animations always
+   outrank normal (non-!important) rules in the cascade — so the pulse keeps
+   reading clearly even while the button is moused over. */
+@keyframes endTurnSuggestPulse {
+  0%, 100% { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 3px rgba(255, 127, 54, 0.3)); }
+  50% { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 15px rgba(255, 127, 54, 0.95)); }
+}
+@keyframes endTurnSuggestBorder {
+  0%, 100% { background: #cf5b1d; }
+  50% { background: #ff7f36; }
+}
+.end-turn.suggested {
+  animation: endTurnSuggestPulse 1.7s ease-in-out infinite;
+}
+.end-turn.suggested .end-turn-decor.border-inner {
+  animation: endTurnSuggestBorder 1.7s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .end-turn.suggested {
+    animation: none;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px rgba(255, 127, 54, 0.85));
+  }
+  .end-turn.suggested .end-turn-decor.border-inner {
+    animation: none;
+    background: #ff7f36;
+  }
+}
+
 /* Top padding must cover the rotated fan's top corner + the cost badge (top:-11px)
    poking above the card box, or they get clipped: overflow-x:auto forces the
    paired overflow-y:visible to compute as 'auto' (CSS Overflow §3), which still
@@ -2174,13 +2206,17 @@ img.svg-ic { object-fit: contain; }
 /* fullscreen toggle and mute buttons in the top bar (replaces the floating one
    to avoid card overlap). Circular with a subtle ornamental inner ring, echoing
    the reference's ringed sigil buttons — kept understated. */
-.tb-fs, .tb-mute { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; padding: 0;
+.tb-fs, .tb-mute, .tb-rhythm { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; padding: 0;
   background: rgba(255,170,80,0.06); border: 1px solid var(--line); color: var(--orange);
   box-shadow: inset 0 0 0 3px rgba(8,5,3,0.6), inset 0 0 0 4px rgba(255,170,80,0.14);
   transition: border-color 0.14s ease, box-shadow 0.14s ease; }
-.tb-fs:hover, .tb-mute:hover { border-color: var(--orange);
+.tb-fs:hover, .tb-mute:hover, .tb-rhythm:hover { border-color: var(--orange);
   box-shadow: inset 0 0 0 3px rgba(8,5,3,0.6), inset 0 0 0 4px rgba(255,170,80,0.22), var(--glow); }
-.tb-fs .svg-ic, .tb-mute .svg-ic { width: 60%; height: 60%; }
+.tb-fs .svg-ic, .tb-mute .svg-ic, .tb-rhythm .svg-ic { width: 60%; height: 60%; }
+/* Rhythm toggle off-state: dimmed ring with a strike-through, like a muted speaker. */
+.tb-rhythm.off { opacity: 0.55; }
+.tb-rhythm.off::after { content: ''; position: absolute; width: 62%; height: 2px; background: var(--orange); transform: rotate(-45deg); border-radius: 1px; }
+.tb-rhythm { position: relative; }
 
 /* ============================================================
    DRAG & DROP to play cards (mouse + touch)
@@ -2481,7 +2517,7 @@ img.svg-ic { object-fit: contain; }
   z-index: 10 !important;
 }
 
-.kb-focus.btn, .kb-focus.title-setting-btn, .kb-focus.tb-fs, .kb-focus.tb-mute {
+.kb-focus.btn, .kb-focus.title-setting-btn, .kb-focus.tb-fs, .kb-focus.tb-mute, .kb-focus.tb-rhythm {
   transform: scale(1.04) !important;
 }
 

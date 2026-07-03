@@ -19,6 +19,7 @@ const PERFECT_MS = 65;         // ± window (strict for rhythmic precision)
 const GOOD_MS = 260;           // ± window; outside = miss
 const PARRY_WINDOW_MS = 150;   // ± single binary parry window
 const SWIPE_MIN_PX = 30;       // below this a pointer gesture counts as a tap
+const CLICK_DIR_MIN_PX = 26;   // stationary clicks this far off ring-center count as a direction
 export const MULT_PERFECT = 1.25;
 export const MULT_GOOD = 1.0;
 export const MULT_MISS = 0.5;
@@ -71,6 +72,17 @@ function buildQTE(kind, isTouch) {
     let dir = 'tap';
     if (Math.hypot(dx, dy) >= SWIPE_MIN_PX) {
       dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+    } else {
+      // Stationary click/tap: mouse players can click on the chevron's side of
+      // the ring instead of reaching for the keyboard — the direction is read
+      // from where the click lands relative to the target ring's center.
+      // Clicks near the center stay a plain 'tap' (ignored on directional
+      // marks, still a valid parry press).
+      const r = stage.getBoundingClientRect();
+      const cx = e.clientX - (r.left + r.width / 2), cy = e.clientY - (r.top + r.height / 2);
+      if (Math.hypot(cx, cy) >= CLICK_DIR_MIN_PX) {
+        dir = Math.abs(cx) >= Math.abs(cy) ? (cx > 0 ? 'right' : 'left') : (cy > 0 ? 'down' : 'up');
+      }
     }
     if (handler) handler(dir);
   };
