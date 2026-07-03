@@ -281,6 +281,32 @@ test('the fight is won when the last enemy flees', () => {
   assert.equal(c.victory, true, 'counted as a victory');
 });
 
+test('a missed parry halves block instead of voiding it', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  const hpBefore = c.player.hp;
+  c.player.block = 10;
+  // Simulate "parry QTE was prompted and missed" the way enemyPhase sets it.
+  c._qtePrompted = true;
+  c._parried = false;
+  c.enemyAttack(enemy, 6);
+  // Block 10 -> halved to 5; a 6 hit chews the 5 and lands 1 on health.
+  assert.equal(c.player.hp, hpBefore - 1, 'half the block still absorbed the hit');
+  assert.equal(c.player.block, 0, 'the halved block was consumed, not restored');
+});
+
+test('a successful parry leaves block untouched by the halving rule', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  const hpBefore = c.player.hp;
+  c.player.block = 10;
+  c._qtePrompted = true;
+  c._parried = true;
+  c.enemyAttack(enemy, 6);
+  assert.equal(c.player.hp, hpBefore, 'full block absorbed the hit');
+  assert.equal(c.player.block, 4, 'block consumed normally (10 - 6)');
+});
+
 test('Sundered (noBlock) blocks Ward for one turn, then expires', () => {
   const c = freshCombat();
   c.applyPower(c.player, 'noBlock', 1, c.player);

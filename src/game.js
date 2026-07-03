@@ -9,7 +9,7 @@
 // before. This keeps any one scene's code in a small, self-contained file.
 
 import { el, clear } from './core/util.js';
-import { saveRun, loadMeta } from './core/save.js';
+import { saveRun, loadMeta, saveMeta } from './core/save.js';
 import { cardDesc, upgradeCard } from './data/cards.js';
 import { POTIONS } from './data/potions.js';
 import { renderCard, topBar, button } from './ui/components.js';
@@ -44,6 +44,14 @@ export class Game {
 
   isTouch() { return this.touch; }
   rhythmOn() { return this.meta.rhythm !== false; }
+  setRhythm(on) {
+    this.meta.rhythm = !!on;
+    saveMeta(this.meta);
+    // Rebind the live combat's parry prompt so the toggle applies mid-fight
+    // (attack QTEs already check rhythmOn() on every card play).
+    if (this.combatView) this.combatView.bindParryPrompt();
+    return this.rhythmOn();
+  }
 
   // ----------------------------------------------------------- mobile / fullscreen
   setupMobile() {

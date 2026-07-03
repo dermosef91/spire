@@ -43,11 +43,17 @@ export const RewardScene = {
   renderRewards(rewards, kind) {
     const run = this.run;
     const panel = el('div', { class: 'reward-scene' });
-    panel.appendChild(topBar(run, { onHover: (o, n, on) => this.tooltip(o, n, on) }));
+    const topbarHolder = el('div');
+    panel.appendChild(topbarHolder);
+    const refreshTopBar = () => {
+      clear(topbarHolder).appendChild(topBar(run, { onHover: (o, n, on) => this.tooltip(o, n, on) }));
+    };
+    refreshTopBar();
     const list = el('div', { class: 'reward-list' });
     let autoProceedScheduled = false;
 
     const rebuild = () => {
+      refreshTopBar();
       clear(list);
       for (const rw of rewards) {
         if (rw.taken) continue;

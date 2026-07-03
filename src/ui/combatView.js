@@ -32,6 +32,9 @@ export class CombatView {
     this._lastHandCards = [];
     this._lastEnergy = null; // for the energy-spent pulse
     this.tempPoses = {};  // locks pose updates during dynamic animations
+    this._suggestEndTurn = false; // true once no card in hand is playable
+    this._focusEndTurnPending = false;
+    this.endTurnBtn = null;
   }
 
   // Does this card visibly synergize with the current board? (used to telegraph
@@ -42,13 +45,21 @@ export class CombatView {
     return this.combat.livingEnemies().some((e) => e.powers.vulnerable);
   }
 
+  // (Re)wire the enemy-attack parry QTE to the current rhythm setting. Called
+  // from mount and again by Game.setRhythm() when the top-bar toggle flips
+  // mid-combat — attack QTEs check rhythmOn() per play, the parry prompt is
+  // bound once, so it must be rebound here.
+  bindParryPrompt() {
+    this.combat.parryPrompt = this.game.rhythmOn()
+      ? () => runParryQTE({ isTouch: this.game.isTouch(), isTutorial: !this.game.meta.tutorialDone })
+      : null;
+  }
+
   mount(root) {
     this.root = root;
     this.combat.onUpdate = () => this.update();
     this.combat.fx = (type, payload) => this.onFx(type, payload);
-    this.combat.parryPrompt = this.game.rhythmOn()
-      ? () => runParryQTE({ isTouch: this.game.isTouch(), isTutorial: !this.game.meta.tutorialDone })
-      : null;
+    this.bindParryPrompt();
     this._lastHandCards = [];
     this.build();
 
@@ -286,6 +297,7 @@ export class CombatView {
     clear(this.logHolder).appendChild(el('div', { text: c.logs.slice(-2).join('   ·   ') }));
     this.renderControls();
     this.renderHand();
+    this.syncEndTurnFocus();
 
     if (c.over && !this.ended) {
       this.ended = true;
@@ -414,8 +426,13 @@ export class CombatView {
       }
     }
     const textStr = this.pendingCard ? 'Cancel' : 'End Turn';
+    // Nothing left to play this turn (empty hand, or every card in hand is
+    // unaffordable/unplayable) — suggest the only legal action.
+    const suggestEndTurn = !c.over && !c.animating && !this.pendingCard && !c.hand.some((card) => c.canPlay(card));
+    this._focusEndTurnPending = suggestEndTurn && !this._suggestEndTurn;
+    this._suggestEndTurn = suggestEndTurn;
     const endBtn = el('button', {
-      class: 'btn end-turn',
+      class: 'btn end-turn' + (suggestEndTurn ? ' suggested' : ''),
       html: `
         <span class="end-turn-decor border-outer"></span>
         <span class="end-turn-decor border-inner"></span>
@@ -443,6 +460,7 @@ export class CombatView {
     });
     if (c.animating) endBtn.disabled = true;
     bar.appendChild(endBtn);
+    this.endTurnBtn = endBtn;
   }
 
   renderHand() {
@@ -624,6 +642,21 @@ export class CombatView {
         }
       });
     }
+  }
+
+  // Nudges the keyboard "play cursor" onto End Turn the instant it becomes
+  // the only legal action, so keyboard players can just hit Enter. Only fires
+  // on the false→true edge (not every re-render) so it never fights a player
+  // who has deliberately tabbed elsewhere (e.g. to check a pile) while the
+  // suggestion is still active.
+  syncEndTurnFocus() {
+    if (!this._focusEndTurnPending) return;
+    this._focusEndTurnPending = false;
+    const kb = this.game.keyboard;
+    if (!kb || !this.endTurnBtn) return;
+    const elements = kb.getElements();
+    const idx = elements.indexOf(this.endTurnBtn);
+    if (idx !== -1) kb.setFocus(elements, idx);
   }
 
   // ----------------------------------------------------------- input
