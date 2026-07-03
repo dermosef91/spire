@@ -18,7 +18,11 @@ import { audio } from '../audio.js';
 export const CombatScene = {
   startMonster() {
     this.run._actMonster = (this.run._actMonster || 0) + 1;
-    const tier = this.run._actMonster <= 2 ? 'weak' : 'normal';
+    // Fights escalate within an act: the first two draw from the `weak` pool,
+    // the 5th onward from `hard` (where the act defines one — pickEncounter
+    // falls back to `normal`), so the act keeps pace with a growing deck.
+    const n = this.run._actMonster;
+    const tier = n <= 2 ? 'weak' : (n >= 5 ? 'hard' : 'normal');
     // Pin the very first monster fight to a guaranteed attack-opener so the
     // tutorial's "the foe is about to strike" step is always true.
     const isTutorialFight = !this.meta.tutorialDone && this.run._actMonster === 1;

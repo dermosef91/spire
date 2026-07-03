@@ -170,6 +170,7 @@ export class RunState {
       act: this.act,
       potions: this.potions, relics: this.relics, deck: this.deck,
       encountersCleared: this.encountersCleared, eliteCleared: this.eliteCleared,
+      actMonster: this._actMonster || 0,
       bossesDefeated: this.bossesDefeated, usedEvents: this.usedEvents,
       map: this.map, position: this.position,
       elapsedTime: this.elapsedTime,
@@ -191,6 +192,7 @@ export class RunState {
     run.relics = data.relics || [];
     run.deck = data.deck || [];
     run.encountersCleared = data.encountersCleared || 0;
+    run._actMonster = data.actMonster || 0;
     run.eliteCleared = data.eliteCleared || 0;
     run.bossesDefeated = data.bossesDefeated || 0;
     run.usedEvents = data.usedEvents || [];

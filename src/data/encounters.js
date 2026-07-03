@@ -1,5 +1,7 @@
 // Encounter tables per act. Each entry is a list of enemy ids that spawn together.
-// `weak` encounters are used for the first couple of fights in an act.
+// `weak` encounters are used for the first couple of fights in an act; `hard`
+// (optional per act, falls back to `normal`) kicks in late in the act once the
+// player's deck has grown — see startMonster()/pickEncounter() in scenes.
 
 // Encounters deliberately mix archetype ROLES so each fight poses a different
 // question: a healer beside an attacker (kill-priority), a poisoner beside a
@@ -10,16 +12,21 @@ export const ENCOUNTERS = {
       ['husk_drone'],
       ['static_jackal'],
       ['reef_spitter'],                        // lone poisoner — learn the clock
-      ['husk_drone', 'husk_drone'],
     ],
     normal: [
       ['spark_imp', 'spark_imp'],              // twin glass cannons — burst check
+      ['husk_drone', 'husk_drone'],            // sturdy pair — grind check
       ['tide_priest', 'static_jackal'],        // healer + attacker — kill priority
       ['brass_sentinel'],                      // retaliator wall
-      ['reef_spitter', 'brass_sentinel'],      // poison behind a turtle — race the wall
       ['market_thief', 'husk_drone'],          // thief pressure
       ['tide_priest', 'spark_imp'],            // healer feeds a ramping cannon
       ['static_jackal', 'reef_spitter'],       // swarm + poison
+    ],
+    hard: [
+      ['reef_spitter', 'brass_sentinel'],      // poison behind a turtle — race the wall
+      ['brass_sentinel', 'static_jackal'],     // wall + flurry — split your answers
+      ['tide_priest', 'brass_sentinel'],       // healer behind a wall — kill priority
+      ['tide_priest', 'reef_spitter'],         // heal + poison — attrition race
     ],
     elite: [
       ['gilded_warden'],

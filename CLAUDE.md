@@ -68,6 +68,16 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
 - `data/` — content: `cards`, `relics`, `potions`, `enemies`, `encounters`,
   `events`, `characters`, `keywords` (status effects). Cards use a shared
   blueprint + per-instance state model (`createCard`/`upgradeCard`).
+  Monster encounters escalate **within** an act via three tiers picked by the
+  per-act fight counter `run._actMonster` (persisted in the save as
+  `actMonster`) in `scenes/combat.js` `startMonster()`: fights 1–2 draw from
+  `weak`, 3–4 from `normal`, 5+ from `hard`; `pickEncounter()` falls back to
+  `normal` for acts that define no `hard` pool (currently only Act 1 has one —
+  it's the fix for Act 1 going flat once the deck outgrew its many low-HP
+  normals). When retuning Act 1 numbers, keep each tier's total-HP band in
+  mind (weak ≲ 30, normal ~30–65, hard ~45–85) and keep new packs to **two**
+  enemies — nothing has ever shipped a 3-pack, so the enemy-side layout at
+  landscape-phone widths is unproven for it.
 - `combat/combat.js` — the turn-based engine (energy, piles, powers, orbs,
   enemy AI, win/loss). Emits visual `fx(type, payload)` events that are
   **purely cosmetic** — never put game logic in the view's fx handler.

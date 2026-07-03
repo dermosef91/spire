@@ -64,7 +64,7 @@ const selfLowHp = (s, frac = 0.4) => s.hp <= s.maxHp * frac;
 
 // Basic attacker — light pressure, an occasional self-buff. The tutorial foe.
 def('husk_drone', {
-  name: 'Husk Drone', act: 1, hpMin: 20, hpMax: 28, startBlock: 6,
+  name: 'Husk Drone', act: 1, hpMin: 24, hpMax: 32, startBlock: 6,
   moves: {
     zap: atk('Zap', 6),
     buzz: { name: 'Overcharge', intent: { type: 'buffblock', block: 4 }, run: (c, s) => { c.applyPower(s, 'strength', 2, s); c.gainBlockTo(s, 4); } },
@@ -74,7 +74,7 @@ def('husk_drone', {
 
 // Swarm / debuffer — quick flurries and Sapped. Block eats its little bites.
 def('static_jackal', {
-  name: 'Static Jackal', act: 1, hpMin: 13, hpMax: 17,
+  name: 'Static Jackal', act: 1, hpMin: 20, hpMax: 26,
   moves: {
     bite: atk('Snap', 8),
     howl: { name: 'Howl', intent: { type: 'debuffblock', block: 5 }, run: (c, s) => { c.applyPower(c.player, 'weak', 1, s); c.gainBlockTo(s, 5); } },
@@ -101,7 +101,7 @@ def('brass_sentinel', {
 
 // Gold thief — chips your purse and flees. Kill it fast or eat the loss.
 def('market_thief', {
-  name: 'Market Thief', act: 1, hpMin: 16, hpMax: 20,
+  name: 'Market Thief', act: 1, hpMin: 26, hpMax: 32,
   moves: {
     swipe: { name: 'Swipe', intent: { type: 'attack', dmg: 7 }, run: (c, s) => { c.enemyAttack(s, 7); if (!s.fled) c.run.gold = Math.max(0, c.run.gold - 8); } },
     flee: { name: 'Flee', intent: { type: 'unknown' }, run: (c, s) => c.enemyFlee(s) },
@@ -112,7 +112,7 @@ def('market_thief', {
 // Poisoner — light attacks but stacks Blight fast. A race: end it before the
 // poison snowballs, or bring healing.
 def('reef_spitter', {
-  name: 'Reef Spitter', act: 1, hpMin: 14, hpMax: 18,
+  name: 'Reef Spitter', act: 1, hpMin: 22, hpMax: 27,
   moves: {
     spit: { name: 'Brine Spit', intent: { type: 'attackdebuff', dmg: 4 }, run: (c, s) => { c.enemyAttack(s, 4); c.applyPower(c.player, 'poison', 3, s); } },
     cloud: { name: 'Blight Cloud', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'poison', 4, s) },
@@ -127,9 +127,9 @@ def('reef_spitter', {
 // Support / healer — barely attacks, but mends the most-wounded ally and lends
 // it Resolve. In a group it is the priority target; alone it is harmless.
 def('tide_priest', {
-  name: 'Tide Priest', act: 1, hpMin: 15, hpMax: 19,
+  name: 'Tide Priest', act: 1, hpMin: 25, hpMax: 31,
   moves: {
-    mend: { name: 'Tidal Mending', intent: { type: 'buff' }, run: (c, s) => { eHeal(c, weakestAlly(c) || s, 8); } },
+    mend: { name: 'Tidal Mending', intent: { type: 'buff' }, run: (c, s) => { eHeal(c, weakestAlly(c) || s, 10); } },
     anoint: { name: 'Anoint', intent: { type: 'buff' }, run: (c, s) => c.applyPower(otherAlly(c, s), 'strength', 2, s) },
     splash: atk('Splash', 5),
   },
@@ -140,15 +140,15 @@ def('tide_priest', {
   },
 });
 
-// Glass cannon / ramper — tiny HP, grows Resolve every turn and swings for more
-// each round. Ignore it and it snowballs; burst it down turn one or two.
+// Glass cannon / ramper — low HP, grows Resolve and swings for more each round.
+// It re-kindles every few turns, so it can't be safely ignored; burst it down.
 def('spark_imp', {
-  name: 'Spark Imp', act: 1, hpMin: 8, hpMax: 11,
+  name: 'Spark Imp', act: 1, hpMin: 13, hpMax: 17,
   moves: {
     kindle: { name: 'Kindle', intent: { type: 'buff' }, run: (c, s) => c.applyPower(s, 'strength', 3, s) },
-    jolt: atk('Jolt', 5),
+    jolt: atk('Jolt', 6),
   },
-  pick: (s, c, rng) => (s.turn === 1 ? 'kindle' : 'jolt'),
+  pick: (s, c, rng) => (s.turn === 1 || s.turn % 4 === 0 ? 'kindle' : 'jolt'),
 });
 
 // Act 1 elite — Warden: enrages, hardening and hitting harder as the fight drags.
