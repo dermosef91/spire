@@ -1,8 +1,16 @@
 const SOUNDS = {
-  select: 'assets/sounds/select.wav',
+  select: 'assets/sounds/click.wav',
   reward: 'assets/sounds/reward.wav',
   attack: 'assets/sounds/attack.wav',
-  skill: 'assets/sounds/skill.wav',
+  skill: 'assets/sounds/skill.mp3',
+  coin: 'assets/sounds/coin.wav',
+  hit: 'assets/sounds/hit.mp3.flac',
+  click: 'assets/sounds/click.wav',
+  click_heavy: 'assets/sounds/click.wav',
+  pickcard: 'assets/sounds/pickcard.mp3',
+  draw: 'assets/sounds/pickcard.mp3',
+  playcard: 'assets/sounds/playcards.mp3',
+  'attack-blocked': 'assets/sounds/attack-blocked.mp3',
 };
 
 // Tiny procedural sound + ambient pad using WebAudio — no asset files required.
@@ -115,6 +123,14 @@ class Audio {
     if (name === 'reward') gain = 0.45;
     if (name === 'attack') gain = 0.45;
     if (name === 'skill') gain = 0.45;
+    if (name === 'coin') gain = 0.5;
+    if (name === 'hit') gain = 0.4;
+    if (name === 'click') gain = 0.3;
+    if (name === 'click_heavy') gain = 0.35;
+    if (name === 'pickcard') gain = 0.2;
+    if (name === 'draw') gain = 0.4;
+    if (name === 'playcard') gain = 0.45;
+    if (name === 'attack-blocked') gain = 0.45;
     
     // Try to play from user WAV/MP3 asset files first
     const played = this.playBuffer(name, gain);
@@ -133,6 +149,13 @@ class Audio {
       case 'defeat': [330, 247, 196, 147].forEach((f, i) => this.tone(f, 0.3, 'sine', 0.12, i * 0.14)); break;
       case 'select': this.tone(587, 0.08, 'sine', 0.1); break;
       case 'cardflip': this.tone(720, 0.05, 'triangle', 0.09); this.tone(280, 0.07, 'triangle', 0.06, 0.035); break;
+      case 'coin': this.tone(988, 0.08, 'sine', 0.1); this.tone(1318, 0.12, 'sine', 0.08, 0.05); break;
+      case 'click': this.tone(800, 0.03, 'sine', 0.08); break;
+      case 'click_heavy': this.tone(300, 0.06, 'triangle', 0.1); break;
+      case 'pickcard': this.tone(600, 0.06, 'triangle', 0.04); break;
+      case 'draw': this.tone(600, 0.06, 'triangle', 0.04); break;
+      case 'playcard': this.tone(400, 0.08, 'sine', 0.08); break;
+      case 'attack-blocked': this.tone(220, 0.12, 'triangle', 0.12); this.tone(180, 0.15, 'sine', 0.08, 0.04); break;
       default: break;
     }
   }

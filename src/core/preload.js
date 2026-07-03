@@ -16,10 +16,15 @@ const MANIFEST_SOURCES = [
 // the combat scene icon).
 const STATIC_ASSETS = [
   'assets/icons/combat.png',
-  'assets/sounds/select.wav',
+  'assets/sounds/click.wav',
   'assets/sounds/reward.wav',
   'assets/sounds/attack.wav',
-  'assets/sounds/skill.wav',
+  'assets/sounds/skill.mp3',
+  'assets/sounds/coin.wav',
+  'assets/sounds/hit.mp3.flac',
+  'assets/sounds/pickcard.mp3',
+  'assets/sounds/playcards.mp3',
+  'assets/sounds/attack-blocked.mp3',
   'assets/music/titletheme.mp3',
   'assets/music/combattheme1.mp3',
   'assets/music/combattheme2.mp3',

@@ -48,7 +48,7 @@ export const CombatScene = {
       const finishTutorial = () => { this.meta.tutorialDone = true; saveMeta(this.meta); };
       setTimeout(() => {
         if (combat.over) { finishTutorial(); return; }
-        new CombatTutorial(this, combat, finishTutorial).start();
+        new CombatTutorial(this, combat, finishTutorial, view).start();
       }, 1700); // after the Battle Start popup + deferred opening draw settle
     }
   },

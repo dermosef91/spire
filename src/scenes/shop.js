@@ -67,8 +67,8 @@ export const ShopScene = {
         if (run.gold < shop.removePrice) { audio.play('error'); return; }
         this.deckOverlay(() => true, (entry) => {
           run.gold -= shop.removePrice; run.removeCardAt(entry._i); shop.removeUsed = true; shop.removePrice += 25;
-          audio.play('select'); this.showShop();
-        }, 'Remove which card?');
+          audio.play('coin'); this.showShop();
+        }, 'Remove which card?', 'click_heavy');
       }));
     } else removeRow.appendChild(el('div', { class: 'event-text', text: 'The smith has unmade one card for you already.' }));
     panel.appendChild(removeRow);
@@ -105,7 +105,7 @@ export const ShopScene = {
     else if (kind === 'potions') { if (!run.addPotion(item.id)) { audio.play('error'); return; } }
     run.gold -= item.price; item.sold = true;
     this.tooltip(null, null, false);
-    audio.play('reward');
+    audio.play('coin');
     this.showShop();
   },
 };

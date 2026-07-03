@@ -20,7 +20,6 @@ export const TitleScene = {
   // ----------------------------------------------------------- title
   showTitle() {
     audio.setMusicMode('title');
-    audio.play('select');
     const panel = el('div', { class: 'title-screen' });
     panel.appendChild(el('h1', { class: 'game-title', html: 'ÀṢẸ' }));
 
@@ -71,7 +70,7 @@ export const TitleScene = {
           this.meta.rhythm = !this.rhythmOn();
           saveMeta(this.meta);
           rhythmBtn.innerHTML = `Rhythm: <b>${this.rhythmOn() ? 'On' : 'Off'}</b>`;
-          audio.play('select');
+          audio.play('click');
         }
       }
     });
@@ -84,7 +83,7 @@ export const TitleScene = {
         click: () => {
           const on = audio.toggleMusic();
           musicBtn.innerHTML = `Music: <b>${on ? 'On' : 'Off'}</b>`;
-          audio.play('select');
+          audio.play('click');
         }
       }
     });
@@ -103,8 +102,18 @@ export const TitleScene = {
     }
     panel.appendChild(topActions);
 
-    const ascLabel = this.meta.maxAscension >= MAX_ASCENSION ? 'Ascension MAX' : `Ascension ${this.meta.maxAscension}`;
-    panel.appendChild(el('div', { class: 'title-meta', text: `Runs: ${this.meta.runs}  ·  Victories: ${this.meta.wins}  ·  Best Act: ${this.meta.bestFloor}  ·  ${ascLabel} unlocked` }));
+    const formatTime = (sec) => {
+      if (!sec || isNaN(sec) || sec <= 0) return '--:--';
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    };
+    const ascLabel = this.meta.maxAscension >= MAX_ASCENSION ? 'ASCENSION MAX' : `ASCENSION ${this.meta.maxAscension}`;
+    const bestTimeStr = formatTime(this.meta.bestTime);
+    panel.appendChild(el('div', {
+      class: 'title-meta',
+      text: `RUNS: ${this.meta.runs}   ·   VICTORIES: ${this.meta.wins}   ·   BEST TIME: ${bestTimeStr}   ·   ${ascLabel} UNLOCKED`
+    }));
     this.setScene(panel, 'title');
   },
 
@@ -126,8 +135,11 @@ export const TitleScene = {
         card.appendChild(el('div', { class: 'char-hp', html: `<i class="tb-ic">${UI.heart}</i> ${ch.maxHp} HP` }));
         card.appendChild(el('div', { class: 'char-blurb', text: ch.blurb }));
         const starter = RELICS[ch.relic];
-        card.appendChild(el('div', { class: 'char-relic', html: `Starter: <b>${starter.name}</b> — ${starter.desc}` }));
-        card.appendChild(button('Begin', () => this.startRun(id), 'primary'));
+        card.appendChild(el('div', { class: 'char-relic' }, [
+          el('div', { class: 'char-relic-label', text: `Starter: ${starter.name}` }),
+          el('div', { class: 'char-relic-desc', text: starter.desc })
+        ]));
+        card.appendChild(button('Begin', () => { audio.play('click_heavy'); this.startRun(id); }, 'primary'));
       } else {
         const lockOverlay = el('div', { class: 'char-lock-overlay' });
         lockOverlay.appendChild(el('i', { class: 'char-lock-ic', html: UI.lock }));
@@ -140,7 +152,7 @@ export const TitleScene = {
     if ((this.meta.maxAscension || 0) > 0) {
       panel.appendChild(this.ascensionSelector());
     }
-    panel.appendChild(button('← Back', () => this.showTitle()));
+    panel.appendChild(button('← Back', () => { audio.play('click'); this.showTitle(); }));
     this.setScene(panel, 'charselect');
   },
 
@@ -172,7 +184,7 @@ export const TitleScene = {
     const maxUnlocked = this.meta.maxAscension || 0;
     this.selectedAscension = Math.max(0, Math.min(maxUnlocked, n));
     this.meta.ascension = this.selectedAscension; saveMeta(this.meta);
-    audio.play('select');
+    audio.play('click');
     this.renderAscension();
   },
 
@@ -203,10 +215,95 @@ export const TitleScene = {
   showActIntro() {
     const run = this.run;
     const panel = el('div', { class: 'act-intro' });
+
+    // ---------- orange floating particles ----------
+    const colors = [[255, 120, 20], [255, 160, 45], [255, 85, 10], [230, 95, 20]];
+    const cvs = document.createElement('canvas');
+    cvs.className = 'act-particles';
+    const pCtx = cvs.getContext('2d');
+    const particles = [];
+    let pW = 0, pH = 0, pDpr = 1, pRaf = null;
+
+    function pResize() {
+      pDpr = Math.min(window.devicePixelRatio || 1, 2);
+      pW = window.innerWidth; pH = window.innerHeight;
+      cvs.width = pW * pDpr; cvs.height = pH * pDpr;
+      cvs.style.width = pW + 'px'; cvs.style.height = pH + 'px';
+      pCtx.setTransform(pDpr, 0, 0, pDpr, 0, 0);
+    }
+
+    function spawnParticle(initialY = null) {
+      const c = colors[Math.floor(Math.random() * colors.length)];
+      const yVal = initialY !== null ? initialY : pH + 10 + Math.random() * 40;
+      const lifeVal = initialY !== null ? Math.random() : 1;
+      particles.push({
+        x: Math.random() * pW,
+        y: yVal,
+        vy: -(8 + Math.random() * 18),
+        vx: (Math.random() - 0.5) * 8,
+        r: Math.random() * 2.2 + 0.8,
+        life: lifeVal,
+        decay: 0.08 + Math.random() * 0.1,
+        c,
+        phase: Math.random() * Math.PI * 2,
+        sway: 0.2 + Math.random() * 0.5,
+      });
+    }
+
+    let pLast = performance.now();
+    function pFrame(now) {
+      const dt = Math.min(50, now - pLast) / 1000; pLast = now;
+      pCtx.clearRect(0, 0, pW, pH);
+
+      // Spawn with decreased frequency
+      if (particles.length < 25 && Math.random() < 0.08) {
+        spawnParticle();
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.phase += dt * 1.8;
+        p.x += (p.vx + Math.sin(p.phase) * p.sway * 12) * dt;
+        p.y += p.vy * dt;
+        p.life -= p.decay * dt;
+        if (p.life <= 0 || p.y < -10) { particles.splice(i, 1); continue; }
+        const a = Math.min(0.7, p.life * 0.8);
+        pCtx.beginPath();
+        pCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        pCtx.fillStyle = `rgba(${p.c[0]},${p.c[1]},${p.c[2]},${a})`;
+        pCtx.shadowColor = `rgba(${p.c[0]},${p.c[1]},${p.c[2]},${a * 0.7})`;
+        pCtx.shadowBlur = 10;
+        pCtx.fill();
+        pCtx.shadowBlur = 0;
+      }
+      pRaf = requestAnimationFrame(pFrame);
+    }
+
+    panel.appendChild(cvs);
+    // Observe mount to start & unmount to stop
+    requestAnimationFrame(() => {
+      pResize();
+      // Pre-populate particles immediately across screen heights
+      for (let i = 0; i < 18; i++) {
+        spawnParticle(Math.random() * pH);
+      }
+      pRaf = requestAnimationFrame(pFrame);
+    });
+    const rObs = new ResizeObserver(() => pResize());
+    rObs.observe(cvs);
+    // Cleanup when scene changes (panel is removed from DOM)
+    const mObs = new MutationObserver(() => {
+      if (!document.body.contains(panel)) {
+        if (pRaf) cancelAnimationFrame(pRaf);
+        rObs.disconnect(); mObs.disconnect();
+      }
+    });
+    mObs.observe(document.getElementById('game-root'), { childList: true, subtree: true });
+
     panel.appendChild(el('div', { class: 'act-num', text: `ACT ${run.act}` }));
     panel.appendChild(el('h2', { text: ACT_NAMES[run.act] }));
     panel.appendChild(el('p', { class: 'act-blurb', text: ACT_BLURB[run.act] }));
-    panel.appendChild(button('Enter', () => this.showMap(), 'primary'));
+    panel.appendChild(button('Enter', () => { audio.play('click_heavy'); this.showMap(); }, 'primary'));
     this.setScene(panel, 'act-intro');
   },
 };

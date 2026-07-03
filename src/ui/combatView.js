@@ -118,6 +118,16 @@ export class CombatView {
     field.appendChild(this.enemySide);
     scene.appendChild(field);
 
+    scene.addEventListener('click', (e) => {
+      if (!e.target.closest('.card, .combatant, .btn, .screen-pile, .potion-slot, .topbar-btn')) {
+        if (this.pendingCard || this.previewCard) {
+          this.pendingCard = null;
+          this.previewCard = null;
+          this.update();
+        }
+      }
+    });
+
     // player combatant (+ orbs holder beneath)
     this.els.p = this.buildCombatant(this.combat.player, false);
     this.playerSide.appendChild(this.els.p);
@@ -205,6 +215,20 @@ export class CombatView {
     parts.powers = el('div', { class: 'powers' });
     wrap.appendChild(parts.powers);
 
+    const blockDef = POWERS.block;
+    if (blockDef) {
+      parts.block.addEventListener('mouseenter', () => {
+        this.game.tooltip({ name: blockDef.name, desc: blockDef.desc }, parts.block, true);
+      });
+      parts.block.addEventListener('mouseleave', () => {
+        this.game.tooltip(null, null, false);
+      });
+      parts.block.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.game.tooltip({ name: blockDef.name, desc: blockDef.desc }, parts.block, true);
+      });
+    }
+
     if (isEnemy) wrap.addEventListener('click', () => { if (this.pendingCard && ent.alive) this.confirmTarget(ent); });
 
     this.parts[eidOf(ent)] = parts;
@@ -241,6 +265,17 @@ export class CombatView {
     for (const e of c.enemies) {
       const node = this.els[eidOf(e)];
       if (node) node.classList.toggle('targetable', targeting && e.alive);
+    }
+
+    // targeting prompt
+    let promptEl = this.scene.querySelector('.targeting-prompt');
+    if (targeting) {
+      if (!promptEl) {
+        promptEl = el('div', { class: 'targeting-prompt', text: 'SELECT A TARGET' });
+        this.scene.appendChild(promptEl);
+      }
+    } else {
+      if (promptEl) promptEl.remove();
     }
 
     // Drop a stale preview if that card has left the hand (played/discarded).
@@ -282,10 +317,27 @@ export class CombatView {
       if (!val) continue;
       const def = POWERS[key]; if (!def) continue;
       const cls = def.type === 'buff' ? 'pip-buff' : 'pip-debuff';
-      p.powers.appendChild(el('div', {
+      let desc = def.desc;
+      if (desc.includes('{n}')) {
+        desc = desc.replace(/{n}/g, val);
+      } else if (def.ticksDown) {
+        desc = `${desc} (${val} turn${val > 1 ? 's' : ''} remaining)`;
+      }
+      const pip = el('div', {
         class: `pip ${cls}`, html: `<i class="pip-ic">${powerIcon(key)}</i> ${val}`,
-        title: `${def.name}: ${def.desc.replace('{n}', val)}`,
-      }));
+        title: `${def.name}: ${desc}`,
+      });
+      pip.addEventListener('mouseenter', () => {
+        this.game.tooltip({ name: def.name, desc }, pip, true);
+      });
+      pip.addEventListener('mouseleave', () => {
+        this.game.tooltip(null, null, false);
+      });
+      pip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.game.tooltip({ name: def.name, desc }, pip, true);
+      });
+      p.powers.appendChild(pip);
     }
     // intent
     if (p.intent) this.renderIntent(ent, p.intent);
@@ -368,17 +420,11 @@ export class CombatView {
         <span class="end-turn-body"></span>
         <span class="end-turn-content">
           <span class="end-turn-text">${textStr}</span>
-          ${this.pendingCard ? '' : `
-          <span class="end-turn-icon-wrap">
-            <svg class="end-turn-icon" viewBox="0 0 24 24">
-              <path d="M12 21c-1.2-3.3-2.7-5-5-7.5 2.5-.5 4.5.5 6-1 1-1 1.5-2.5 1-4.5 1.5 2 3.5 3 6 3-2.5 1-4.5 2.5-5 5-.5 2.5.5 4-3 5z" />
-            </svg>
-          </span>
-          `}
+
         </span>
       `,
       on: {
-        click: () => { if (this.pendingCard) { this.pendingCard = null; this.update(); } else this.endTurn(); },
+        click: () => { if (this.pendingCard) { this.pendingCard = null; this.previewCard = null; this.update(); } else this.endTurn(); },
         mousemove: (e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           if (rect.width === 0 || rect.height === 0) return;
@@ -538,6 +584,10 @@ export class CombatView {
               // Widen the stagger a touch so cards clearly deal in one-by-one.
               const delay = Math.min(newIdx * 95, 520);
 
+              setTimeout(() => {
+                if (document.body.contains(node)) audio.play('draw');
+              }, delay);
+
               const anim = node.animate([
                 {
                   transform: `translate(${dx}px, ${dy}px) scale(0.2) rotate(0deg)`,
@@ -578,26 +628,41 @@ export class CombatView {
   clickCard(card) {
     const c = this.combat;
     if (c.animating || c.over) return;
-    // First tap previews: the card straightens and grows so it can be read.
-    // A second tap on the same card commits it. Drag-to-play bypasses this.
-    if (!this.previewCard || this.previewCard.uid !== card.uid) {
-      audio.play('select');
-      this.previewCard = card;
-      this.pendingCard = null;
-      this.update();
+    const living = c.livingEnemies();
+    const isRegularAttack = card.type === 'attack' && card.target === 'enemy';
+    const needsTargetFirst = isRegularAttack && living.length > 1;
+
+    // If the card is already selected/previewed:
+    if (this.previewCard && this.previewCard.uid === card.uid) {
+      // If we needed a target first and they tapped the card itself again, cancel selection.
+      if (needsTargetFirst) {
+        this.previewCard = null;
+        this.pendingCard = null;
+        this.update();
+        return;
+      }
+      // Second tap on a normal previewed card → commit.
+      this.previewCard = null;
+      if (!c.canPlay(card)) { audio.play('error'); this.update(); return; }
+      if (card.target === 'enemy') {
+        if (living.length === 1) { this.playCard(card, living[0]); return; }
+        this.pendingCard = card;
+        this.update();
+      } else {
+        this.playCard(card, c.randomEnemy());
+      }
       return;
     }
-    // Second tap on the previewed card → commit.
-    this.previewCard = null;
-    if (!c.canPlay(card)) { audio.play('error'); this.update(); return; }
-    if (card.target === 'enemy') {
-      const living = c.livingEnemies();
-      if (living.length === 1) { this.playCard(card, living[0]); return; }
+
+    // First tap on the card:
+    audio.play('pickcard');
+    this.previewCard = card;
+    if (needsTargetFirst) {
       this.pendingCard = card;
-      this.update();
     } else {
-      this.playCard(card, c.randomEnemy());
+      this.pendingCard = null;
     }
+    this.update();
   }
 
   confirmTarget(enemy) {
@@ -707,6 +772,7 @@ export class CombatView {
       c._rhythmMult = mult;
       c.fire('rhythm', { grade, card });
     }
+    audio.play('playcard');
     audio.play(card.type === 'attack' ? 'attack' : 'skill');
     // brief play animation on the card element
     const cardEl = this.handHolder.querySelector(`.card[data-uid="${card.uid}"]`);
@@ -849,10 +915,11 @@ export class CombatView {
             if (payload.target.isPlayer) bg.pulse('damage', Math.min(2, payload.hpLost / 12));
             else if (big) bg.pulse('heavy', Math.min(2, payload.hpLost / 18));
           }
-          if (isDelayedPlayerHit) audio.play('hit');
+            if (payload.target.isPlayer) audio.play('hit');
         } else if (payload.blocked > 0) {
           floatText(layer, el2, 'BLOCK', 'blocked');
           hitFlash(el2, 'block');
+          audio.play('attack-blocked');
         }
       };
       // Delay the impact fx/sfx on the enemy so it lands a beat after the
@@ -868,6 +935,7 @@ export class CombatView {
       const el2 = this.elFor(payload.entity); if (!el2) return;
       floatText(layer, el2, `+${payload.amount}`, 'block');
       ring(layer, el2, 'rgba(94,169,230,0.9)');
+      audio.play('block');
       return;
     }
     if (type === 'warded') {

@@ -56,7 +56,7 @@ export class Game {
 
     // A tap/click anywhere that is not an inspectable chip/card/tooltip dismisses the tooltip.
     document.addEventListener('pointerdown', (e) => {
-      if (!e.target.closest('.relic, .potion, .card, .tooltip')) {
+      if (!e.target.closest('.relic, .potion, .card, .tooltip, .pip, .block-badge')) {
         this.tooltip(null, null, false);
       }
     }, true);

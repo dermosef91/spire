@@ -57,6 +57,9 @@ export class RunState {
     this.map = generateMap(this.rng, this.act);
     this.position = null; // {row, col}
     this.lastResult = null;
+
+    this.elapsedTime = 0;
+    this.sessionStartTime = Date.now();
   }
 
   // -------- relics --------
@@ -147,8 +150,17 @@ export class RunState {
   }
   removePotionAt(i) { this.potions.splice(i, 1); }
 
+  updateElapsedTime() {
+    if (this.sessionStartTime) {
+      const now = Date.now();
+      this.elapsedTime += Math.floor((now - this.sessionStartTime) / 1000);
+      this.sessionStartTime = now;
+    }
+  }
+
   // -------- serialization --------
   toJSON() {
+    this.updateElapsedTime();
     return {
       seed: this.seed,
       rngState: this.rng.state,
@@ -160,6 +172,7 @@ export class RunState {
       encountersCleared: this.encountersCleared, eliteCleared: this.eliteCleared,
       bossesDefeated: this.bossesDefeated, usedEvents: this.usedEvents,
       map: this.map, position: this.position,
+      elapsedTime: this.elapsedTime,
     };
   }
 
@@ -184,6 +197,8 @@ export class RunState {
     run.map = data.map;
     run.position = data.position;
     run.lastResult = null;
+    run.elapsedTime = data.elapsedTime || 0;
+    run.sessionStartTime = Date.now();
     return run;
   }
 }
