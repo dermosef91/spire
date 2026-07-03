@@ -27,7 +27,7 @@
   {
     "id": "brass_sentinel",
     "kind": "enemy",
-    "prompt": "A majestic, towering golem constructed from heavy plates of burnished brass and dark iron. Flat rectangular head with a single horizontal visor slit glowing with intense ember-orange light. Intricate geometric African-inspired tribal patterns etched into the brass chest plates. A circular power core in the center of its torso radiates glowing concentric energy rings. Segmented gear-jointed limbs and heavy brass fists. A dented cowrie-shell collar and a single snapped star-iron blade are fused into its chest plating — the ghost of an Agojie bladedancer the Spire welded into a wall. Imposing, robotic, and powerful. Full figure head-to-feet, centered."
+    "prompt": "A majestic, towering golem constructed from heavy plates of burnished brass and dark iron. Flat rectangular head with a single horizontal visor slit glowing with intense ember-orange light. Intricate geometric African-inspired tribal patterns etched into the brass chest plates. A circular power core in the center of its torso radiates glowing concentric energy rings. Segmented gear-jointed limbs and heavy brass fists. A dented cowrie-shell collar and a single snapped star-iron blade are fused into its chest plating — the ghost of an Agojie bladedancer the Spire welded into a wall. Imposing, robotic, and powerful. Full figure head-to-feet, centered, facing to the left (towards the opponent)."
   },
   {
     "id": "market_thief",

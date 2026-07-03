@@ -905,7 +905,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .enemy-side {
   position: relative;
   display: flex;
-  gap: clamp(16px, 4vw, 40px);
+  --enemy-gap: clamp(16px, 4vw, 40px);
+  gap: var(--enemy-gap);
   justify-content: center;
   align-items: flex-end;
   flex-wrap: wrap;
@@ -918,6 +919,7 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   align-items: center;
   justify-content: flex-end;
   min-width: 120px;
+  max-width: 500px;
   position: relative;
   transition: opacity 0.4s ease;
   height: calc(var(--med) * 1.85);
@@ -1752,7 +1754,17 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .combatant.lunge-right .stage { animation: lungeR 0.34s ease; } .combatant.lunge-left .stage { animation: lungeL 0.34s ease; }
 @keyframes lungeR { 0%,100%{transform:translateX(0)} 40%{transform:translateX(36px) scale(1.05)} }
 @keyframes lungeL { 0%,100%{transform:translateX(0)} 40%{transform:translateX(-36px) scale(1.05)} }
-.combatant.dying { animation: die 0.62s ease forwards; }
+.combatant.dying {
+  animation: die 0.62s ease forwards;
+  transition: min-width 0.62s ease, max-width 0.62s ease, width 0.62s ease, margin-left 0.62s ease, margin-right 0.62s ease, opacity 0.62s ease;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  width: 0 !important;
+  margin-left: calc(var(--enemy-gap, 20px) / -2) !important;
+  margin-right: calc(var(--enemy-gap, 20px) / -2) !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+}
 @keyframes die { to { opacity: 0; transform: translateY(10px) scale(0.7) rotate(8deg); filter: grayscale(1) brightness(0.4); } }
 .combat-scene.scene-shake { animation: sShake 0.3s; } .combat-scene.scene-shake-big { animation: sShakeBig 0.46s; }
 @keyframes sShake { 0%,100%{transform:translate(0,0)} 25%{transform:translate(-4px,2px)} 50%{transform:translate(3px,-2px)} 75%{transform:translate(-2px,1px)} }

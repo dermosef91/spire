@@ -31,3 +31,5 @@
 
 - **Keyboard Navigation**: Global keyboard navigation is managed by `KeyboardController` in `src/core/keyboard.js`. Interactive elements are queried dynamically across overlays and scenes. Supports arrow/WASD/Tab navigation, Escape for canceling, and numbers `1`-`9` as direct shortcuts (except during combat hand play). Emits synthetic `mouseenter`/`mouseleave` to drive tooltips/hover states. Focus class is `.kb-focus`. Keyboard focus must be bypassed/disabled during rhythm QTEs (`.qte-layer` exists) so directional commands correctly drive the mini-game.
 
+- **Smooth Enemy Repositioning**: When an enemy is defeated, their `.dying` transition collapses their `min-width`, `max-width`, `width`, and `margin-left`/`margin-right` to `0` over `0.62s`. This allows the remaining flex children in `.enemy-side` to slide smoothly into their centered positions rather than hopping abruptly. The negative margins are sized to half of `--enemy-gap` to offset the flex container's gaps exactly.
+

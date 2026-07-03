@@ -6,22 +6,14 @@
 // their turn. `game.js` pins the very first monster fight to a guaranteed
 // attack-opener (Husk Drone) so the "the foe is about to strike" step is
 // always true — see `startMonster()`.
-//
-// When Rhythm QTEs are enabled (the default), the tutorial includes extra steps
-// that teach the attack QTE and parry mechanics. Rhythm is suppressed for the
-// first three steps (hand/intent/block) and then unsuppressed so the player
-// experiences the QTEs with coaching guidance. If Rhythm is off, the tutorial
-// uses the classic 6-step flow with no QTE steps.
 import { el } from '../core/util.js';
 import { button } from './components.js';
 import { audio } from '../audio.js';
-import { runParryQTE } from './rhythm.js';
 
 const isBlockCard = (c) => c.type === 'skill' && (c.block || 0) > 0;
 const isAttackCard = (c) => c.type === 'attack';
 
-// ---- shared opening steps (both flows) ------------------------------------
-const BASE_STEPS = [
+const STEPS = [
   {
     text: 'Cards win battles. Each costs Àṣẹ — your energy, refilled every turn.',
     button: 'Next',
@@ -38,37 +30,6 @@ const BASE_STEPS = [
     await: 'block',
     hint: 'Play the highlighted card',
   },
-];
-
-// ---- rhythm-on flow: teaches attack QTE then parry ------------------------
-const RHYTHM_STEPS = [
-  {
-    text: 'Attack cards trigger a Rhythm Strike — press or swipe the shown direction when the ring closes for bonus damage. Play an Attack to try it.',
-    await: 'attack',
-    hint: 'Play the highlighted card',
-    onEnter(tut) { tut.view.rhythmSuppressed = false; },
-  },
-  {
-    text: 'Well struck! Timing is everything — PERFECT earns \u00d71.25 damage, a MISS halves it. You can toggle Rhythm on or off from the title screen.',
-    button: 'Next',
-  },
-  {
-    text: 'Now end your turn. When the foe strikes while you have Block, you will get a Parry prompt — time it to keep your shield.',
-    await: 'endturn',
-    hint: 'End your turn \u2192',
-    highlight: () => ['.end-turn'],
-    onEnter(tut) {
-      tut.combat.parryPrompt = () => runParryQTE({ isTouch: tut.game.isTouch() });
-    },
-  },
-  {
-    text: 'A successful Parry lets your Block absorb the hit. Miss it and the strike bypasses your shield — straight to HP.',
-    button: 'Next',
-  },
-];
-
-// ---- classic flow (rhythm off): original attack + end turn ----------------
-const CLASSIC_STEPS = [
   {
     text: 'Well shielded. Now hit back — play an Attack card.',
     await: 'attack',
@@ -77,29 +38,23 @@ const CLASSIC_STEPS = [
   {
     text: 'Well struck. Now end your turn and let your foe act.',
     await: 'endturn',
-    hint: 'End your turn \u2192',
+    hint: 'End your turn →',
     highlight: () => ['.end-turn'],
+  },
+  {
+    text: 'That is the loop. Defeat every foe for rewards, then climb toward the Spire. Àṣẹ be with you.',
+    button: 'Begin',
   },
 ];
 
-// ---- shared closing step --------------------------------------------------
-const FINAL_STEP = {
-  text: 'That is the loop. Defeat every foe for rewards, then climb toward the Spire. \u00c0\u1e63\u1eb9 be with you.',
-  button: 'Begin',
-};
-
 export class CombatTutorial {
-  constructor(game, combat, onDone, view) {
+  constructor(game, combat, onDone) {
     this.game = game;
     this.combat = combat;
     this.onDone = onDone || (() => {});
-    this.view = view || null;
     this.i = 0;
     this.done = false;
     this.targetUid = null;
-    // Build the step list: rhythm-aware when QTEs are on, classic otherwise.
-    const middle = (view && game.rhythmOn()) ? RHYTHM_STEPS : CLASSIC_STEPS;
-    this.steps = [...BASE_STEPS, ...middle, FINAL_STEP];
   }
 
   start() {
@@ -115,10 +70,7 @@ export class CombatTutorial {
   }
 
   render() {
-    const step = this.steps[this.i];
-    // Per-step side effects (e.g. unsuppressing rhythm for QTE steps).
-    if (step.onEnter) step.onEnter(this);
-
+    const step = STEPS[this.i];
     this.banner.classList.toggle('tut-left', step.align === 'left');
     this.banner.innerHTML = '';
     this.banner.appendChild(el('p', { class: 'tut-text', text: step.text }));
@@ -149,7 +101,7 @@ export class CombatTutorial {
 
   applyHighlight() {
     document.querySelectorAll('.tut-highlight').forEach((el2) => el2.classList.remove('tut-highlight'));
-    const step = this.steps[this.i];
+    const step = STEPS[this.i];
     const selectors = step.highlight ? step.highlight() : [];
     if (this.targetUid) selectors.push(`.hand .card[data-uid="${this.targetUid}"]`);
     for (const sel of selectors) {
@@ -176,7 +128,7 @@ export class CombatTutorial {
   next() {
     if (this.done) return;
     audio.play('select');
-    if (this.i >= this.steps.length - 1) { this.finish(); return; }
+    if (this.i >= STEPS.length - 1) { this.finish(); return; }
     this.i += 1;
     this.render();
   }
@@ -187,14 +139,6 @@ export class CombatTutorial {
     if (this._origUpdate) this.combat.onUpdate = this._origUpdate;
     document.querySelectorAll('.tut-highlight').forEach((el2) => el2.classList.remove('tut-highlight'));
     if (this.banner) { this.banner.remove(); this.banner = null; }
-    // Ensure rhythm is fully enabled for the rest of this fight if the player
-    // skipped before the QTE teaching steps ran their onEnter hooks.
-    if (this.view && this.game.rhythmOn()) {
-      this.view.rhythmSuppressed = false;
-      if (!this.combat.parryPrompt) {
-        this.combat.parryPrompt = () => runParryQTE({ isTouch: this.game.isTouch() });
-      }
-    }
     this.onDone();
   }
 }

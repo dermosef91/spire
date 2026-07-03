@@ -345,8 +345,7 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
   of these (bottom crop + both control overlaps) at both viewports.
 - **Port conflicts (`EADDRINUSE`) during QA audit**: If the static server fails to bind to port 8091 because of lingering/zombie processes, run the audit specifying a different port prefix, e.g., `QA_PORT=8095 npm run qa`.
 - **Text contrast on title/scenic backgrounds**: Any overlay text or toggle buttons rendered over scenic background art (such as the bright lines on the title screen) must have a dark semi-transparent backing card/pill background (like `rgba(8, 5, 3, 0.85)`) to block out light lines and ensure contrast.
-
-
+- **Smooth Enemy Repositioning**: When an enemy is defeated, their `.dying` transition collapses their `min-width`, `max-width`, `width`, and `margin-left`/`margin-right` to `0` over `0.62s`. This allows the remaining flex children in `.enemy-side` to slide smoothly into their centered positions rather than hopping abruptly. The negative margins are sized to half of `--enemy-gap` to offset the flex container's gaps exactly.
 
 ## Asset Generation
 - **Model Rules**: Always use the `gpt-image-2` model for all image, sprite, and background art generations. Never use Gemini or any other image models.

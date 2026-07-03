@@ -52,12 +52,12 @@ function getVariationPrompt(id, basePrompt, pose) {
   if (pose === 'attack') {
     if (id === 'amara') {
       return basePrompt
-        .replace('in heroic standing pose', 'in dynamic attacking pose, lunging forward and slashing')
-        .replace('Two crossed star-iron blades held at her sides', 'Two star-iron blades raised and striking in mid-air');
+        .replace('in heroic standing pose', 'in dynamic attacking pose, lunging forward and slashing to the right')
+        .replace('Two crossed star-iron blades held at her sides', 'Two star-iron blades raised and striking in mid-air, oriented to the right');
     }
     if (id === 'kofi') {
       return basePrompt
-        .replace('standing centered, cradling', 'in dynamic attacking pose, actively playing chords on')
+        .replace('standing centered, cradling', 'in dynamic attacking pose facing to the right, actively playing chords on')
         .replace('Calm wise expression', 'Focused passionate expression')
         .replace('Musical note wisps', 'Energetic glowing musical note waves and sonic blasts');
     }
@@ -92,7 +92,7 @@ function getVariationPrompt(id, basePrompt, pose) {
     }
     if (id === 'kofi') {
       return basePrompt
-        .replace('standing centered, cradling', 'in defensive blocking pose, holding defensively')
+        .replace('standing centered, cradling', 'in defensive blocking pose facing to the right, holding defensively')
         .replace('Musical note wisps', 'A protective barrier of glowing amber sound-waves and shielding concentric rings');
     }
     if (id === 'zara') {
