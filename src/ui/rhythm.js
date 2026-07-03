@@ -15,7 +15,7 @@ const REDUCED_BEAT_MS = 420;   // per-beat pip cadence in the reduced-motion var
 const NOTE_GAP_MS = 380;       // breather between marks
 const LEAD_IN_MS = 520;        // beat before the first note
 const RESULT_MS = 700;         // final banner hold
-const PERFECT_MS = 110;        // ± window (generous for touch latency)
+const PERFECT_MS = 65;         // ± window (strict for rhythmic precision)
 const GOOD_MS = 260;           // ± window; outside = miss
 const PARRY_WINDOW_MS = 150;   // ± single binary parry window
 const SWIPE_MIN_PX = 30;       // below this a pointer gesture counts as a tap

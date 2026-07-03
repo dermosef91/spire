@@ -1,0 +1,37 @@
+[
+  {
+    "id": "combat",
+    "filename": "combat.png",
+    "prompt": "Two crossed traditional African curved blades (like shotel or mambele) with glowing ember-orange edges, etched with geometric lines. Clean bold silhouette, centered isolated object."
+  },
+  {
+    "id": "elite",
+    "filename": "elite.png",
+    "prompt": "An ornate, heavy horned war helmet with glowing amber eyes and geometric metal engravings. Menacing clean silhouette, centered isolated object."
+  },
+  {
+    "id": "boss",
+    "filename": "boss.png",
+    "prompt": "A massive, towering obsidian tower spire gateway radiating strong amber light from its cracks, crowned with a floating crown silhouette. Centered isolated object."
+  },
+  {
+    "id": "bazaar",
+    "filename": "bazaar.png",
+    "prompt": "Stylized merchant market scales of trade filled with amber spices and glowing ores, with geometric patterns. Clean bold silhouette, centered isolated object."
+  },
+  {
+    "id": "rest",
+    "filename": "rest.png",
+    "prompt": "A small stone hearth fire with stylized dancing flames in orange and amber hues rising from brass coals. Warm inviting silhouette, centered isolated object."
+  },
+  {
+    "id": "event",
+    "filename": "event.png",
+    "prompt": "A mysterious floating glowing question mark glyph wrapped in ancient geometric energy trails and sparking embers. Clean bold silhouette, centered isolated object."
+  },
+  {
+    "id": "treasure",
+    "filename": "treasure.png",
+    "prompt": "An ornate banded wood and brass chest with a massive geometric latch, glowing with amber light radiating from the seams. Clean bold silhouette, centered isolated object."
+  }
+]

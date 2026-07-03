@@ -99,24 +99,14 @@ export const NODE = {
   elite: `<img src="assets/icons/elite.png" class="svg-ic" alt="Elite" />`,
   // Boss — a custom PNG icon.
   boss: `<img src="assets/icons/boss.png" class="svg-ic" alt="Boss" />`,
-  // Unknown event — a glyph-question rising from a spark, with drifting motes.
-  event: S(`
-    <path d="M39 42 C39 27 65 29 63 44 C61 55 50 54 50 65" stroke="currentColor" stroke-width="8"/>
-    <circle cx="50" cy="79" r="5" fill="currentColor"/>
-    <path d="M24 30 l2.4 5.4 5.4 2.4 -5.4 2.4 -2.4 5.4 -2.4 -5.4 -5.4 -2.4 5.4 -2.4Z" fill="${A}" opacity="0.85"/>
-    <circle cx="74" cy="62" r="2.4" fill="${A}" opacity="0.7"/>`),
+  // Unknown event — a custom PNG icon.
+  event: `<img src="assets/icons/event.png" class="svg-ic" alt="Event" />`,
   // Bazaar — a custom PNG icon.
   shop: `<img src="assets/icons/bazaar.png" class="svg-ic" alt="Bazaar" />`,
   // Rest — a custom PNG icon.
   rest: `<img src="assets/icons/rest.png" class="svg-ic" alt="Rest" />`,
-  // Treasure — a banded chest with a glinting lock and a sparkle.
-  treasure: S(`
-    <path d="M26 44 C26 30 74 30 74 44" fill="#16100b" stroke="currentColor" stroke-width="5"/>
-    <rect x="26" y="44" width="48" height="30" rx="3" fill="#16100b" stroke="currentColor" stroke-width="5"/>
-    <path d="M26 56 H74" stroke="currentColor" stroke-width="3"/>
-    <rect x="44" y="51" width="12" height="13" rx="2.5" fill="${A}" stroke="currentColor" stroke-width="2"/>
-    <circle cx="50" cy="56" r="2" fill="#16100b"/><path d="M50 56 V61" stroke="#16100b" stroke-width="1.8"/>
-    <path d="M70 33 l1.8 4 4 1.8 -4 1.8 -1.8 4 -1.8 -4 -4 -1.8 4 -1.8Z" fill="${A}" opacity="0.85"/>`),
+  // Treasure — a custom PNG icon.
+  treasure: `<img src="assets/icons/treasure.png" class="svg-ic" alt="Treasure" />`,
 };
 
 /* ============================== POWERS / STATUS ============================== */

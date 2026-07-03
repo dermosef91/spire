@@ -688,16 +688,6 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .map-node.reachable:not(.node-boss) .svg-ic {
   transform: scale(2.25);
 }
-/* Combat icon needs extra scaling on the map and in the legend to compensate for its larger transparent canvas borders */
-.map-node.node-monster:not(.node-boss) .svg-ic {
-  transform: scale(3.0);
-}
-.map-node.reachable.node-monster:not(.node-boss) .svg-ic {
-  transform: scale(4.5);
-}
-.leg-ic.node-monster .svg-ic {
-  transform: scale(1.8);
-}
 .node-elite { color: var(--ember); } .node-boss { color: var(--orange); }
 .map-node.node-boss { width: 256px; height: 256px; transform: translate(-50%, -50%); }
 .map-node.node-boss.reachable { animation: bossPulse 2.1s ease-in-out infinite; }
