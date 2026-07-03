@@ -14,11 +14,15 @@ export function generateMap(rng, act) {
     return grid[r][c];
   };
 
-  // Carve paths
+  // Carve paths. The bottom row only ever exposes 1-3 starting nodes; every
+  // path begins on one of those columns and fans out from there.
+  const startCols = rng.sample(
+    Array.from({ length: COLS }, (_, i) => i),
+    rng.int(1, 3)
+  );
   const starts = [];
   for (let p = 0; p < PATHS; p++) {
-    let cur = p < COLS ? p % COLS : rng.int(0, COLS - 1);
-    if (p === 0) cur = rng.int(0, COLS - 1);
+    let cur = startCols[p % startCols.length];
     ensure(0, cur);
     if (!starts.includes(cur)) starts.push(cur);
     for (let r = 1; r < ROWS; r++) {
