@@ -244,6 +244,40 @@ await testAsync('endTurn advances the turn and redraws a hand', async () => {
   if (!c.over) assert.ok(c.hand.length > 0, 'new hand drawn for the next turn');
 });
 
+test('the fight is won when the last enemy flees', () => {
+  const run = new RunState('amara', 7);
+  const c = new Combat(run, ['market_thief']);
+  c.start();
+  const thief = c.enemies[0];
+  thief.bp.moves.flee.run(c, thief);
+  assert.equal(thief.alive, false, 'thief left combat');
+  assert.equal(thief.fled, true, 'thief marked as fled');
+  assert.equal(c.over, true, 'combat ended');
+  assert.equal(c.victory, true, 'counted as a victory');
+});
+
+test('Sundered (noBlock) blocks Ward for one turn, then expires', () => {
+  const c = freshCombat();
+  c.applyPower(c.player, 'noBlock', 1, c.player);
+  c.gainBlock(6);
+  assert.equal(c.player.block, 0, 'no Ward gained while Sundered');
+  c.tickTurnDebuffs(c.player);
+  assert.equal(c.player.powers.noBlock, undefined, 'Sundered expired at turn end');
+  c.gainBlock(6);
+  assert.ok(c.player.block > 0, 'Ward gain works again next turn');
+});
+
+test('Snared (entangle) blocks Attacks for one turn, then expires', () => {
+  const c = freshCombat();
+  const attack = c.hand.find((card) => card.type === 'attack');
+  assert.ok(attack, 'an attack card is in the opening hand');
+  c.applyPower(c.player, 'entangle', 1, c.player);
+  assert.equal(c.canPlay(attack), false, 'attacks unplayable while Snared');
+  c.tickTurnDebuffs(c.player);
+  assert.equal(c.player.powers.entangle, undefined, 'Snared expired at turn end');
+  assert.equal(c.canPlay(attack), true, 'attacks playable again next turn');
+});
+
 // ----------------------------------------------------------------- summary
 console.log('');
 if (failures.length) {

@@ -28,7 +28,7 @@ def('star_lens', {
 // --------- Common ---------
 def('brass_anklet', {
   name: 'Brass Anklet', rarity: 'common',
-  desc: 'At the start of each combat, gain 1 temporary Resolve... no — gain 1 Àṣẹ on turn 1.',
+  desc: 'Gain 1 extra Àṣẹ on the first turn of each combat.',
   startCombat: (combat) => { combat.bonusEnergyTurn1 = (combat.bonusEnergyTurn1 || 0) + 1; },
 });
 def('kente_wrap', {
@@ -115,7 +115,7 @@ def('ancestor_idol', {
 });
 def('cosmic_egg', {
   name: 'Cosmic Egg', rarity: 'rare',
-  desc: 'Powers you play cost 0 Àṣẹ... once per turn.',
+  desc: 'The first Power you play each turn costs 0 Àṣẹ.',
   startCombat: (combat) => { combat.freePowerEachTurn = true; },
 });
 def('eternal_flame', {
