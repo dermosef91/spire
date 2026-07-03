@@ -442,7 +442,7 @@ async function main() {
   // Write/Update output manifest
   const { readdirSync } = await import('node:fs');
   const allPngs = readdirSync(SPRITES_DIR)
-    .filter(f => f.endsWith('.png') && f !== 'style-key.png')
+    .filter(f => f.endsWith('.png') && !f.startsWith('style-key'))
     .map(f => f.replace('.png', ''));
 
   const outputManifest = {

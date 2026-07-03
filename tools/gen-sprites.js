@@ -24,7 +24,7 @@ const ROOT = join(__dirname, '..');
 const SPRITES_DIR = join(ROOT, 'assets', 'sprites');
 const MANIFEST_IN = join(__dirname, 'sprites.manifest.json');
 const MANIFEST_OUT = join(SPRITES_DIR, 'manifest.json');
-const STYLE_KEY_PATH = join(SPRITES_DIR, 'style-key.png');
+const STYLE_KEYS = ['style-key.png', 'style-key2.png', 'style-key3.png'];
 
 // ── CLI args ────────────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
@@ -96,13 +96,14 @@ async function withRetry(fn, retries = 3, baseDelay = 2000) {
 }
 
 // ── Image generation helpers ────────────────────────────────────────────────
-async function generateStyleKey(openai, sharp) {
-  console.log('🎨 Generating style-key reference image...');
+async function generateStyleKey(openai, sharp, keyName = 'style-key.png') {
+  const keyPath = join(SPRITES_DIR, keyName);
+  console.log(`🎨 Generating ${keyName} reference image...`);
 
   if (DRY_RUN) {
-    const buf = await createPlaceholderWithSharp(sharp, 'style-key', 'reference');
-    writeFileSync(STYLE_KEY_PATH, buf);
-    console.log('  ✓ Style-key placeholder written');
+    const buf = await createPlaceholderWithSharp(sharp, keyName.replace('.png', ''), 'reference');
+    writeFileSync(keyPath, buf);
+    console.log(`  ✓ ${keyName} placeholder written`);
     return;
   }
 
@@ -115,15 +116,15 @@ async function generateStyleKey(openai, sharp) {
     });
   });
 
-  logCost('style-key', 'generate', 'gpt-image-2');
+  logCost(keyName.replace('.png', ''), 'generate', 'gpt-image-2');
 
   const b64 = result.data[0].b64_json;
   const rawBuf = Buffer.from(b64, 'base64');
 
   // Post-process with sharp
   const processed = await postProcess(sharp, rawBuf);
-  writeFileSync(STYLE_KEY_PATH, processed);
-  console.log('  ✓ Style-key saved');
+  writeFileSync(keyPath, processed);
+  console.log(`  ✓ ${keyName} saved`);
 }
 
 async function generateEntity(openai, OpenAI, sharp, entity) {
@@ -137,6 +138,13 @@ async function generateEntity(openai, OpenAI, sharp, entity) {
 
   console.log(`  🖌 ${id} (${kind})...`);
 
+  const fullPrompt = `${STYLE_BIBLE} Subject: ${prompt}`;
+
+  // Randomly select one of the style keys
+  const chosenKey = STYLE_KEYS[Math.floor(Math.random() * STYLE_KEYS.length)];
+  const styleKeyPath = join(SPRITES_DIR, chosenKey);
+  console.log(`    🎨 Using ${chosenKey} as style reference...`);
+
   if (DRY_RUN) {
     const buf = await createPlaceholderWithSharp(sharp, id, kind);
     writeFileSync(outPath, buf);
@@ -144,12 +152,10 @@ async function generateEntity(openai, OpenAI, sharp, entity) {
     return id;
   }
 
-  const fullPrompt = `${STYLE_BIBLE} Subject: ${prompt}`;
-
   // Read style-key as image input for consistency
-  const styleKeyBuf = readFileSync(STYLE_KEY_PATH);
+  const styleKeyBuf = readFileSync(styleKeyPath);
   // Prepare style key file for OpenAI API with correct mimetype
-  const styleKeyFile = await OpenAI.toFile(styleKeyBuf, 'style-key.png', { type: 'image/png' });
+  const styleKeyFile = await OpenAI.toFile(styleKeyBuf, chosenKey, { type: 'image/png' });
 
   const result = await withRetry(async () => {
     // Use images.edit with the style-key as the base image for consistency
@@ -300,11 +306,14 @@ async function main() {
     }
   }
 
-  // Step 1: Generate style-key reference
-  if (!existsSync(STYLE_KEY_PATH)) {
-    await generateStyleKey(openai, sharp);
-  } else {
-    console.log('🎨 Style-key exists, reusing');
+  // Step 1: Generate style-key references
+  for (const key of STYLE_KEYS) {
+    const keyPath = join(SPRITES_DIR, key);
+    if (!existsSync(keyPath)) {
+      await generateStyleKey(openai, sharp, key);
+    } else {
+      console.log(`🎨 Style key reference ${key} exists, reusing`);
+    }
   }
   console.log();
 
@@ -325,7 +334,7 @@ async function main() {
   // Scan directory for all .png files (not just this run's output)
   const { readdirSync } = await import('node:fs');
   const allPngs = readdirSync(SPRITES_DIR)
-    .filter(f => f.endsWith('.png') && f !== 'style-key.png')
+    .filter(f => f.endsWith('.png') && !f.startsWith('style-key'))
     .map(f => f.replace('.png', ''));
 
   const outputManifest = {

@@ -49,7 +49,7 @@ Generated files go to `assets/sprites/`:
 
 | File | Description |
 |------|-------------|
-| `style-key.png` | Style reference image (used for conditioning) |
+| `style-key.png`, `style-key2.png`, `style-key3.png` | Style reference images (sampled randomly for conditioning) |
 | `<id>.png` | Per-entity sprite (512×512, transparent BG) |
 | `manifest.json` | Runtime manifest listing available sprite IDs |
 
@@ -74,8 +74,8 @@ All sprites follow the "Incandescent" style bible:
 
 ## Consistency Strategy
 
-1. A "style-key" reference image is generated first (neutral robed figure)
-2. Every entity is generated via `images.edit` conditioned on the style-key
+1. Style reference images (`style-key*.png`) are used for conditioning
+2. Every entity is generated via `images.edit` conditioned randomly on one of the three style-keys for visual variety
 3. Post-processing quantizes colors back toward the theme palette
 4. Future multi-pose sprites will be conditioned on each entity's master image
 
