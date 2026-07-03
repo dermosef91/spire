@@ -108,7 +108,6 @@ export const MapScene = {
     board.appendChild(svg);
 
     // nodes
-    let currentNodeEl = null;
     const placeNode = (type, x, y, key, posObj) => {
       const isReach = reachKey.has(key);
       const isCurrent = run.position && !posObj.boss && run.position.row === posObj.row && run.position.col === posObj.col;
@@ -120,7 +119,6 @@ export const MapScene = {
       });
       n.dataset.key = key;
       if (isReach) n.addEventListener('click', () => this.enterNode(posObj));
-      if (isCurrent) currentNodeEl = n;
       board.appendChild(n);
     };
 
@@ -190,19 +188,24 @@ export const MapScene = {
 
     this.setScene(panel, 'map');
 
-    // Scroll to center the player's position if it's off-screen, otherwise scroll to the bottom
+    // Scroll straight to the currently-selectable (reachable) nodes on entry —
+    // that's what the player needs to act on, not the node they just left.
     const adjustScroll = () => {
       const viewportHeight = scroller.clientHeight;
-      if (currentNodeEl && viewportHeight > 0) {
-        const nodeY = currentNodeEl.offsetTop;
-        const defaultScrollTop = scroller.scrollHeight - viewportHeight;
-        // Check if the node is off-screen (above the visible area when scrolled to bottom)
-        const isOffScreen = (nodeY - 22 < defaultScrollTop);
-        if (isOffScreen) {
-          scroller.scrollTop = nodeY - (viewportHeight / 2);
-        } else {
-          scroller.scrollTop = scroller.scrollHeight;
-        }
+      if (viewportHeight <= 0) { scroller.scrollTop = scroller.scrollHeight; checkScrollHint(); return; }
+
+      const reachTops = reachable
+        .map((rn) => {
+          const key = rn.boss ? 'boss' : `${rn.row}-${rn.col}`;
+          return board.querySelector(`[data-key="${key}"]`);
+        })
+        .filter(Boolean)
+        .map((nodeEl) => nodeEl.offsetTop);
+
+      if (reachTops.length) {
+        const center = (Math.min(...reachTops) + Math.max(...reachTops)) / 2;
+        const maxScrollTop = scroller.scrollHeight - viewportHeight;
+        scroller.scrollTop = Math.max(0, Math.min(maxScrollTop, center - viewportHeight / 2));
       } else {
         scroller.scrollTop = scroller.scrollHeight;
       }
