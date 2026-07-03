@@ -218,6 +218,35 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   faint inset ornamental ring (they show on every scene's top bar, so this is a
   global chrome tweak, not map-only — QA covers combat to catch regressions).
 
+## Parallel Claude sessions — one worktree each
+Multiple interactive Claude/agent sessions must **never share this checkout**:
+branch, index and stash are global per working tree, so one session's
+`git reset` / `git stash` / branch switch silently clobbers another session's
+staged work mid-commit (this really happened — two sessions on this folder
+produced mixed-scope commits and a mid-commit index reset). Give every session
+its own worktree instead:
+- `tools/worktree.sh new <topic>` → creates `../spire-wt-<topic>` on branch
+  `claude/<topic>` off a freshly fetched `origin/main`, symlinks the primary
+  checkout's `node_modules` into it (the game is dependency-free; the symlink
+  is only for `npm run smoke` / `npm run qa`'s ambient playwright), and prints
+  a stable per-topic dev port (8100–8199) plus `QA_PORT` (+100) so parallel
+  `npm start` / `npm run qa` runs don't collide — 8080/8091 stay reserved for
+  the primary checkout.
+- Open the printed folder in the new Claude session and work normally there
+  (commit, push, PR into `main`, self-merge; deploys still only trigger from
+  `main`).
+- After the merge: `tools/worktree.sh done <topic>` removes the worktree and
+  deletes the branch if merged. It drops the `node_modules` symlink first —
+  git refuses to remove a worktree containing untracked files otherwise.
+- `git worktree list` will also show IDE-managed worktrees
+  (`.claude/worktrees/...`, Antigravity's `~/.gemini/antigravity/worktrees/...`);
+  they belong to those tools — leave them alone.
+- The primary checkout should sit on `main` and mostly just `git pull`. If a
+  session must run directly on it, treat it as read-only for git state.
+- Gotcha: `.gitignore` must contain `node_modules` **without** a trailing
+  slash — `node_modules/` only matches real directories, so the worktree's
+  symlink would show up as untracked noise in `git status`.
+
 ## Story framing & endings (the Spire's lie)
 The world runs on one reveal: **the Spire "welcomes climbers home" by rendering
 winners into the enemies the next climber fights.** Ascension is extraction
