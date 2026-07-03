@@ -81,7 +81,7 @@ All sprites follow the "Incandescent" style bible:
 
 ## Cost
 
-Approximate costs per generation (gpt-image-1 at 1024×1024):
+Approximate costs per generation (gpt-image-2 at 1024×1024):
 - Style key: ~$0.04
 - Each entity: ~$0.04
 - Full run (18 entities + key): ~$0.76

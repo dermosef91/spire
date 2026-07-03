@@ -11,7 +11,9 @@
     "qa": "node tools/qa-screenshots.js",
     "sprites": "node tools/gen-sprites.js",
     "sprite-variations": "node tools/gen-sprite-variations.js",
-    "backgrounds": "node tools/gen-backgrounds.js"
+    "card-art": "node tools/gen-card-art.js",
+    "backgrounds": "node tools/gen-backgrounds.js",
+    "event-art": "node tools/gen-event-art.js"
   },
   "license": "MIT"
 }
