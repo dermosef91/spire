@@ -63,6 +63,8 @@ export const ENCOUNTERS = {
       ['ember_colossus'],                      // solo berserker — a pure clock
       ['hollow_cantor', 'echo_wraith'],        // healer + phaser — attrition
       ['static_swarm', 'void_chanter'],        // curses + hexes
+      ['choir_master'],                        // summoner — cut the conductor or drown
+      ['choir_master', 'void_chanter'],        // summoner behind a hexer
     ],
     elite: [
       ['chrome_archon'],
