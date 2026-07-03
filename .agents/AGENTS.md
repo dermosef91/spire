@@ -41,3 +41,31 @@
 - **Event scene audio dependency**: `src/scenes/event.js` calls `audio.play()` while resolving choices that change gold/remove cards. Keep `import { audio } from '../audio.js';` in that scene and cover gold-changing event choices in `tools/test.js`; otherwise a choice can mutate run state, throw before `resultThenMap()`, and stay clickable for repeated rewards/costs.
 - **Lost Pointer Capture**: When card nodes (or any nodes capturing pointer events) are removed from the DOM or rebuilt during a state update while pointer capture is active, the browser fires a `lostpointercapture` event. Since `pointerup` or `pointercancel` may not fire on the node after it's removed, you must always listen to `lostpointercapture` to cleanly reset drag/gesture state (e.g., `this.drag = null`) and prevent permanent input locks.
 
+## Parallel Claude sessions — one worktree each
+Multiple interactive Claude/agent sessions must **never share this checkout**:
+branch, index and stash are global per working tree, so one session's
+`git reset` / `git stash` / branch switch silently clobbers another session's
+staged work mid-commit (this really happened — two sessions on this folder
+produced mixed-scope commits and a mid-commit index reset). Give every session
+its own worktree instead:
+- `tools/worktree.sh new <topic>` → creates `../spire-wt-<topic>` on branch
+  `claude/<topic>` off a freshly fetched `origin/main`, symlinks the primary
+  checkout's `node_modules` into it (the game is dependency-free; the symlink
+  is only for `npm run smoke` / `npm run qa`'s ambient playwright), and prints
+  a stable per-topic dev port (8100–8199) plus `QA_PORT` (+100) so parallel
+  `npm start` / `npm run qa` runs don't collide — 8080/8091 stay reserved for
+  the primary checkout.
+- Open the printed folder in the new Claude session and work normally there
+  (commit, push, PR into `main`, self-merge; deploys still only trigger from
+  `main`).
+- After the merge: `tools/worktree.sh done <topic>` removes the worktree and
+  deletes the branch if merged. It drops the `node_modules` symlink first —
+  git refuses to remove a worktree containing untracked files otherwise.
+- `git worktree list` will also show IDE-managed worktrees
+  (`.claude/worktrees/...`, Antigravity's `~/.gemini/antigravity/worktrees/...`);
+  they belong to those tools — leave them alone.
+- The primary checkout should sit on `main` and mostly just `git pull`. If a
+  session must run directly on it, treat it as read-only for git state.
+- Gotcha: `.gitignore` must contain `node_modules` **without** a trailing
+  slash — `node_modules/` only matches real directories, so the worktree's
+  symlink would show up as untracked noise in `git status`.
