@@ -729,11 +729,11 @@ export class CombatView {
     this.combat.playCard(card, target);
   }
 
-  // Standard attacks are a single rhythm mark; multi-mark patterns (up to 4)
-  // are reserved for finisher cards via the qteMarks blueprint field.
+  // 1-3 rhythm marks: blueprint override, else scaled by cost.
   marksFor(card) {
-    if (card._bp.qteMarks) return Math.max(1, Math.min(4, card._bp.qteMarks));
-    return 1;
+    if (card._bp.qteMarks) return Math.max(1, Math.min(3, card._bp.qteMarks));
+    const cost = card.cost === 'X' ? 3 : card.cost;
+    return cost >= 3 ? 3 : cost >= 2 ? 2 : 1;
   }
 
   endTurn() {
