@@ -38,6 +38,31 @@ function orbitDots(cx, cy, r, count, dotR = 3, col = A) {
 /* ============================== UI ICONS ============================== */
 export const UI = {
   heart: S(`<path d="M50 78 C18 55 22 28 40 28 C49 28 50 38 50 38 C50 38 51 28 60 28 C78 28 82 55 50 78Z" fill="${E}" stroke="${O}" stroke-width="4"/>`),
+  // Rhythm QTE: feathered chevron-stack swipe arrow (drawn pointing up; other
+  // directions rotate the .qte-dir wrapper in CSS) — brightest/widest at the
+  // tip, tapering and fading toward the tail, with a spike at each end.
+  qteChevrons: (() => {
+    let s = `<path d="M50 2 V16" stroke="${A}" stroke-width="1.4" opacity="0.85"/>`;
+    const n = 8;
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1);
+      const hw = 30 - 21 * t;      // half-width: 30 → 9
+      const y = 15 + i * 15;       // apex y
+      const band = 13 - 7 * t;     // band thickness: 13 → 6
+      const arm = hw * 0.75;       // vertical drop of the arms
+      const fill = i < 2 ? '#ffe6bd' : i < 4 ? '#ffc478' : '#ee9c44';
+      const op = (1 - 0.6 * t).toFixed(2);
+      s += `<path d="M50 ${y} L${50 + hw} ${y + arm} V${y + arm + band} L50 ${y + band} L${50 - hw} ${y + arm + band} V${y + arm} Z" fill="${fill}" opacity="${op}"/>`;
+    }
+    s += `<path d="M50 154 L55 134 L50 139 L45 134 Z" fill="#ee9c44" opacity="0.6"/>`;
+    return S(s, { vb: '0 0 100 158' });
+  })(),
+  // Faint concentric ornament rings behind the QTE arrow (static backdrop).
+  qteRings: S(
+    rings(50, 50, 3, 14, O, 0.4)
+    + `<circle cx="50" cy="50" r="47" stroke="${A}" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.35"/>`
+    + orbitDots(50, 50, 42, 6, 1.4, A)
+  ),
   coin: S(`<circle cx="50" cy="50" r="30" fill="${A}" stroke="${C}" stroke-width="3"/><circle cx="50" cy="50" r="22" fill="none" stroke="#6a3a10" stroke-width="2"/><path d="M44 40 q12 10 0 20 M56 40 q-12 10 0 20" stroke="#6a3a10" stroke-width="3"/>`),
   energy: S(`${rays(50, 50, 30, 42, 12, O, 0.6, 2)}<circle cx="50" cy="50" r="26" fill="none" stroke="${O}" stroke-width="4"/><path d="M54 30 L40 54 H50 L46 70 L62 44 H52 Z" fill="${A}" stroke="${C}" stroke-width="2"/>`),
   shield: S(`<path d="M50 18 L78 28 V52 C78 70 64 80 50 84 C36 80 22 70 22 52 V28 Z" fill="#123" stroke="#9fc2ff" stroke-width="4"/><path d="M50 30 V72" stroke="#9fc2ff" stroke-width="3" opacity="0.7"/>`),

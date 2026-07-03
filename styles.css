@@ -1989,8 +1989,8 @@ img.svg-ic { object-fit: contain; }
 }
 .qte-target {
   position: absolute; inset: 22%; border-radius: 50%;
-  border: 3px solid var(--line);
-  box-shadow: 0 0 18px rgba(255, 106, 26, 0.3), inset 0 0 16px rgba(255, 106, 26, 0.12);
+  border: 2px solid var(--line);
+  box-shadow: 0 0 14px rgba(255, 106, 26, 0.25), inset 0 0 14px rgba(255, 106, 26, 0.1);
   transition: border-color 100ms linear, box-shadow 100ms linear;
 }
 .qte-parry .qte-target { border-color: var(--amber); box-shadow: 0 0 22px rgba(255, 171, 71, 0.4), inset 0 0 16px rgba(255, 171, 71, 0.15); }
@@ -2000,14 +2000,37 @@ img.svg-ic { object-fit: contain; }
   will-change: transform; pointer-events: none;
 }
 .qte-parry .qte-note { border-color: var(--amber); }
-.qte-arrow {
-  position: relative; z-index: 2; line-height: 1;
-  font-family: var(--font-display); font-size: clamp(32px, 9dvh, 62px);
-  color: var(--cream); text-shadow: 0 0 18px rgba(255, 138, 58, 0.85);
+/* Faint concentric ornament rings behind the arrow (static, reduced-motion safe). */
+.qte-rings {
+  position: absolute; inset: -8%;
+  opacity: 0.75; pointer-events: none;
 }
-.qte-hint {
-  margin-top: 3dvh; font-family: var(--font-display); color: var(--muted);
-  font-size: clamp(11px, 2.2dvh, 15px); letter-spacing: 0.14em; text-transform: uppercase;
+.qte-rings .svg-ic { width: 100%; height: 100%; }
+/* Feathered chevron-stack swipe arrow; drawn pointing up, rotated per direction. */
+.qte-dir {
+  position: absolute; inset: 0; z-index: 2;
+  display: grid; place-items: center;
+  transform: rotate(var(--dir-rot, 0deg));
+  filter: drop-shadow(0 0 14px rgba(255, 138, 58, 0.65));
+  pointer-events: none;
+}
+.qte-dir[data-dir='right'] { --dir-rot: 90deg; }
+.qte-dir[data-dir='down'] { --dir-rot: 180deg; }
+.qte-dir[data-dir='left'] { --dir-rot: -90deg; }
+.qte-dir .svg-ic { height: 88%; width: auto; }
+/* "SWIPE UP / TO STRIKE" label stack under the stage. */
+.qte-labels { margin-top: 3.4dvh; text-align: center; }
+.qte-label-main {
+  font-family: var(--font-display); color: var(--orange-bright);
+  font-size: clamp(22px, 5.4dvh, 42px); letter-spacing: 0.22em; text-transform: uppercase;
+  text-shadow: 0 0 22px rgba(255, 106, 26, 0.75), 0 1px 6px rgba(0, 0, 0, 0.9);
+  min-height: 1.2em;
+}
+.qte-label-sub {
+  margin-top: 0.5dvh;
+  font-family: var(--font-display); color: var(--cream); opacity: 0.85;
+  font-size: clamp(11px, 2.4dvh, 17px); letter-spacing: 0.3em; text-transform: uppercase;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
 }
 .qte-beats { display: none; position: absolute; left: 0; right: 0; bottom: -14%; justify-content: center; gap: 12px; }
 .qte-beat {

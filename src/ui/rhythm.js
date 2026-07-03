@@ -7,6 +7,7 @@
 // combat state and never consumes the seeded run RNG.
 import { el, wait } from '../core/util.js';
 import { audio } from '../audio.js';
+import { UI } from './icons.js';
 
 // ---- tuning ----------------------------------------------------------------
 const NOTE_TRAVEL_MS = 800;    // note spawn → target ring
@@ -23,7 +24,7 @@ export const MULT_GOOD = 1.0;
 export const MULT_MISS = 0.5;
 
 const DIRS = ['left', 'up', 'down', 'right'];
-const GLYPH = { left: '◀', up: '▲', down: '▼', right: '▶', tap: '✦' };
+const DIR_WORD = { left: 'LEFT', up: 'UP', down: 'DOWN', right: 'RIGHT' };
 const KEY_DIR = {
   ArrowLeft: 'left', ArrowUp: 'up', ArrowDown: 'down', ArrowRight: 'right',
   w: 'up', a: 'left', s: 'down', d: 'right',
@@ -37,17 +38,20 @@ export const rhythmReduced = () =>
 function buildQTE(kind, isTouch) {
   const layer = el('div', { class: `qte-layer qte-${kind}` });
   const stage = el('div', { class: 'qte-stage' });
+  stage.appendChild(el('div', { class: 'qte-rings', html: UI.qteRings }));
   stage.appendChild(el('div', { class: 'qte-target' }));
-  const arrow = el('div', { class: 'qte-arrow' });
-  stage.appendChild(arrow);
+  const dir = el('div', { class: 'qte-dir', html: UI.qteChevrons });
+  dir.style.visibility = 'hidden';
+  stage.appendChild(dir);
   const beats = el('div', { class: 'qte-beats' });
   for (let i = 0; i < 3; i++) beats.appendChild(el('span', { class: 'qte-beat' }));
   stage.appendChild(beats);
   layer.appendChild(stage);
-  const hintText = kind === 'parry'
-    ? (isTouch ? 'Tap in time to parry!' : 'Press any key in time to parry!')
-    : (isTouch ? 'Swipe with the beat!' : 'Arrow keys or WASD with the beat!');
-  layer.appendChild(el('div', { class: 'qte-hint', text: hintText }));
+  // "SWIPE UP" / "TO STRIKE" label stack (direction word set per mark).
+  const verb = kind === 'parry' ? (isTouch ? 'TAP' : 'PRESS') : (isTouch ? 'SWIPE' : 'PRESS');
+  const labelMain = el('div', { class: 'qte-label-main' });
+  const labelSub = el('div', { class: 'qte-label-sub', text: kind === 'parry' ? 'TO PARRY' : 'TO STRIKE' });
+  layer.appendChild(el('div', { class: 'qte-labels' }, [labelMain, labelSub]));
   document.body.appendChild(layer);
 
   let handler = null; // per-mark input sink: fn(dir) where dir ∈ DIRS | 'tap'
@@ -76,7 +80,7 @@ function buildQTE(kind, isTouch) {
   layer.addEventListener('pointercancel', () => { pStart = null; });
 
   return {
-    layer, stage, arrow, beats,
+    layer, stage, dir, beats, verb, labelMain,
     setHandler: (fn) => { handler = fn; },
     destroy: () => { document.removeEventListener('keydown', onKey, true); layer.remove(); },
   };
@@ -92,7 +96,15 @@ function playMark(ui, dir, { perfectMs = PERFECT_MS, goodMs = GOOD_MS } = {}) {
     const target = start + travel;
     const timers = [];
 
-    ui.arrow.textContent = GLYPH[dir || 'tap'];
+    if (dir) {
+      ui.dir.dataset.dir = dir;
+      ui.dir.style.visibility = 'visible';
+      ui.labelMain.textContent = `${ui.verb} ${DIR_WORD[dir]}`;
+    } else {
+      // Parry: no direction — the amber target ring is the cue.
+      ui.dir.style.visibility = 'hidden';
+      ui.labelMain.textContent = ui.verb;
+    }
 
     let note = null;
     if (reduced) {
@@ -119,7 +131,7 @@ function playMark(ui, dir, { perfectMs = PERFECT_MS, goodMs = GOOD_MS } = {}) {
       ui.setHandler(null);
       timers.forEach(clearTimeout);
       if (note) note.remove();
-      ui.arrow.textContent = '';
+      ui.dir.style.visibility = 'hidden';
       ui.stage.classList.remove('hit-perfect', 'hit-good', 'hit-miss');
       void ui.stage.offsetWidth;
       ui.stage.classList.add(`hit-${grade}`);
