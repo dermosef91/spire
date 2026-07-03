@@ -361,10 +361,24 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; margin: 0
   color: var(--orange-bright);
 }
 .game-title {
-  font-family: 'Cinzel', 'Playfair Display', Georgia, serif; font-size: 130px; font-weight: 400; margin: 0; letter-spacing: 0.12em;
+  font-family: 'Cinzel', 'Playfair Display', Georgia, serif;
+  font-size: 130px;
+  font-weight: 400;
+  margin: 0;
+  letter-spacing: 0.12em;
   color: var(--cream);
   text-shadow: 0 4px 20px rgba(0, 0, 0, 0.95), 0 0 10px rgba(0, 0, 0, 0.7);
-  text-indent: 0.12em; /* Centers the text properly with letter-spacing */
+  text-indent: 0.12em;
+  user-select: none;
+  line-height: 1;
+}
+.logo-a-svg {
+  display: inline-block;
+  height: 1.08em;
+  width: auto;
+  vertical-align: -0.14em;
+  color: inherit;
+  filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 10px rgba(0, 0, 0, 0.7));
 }
 .title-ornament {
   display: flex; justify-content: center; align-items: center; gap: 8px;
@@ -2111,7 +2125,7 @@ img.svg-ic { object-fit: contain; }
 .qte-dir[data-dir='right'] { --dir-rot: 90deg; }
 .qte-dir[data-dir='down'] { --dir-rot: 180deg; }
 .qte-dir[data-dir='left'] { --dir-rot: -90deg; }
-.qte-dir .svg-ic { height: 88%; width: auto; }
+.qte-dir .svg-ic { height: 88%; width: auto; transform: translateY(-33%); }
 /* "SWIPE UP / TO STRIKE" label stack under the stage. */
 .qte-labels { margin-top: 3.4dvh; text-align: center; }
 .qte-label-main {

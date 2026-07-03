@@ -135,7 +135,7 @@ export class KeyboardController {
     // End Turn handling in combat
     const isCombat = document.body.classList.contains('scene-combat');
     const hasOverlay = !!document.querySelector('.overlay');
-    if (isCombat && !hasOverlay && (key === 'e' || key === 'E' || key === 'd' || key === 'D')) {
+    if (isCombat && !hasOverlay && (key === 'e' || key === 'E')) {
       const endTurnBtn = document.querySelector('.end-turn');
       if (endTurnBtn && !endTurnBtn.disabled) {
         e.preventDefault();
