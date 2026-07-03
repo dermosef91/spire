@@ -1553,6 +1553,38 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   pointer-events: none;
 }
 
+/* Suggested: nothing left in hand can be played this turn (empty hand, or
+   too little Àṣẹ for what remains) — pulse the button so the only legal
+   action is obvious instead of the player wondering why cards won't respond.
+   Animated properties (filter / background) win over the plain :hover
+   declarations above regardless of hover state — CSS animations always
+   outrank normal (non-!important) rules in the cascade — so the pulse keeps
+   reading clearly even while the button is moused over. */
+@keyframes endTurnSuggestPulse {
+  0%, 100% { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 3px rgba(255, 127, 54, 0.3)); }
+  50% { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 15px rgba(255, 127, 54, 0.95)); }
+}
+@keyframes endTurnSuggestBorder {
+  0%, 100% { background: #cf5b1d; }
+  50% { background: #ff7f36; }
+}
+.end-turn.suggested {
+  animation: endTurnSuggestPulse 1.7s ease-in-out infinite;
+}
+.end-turn.suggested .end-turn-decor.border-inner {
+  animation: endTurnSuggestBorder 1.7s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .end-turn.suggested {
+    animation: none;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px rgba(255, 127, 54, 0.85));
+  }
+  .end-turn.suggested .end-turn-decor.border-inner {
+    animation: none;
+    background: #ff7f36;
+  }
+}
+
 /* Top padding must cover the rotated fan's top corner + the cost badge (top:-11px)
    poking above the card box, or they get clipped: overflow-x:auto forces the
    paired overflow-y:visible to compute as 'auto' (CSS Overflow §3), which still
