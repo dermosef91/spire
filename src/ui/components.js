@@ -7,6 +7,8 @@ import { POWERS, KEYWORDS } from '../data/keywords.js';
 import { UI, cardArt, relicIcon, potionIcon, powerIcon } from './icons.js';
 import { fullscreenSupported, toggleFullscreen } from '../core/fullscreen.js';
 import { hasCardArt } from './card-art.js';
+import { hasRelicArt } from './relic-art.js';
+import { hasPotionArt } from './potion-art.js';
 import { audio } from '../audio.js';
 
 export function renderCard(card, opts = {}) {
@@ -94,6 +96,16 @@ export function relicChip(relicId, onHover) {
   if (!r) return el('span');
   const cls = `relic relic-${r.rarity}`;
   const node = el('div', { class: cls, html: relicIcon(relicId), title: `${r.name} — ${r.desc}` });
+  
+  if (hasRelicArt(relicId)) {
+    const img = el('img', {
+      class: 'relic-art-img',
+      attrs: { src: `assets/relic-art/${relicId}.png`, alt: '', draggable: 'false' },
+    });
+    img.onerror = () => { img.style.display = 'none'; };
+    node.appendChild(img);
+  }
+
   if (onHover) {
     node.addEventListener('mouseenter', () => onHover(r, node, true));
     node.addEventListener('mouseleave', () => onHover(r, node, false));
@@ -107,6 +119,16 @@ export function potionChip(potionId, idx, onClick, onHover) {
   const p = POTIONS[potionId];
   if (!p) return el('span');
   const node = el('div', { class: 'potion', style: { '--pcolor': p.color }, html: potionIcon(), title: `${p.name} — ${p.desc}` });
+  
+  if (hasPotionArt(potionId)) {
+    const img = el('img', {
+      class: 'potion-art-img',
+      attrs: { src: `assets/potion-art/${potionId}.png`, alt: '', draggable: 'false' },
+    });
+    img.onerror = () => { img.remove(); };
+    node.appendChild(img);
+  }
+
   if (onClick) node.addEventListener('click', () => onClick(p, idx));
   if (onHover) {
     node.addEventListener('mouseenter', () => onHover(p, node, true));

@@ -165,7 +165,7 @@ export const MapScene = {
   },
 
   enterNode(pos) {
-    audio.play('select');
+    audio.play('click_heavy');
     this.run.position = pos;
     const node = nodeAt(this.run.map, pos);
     const type = pos.boss ? 'boss' : node.type;
@@ -223,7 +223,7 @@ export const MapScene = {
     const doUse = () => {
       potion.use({ run, combat: null, target: null });
       run.removePotionAt(idx);
-      audio.play('select');
+      audio.play('click');
       this.showMap();
     };
     if (this.touch) this.confirm(`Use ${potion.name}?`, potion.desc, doUse);

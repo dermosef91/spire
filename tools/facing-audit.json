@@ -1,0 +1,242 @@
+[
+  {
+    "id": "amara",
+    "kind": "champion",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "amara_attack",
+    "kind": "champion",
+    "direction": "left",
+    "isWrong": true
+  },
+  {
+    "id": "amara_block",
+    "kind": "champion",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "amara_skill",
+    "kind": "champion",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "brass_sentinel",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "echo_wraith",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "ember_colossus",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "gilded_warden",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "glyph_sentry",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "hollow_cantor",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "husk_drone",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "husk_drone_attack",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "husk_drone_block",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "husk_drone_skill",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "ink_leech",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "kofi",
+    "kind": "champion",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "kofi_attack",
+    "kind": "champion",
+    "direction": "left",
+    "isWrong": true
+  },
+  {
+    "id": "kofi_block",
+    "kind": "champion",
+    "direction": "left",
+    "isWrong": true
+  },
+  {
+    "id": "kofi_skill",
+    "kind": "champion",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "market_thief",
+    "kind": "enemy",
+    "direction": "left",
+    "isWrong": false
+  },
+  {
+    "id": "null_scribe",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "obsidian_maw",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "reef_spitter",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "rust_maw",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "spark_imp",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "static_jackal",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "static_jackal_attack",
+    "kind": "enemy",
+    "direction": "left",
+    "isWrong": false
+  },
+  {
+    "id": "static_jackal_block",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "static_jackal_skill",
+    "kind": "enemy",
+    "direction": "left",
+    "isWrong": false
+  },
+  {
+    "id": "static_swarm",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "the_archivist",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "the_gatekeeper",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "the_gatekeeper_attack",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "the_gatekeeper_block",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "the_gatekeeper_skill",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "tide_priest",
+    "kind": "enemy",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "zara",
+    "kind": "champion",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "zara_attack",
+    "kind": "champion",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "zara_block",
+    "kind": "champion",
+    "direction": "center",
+    "isWrong": false
+  },
+  {
+    "id": "zara_skill",
+    "kind": "champion",
+    "direction": "center",
+    "isWrong": false
+  }
+]

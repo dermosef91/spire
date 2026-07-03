@@ -1,0 +1,52 @@
+[
+  {
+    "id": "elixir",
+    "name": "Elixir of Ìyá",
+    "prompt": "A beautiful rounded ceramic potion flask wrapped in woven fiber cords, containing a glowing healing brew. Catching bold ember-orange rim lighting. High contrast woodcut style, clean bold silhouette. Centered isolated object, transparent background."
+  },
+  {
+    "id": "rage_brew",
+    "name": "Rage Brew",
+    "prompt": "A small stout copper-banded metal flask with tribal pattern engravings, emitting a warm glowing steam. High contrast woodcut style, clean bold silhouette. Centered isolated object, transparent background."
+  },
+  {
+    "id": "swift_brew",
+    "name": "Swiftroot Brew",
+    "prompt": "A slender elegant glass vial with clean geometric African-inspired trim lines, holding a swirling tonic. Catching bold amber-orange highlights. Afrofuturist woodcut style, clean bold silhouette. Centered isolated object, transparent background."
+  },
+  {
+    "id": "block_brew",
+    "name": "Blockstone Brew",
+    "prompt": "A thick, heavy octagonal flask carved from solid dark stone, with geometric brass banding. Ember-orange accent lighting. Afrofuturist woodcut style, clean bold blocky silhouette. Centered isolated object, transparent background."
+  },
+  {
+    "id": "energy_brew",
+    "name": "Sunfire Draught",
+    "prompt": "A circular glass orb vessel shaped like a sun, decorated with radiating thin geometric sunburst rays. Bright glowing amber core. Afrofuturist woodcut style, clean bold circular silhouette. Centered isolated object, transparent background."
+  },
+  {
+    "id": "blight_brew",
+    "name": "Blight Vial",
+    "prompt": "A small, jagged obsidian vial wrapped in copper wire, with faint green-tinted (ember-orange adjusted) geometric symbols. Afrofuturist woodcut style, clean bold sharp silhouette. Centered isolated object, transparent background."
+  },
+  {
+    "id": "weak_brew",
+    "name": "Saplight Tonic",
+    "prompt": "An elegant teardrop-shaped glass flask with an ornate brass stopper and detailed geometric trim. Amber highlights, high contrast. Afrofuturist woodcut style, clean bold teardrop silhouette. Centered isolated object, transparent background."
+  },
+  {
+    "id": "focus_brew",
+    "name": "Clarity Draught",
+    "prompt": "A crystal vial with sharp hexagonal geometric facets, catching bold ember-orange and cream highlights. Afrofuturist woodcut style, clean bold faceted silhouette. Centered isolated object, transparent background."
+  },
+  {
+    "id": "fairy_brew",
+    "name": "Ancestor's Breath",
+    "prompt": "A traditional dried calabash gourd flask with geometric patterns, glowing with a soft ancestral amber light. Afrofuturist woodcut style, clean bold gourd silhouette. Centered isolated object, transparent background."
+  },
+  {
+    "id": "fury_brew",
+    "name": "Cataclysm Draught",
+    "prompt": "A heavy iron canister with spiked metallic bands, detailed geometric ribs, looking volatile and dangerous. Ember-orange rim light. High contrast woodcut style, clean bold canister silhouette. Centered isolated object, transparent background."
+  }
+]

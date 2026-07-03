@@ -10,6 +10,7 @@ import { RELICS } from '../data/relics.js';
 import { POTIONS } from '../data/potions.js';
 import { COLORLESS_POOL } from '../data/characters.js';
 import { UI, relicIcon, potionIcon } from '../ui/icons.js';
+import { hasPotionArt } from '../ui/potion-art.js';
 import { audio } from '../audio.js';
 
 export const RewardScene = {
@@ -65,13 +66,22 @@ export const RewardScene = {
         if (rw.type === 'gold') {
           content.appendChild(el('div', { class: 'reward-icon', html: UI.coin }));
           content.appendChild(el('div', { class: 'reward-label', text: `${rw.amount} gold` }));
-          row.addEventListener('click', () => { run.gold += rw.amount; rw.taken = true; audio.play('select'); rebuild(); });
+          row.addEventListener('click', () => { run.gold += rw.amount; rw.taken = true; audio.play('coin'); rebuild(); });
         } else if (rw.type === 'potion') {
           const p = POTIONS[rw.id];
-          content.appendChild(el('div', { class: 'reward-icon', style: { '--pcolor': p.color }, html: potionIcon() }));
+          const iconNode = el('div', { class: 'reward-icon', style: { '--pcolor': p.color }, html: potionIcon() });
+          if (hasPotionArt(rw.id)) {
+            const img = el('img', {
+              class: 'potion-art-img',
+              attrs: { src: `assets/potion-art/${rw.id}.png`, alt: '', draggable: 'false' },
+            });
+            img.onerror = () => { img.remove(); };
+            iconNode.appendChild(img);
+          }
+          content.appendChild(iconNode);
           content.appendChild(el('div', { class: 'reward-label', html: `<b>${p.name}</b> — ${p.desc}` }));
           row.addEventListener('click', () => {
-            if (run.addPotion(rw.id)) { rw.taken = true; audio.play('select'); rebuild(); }
+            if (run.addPotion(rw.id)) { rw.taken = true; audio.play('click'); rebuild(); }
           });
         } else if (rw.type === 'relic') {
           content.appendChild(el('div', { class: 'reward-icon', html: relicIcon('default') }));
@@ -133,7 +143,7 @@ export const RewardScene = {
 
     const finish = (c) => {
       this.tooltip(null, null, false);
-      audio.play('select');
+      audio.play('playcard');
       document.body.removeChild(overlay);
       onDone(c);
     };
@@ -144,6 +154,7 @@ export const RewardScene = {
       const node = renderCard(c, {
         onClick: () => {
           if (selectedCard === c) { finish(c); return; }
+          audio.play('click');
           if (selectedNode) selectedNode.classList.remove('selected');
           selectedCard = c;
           selectedNode = node;
@@ -161,6 +172,7 @@ export const RewardScene = {
     box.appendChild(hint);
     box.appendChild(button('Skip', () => {
       this.tooltip(null, null, false);
+      audio.play('click');
       document.body.removeChild(overlay);
       onDone(null);
     }));

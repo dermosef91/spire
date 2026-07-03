@@ -88,7 +88,7 @@ def('brass_sentinel', {
   name: 'Brass Sentinel', act: 1, hpMin: 44, hpMax: 54, startBlock: 6,
   moves: {
     slam: atk('Piston Slam', 10),
-    barricade: { name: 'Barricade', intent: { type: 'buffblock', block: 8 }, run: (c, s) => { c.gainBlockTo(s, 8); c.applyPower(s, 'thorns', 3, s); } },
+    barricade: { name: 'Barricade', intent: { type: 'block', block: 8 }, run: (c, s) => { c.gainBlockTo(s, 8); } },
     rivet: { name: 'Rivet', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.addCardToPile(c.makeCard('dazed'), 'discard'); } },
   },
   pick: (s, c, rng) => {
@@ -174,7 +174,7 @@ def('rust_maw', {
   name: 'Rust Maw', act: 1, elite: true, hpMin: 62, hpMax: 68,
   moves: {
     gnash: atk('Gnash', 8, 2),
-    coil: { name: 'Coil', intent: { type: 'buffblock', block: 10 }, run: (c, s) => { c.gainBlockTo(s, 10); c.applyPower(s, 'thorns', 4, s); c.applyPower(s, 'strength', 3, s); } },
+    coil: { name: 'Coil', intent: { type: 'buffblock', block: 10 }, run: (c, s) => { c.gainBlockTo(s, 10); c.applyPower(s, 'strength', 3, s); } },
     crush: { name: 'Rusted Crush', intent: { type: 'attack', dmg: 24 }, run: (c, s) => c.enemyAttack(s, 24) },
   },
   pick: (s, c, rng) => {
@@ -221,7 +221,7 @@ def('mirror_shade', {
   name: 'Mirror Shade', act: 2, hpMin: 30, hpMax: 36,
   moves: {
     shard: atk('Shard Volley', 6, 2),
-    reflect: { name: 'Reflect', intent: { type: 'buffblock', block: 14 }, run: (c, s) => { c.gainBlockTo(s, 14); c.applyPower(s, 'thorns', 4, s); } },
+    reflect: { name: 'Reflect', intent: { type: 'block', block: 14 }, run: (c, s) => { c.gainBlockTo(s, 14); } },
     glare: { name: 'Glare', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'vulnerable', 2, s) },
   },
   pick: (s, c, rng) => (s.turn % 3 === 0 ? 'reflect' : rng.pick(['shard', 'glare'])),
@@ -292,7 +292,7 @@ def('brass_colossus', {
   moves: {
     quake: atk('Quake', 22),
     twin: atk('Piston Punch', 9, 2),
-    plate: { name: 'Replate', intent: { type: 'buffblock', block: 20 }, run: (c, s) => { c.gainBlockTo(s, 20); c.applyPower(s, 'thorns', 6, s); } },
+    plate: { name: 'Replate', intent: { type: 'block', block: 20 }, run: (c, s) => { c.gainBlockTo(s, 20); } },
     overload: { name: 'Overload', intent: { type: 'buff' }, run: (c, s) => c.applyPower(s, 'strength', 4, s) },
   },
   pick: (s, c, rng) => {
@@ -438,7 +438,7 @@ def('chrome_archon', {
   moves: {
     annihilate: atk('Annihilate', 30),
     swarm: atk('Nanoswarm', 6, 4),
-    reweave: { name: 'Reweave', intent: { type: 'buffblock', block: 24 }, run: (c, s) => { c.gainBlockTo(s, 24); c.applyPower(s, 'strength', 3, s); c.applyPower(s, 'thorns', 6, s); } },
+    reweave: { name: 'Reweave', intent: { type: 'buffblock', block: 24 }, run: (c, s) => { c.gainBlockTo(s, 24); c.applyPower(s, 'strength', 3, s); } },
   },
   // Reweaves its wall when wounded, drops Annihilate on an undefended hero (but
   // never twice running), and chips with Nanoswarm otherwise.

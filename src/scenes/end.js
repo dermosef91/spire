@@ -57,6 +57,15 @@ export const EndScene = {
     const firstAscent = !this.meta.ascendedOnce;
     this.meta.ascendedOnce = true;
     this.meta.timesAscended = (this.meta.timesAscended || 0) + 1;
+    if (this.run) {
+      this.run.updateElapsedTime();
+      const runTime = this.run.elapsedTime;
+      if (runTime > 0) {
+        if (!this.meta.bestTime || runTime < this.meta.bestTime) {
+          this.meta.bestTime = runTime;
+        }
+      }
+    }
     saveMeta(this.meta);
     this._ascJustUnlocked = unlocked ? this.meta.maxAscension : 0;
     // The first climb to the Heart is always the complicit one — you cannot

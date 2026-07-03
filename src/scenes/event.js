@@ -70,11 +70,16 @@ export const EventScene = {
       if (run.gold < (ch.gold || 0)) { this.resultThenMap('You cannot afford that.'); return; }
       this.deckOverlay(() => true, (entry) => {
         run.gold -= ch.gold; run.removeCardAt(entry._i);
+        audio.play('coin');
         this.resultThenMap(ch.effect(run));
-      }, 'Remove which card?');
+      }, 'Remove which card?', 'click_heavy');
       return;
     }
+    const oldGold = run.gold;
     const text = ch.effect(run);
+    if (run.gold !== oldGold) {
+      audio.play('coin');
+    }
     if (run.isDead()) { this.gameOver(false); return; }
     this.resultThenMap(text);
   },

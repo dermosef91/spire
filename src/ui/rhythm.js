@@ -98,10 +98,12 @@ function playMark(ui, dir, { perfectMs = PERFECT_MS, goodMs = GOOD_MS } = {}) {
 
     if (dir) {
       ui.dir.dataset.dir = dir;
+      ui.dir.classList.add('show');
       ui.dir.style.visibility = 'visible';
       ui.labelMain.textContent = `${ui.verb} ${DIR_WORD[dir]}`;
     } else {
       // Parry: no direction — the amber target ring is the cue.
+      ui.dir.classList.remove('show');
       ui.dir.style.visibility = 'hidden';
       ui.labelMain.textContent = ui.verb;
     }
@@ -131,6 +133,7 @@ function playMark(ui, dir, { perfectMs = PERFECT_MS, goodMs = GOOD_MS } = {}) {
       ui.setHandler(null);
       timers.forEach(clearTimeout);
       if (note) note.remove();
+      ui.dir.classList.remove('show');
       ui.dir.style.visibility = 'hidden';
       ui.stage.classList.remove('hit-perfect', 'hit-good', 'hit-miss');
       void ui.stage.offsetWidth;
@@ -138,7 +141,7 @@ function playMark(ui, dir, { perfectMs = PERFECT_MS, goodMs = GOOD_MS } = {}) {
       const pop = el('div', { class: `qte-pop qte-pop-${grade}`, text: grade === 'perfect' ? 'PERFECT!' : grade === 'good' ? 'GOOD' : 'MISS' });
       ui.stage.appendChild(pop);
       setTimeout(() => pop.remove(), 650);
-      audio.play(grade === 'perfect' ? 'skill' : grade === 'good' ? 'hit' : 'error');
+      if (grade !== 'good') audio.play(grade === 'perfect' ? 'skill' : 'error');
       resolve(grade);
     };
 
@@ -192,3 +195,6 @@ export async function runParryQTE({ isTouch = false } = {}) {
     ui.destroy();
   }
 }
+
+window.__runAttackQTE = runAttackQTE;
+window.__runParryQTE = runParryQTE;
