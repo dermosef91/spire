@@ -217,7 +217,40 @@ export class Combat {
     //   this.applyDamage(source, target.powers.thorns, { isAttack: false });
     // }
     this.checkDeath(target);
+    if (!target.isPlayer) this.checkPhase(target);
     return hpLost;
+  }
+
+  // Boss/enemy phase transition: when a blueprint declares a `phase` and the
+  // enemy's HP first crosses the threshold, it transforms once — logs, plays a
+  // dramatic fx, runs onEnter, and re-picks its intent so the telegraph reflects
+  // the new phase. `pick()` reads `s._phased` to branch its move table.
+  checkPhase(e) {
+    if (!e || e.isPlayer || !e.alive || e._phased) return;
+    const ph = e.bp.phase;
+    if (!ph || e.hp > e.maxHp * (ph.at ?? 0.5)) return;
+    e._phased = true;
+    this.log(ph.log || `${e.name} transforms!`);
+    this.fx('phase', { target: e, name: ph.name || 'Second Phase' });
+    if (ph.onEnter) ph.onEnter(this, e);
+    if (e.alive && !this.over) this.pickEnemyMove(e);
+    this.notify();
+  }
+
+  // Spawn a fresh enemy mid-combat (summoners). It waits one enemy phase before
+  // acting (its intent is telegraphed during the player's turn first) and the
+  // board is capped so summon-spam can't overwhelm the layout or the player.
+  summonEnemy(id, { max = 4 } = {}) {
+    if (this.livingEnemies().length >= max) return null;
+    const e = this.makeEnemy(id, this.enemies.length);
+    if (e.dmgCapPerTurn > 0) e.powers.invincibility = e.dmgCapPerTurn;
+    e._justSummoned = true;
+    this.enemies.push(e);
+    this.pickEnemyMove(e);
+    this.log(`${e.name} answers the call!`);
+    this.fx('summon', { target: e });
+    this.notify();
+    return e;
   }
 
   checkDeath(entity) {
@@ -663,9 +696,21 @@ export class Combat {
     await wait(850);
     for (const e of this.enemies) {
       if (!e.alive || this.over) continue;
+      // A foe summoned during this same phase waits until the next one to act
+      // (its intent is already telegraphed for the player's turn in between).
+      if (e._justSummoned) { e._justSummoned = false; continue; }
       e.block = 0;
       this.tickPoison(e);
       if (!e.alive || this.over) continue;
+      // Enrage: a guaranteed escalation clock. On/after the blueprint's turn it
+      // gains Resolve once, punishing decks that try to stall the fight out.
+      const en = e.bp.enrage;
+      if (en && !e._enraged && e.turn >= en.turn) {
+        e._enraged = true;
+        this.log(`${e.name} enrages!`);
+        this.fx('enrage', { target: e });
+        this.applyPower(e, 'strength', en.strength, e);
+      }
       const move = e.bp.moves[e.move];
       this.log(`${e.name} uses ${move.name}.`);
       const isAttack = e.intent && e.intent.type && e.intent.type.startsWith('attack');

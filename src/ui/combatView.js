@@ -262,7 +262,17 @@ export class CombatView {
     this.updateCombatant(c.player);
     for (const e of c.enemies) {
       const id = eidOf(e);
-      if (e.alive) { if (this.els[id]) this.updateCombatant(e); }
+      if (e.alive) {
+        // A foe summoned mid-combat has no node yet — build one on the fly and
+        // let it animate in via the `.summoning` entrance class.
+        if (!this.els[id]) {
+          const node = this.buildCombatant(e, true);
+          node.classList.add('summoning');
+          this.els[id] = node;
+          this.enemySide.appendChild(node);
+        }
+        this.updateCombatant(e);
+      }
       else if (this.els[id] && !this.els[id]._removing) {
         const node = this.els[id]; node._removing = true; node.classList.add('dying');
         setTimeout(() => { node.remove(); }, 620);
@@ -271,6 +281,12 @@ export class CombatView {
     }
 
     if (this.orbsHolder) this.updateOrbs();
+
+    // Shrink the enemy medallions when the board gets crowded (summoners can put
+    // 3+ foes on one side, which otherwise wraps into the hand).
+    const livingCount = c.livingEnemies().length;
+    this.enemySide.classList.toggle('enemies-3', livingCount === 3);
+    this.enemySide.classList.toggle('enemies-4', livingCount >= 4);
 
     // targeting affordance
     const targeting = !!this.pendingCard;
@@ -314,6 +330,13 @@ export class CombatView {
   updateCombatant(ent) {
     const p = this.parts[eidOf(ent)];
     if (!p) return;
+
+    // Persistent state auras (survive in-place re-renders).
+    const wrap = this.els[eidOf(ent)];
+    if (wrap) {
+      wrap.classList.toggle('phased', !!ent._phased);
+      wrap.classList.toggle('enraged', !!ent._enraged);
+    }
 
     if (!this.tempPoses[eidOf(ent)]) {
       this.setSpritePose(ent, ent.block > 0 ? 'block' : 'idle');
@@ -884,6 +907,43 @@ export class CombatView {
     if (type === 'enemyMove') {
       const el2 = this.elFor(payload.source);
       if (el2 && payload.name) floatText(layer, el2, payload.name, 'name');
+      return;
+    }
+    if (type === 'phase') {
+      // A boss crosses its HP threshold and transforms — the marquee moment.
+      this.announce(payload.name || 'Phase', { kind: 'phase', duration: 1500 });
+      screenShake(this.scene, true);
+      const el2 = this.elFor(payload.target);
+      if (el2) {
+        el2.classList.add('phased');
+        hitFlash(el2, 'damage');
+        ring(layer, el2, 'rgba(224,69,123,0.95)');
+        burst(layer, el2, '#e0457b', 24);
+      }
+      const bg = background(); if (bg) bg.pulse('heavy', 2);
+      audio.play('reward');
+      return;
+    }
+    if (type === 'enrage') {
+      this.announce('ENRAGED', { kind: 'enrage', duration: 1050 });
+      const el2 = this.elFor(payload.target);
+      if (el2) {
+        el2.classList.add('enraged');
+        floatText(layer, el2, 'ENRAGED', 'debuff');
+        hitFlash(el2, 'damage');
+        ring(layer, el2, 'rgba(217,79,43,0.95)');
+      }
+      screenShake(this.scene, false);
+      return;
+    }
+    if (type === 'summon') {
+      // The combatant node is built on the next tick by update(); flash it once
+      // it exists so the burst lands on the newly-appeared foe.
+      const t = payload.target;
+      setTimeout(() => {
+        const el2 = this.elFor(t);
+        if (el2) { ring(layer, el2, 'rgba(200,182,255,0.9)'); burst(layer, el2, '#c8b6ff', 14); }
+      }, 30);
       return;
     }
     if (type === 'attackstart') {

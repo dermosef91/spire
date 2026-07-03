@@ -329,6 +329,72 @@ test('Snared (entangle) blocks Attacks for one turn, then expires', () => {
   assert.equal(c.canPlay(attack), true, 'attacks playable again next turn');
 });
 
+// ----------------------------------------------------------------- smarter enemies
+console.log('Smarter enemies (phase / summon / enrage)');
+
+test('a boss transforms once when its HP crosses the phase threshold', () => {
+  const run = new RunState('amara', 3);
+  const c = new Combat(run, ['the_gatekeeper']);
+  c.start();
+  const boss = c.enemies[0];
+  assert.ok(boss.bp.phase, 'gatekeeper has a phase');
+  assert.equal(boss._phased, undefined, 'not phased at full HP');
+  // Chip it to just above half — still no phase.
+  boss.hp = Math.floor(boss.maxHp * 0.5) + 5;
+  c.checkPhase(boss);
+  assert.ok(!boss._phased, 'no transform above the threshold');
+  // Cross the threshold.
+  boss.hp = Math.floor(boss.maxHp * 0.5) - 1;
+  const strBefore = boss.powers.strength || 0;
+  c.checkPhase(boss);
+  assert.equal(boss._phased, true, 'transformed at/below half HP');
+  assert.ok((boss.powers.strength || 0) > strBefore, 'onEnter buffed the boss');
+  // It never transforms twice.
+  boss.powers.strength = strBefore;
+  c.checkPhase(boss);
+  assert.equal(boss.powers.strength || 0, strBefore, 'phase onEnter did not fire again');
+});
+
+test('a summoner adds a minion to the board, capped and delayed', () => {
+  const run = new RunState('zara', 11);
+  const c = new Combat(run, ['choir_master']);
+  c.start();
+  const boss = c.enemies[0];
+  const before = c.livingEnemies().length;
+  const mote = c.summonEnemy('echo_mote');
+  assert.ok(mote, 'a minion was summoned');
+  assert.equal(mote.id, 'echo_mote');
+  assert.equal(c.livingEnemies().length, before + 1, 'board grew by one');
+  assert.equal(mote._justSummoned, true, 'minion waits a phase before acting');
+  assert.ok(mote.intent, 'summoned minion has a telegraphed intent');
+  // Board cap: fill to the limit, then further summons are refused.
+  let guard = 0;
+  while (c.livingEnemies().length < 4 && guard++ < 10) c.summonEnemy('echo_mote');
+  assert.equal(c.livingEnemies().length, 4, 'board filled to the cap');
+  assert.equal(c.summonEnemy('echo_mote'), null, 'summon refused at the cap');
+});
+
+test('an enrage-flagged elite gains Resolve once on its enrage turn', () => {
+  const run = new RunState('amara', 9);
+  const c = new Combat(run, ['brass_colossus']);
+  c.start();
+  const elite = c.enemies[0];
+  const en = elite.bp.enrage;
+  assert.ok(en, 'colossus has an enrage clock');
+  // Not yet: before the enrage turn.
+  assert.ok(elite.turn < en.turn, 'starts before its enrage turn');
+  assert.ok(!elite._enraged);
+  // Simulate reaching the enrage turn the way enemyPhase does.
+  elite.turn = en.turn;
+  const strBefore = elite.powers.strength || 0;
+  if (!elite._enraged && elite.turn >= en.turn) {
+    elite._enraged = true;
+    c.applyPower(elite, 'strength', en.strength, elite);
+  }
+  assert.equal(elite._enraged, true, 'enraged at its turn');
+  assert.equal((elite.powers.strength || 0), strBefore + en.strength, 'gained the enrage Resolve');
+});
+
 // ----------------------------------------------------------------- summary
 console.log('');
 if (failures.length) {

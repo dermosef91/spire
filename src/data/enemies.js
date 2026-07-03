@@ -18,6 +18,7 @@
 //   • Poisoner — stacks Blight → a race against the clock.
 //   • Charger — telegraphs a huge nuke every few turns → block-timing puzzle.
 //   • Support / healer — heals & buffs allies → kill-priority puzzle in groups.
+//   • Summoner — calls fresh minions onto the board → cut the caller or drown.
 //   • Curse-flooder — jams your deck with Dazed/Wounds → deck disruption.
 //   • Life-drain — heals itself as it hits → out-pace its sustain.
 //   • Warded — Charm resists your debuffs → forces raw damage.
@@ -183,7 +184,9 @@ def('rust_maw', {
   },
 });
 
-// Act 1 boss
+// Act 1 boss — measured cycle of hits, walls and debuffs. At half health it
+// casts off its seals: phase 2 drops the defensive Seal entirely and just
+// batters an already-weakened hero.
 def('the_gatekeeper', {
   name: 'The Gatekeeper', act: 1, boss: true, hpMin: 250, hpMax: 250,
   moves: {
@@ -192,7 +195,17 @@ def('the_gatekeeper', {
     seal: { name: 'Seal the Gate', intent: { type: 'debuffblock', block: 18 }, run: (c, s) => { c.gainBlockTo(s, 18); c.applyPower(c.player, 'frail', 2, s); } },
     decree: { name: 'Decree', intent: { type: 'debuff' }, run: (c, s) => { c.applyPower(c.player, 'weak', 2, s); c.applyPower(c.player, 'vulnerable', 2, s); } },
   },
+  phase: {
+    at: 0.5, name: 'The Gate Unbars',
+    log: 'The Gatekeeper casts off its seals — the Gate unbars!',
+    onEnter: (c, s) => { c.applyPower(s, 'strength', 3, s); c.gainBlockTo(s, 18); },
+  },
   pick: (s, c, rng) => {
+    if (s._phased) {
+      // No more turtling — set you up with Decree, then hammer.
+      const cyc = ['decree', 'judge', 'barrage', 'judge'];
+      return cyc[(s.turn - 1) % cyc.length];
+    }
     const cycle = ['judge', 'seal', 'barrage', 'decree'];
     return cycle[(s.turn - 1) % cycle.length];
   },
@@ -289,6 +302,8 @@ def('glyph_sentry', {
 // with Backlash. A stat-check on both offense and your ability to break Block.
 def('brass_colossus', {
   name: 'Brass Colossus', act: 2, elite: true, hpMin: 120, hpMax: 130, startBlock: 15,
+  // Enrages on turn 6 (+5 Resolve) so a defensive deck can't safely wall it out forever.
+  enrage: { turn: 6, strength: 5 },
   moves: {
     quake: atk('Quake', 22),
     twin: atk('Piston Punch', 9, 2),
@@ -319,7 +334,9 @@ def('obsidian_maw', {
   },
 });
 
-// Act 2 boss
+// Act 2 boss — a deck-jamming controller. Below half health it reopens every
+// page at once (Total Recall): it stops shielding, dumps more Dazed on entry,
+// and leans on its multi-hit Purge and deck jam to bury you.
 def('the_archivist', {
   name: 'The Archivist', act: 2, boss: true, hpMin: 320, hpMax: 320,
   moves: {
@@ -328,7 +345,16 @@ def('the_archivist', {
     censor: { name: 'Censor', intent: { type: 'debuffblock', block: 25 }, run: (c, s) => { c.gainBlockTo(s, 25); c.applyPower(c.player, 'weak', 2, s); } },
     purge: { name: 'Purge', intent: { type: 'attack', dmg: 7, hits: 3 }, run: (c, s) => c.enemyAttack(s, 7, 3) },
   },
+  phase: {
+    at: 0.5, name: 'Total Recall',
+    log: 'The Archivist reopens every page at once — Total Recall!',
+    onEnter: (c, s) => { c.applyPower(s, 'strength', 3, s); for (let i = 0; i < 2; i++) c.addCardToPile(c.makeCard('dazed'), 'draw'); },
+  },
   pick: (s, c, rng) => {
+    if (s._phased) {
+      const cyc = ['catalog', 'purge', 'erase', 'purge'];
+      return cyc[(s.turn - 1) % cyc.length];
+    }
     const cyc = ['catalog', 'erase', 'censor', 'purge'];
     return cyc[(s.turn - 1) % cyc.length];
   },
@@ -432,9 +458,40 @@ def('static_swarm', {
   },
 });
 
+// Summoner — conducts a choir of Echo Motes onto the board and buffs the swarm.
+// Left alone it drowns you in bodies; the answer is to cut the conductor down
+// before the choir grows. Minions wait a turn before their first strike.
+def('choir_master', {
+  name: 'Choir Master', act: 3, hpMin: 54, hpMax: 62,
+  moves: {
+    conduct: { name: 'Conduct', intent: { type: 'unknown' }, run: (c, s) => { c.summonEnemy('echo_mote'); c.summonEnemy('echo_mote'); } },
+    crescendo: { name: 'Crescendo', intent: { type: 'buff' }, run: (c, s) => { for (const e of c.enemies) if (e.alive && e !== s) c.applyPower(e, 'strength', 2, s); } },
+    lash: atk('Baton Lash', 12),
+  },
+  pick: (s, c, rng) => {
+    const motes = c.enemies.filter((e) => e.alive && e.id === 'echo_mote').length;
+    if (s.turn === 1 || motes === 0) return 'conduct';      // fill (or refill) the choir
+    if (motes >= 2 && s.last !== 'crescendo') return 'crescendo'; // amplify the swarm
+    return 'lash';
+  },
+});
+
+// Minion — the Choir Master's summoned voice. Individually trivial, dangerous in
+// numbers, especially once Crescendo lends them Resolve.
+def('echo_mote', {
+  name: 'Echo Mote', act: 3, hpMin: 9, hpMax: 13,
+  moves: {
+    sting: atk('Sting', 4),
+  },
+  pick: (s, c, rng) => 'sting',
+});
+
 // Act 3 elite
 def('chrome_archon', {
   name: 'Chrome Archon', act: 3, elite: true, hpMin: 160, hpMax: 170, startBlock: 20,
+  // Enrages on turn 6 (+6 Resolve): its Reweave wall makes it easy to stall, so
+  // there's a hard clock forcing you to break through before it snowballs.
+  enrage: { turn: 6, strength: 6 },
   moves: {
     annihilate: atk('Annihilate', 30),
     swarm: atk('Nanoswarm', 6, 4),
@@ -460,10 +517,24 @@ def('heart_of_static', {
     rebuild: { name: 'Rebuild', intent: { type: 'buffblock', block: 30 }, run: (c, s) => { c.gainBlockTo(s, 30); c.applyPower(s, 'strength', 4, s); } },
   },
   buff: { name: 'Invincibility', desc: 'Caps the damage taken in a single turn.' },
+  // At half health the Heart tears open (The Static Screams): it walls up, gains
+  // heavy Resolve, and its phase-2 rotation drops the deck-jam filler to swing
+  // with Reality Blast and Cascade far more often.
+  phase: {
+    at: 0.5, name: 'The Static Screams',
+    log: 'The Heart tears open — the Static SCREAMS!',
+    onEnter: (c, s) => { c.applyPower(s, 'strength', 5, s); c.gainBlockTo(s, 40); },
+  },
   // Reacts to the board: opens by clogging your deck, punishes an undefended hero
   // with its big nuke, jams more Static when you have tempo, and rebuilds when hurt.
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'static_field';
+    if (s._phased) {
+      if (s.last === 'rebuild') return 'blast';
+      if (selfLowHp(s, 0.25) && s.last !== 'rebuild') return 'rebuild';
+      if (!playerBlocked(c, 25)) return rng.weighted([{ value: 'blast', weight: 3 }, { value: 'multibeam', weight: 2 }]);
+      return rng.weighted([{ value: 'multibeam', weight: 3 }, { value: 'blast', weight: 2 }, { value: 'static_field', weight: 1 }]);
+    }
     if (s.last === 'rebuild') return 'blast'; // follow the wall with a swing
     if (selfLowHp(s, 0.5) && s.last !== 'rebuild') return 'rebuild';
     if (!playerBlocked(c, 20)) return rng.weighted([{ value: 'blast', weight: 3 }, { value: 'multibeam', weight: 1 }]);
