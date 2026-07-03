@@ -36,7 +36,12 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   (lands on the act-intro), `__ase.showMap()`, `__ase.startMonster()` — far more
   reliable than clicking through the UI. Set `localStorage`'s
   `spire_of_ase_meta_v1` `tutorialDone:true` (via `addInitScript`) before combat
-  so the first-play tutorial overlay doesn't block the shot.
+  so the first-play tutorial overlay doesn't block the shot. Also, when selecting cards
+  dynamically via Playwright (e.g., during tutorial coaching steps), avoid chaining dynamic
+  styling classes like `.tut-highlight` directly in click locators. Because the hand is
+  cleared and rebuilt in the DOM on changes, these classes can be temporarily missing
+  until next-tick updates reapply them. Instead, fetch the card's `data-uid` attribute first
+  and target the element specifically using `[data-uid="..."]`.
 - **QA screenshot / responsiveness audit**: `npm run qa`
   (`node tools/qa-screenshots.js`) boots the game, drives title → char select →
   map → combat at a landscape phone (812×375) **and** a desktop (1366×850)

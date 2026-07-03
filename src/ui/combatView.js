@@ -47,7 +47,7 @@ export class CombatView {
     this.combat.onUpdate = () => this.update();
     this.combat.fx = (type, payload) => this.onFx(type, payload);
     this.combat.parryPrompt = this.game.rhythmOn()
-      ? () => runParryQTE({ isTouch: this.game.isTouch() })
+      ? () => runParryQTE({ isTouch: this.game.isTouch(), isTutorial: !this.game.meta.tutorialDone })
       : null;
     this._lastHandCards = [];
     this.build();
@@ -767,7 +767,11 @@ export class CombatView {
     if (this.game.rhythmOn() && !this.rhythmSuppressed && card.type === 'attack' && !c.over) {
       c.animating = true; // blocks End Turn and further card input during the QTE
       this.update();
-      const { grade, mult } = await runAttackQTE({ marks: this.marksFor(card), isTouch: this.game.isTouch() });
+      const { grade, mult } = await runAttackQTE({
+        marks: this.marksFor(card),
+        isTouch: this.game.isTouch(),
+        isTutorial: !this.game.meta.tutorialDone
+      });
       c.animating = false;
       c._rhythmMult = mult;
       c.fire('rhythm', { grade, card });

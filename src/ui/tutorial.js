@@ -25,47 +25,85 @@ export class CombatTutorial {
     const rhythm = this.game.rhythmOn();
     const isTouch = this.game.isTouch();
 
-    this.steps = [
-      {
-        text: 'Cards win battles. Each costs Àṣẹ — your energy, refilled every turn.',
-        button: 'Next',
-        highlight: () => ['.hand .card', '.combat-controls .energy-orb'],
-      },
-      {
-        text: 'Above each foe, its intent shows what it will do next.',
-        button: 'Next',
-        highlight: () => ['.combatant.enemy .intent'],
-        align: 'left', // keep the banner off the intent pill on small screens
-      },
-      {
-        text: 'The foe is about to strike. Play a Block skill to shield yourself.',
-        await: 'block',
-        hint: 'Play the highlighted card',
-      },
-      {
-        text: rhythm
-          ? `Well shielded. Now play an Attack card. Time your ${isTouch ? 'swipe' : 'press'} when the ring matches the circle to strike harder!`
-          : 'Well shielded. Now hit back — play an Attack card.',
-        await: 'attack',
-        hint: 'Play the highlighted card',
-      },
-      {
-        text: rhythm
-          ? `Well struck. Now end your turn. When the foe attacks, time your ${isTouch ? 'tap' : 'press'} to PARRY and preserve your block!`
-          : 'Well struck. Now end your turn and let your foe act.',
-        await: 'endturn',
-        hint: 'End your turn →',
-        highlight: () => ['.end-turn'],
-      },
-      {
-        text: 'That is the loop. Defeat every foe for rewards, then climb toward the Spire. Àṣẹ be with you.',
-        button: 'Begin',
-      },
-    ];
+    if (rhythm) {
+      this.steps = [
+        {
+          text: 'Cards win battles. Each costs Àṣẹ — your energy, refilled every turn.',
+          button: 'Next',
+          highlight: () => ['.hand .card', '.combat-controls .energy-orb'],
+        },
+        {
+          text: 'Above each foe, its intent shows what it will do next.',
+          button: 'Next',
+          highlight: () => ['.combatant.enemy .intent'],
+          align: 'left', // keep the banner off the intent pill on small screens
+        },
+        {
+          text: 'The foe is about to strike. Play a Block skill to shield yourself.',
+          await: 'block',
+          hint: 'Play the highlighted card',
+        },
+        {
+          text: 'Well shielded. Now play an Attack card.',
+          await: 'attack',
+          hint: 'Play the highlighted card',
+        },
+        {
+          text: `TIME YOUR STRIKE! ${isTouch ? 'Swipe right' : 'Press the Right Arrow key (or D)'} when the ring matches the circle to strike harder!`,
+          await: 'qte_action',
+          hint: isTouch ? 'Swipe Right ➔' : 'Press Right Arrow ➔',
+        },
+        {
+          text: `Well struck. Now end your turn. When the foe attacks, time your ${isTouch ? 'tap' : 'press'} to PARRY and preserve your block!`,
+          await: 'endturn',
+          hint: 'End your turn →',
+          highlight: () => ['.end-turn'],
+        },
+        {
+          text: 'That is the loop. Defeat every foe for rewards, then climb toward the Spire. Àṣẹ be with you.',
+          button: 'Begin',
+        },
+      ];
+    } else {
+      this.steps = [
+        {
+          text: 'Cards win battles. Each costs Àṣẹ — your energy, refilled every turn.',
+          button: 'Next',
+          highlight: () => ['.hand .card', '.combat-controls .energy-orb'],
+        },
+        {
+          text: 'Above each foe, its intent shows what it will do next.',
+          button: 'Next',
+          highlight: () => ['.combatant.enemy .intent'],
+          align: 'left',
+        },
+        {
+          text: 'The foe is about to strike. Play a Block skill to shield yourself.',
+          await: 'block',
+          hint: 'Play the highlighted card',
+        },
+        {
+          text: 'Well shielded. Now hit back — play an Attack card.',
+          await: 'attack',
+          hint: 'Play the highlighted card',
+        },
+        {
+          text: 'Well struck. Now end your turn and let your foe act.',
+          await: 'endturn',
+          hint: 'End your turn →',
+          highlight: () => ['.end-turn'],
+        },
+        {
+          text: 'That is the loop. Defeat every foe for rewards, then climb toward the Spire. Àṣẹ be with you.',
+          button: 'Begin',
+        },
+      ];
+    }
   }
 
   start() {
     if (this.combat.over) { this.finish(); return; }
+    this.game.tutorial = this;
     this.banner = el('div', { class: 'tut-banner' });
     document.body.appendChild(this.banner);
 
@@ -132,6 +170,23 @@ export class CombatTutorial {
     if (advanced) this.next();
   }
 
+  onQTEPaused(dir) {
+    if (!dir) return; // ignore parry pause in the tutorial banner step machine
+    const qteStepIdx = this.steps.findIndex((s) => s.await === 'qte_action');
+    if (qteStepIdx !== -1) {
+      this.i = qteStepIdx;
+      this.render();
+    }
+  }
+
+  onQTEActionExecuted() {
+    const qteStepIdx = this.steps.findIndex((s) => s.await === 'qte_action');
+    if (qteStepIdx !== -1 && this.i === qteStepIdx) {
+      this.i = qteStepIdx + 1;
+      this.render();
+    }
+  }
+
   next() {
     if (this.done) return;
     audio.play('select');
@@ -143,6 +198,7 @@ export class CombatTutorial {
   finish() {
     if (this.done) return;
     this.done = true;
+    this.game.tutorial = null;
     if (this._origUpdate) this.combat.onUpdate = this._origUpdate;
     document.querySelectorAll('.tut-highlight').forEach((el2) => el2.classList.remove('tut-highlight'));
     if (this.banner) { this.banner.remove(); this.banner = null; }

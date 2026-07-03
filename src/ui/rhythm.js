@@ -88,13 +88,14 @@ function buildQTE(kind, isTouch) {
 
 // ---- one mark ---------------------------------------------------------------
 // Resolves 'perfect' | 'good' | 'miss'. `dir` null = any input counts (parry).
-function playMark(ui, dir, { perfectMs = PERFECT_MS, goodMs = GOOD_MS } = {}) {
+function playMark(ui, dir, { perfectMs = PERFECT_MS, goodMs = GOOD_MS, isTutorial = false } = {}) {
   return new Promise((resolve) => {
     const reduced = rhythmReduced();
     const travel = reduced ? REDUCED_BEAT_MS * 3 : NOTE_TRAVEL_MS;
     const start = performance.now();
     const target = start + travel;
     const timers = [];
+    let isPaused = false;
 
     if (dir) {
       ui.dir.dataset.dir = dir;
@@ -145,9 +146,36 @@ function playMark(ui, dir, { perfectMs = PERFECT_MS, goodMs = GOOD_MS } = {}) {
       resolve(grade);
     };
 
-    timers.push(setTimeout(() => finish('miss'), travel + goodMs));
+    if (isTutorial) {
+      const pauseTimer = setTimeout(() => {
+        if (done) return;
+        isPaused = true;
+        if (note) {
+          const computed = window.getComputedStyle(note).transform;
+          note.style.transition = 'none';
+          note.style.transform = computed;
+        }
+        timers.forEach(clearTimeout);
+        if (window.__ase && window.__ase.tutorial) {
+          window.__ase.tutorial.onQTEPaused(dir);
+        }
+      }, 500);
+      timers.push(pauseTimer);
+    } else {
+      timers.push(setTimeout(() => finish('miss'), travel + goodMs));
+    }
+
     ui.setHandler((input) => {
       if (dir && input === 'tap') return; // stray tap on a directional mark: ignore
+      if (isPaused) {
+        if (dir && input !== dir) return;
+        isPaused = false;
+        if (window.__ase && window.__ase.tutorial) {
+          window.__ase.tutorial.onQTEActionExecuted();
+        }
+        finish('perfect');
+        return;
+      }
       const dt = performance.now() - target;
       if (dt < -goodMs) { finish('miss'); return; } // spamming way early
       if (dir && input !== dir) { finish('miss'); return; }
@@ -163,13 +191,14 @@ function showResult(layer, text, kind) {
 }
 
 // ---- public entry points ------------------------------------------------------
-export async function runAttackQTE({ marks = 1, isTouch = false } = {}) {
+export async function runAttackQTE({ marks = 1, isTouch = false, isTutorial = false } = {}) {
   const ui = buildQTE('attack', isTouch);
   try {
     await wait(LEAD_IN_MS);
     const grades = [];
     for (let i = 0; i < marks; i++) {
-      grades.push(await playMark(ui, DIRS[Math.floor(Math.random() * DIRS.length)]));
+      const targetDir = (isTutorial && i === 0) ? 'right' : DIRS[Math.floor(Math.random() * DIRS.length)];
+      grades.push(await playMark(ui, targetDir, { isTutorial: isTutorial && i === 0 }));
       if (i < marks - 1) await wait(NOTE_GAP_MS);
     }
     const grade = grades.every((g) => g === 'perfect') ? 'perfect'
@@ -183,11 +212,11 @@ export async function runAttackQTE({ marks = 1, isTouch = false } = {}) {
   }
 }
 
-export async function runParryQTE({ isTouch = false } = {}) {
+export async function runParryQTE({ isTouch = false, isTutorial = false } = {}) {
   const ui = buildQTE('parry', isTouch);
   try {
     await wait(LEAD_IN_MS * 0.6);
-    const grade = await playMark(ui, null, { perfectMs: PARRY_WINDOW_MS, goodMs: PARRY_WINDOW_MS });
+    const grade = await playMark(ui, null, { perfectMs: PARRY_WINDOW_MS, goodMs: PARRY_WINDOW_MS, isTutorial });
     const success = grade !== 'miss';
     if (success) audio.play('skill');
     return { success };
