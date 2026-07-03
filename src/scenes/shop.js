@@ -3,7 +3,7 @@
 // Mixed onto Game.prototype (see game.js).
 
 import { el } from '../core/util.js';
-import { renderCard, topBar, relicChip, button } from '../ui/components.js';
+import { renderCard, topBar, relicChip, potionChip, button } from '../ui/components.js';
 import { CARDS, createCard } from '../data/cards.js';
 import { RELICS } from '../data/relics.js';
 import { POTIONS } from '../data/potions.js';
@@ -52,7 +52,7 @@ export const ShopScene = {
       if (item.sold) return;
       const p = POTIONS[item.id];
       const holder = el('div', { class: 'shop-mini' });
-      holder.appendChild(el('div', { class: 'potion', style: { '--pcolor': p.color }, html: potionIcon(), title: p.desc }));
+      holder.appendChild(potionChip(item.id, null, null, (o, n, on) => this.tooltip(o, n, on)));
       holder.appendChild(el('div', { class: 'mini-label', text: p.name }));
       holder.appendChild(el('div', { class: `price ${run.gold < item.price ? 'cant' : ''}`, html: `<i class="tb-ic">${UI.coin}</i> ${item.price}` }));
       holder.addEventListener('click', () => this.buy(shop, 'potions', i));

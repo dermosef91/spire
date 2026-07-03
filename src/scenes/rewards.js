@@ -10,6 +10,7 @@ import { RELICS } from '../data/relics.js';
 import { POTIONS } from '../data/potions.js';
 import { COLORLESS_POOL } from '../data/characters.js';
 import { UI, relicIcon, potionIcon } from '../ui/icons.js';
+import { hasPotionArt } from '../ui/potion-art.js';
 import { audio } from '../audio.js';
 
 export const RewardScene = {
@@ -68,7 +69,16 @@ export const RewardScene = {
           row.addEventListener('click', () => { run.gold += rw.amount; rw.taken = true; audio.play('coin'); rebuild(); });
         } else if (rw.type === 'potion') {
           const p = POTIONS[rw.id];
-          content.appendChild(el('div', { class: 'reward-icon', style: { '--pcolor': p.color }, html: potionIcon() }));
+          const iconNode = el('div', { class: 'reward-icon', style: { '--pcolor': p.color }, html: potionIcon() });
+          if (hasPotionArt(rw.id)) {
+            const img = el('img', {
+              class: 'potion-art-img',
+              attrs: { src: `assets/potion-art/${rw.id}.png`, alt: '', draggable: 'false' },
+            });
+            img.onerror = () => { img.remove(); };
+            iconNode.appendChild(img);
+          }
+          content.appendChild(iconNode);
           content.appendChild(el('div', { class: 'reward-label', html: `<b>${p.name}</b> — ${p.desc}` }));
           row.addEventListener('click', () => {
             if (run.addPotion(rw.id)) { rw.taken = true; audio.play('click'); rebuild(); }
