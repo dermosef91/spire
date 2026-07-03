@@ -110,33 +110,7 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
 - `ui/` — `components` (cards/relics/potions/top bar), `combatView` (updates
   combatants **in place** so FX can animate), `fx` (floating numbers, shakes,
   lunges, slashes, rings, particles, screen shake), `tutorial` (first-play
-  coaching banner — see below), `rhythm` (the rhythm QTE — see below).
-
-## Rhythm QTE (timed attacks & parries)
-- `src/ui/rhythm.js` is a **self-contained overlay**: a horizontal ornamented
-  track with diamond direction marks and a playhead cursor sweeping across it
-  once (E33-style). Arrow keys or WASD on desktop, swipes on touch; all tuning
-  constants (sweep speed, ±ms windows, multipliers) sit at the top of the file.
-  All perfect = ×1.25 damage, any miss = ×0.5, else ×1.0. Engine seams:
-  the view sets `combat._rhythmMult` (consumed in `deal`/`dealAll` beside
-  `_cardDamageMult`) before `combat.playCard`, and injects async
-  `combat.parryPrompt` (awaited in `enemyPhase` when an attack lands while the
-  player has Block — the parry decides whether Block applies: fail a prompted
-  parry and the attack **bypasses Block entirely** (`_qtePrompted`/`_parried`
-  zero it for the hits and restore it after), succeed and Block applies
-  normally; the parry resolves instantly with no result banner). Both seams
-  default inert: headless combat and Rhythm-off behave classically.
-- **Mark policy**: standard attacks are always **1 mark**; multi-mark patterns
-  (2–4) are strictly reserved for finishers via the `qteMarks` blueprint field
-  (`grand_finale: 4`, `skyfall: 3`). Don't re-add cost-based scaling.
-- Toggle: `meta.rhythm` (title-screen "Rhythm: On/Off" button, default on);
-  `prefers-reduced-motion` swaps the sweeping cursor for opacity-only
-  brightness steps on the marks. QTEs are suppressed during the first-play
-  tutorial fight (`view.rhythmSuppressed` + `parryPrompt = null` in
-  `scenes/combat.js`).
-- **Playwright gotchas** when driving QTEs: card play is **two-tap**
-  (first tap previews, second commits), and `husk_drone` has `startBlock`,
-  so zero `enemy.block` before asserting bare damage math.
+  coaching banner — see below).
 - `fx/background.js` — canvas starfield + nebula behind every scene.
 - `styles.css` — the entire theme; respects `prefers-reduced-motion` and scales
   for phones (portrait + landscape) using `dvh` and height/width breakpoints.
