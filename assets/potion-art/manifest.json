@@ -1,0 +1,16 @@
+{
+  "generated": "2026-07-03T19:23:42.706Z",
+  "dryRun": true,
+  "ids": [
+    "blight_brew",
+    "block_brew",
+    "elixir",
+    "energy_brew",
+    "fairy_brew",
+    "focus_brew",
+    "fury_brew",
+    "rage_brew",
+    "swift_brew",
+    "weak_brew"
+  ]
+}

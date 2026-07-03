@@ -593,10 +593,33 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .relic-starter:has(.relic-art-img) { filter: drop-shadow(0 0 3px rgba(243,232,216,0.4)); }
 .relic:has(.relic-art-img):hover { transform: scale(1.16); filter: drop-shadow(0 0 8px var(--orange)) !important; }
 
-.potion { width: 30px; height: 34px; border-radius: 7px 7px 12px 12px; display: grid; place-items: center; font-size: 15px; cursor: pointer;
+.potion { position: relative; width: 30px; height: 34px; border-radius: 7px 7px 12px 12px; display: grid; place-items: center; font-size: 15px; cursor: pointer;
   background: linear-gradient(180deg, rgba(255,200,140,0.25), var(--pcolor, #b5602a)); border: 1px solid rgba(255,210,160,0.5); color: #1a0c04; transition: transform 0.12s; }
 .potion:hover { transform: scale(1.14); }
 .potion.empty { background: rgba(255,170,80,0.05); border: 1px dashed rgba(255,170,80,0.25); color: rgba(255,170,80,0.3); cursor: default; }
+
+.potion-art-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 2; }
+
+/* Image-based potions override */
+.potion:has(.potion-art-img) {
+  border: none !important;
+  background: none !important;
+  box-shadow: none !important;
+  border-radius: 0;
+  overflow: visible;
+  display: block;
+}
+.potion:has(.potion-art-img) svg {
+  display: none;
+}
+.potion:has(.potion-art-img):hover { transform: scale(1.16); filter: drop-shadow(0 0 8px var(--orange)) !important; }
+
+.reward-icon:has(.potion-art-img) {
+  position: relative;
+}
+.reward-icon:has(.potion-art-img) svg {
+  display: none;
+}
 
 /* ----------------------------- map ----------------------------- */
 /* The map scene fills the viewport edge-to-edge below the top bar; the
@@ -1826,6 +1849,7 @@ html { -webkit-text-size-adjust: 100%; }
   .map-legend-list { gap: 7px; }
   .relic, .potion { width: 28px; height: 28px; }
   .relic:has(.relic-art-img) { width: 34px; height: 34px; }
+  .potion:has(.potion-art-img) { width: 34px; height: 34px; }
   .combatant { min-width: 84px; }
   .combatant-info { width: 120px; }
   .combatant-name { font-size: 13px; }
