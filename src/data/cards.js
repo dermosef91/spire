@@ -42,7 +42,7 @@ def('sunder', {
 });
 def('twin_fangs', {
   name: 'Twin Fangs', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
-  dmg: 5, hits: 2, target: 'enemy', qteMarks: 2,
+  dmg: 5, hits: 2, target: 'enemy',
   desc: (c) => `Deal ${c.dmg} damage twice.`,
   upgrade: (c) => { c.dmg = 7; },
   onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.c.dmg, ctx.c.hits),
@@ -179,7 +179,7 @@ def('harvest', {
 });
 def('skyfall', {
   name: 'Skyfall Hammer', char: 'amara', type: 'attack', rarity: 'rare', cost: 3,
-  dmg: 32, target: 'enemy',
+  dmg: 32, target: 'enemy', qteMarks: 3,
   desc: (c) => `Deal ${c.dmg} damage.`,
   upgrade: (c) => { c.dmg = 42; },
   onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.c.dmg),
@@ -321,7 +321,7 @@ def('the_long_song', {
 });
 def('grand_finale', {
   name: 'Final Chorus', char: 'kofi', type: 'attack', rarity: 'rare', cost: 2,
-  dmg: 8, target: 'all', qteMarks: 3,
+  dmg: 8, target: 'all', qteMarks: 4,
   desc: (c) => `Deal damage to ALL enemies equal to ${c.dmg}× the Verses you played this combat.`,
   upgrade: (c) => { c.dmg = 10; },
   onPlay: (ctx) => ctx.dealAll(ctx.c.dmg * ctx.combat.versesThisCombat),
