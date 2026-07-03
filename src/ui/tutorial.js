@@ -54,7 +54,7 @@ export class CombatTutorial {
           hint: isTouch ? 'Swipe Right ➔' : 'Press Right Arrow ➔',
         },
         {
-          text: `Well struck. Now end your turn. When the foe attacks, time your ${isTouch ? 'tap' : 'press'} to PARRY and preserve your block!`,
+          text: `Well struck. Now end your turn. When the foe attacks, time your ${isTouch ? 'tap' : 'press'} to PARRY — miss it and half your Block shatters!`,
           await: 'endturn',
           hint: 'End your turn →',
           highlight: () => ['.end-turn'],
@@ -200,6 +200,46 @@ export class CombatTutorial {
     this.done = true;
     this.game.tutorial = null;
     if (this._origUpdate) this.combat.onUpdate = this._origUpdate;
+    document.querySelectorAll('.tut-highlight').forEach((el2) => el2.classList.remove('tut-highlight'));
+    if (this.banner) { this.banner.remove(); this.banner = null; }
+    this.onDone();
+  }
+}
+
+export class MultiEnemyTutorial {
+  constructor(game, combat, onDone) {
+    this.game = game;
+    this.combat = combat;
+    this.onDone = onDone || (() => {});
+    this.done = false;
+  }
+
+  start() {
+    if (this.combat.over) { this.finish(); return; }
+    this.game.tutorial = this;
+    this.banner = el('div', { class: 'tut-banner' });
+    document.body.appendChild(this.banner);
+
+    this.banner.innerHTML = '';
+    this.banner.appendChild(el('p', { class: 'tut-text', text: 'Multi-Enemy Targeting: With multiple foes, attacks require a target. Tap an attack card once, then tap a foe to launch the strike (or tap the card again to cancel).' }));
+
+    const row = el('div', { class: 'tut-row' });
+    row.appendChild(button('Got It', () => this.finish(), 'primary'));
+    this.banner.appendChild(row);
+
+    this.applyHighlight();
+  }
+
+  applyHighlight() {
+    document.querySelectorAll('.tut-highlight').forEach((el2) => el2.classList.remove('tut-highlight'));
+    // Highlight living enemies to show they can be targeted/tapped
+    document.querySelectorAll('.combatant.enemy').forEach((el2) => el2.classList.add('tut-highlight'));
+  }
+
+  finish() {
+    if (this.done) return;
+    this.done = true;
+    this.game.tutorial = null;
     document.querySelectorAll('.tut-highlight').forEach((el2) => el2.classList.remove('tut-highlight'));
     if (this.banner) { this.banner.remove(); this.banner = null; }
     this.onDone();

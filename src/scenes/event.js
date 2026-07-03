@@ -8,6 +8,7 @@ import { topBar, button } from '../ui/components.js';
 import { canUpgrade } from '../data/cards.js';
 import { eventsForAct } from '../data/events.js';
 import { NODE } from '../ui/icons.js';
+import { audio } from '../audio.js';
 
 // Event illustration: prefer a generated PNG, fall back to the committed SVG
 // placeholder, and finally to the generic "?" node glyph if neither exists.
@@ -76,6 +77,15 @@ export const EventScene = {
       return;
     }
     const oldGold = run.gold;
+    // For final/immediate choices, disable all buttons to prevent double clicks/repeated mutation
+    if (typeof document !== 'undefined') {
+      const container = document.querySelector('.event-scene .choices');
+      if (container) {
+        for (const btn of container.querySelectorAll('button')) {
+          btn.disabled = true;
+        }
+      }
+    }
     const text = ch.effect(run);
     if (run.gold !== oldGold) {
       audio.play('coin');

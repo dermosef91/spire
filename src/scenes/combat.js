@@ -11,7 +11,7 @@ import { saveMeta } from '../core/save.js';
 import { RELICS } from '../data/relics.js';
 import { Combat } from '../combat/combat.js';
 import { CombatView } from '../ui/combatView.js';
-import { CombatTutorial } from '../ui/tutorial.js';
+import { CombatTutorial, MultiEnemyTutorial } from '../ui/tutorial.js';
 import { background } from '../fx/background.js';
 import { audio } from '../audio.js';
 
@@ -47,6 +47,12 @@ export const CombatScene = {
         if (combat.over) { finishTutorial(); return; }
         new CombatTutorial(this, combat, finishTutorial).start();
       }, 1700); // after the Battle Start popup + deferred opening draw settle
+    } else if (!this.meta.multiEnemyTutorialDone && combat.enemies.length > 1 && kind === 'monster') {
+      const finishMulti = () => { this.meta.multiEnemyTutorialDone = true; saveMeta(this.meta); };
+      setTimeout(() => {
+        if (combat.over) { finishMulti(); return; }
+        new MultiEnemyTutorial(this, combat, finishMulti).start();
+      }, 1700);
     }
   },
 

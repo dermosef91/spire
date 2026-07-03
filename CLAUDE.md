@@ -351,6 +351,7 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
 - **Port conflicts (`EADDRINUSE`) during QA audit**: If the static server fails to bind to port 8091 because of lingering/zombie processes, run the audit specifying a different port prefix, e.g., `QA_PORT=8095 npm run qa`.
 - **Text contrast on title/scenic backgrounds**: Any overlay text or toggle buttons rendered over scenic background art (such as the bright lines on the title screen) must have a dark semi-transparent backing card/pill background (like `rgba(8, 5, 3, 0.85)`) to block out light lines and ensure contrast.
 - **Smooth Enemy Repositioning**: When an enemy is defeated, their `.dying` transition collapses their `min-width`, `max-width`, `width`, and `margin-left`/`margin-right` to `0` over `0.62s`. This allows the remaining flex children in `.enemy-side` to slide smoothly into their centered positions rather than hopping abruptly. The negative margins are sized to half of `--enemy-gap` to offset the flex container's gaps exactly.
+- **Event scene audio dependency**: `src/scenes/event.js` calls `audio.play()` while resolving choices that change gold/remove cards. Keep `import { audio } from '../audio.js';` in that scene and cover gold-changing event choices in `tools/test.js`; otherwise a choice can mutate run state, throw before `resultThenMap()`, and stay clickable for repeated rewards/costs.
 
 ## Asset Generation
 - **Model Rules**: Always use the `gpt-image-2` model for all image, sprite, and background art generations. Never use Gemini or any other image models.

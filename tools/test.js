@@ -15,6 +15,9 @@ import { RunState } from '../src/core/state.js';
 import { generateMap, nextNodes, nodeAt } from '../src/map/mapgen.js';
 import { createCard, upgradeCard, canUpgrade } from '../src/data/cards.js';
 import { Combat } from '../src/combat/combat.js';
+import { EVENTS } from '../src/data/events.js';
+import { EventScene } from '../src/scenes/event.js';
+import { audio } from '../src/audio.js';
 
 // ----------------------------------------------------------------- tiny runner
 let passed = 0;
@@ -187,6 +190,28 @@ test('upgradeCard mutates in place and is idempotent', () => {
 
 test('createCard throws on an unknown id', () => {
   assert.throws(() => createCard('definitely_not_a_card'));
+});
+
+// ----------------------------------------------------------------- Events
+console.log('Events (scenes/event.js)');
+
+test('gold-changing event choices resolve without throwing', () => {
+  audio.muted = true;
+  const run = new RunState('amara', 5);
+  run.gold = 99;
+  const ev = EVENTS.find((e) => e.id === 'bone_scale_merchant');
+  const choice = ev.choices.find((ch) => ch.label.startsWith('Weigh your coin'));
+  let result = '';
+
+  EventScene.resolveEventChoice.call({
+    run,
+    resultThenMap(text) { result = text; },
+    gameOver() { throw new Error('unexpected death'); },
+  }, ev, choice);
+
+  assert.equal(run.gold, 54, 'gold cost applied once');
+  assert.ok(run.relics.length > 1, 'relic granted');
+  assert.match(result, /gold sinks away/i);
 });
 
 // ----------------------------------------------------------------- Combat

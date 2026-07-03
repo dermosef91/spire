@@ -63,7 +63,7 @@ const selfLowHp = (s, frac = 0.4) => s.hp <= s.maxHp * frac;
 
 // Basic attacker — light pressure, an occasional self-buff. The tutorial foe.
 def('husk_drone', {
-  name: 'Husk Drone', act: 1, hpMin: 20, hpMax: 28, startBlock: 12,
+  name: 'Husk Drone', act: 1, hpMin: 20, hpMax: 28, startBlock: 6,
   moves: {
     zap: atk('Zap', 6),
     buzz: { name: 'Overcharge', intent: { type: 'buffblock', block: 4 }, run: (c, s) => { c.applyPower(s, 'strength', 2, s); c.gainBlockTo(s, 4); } },

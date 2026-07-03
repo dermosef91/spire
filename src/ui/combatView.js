@@ -242,6 +242,8 @@ export class CombatView {
     const c = this.combat;
 
     clear(this.topbarHolder).appendChild(topBar(this.game.run, {
+      hp: c.player.hp,
+      maxHp: c.player.maxHp,
       onPotion: (p, i) => this.tryPotion(p, i),
       onHover: (o, n, on) => this.game.tooltip(o, n, on),
     }));
@@ -688,6 +690,7 @@ export class CombatView {
     node.addEventListener('pointermove', this._dragMove);
     node.addEventListener('pointerup', this._dragEnd);
     node.addEventListener('pointercancel', this._dragEnd);
+    node.addEventListener('lostpointercapture', this._dragEnd);
   }
 
   dragMove(e) {
@@ -722,6 +725,7 @@ export class CombatView {
     d.node.removeEventListener('pointermove', this._dragMove);
     d.node.removeEventListener('pointerup', this._dragEnd);
     d.node.removeEventListener('pointercancel', this._dragEnd);
+    d.node.removeEventListener('lostpointercapture', this._dragEnd);
     try { d.node.releasePointerCapture(d.id); } catch (_) {}
     this.drag = null;
     this.setDragOver(null);
@@ -899,6 +903,12 @@ export class CombatView {
           }
         }, 855);
       }
+      return;
+    }
+    if (type === 'parrymiss') {
+      // Missed parry: tell the player why the hit is about to bite through.
+      const el2 = this.elFor(payload.entity);
+      if (el2) { floatText(layer, el2, 'BLOCK HALVED', 'debuff'); hitFlash(el2, 'damage'); }
       return;
     }
     if (type === 'damage') {

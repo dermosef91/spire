@@ -308,17 +308,17 @@ export class Combat {
     this._parried = false;
 
     if (qtePrompted && !parried) {
-      this.player.block = 0;
+      // Missed parry: half the block shatters, the rest still absorbs and is
+      // consumed as normal. (Was: block fully bypassed — too punishing.)
+      this.player.block = Math.floor(realBlock / 2);
+      this.fx('parrymiss', { entity: this.player, lost: realBlock - this.player.block });
+      this.log(`Parry missed — ${enemy.name}'s hit shatters half your Block.`);
     }
 
     for (let i = 0; i < hits; i++) {
       if (!this.player.alive) break;
       const dmg = Math.round(this.calcAttackDamage(base, enemy, this.player) * this.run.enemyDamageMult());
       this.applyDamage(this.player, dmg, { isAttack: true, source: enemy });
-    }
-
-    if (qtePrompted && !parried) {
-      this.player.block = realBlock;
     }
     this.notify();
   }

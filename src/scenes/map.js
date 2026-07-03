@@ -118,6 +118,7 @@ export const MapScene = {
         html: NODE_ICON[type] || '',
         title: NODE_LABEL[type] || type,
       });
+      n.dataset.key = key;
       if (isReach) n.addEventListener('click', () => this.enterNode(posObj));
       if (isCurrent) currentNodeEl = n;
       board.appendChild(n);
@@ -137,6 +138,56 @@ export const MapScene = {
     body.appendChild(scroller);
     body.appendChild(legend);
     panel.appendChild(body);
+
+    const scrollHint = el('div', { class: 'map-scroll-hint hidden' });
+    panel.appendChild(scrollHint);
+
+    const checkScrollHint = () => {
+      const scrollTop = scroller.scrollTop;
+      const offscreenAbove = [];
+      for (const rn of reachable) {
+        const key = rn.boss ? 'boss' : `${rn.row}-${rn.col}`;
+        const nodeEl = board.querySelector(`[data-key="${key}"]`);
+        if (nodeEl) {
+          if (nodeEl.offsetTop + 30 < scrollTop) {
+            offscreenAbove.push(rn);
+          }
+        }
+      }
+
+      if (offscreenAbove.length > 0) {
+        scrollHint.classList.remove('hidden');
+        scrollHint.innerHTML = '';
+        scrollHint.appendChild(el('span', { text: 'Reachable: ' }));
+        offscreenAbove.forEach(rn => {
+          const type = rn.type;
+          const chip = el('span', { class: `map-hint-chip node-${type}`, html: NODE_ICON[type] || '' });
+          chip.title = NODE_LABEL[type] || type;
+          scrollHint.appendChild(chip);
+        });
+        scrollHint.appendChild(el('span', { class: 'hint-arrow', text: ' ⇧' }));
+
+        scrollHint.onclick = () => {
+          let minTop = height;
+          for (const rn of offscreenAbove) {
+            const key = rn.boss ? 'boss' : `${rn.row}-${rn.col}`;
+            const nodeEl = board.querySelector(`[data-key="${key}"]`);
+            if (nodeEl && nodeEl.offsetTop < minTop) {
+              minTop = nodeEl.offsetTop;
+            }
+          }
+          scroller.scrollTo({
+            top: Math.max(0, minTop - scroller.clientHeight / 3),
+            behavior: 'smooth'
+          });
+        };
+      } else {
+        scrollHint.classList.add('hidden');
+      }
+    };
+
+    scroller.addEventListener('scroll', checkScrollHint);
+
     this.setScene(panel, 'map');
 
     // Scroll to center the player's position if it's off-screen, otherwise scroll to the bottom
@@ -155,6 +206,7 @@ export const MapScene = {
       } else {
         scroller.scrollTop = scroller.scrollHeight;
       }
+      checkScrollHint();
     };
 
     requestAnimationFrame(() => {

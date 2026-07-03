@@ -37,7 +37,7 @@ function defaultMeta() {
   // rhythm: the timed-hit QTE mode on attacks/parries (off = classic combat).
   return {
     runs: 0, wins: 0, bestFloor: 0, ascensions: 0, maxAscension: 0, ascension: 0,
-    tutorialDone: false, ascendedOnce: false, timesAscended: 0, spireUnwritten: false,
+    tutorialDone: false, multiEnemyTutorialDone: false, ascendedOnce: false, timesAscended: 0, spireUnwritten: false,
     rhythm: true, bestTime: 0,
   };
 }
