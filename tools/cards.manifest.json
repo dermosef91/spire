@@ -418,5 +418,35 @@
     "char": "curse",
     "name": "Sorrow",
     "prompt": "A figure kneeling in darkness with head bowed."
+  },
+  {
+    "id": "flowing_edge",
+    "char": "amara",
+    "name": "Flowing Edge",
+    "prompt": "A single curved blade mid-swing leaving a ribbon-like trail of luminous motion arcs, like a dancer's sweep frozen in time. Radiant orange rim lighting. Geometric African patterns in the background."
+  },
+  {
+    "id": "dancers_poise",
+    "char": "amara",
+    "name": "Dancer's Poise",
+    "prompt": "A poised warrior woman silhouette balancing on one foot, blade held low, concentric protective rings of light pulsing around her stance. Radiant orange rim lighting. Geometric African patterns in the background."
+  },
+  {
+    "id": "spiral_finish",
+    "char": "amara",
+    "name": "Spiral Finish",
+    "prompt": "A devastating spiral slash — a blade path coiling inward like a whirlpool of light converging on a single strike point, sparks flying outward. Radiant orange rim lighting. Geometric African patterns in the background."
+  },
+  {
+    "id": "war_drum_cadence",
+    "char": "amara",
+    "name": "War-Drum Cadence",
+    "prompt": "A tall West African talking drum with glowing drumheads, rhythmic shockwave rings radiating from it in a steady beat. Radiant orange rim lighting. Geometric African patterns in the background."
+  },
+  {
+    "id": "unbroken_dance",
+    "char": "amara",
+    "name": "Unbroken Dance",
+    "prompt": "An endless looping ribbon of blade-light forming a continuous dance path around a warrior silhouette, no beginning and no end, glowing shield sparks along the ribbon. Radiant orange rim lighting. Geometric African patterns in the background."
   }
 ]

@@ -10,6 +10,7 @@ import { wait } from '../core/util.js';
 
 const BASE_ENERGY = 3;
 const HAND_LIMIT = 10;
+const TEMPO_CAP = 10;
 
 export class Combat {
   constructor(run, enemyIds, opts = {}) {
@@ -25,11 +26,14 @@ export class Combat {
     this.animating = false;
     this._notifyScheduled = false; // coalesces same-tick notify() calls, see notify()
 
-    // Rhythm QTE seams. The view sets `_rhythmMult` (from the attack QTE)
-    // before playCard, and injects `parryPrompt` — an async fn resolving
-    // { success } — awaited during the enemy phase. Both default to inert so
-    // the engine runs unchanged without a view or with Rhythm Mode off.
+    // Rhythm QTE seams. The view sets `_rhythmMult` and `_rhythmGrade` (from
+    // the attack QTE) before playCard, and injects `parryPrompt` — an async fn
+    // resolving { success } — awaited during the enemy phase. All default to
+    // inert so the engine runs unchanged without a view or with Rhythm Mode
+    // off: a null grade counts as a clean ('good') strike, so Tempo still
+    // builds for non-rhythm players.
     this._rhythmMult = 1;
+    this._rhythmGrade = null;
     this.parryPrompt = null;
     this._parried = false;
     this._qtePrompted = false;
@@ -178,6 +182,40 @@ export class Combat {
   randomEnemy() { const l = this.livingEnemies(); return l.length ? this.rng.pick(l) : null; }
   isOrbUser() { return this.run.character.id === 'zara'; }
   focus() { return this.player.powers.focus || 0; }
+
+  // ---------------------------------------------------------------- Tempo
+  // The rhythm layer made visible to the card game. Tempo is a player-only
+  // power (so it rides the generic pip/tooltip/float rendering): clean strikes
+  // build it (+1, +2 on a Perfect), a successful parry adds +1, and a missed
+  // beat — a missed strike QTE or a missed parry — breaks it back to 0. With
+  // Rhythm Mode off every attack registers as 'good', so Tempo still builds
+  // (steadily, without the Perfect upside or the miss risk). Cards read it via
+  // ctx.tempo() or consume it via ctx.spendAllTempo(); relics listen on the
+  // 'tempoGained' trigger.
+  tempo() { return this.player.powers.tempo || 0; }
+  gainTempo(n) {
+    const add = Math.min(n, TEMPO_CAP - this.tempo());
+    if (add <= 0) return;
+    this.applyPower(this.player, 'tempo', add, this.player);
+    this.fire('tempoGained', { amount: add, total: this.tempo() });
+  }
+  breakTempo() {
+    if (this.tempo() <= 0) return;
+    delete this.player.powers.tempo;
+    this.log('Your rhythm breaks.');
+    this.fx('tempobreak', { entity: this.player });
+    this.notify();
+  }
+  // Deliberate spend (finisher cards): no falter fx, returns the amount spent.
+  spendAllTempo() {
+    const t = this.tempo();
+    if (t > 0) { delete this.player.powers.tempo; this.notify(); }
+    return t;
+  }
+  registerStrikeGrade(grade) {
+    if (grade === 'miss') this.breakTempo();
+    else this.gainTempo(grade === 'perfect' ? 2 : 1);
+  }
 
   // ---------------------------------------------------------------- damage & block math
   calcAttackDamage(base, source, target) {
@@ -345,9 +383,14 @@ export class Combat {
     if (qtePrompted && !parried) {
       // Missed parry: half the block shatters, the rest still absorbs and is
       // consumed as normal. (Was: block fully bypassed — too punishing.)
+      // A missed beat also breaks Tempo.
       this.player.block = Math.floor(realBlock / 2);
       this.fx('parrymiss', { entity: this.player, lost: realBlock - this.player.block });
       this.log(`Parry missed — ${enemy.name}'s hit shatters half your Block.`);
+      this.breakTempo();
+    } else if (qtePrompted && parried) {
+      // A clean parry keeps the dance going.
+      this.gainTempo(1);
     }
 
     for (let i = 0; i < hits; i++) {
@@ -531,6 +574,9 @@ export class Combat {
       heal: (n) => self.heal(n),
       channel: (t, n = 1) => self.channel(t, n),
       evoke: (n = 1) => self.evoke(n),
+      tempo: () => self.tempo(),
+      gainTempo: (n) => self.gainTempo(n),
+      spendAllTempo: () => self.spendAllTempo(),
       exhaustThis: () => { card._forceExhaust = true; },
     };
   }
@@ -553,6 +599,16 @@ export class Combat {
     this.cardsThisTurn += 1;
     this.cardsPlayedTotal += 1;
     if (card.verse) { this.versesThisTurn += 1; this.versesThisCombat += 1; }
+
+    // Tempo registers BEFORE onPlay: the QTE already resolved, so this strike
+    // is part of the flow it creates — a Tempo-scaling card counts its own
+    // clean strike, and a missed finisher fizzles (breaks Tempo, then deals
+    // its now-bonusless damage at the miss multiplier). Deliberate design:
+    // misses hurt twice, that tension is the point of the rhythm layer.
+    if (card.type === 'attack') {
+      this.registerStrikeGrade(this._rhythmGrade || 'good');
+      this._rhythmGrade = null;
+    }
 
     this.log(`You play ${card.name}.`);
     if (card.type === 'skill') {

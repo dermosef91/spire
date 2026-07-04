@@ -341,6 +341,142 @@ test('a successful parry leaves block untouched by the halving rule', () => {
   assert.equal(c.player.block, 4, 'block consumed normally (10 - 6)');
 });
 
+// ----------------------------------------------------------------- Tempo (rhythm layer → card game)
+console.log('Tempo (combat/combat.js)');
+
+test('playing an attack builds 1 Tempo by default (headless / rhythm off)', () => {
+  const c = freshCombat();
+  const attack = c.hand.find((card) => card.type === 'attack');
+  assert.ok(attack, 'an attack card is in the opening hand');
+  assert.equal(c.tempo(), 0, 'starts at 0');
+  c.playCard(attack, c.enemies[0]);
+  assert.equal(c.tempo(), 1, 'a clean strike adds 1 Tempo');
+});
+
+test('a Perfect strike adds 2 Tempo, a miss breaks it to 0', () => {
+  const c = freshCombat();
+  c._rhythmGrade = 'perfect';
+  c.registerStrikeGrade(c._rhythmGrade);
+  assert.equal(c.tempo(), 2, 'perfect adds 2');
+  c.registerStrikeGrade('good');
+  assert.equal(c.tempo(), 3, 'good adds 1');
+  c.registerStrikeGrade('miss');
+  assert.equal(c.tempo(), 0, 'miss breaks Tempo to 0');
+});
+
+test('Tempo caps at 10 and playCard consumes the pending grade', () => {
+  const c = freshCombat();
+  for (let i = 0; i < 9; i++) c.gainTempo(2);
+  assert.equal(c.tempo(), 10, 'capped at 10');
+  const attack = c.hand.find((card) => card.type === 'attack');
+  c._rhythmGrade = 'perfect';
+  c.playCard(attack, c.enemies[0]);
+  assert.equal(c._rhythmGrade, null, 'grade consumed by the play');
+  assert.equal(c.tempo(), 10, 'still capped');
+});
+
+test('spendAllTempo returns the pool and zeroes it', () => {
+  const c = freshCombat();
+  c.gainTempo(4);
+  assert.equal(c.spendAllTempo(), 4);
+  assert.equal(c.tempo(), 0);
+  assert.equal(c.spendAllTempo(), 0, 'spending an empty pool is a harmless 0');
+});
+
+test('a successful parry gains 1 Tempo; a missed parry breaks it', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  c.player.block = 20;
+  c._qtePrompted = true;
+  c._parried = true;
+  c.enemyAttack(enemy, 3);
+  assert.equal(c.tempo(), 1, 'clean parry adds 1 Tempo');
+  c.gainTempo(3);
+  c.player.block = 20;
+  c._qtePrompted = true;
+  c._parried = false;
+  c.enemyAttack(enemy, 3);
+  assert.equal(c.tempo(), 0, 'missed parry breaks Tempo');
+});
+
+test('Flowing Edge scales with Tempo (counting its own strike)', () => {
+  const c = freshCombat();
+  c.gainTempo(3);
+  const enemy = c.enemies[0];
+  enemy.block = 0;
+  const hpBefore = enemy.hp;
+  const card = createCard('flowing_edge');
+  c.hand.push(card);
+  c.energy = 3;
+  c.playCard(card, enemy);
+  // 3 Tempo + 1 from this strike = 4 → 5 + 2×4 = 13 damage.
+  assert.equal(hpBefore - enemy.hp, 13, 'damage read the post-strike Tempo');
+});
+
+test('Spiral Finish consumes ALL Tempo for bonus damage', () => {
+  const c = freshCombat();
+  c.gainTempo(4);
+  const enemy = c.enemies[0];
+  enemy.block = 0;
+  enemy.hp = enemy.maxHp = 999; // survive the hit so the math is readable
+  const hpBefore = enemy.hp;
+  const card = createCard('spiral_finish');
+  c.hand.push(card);
+  c.energy = 3;
+  c.playCard(card, enemy);
+  // 4 Tempo + 1 from this strike = 5 consumed → 10 + 3×5 = 25 damage.
+  assert.equal(hpBefore - enemy.hp, 25, 'consumed Tempo converted to damage');
+  assert.equal(c.tempo(), 0, 'Tempo pool emptied');
+});
+
+test('War-Drum Cadence grants Resolve at 3+ Tempo on turn start', () => {
+  const c = freshCombat();
+  const card = createCard('war_drum_cadence');
+  c.hand.push(card);
+  c.energy = 3;
+  c.playCard(card, null);
+  c.gainTempo(2);
+  c.fire('turnStart');
+  assert.equal(c.player.powers.strength || 0, 0, 'below threshold: no Resolve');
+  c.gainTempo(1);
+  c.fire('turnStart');
+  assert.equal(c.player.powers.strength, 1, 'at 3 Tempo: +1 Resolve');
+});
+
+test('Unbroken Dance converts Tempo gains into Block', () => {
+  const c = freshCombat();
+  const card = createCard('unbroken_dance');
+  c.hand.push(card);
+  c.energy = 3;
+  c.playCard(card, null);
+  const blockBefore = c.player.block;
+  c.gainTempo(2);
+  assert.equal(c.player.block, blockBefore + 2, '1 Block per Tempo gained');
+});
+
+test('Pulse Stone starts combat with 3 Tempo', () => {
+  const run = new RunState('amara', 21);
+  run.relics.push('pulse_stone');
+  const c = new Combat(run, ['husk_drone']);
+  c.start();
+  assert.equal(c.tempo(), 3);
+});
+
+test("Drummer's Bangle fires once on first reaching 5 Tempo", () => {
+  const run = new RunState('kofi', 22); // champion-agnostic: works off any attack
+  run.relics.push('drummers_bangle');
+  const c = new Combat(run, ['husk_drone']);
+  c.start();
+  const energyBefore = c.energy;
+  c.gainTempo(4);
+  assert.equal(c.energy, energyBefore, 'below 5: no bonus');
+  c.gainTempo(1);
+  assert.equal(c.energy, energyBefore + 1, 'reaching 5 grants 1 Àṣẹ');
+  c.spendAllTempo();
+  c.gainTempo(6);
+  assert.equal(c.energy, energyBefore + 1, 'does not fire twice in one combat');
+});
+
 test('Sundered (noBlock) blocks Ward for one turn, then expires', () => {
   const c = freshCombat();
   c.player.block = 0;

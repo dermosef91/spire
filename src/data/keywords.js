@@ -69,6 +69,11 @@ export const POWERS = {
     type: 'buff',
     desc: 'Increases the potency of channeled Spirits by {n}.',
   },
+  tempo: {
+    name: 'Tempo',
+    type: 'buff',
+    desc: 'The rhythm of the fight. Clean strikes build it (+1, +2 on a Perfect) and parries add 1; a missed beat breaks it to 0. Some cards grow stronger with Tempo or consume it. Caps at 10.',
+  },
 
   // --- Debuffs ---
   vulnerable: {
