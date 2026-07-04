@@ -852,15 +852,9 @@ export class CombatView {
     if (chargeLevel) setTimeout(() => { this._chargedStrike = 0; }, 0);
     setTimeout(() => { this._lastPlayedCardId = null; }, 0);
     audio.play('playcard');
-    let sound = card.type === 'attack' ? 'attack' : 'skill';
-    if (card.id === 'skyfall' || card.id === 'falling_star') {
-      sound = 'thunder';
-    } else if (card.id === 'static_burst') {
-      sound = 'zap';
-    } else if (card.id === 'blight_needle') {
-      sound = 'slime';
+    if (card.type !== 'attack') {
+      audio.play('skill');
     }
-    audio.play(sound);
     // brief play animation on the card element
     const cardEl = this.handHolder.querySelector(`.card[data-uid="${card.uid}"]`);
     if (cardEl) { cardEl.classList.add('playing'); }
@@ -1081,6 +1075,14 @@ export class CombatView {
               slash(layer, el2);
             } else {
               singleFrameAnim(layer, el2, anim);
+            }
+            if (payload.source && payload.source.isPlayer) {
+              let attackSound = 'attack';
+              if (anim === 'skyfall-hammer') attackSound = 'thunder';
+              else if (anim === 'zap') attackSound = 'zap';
+              else if (anim === 'spit') attackSound = 'slime';
+              else if (anim === 'splash') attackSound = 'splash';
+              audio.play(attackSound);
             }
           }
           if (payload.target.isPlayer || big) screenShake(this.scene, big);
