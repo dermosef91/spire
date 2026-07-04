@@ -265,6 +265,7 @@ export const MapScene = {
     const run = this.run;
     if (run.act >= MAX_ACT) { this.victory(); return; }
     run.act += 1;
+    run.heal(run.maxHp);
     run._actMonster = 0;
     run.map = generateMap(run.rng, run.act);
     run.position = null;
