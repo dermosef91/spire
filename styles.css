@@ -2115,25 +2115,38 @@ html { -webkit-text-size-adjust: 100%; }
   .block-badge { min-width: 24px; height: 24px; font-size: 12px; bottom: 5px; left: -12px; }
   .intent { bottom: calc(var(--med) * 1.85 + 8px); font-size: 14px; } .orbs { bottom: calc(25% + 42px); } .orbs .orb { width: 26px; height: 26px; }
   .combat-log { min-height: 12px; font-size: 11px; margin: auto 0 1px; }
-  .combat-controls { bottom: 56px; max-width: 780px; padding: 0 8px; --energy-shift: 50px; }
-  .energy-orb { width: clamp(40px, 9vh, 56px); height: clamp(40px, 9vh, 56px); font-size: clamp(16px, 4vh, 22px); }
+  /* Pulled in tighter than the base rule so the safe zone below (.hand's
+     margins) can claim more width for a crowded hand — see the .hand comment
+     below for the full geometry this feeds. */
+  .combat-controls { bottom: 56px; max-width: 780px; padding: 0 4px; --energy-shift: 28px; }
+  .energy-orb { width: clamp(36px, 8vh, 50px); height: clamp(36px, 8vh, 50px); font-size: clamp(15px, 3.6vh, 20px); }
+  /* End Turn shrunk ~13% from the base 164x50 (paddings/gap/icon/text scaled
+     down to match) purely to free horizontal room for the hand in this
+     cramped breakpoint — the base button stays full-size everywhere else. */
+  .end-turn { width: 142px; height: 44px; }
+  .end-turn-content { gap: 8px; padding-left: 16px; padding-right: 12px; }
+  .end-turn-text { font-size: 15px; }
+  .end-turn-icon-wrap { width: 14px; height: 14px; }
   /* Bigger, legible hand in landscape: enlarge the cards (a bit less than
      before so a normal-size hand still fits the narrower safe zone below).
      The fan (rotation + downward dip) is kept, but .hand gets extra bottom
      padding so the dip has room before combat-scene's overflow:hidden crops
      it. Its side margins are carved out to match .combat-controls' geometry
      (percentages resolve against the same containing block as .hand, so
-     these track it exactly: 780px cap, 8px padding, the energy orb's
-     shift+width on the left, the End Turn button's width on the right) so
-     the row can't slide under the pinned controls — overflow spills into
-     the existing horizontal scroll instead of hiding under a button. */
+     these track it exactly: 780px cap, 4px padding, the energy orb's
+     shift+width on the left, the (shrunk) End Turn button's width on the
+     right) so the row can't slide under the pinned controls — a hand that
+     still doesn't fit this widened safe zone overlaps instead (see
+     applyHandSpacing() in combatView.js), with the old horizontal scroll
+     only as a last-resort fallback once cards are already overlapping at
+     their floor. */
   .combat-scene { --card-h: clamp(132px, 32vh, 180px); --card-w: calc(var(--card-h) * 0.7); --med: clamp(64px, 23vh, 150px); }
   .hand {
     /* Same top-clipping fix as the base .hand rule, just tuned down for the
        shorter card-h at this breakpoint. */
     padding-top: 38px; padding-bottom: 34px; gap: clamp(6px, 1vw, 14px);
-    margin-left: calc(max(0px, (100% - 780px) / 2) + 102px);
-    margin-right: calc(max(0px, (100% - 780px) / 2) + 176px);
+    margin-left: calc(max(0px, (100% - 780px) / 2) + 72px);
+    margin-right: calc(max(0px, (100% - 780px) / 2) + 152px);
   }
   /* Characters are shorter in landscape and the (lowered) hand covers their
      feet, so lift the name/HP block onto the torso where it clears the card
@@ -2149,13 +2162,13 @@ html { -webkit-text-size-adjust: 100%; }
      selected transforms (which lift cards upward) keep their own !important. */
   .hand .card.in-hand { transform: rotate(var(--angle, 0deg)) translateY(min(var(--shift, 0px), 16px)); }
   .screen-pile {
-    width: 50px;
-    height: 60px;
-    bottom: 10px;
+    width: 44px;
+    height: 54px;
+    bottom: 6px;
   }
-  .screen-pile.draw-pile { left: 10px; }
-  .screen-pile.discard-pile { right: 10px; }
-  .screen-pile.exhaust-pile { right: 10px; bottom: 78px; }
+  .screen-pile.draw-pile { left: 6px; }
+  .screen-pile.discard-pile { right: 6px; }
+  .screen-pile.exhaust-pile { right: 6px; bottom: 68px; }
   .screen-pile .pile-badge {
     width: 20px;
     height: 20px;
