@@ -2506,8 +2506,16 @@ img.svg-ic { object-fit: contain; }
   position: fixed; inset: 0; z-index: 400;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   background: radial-gradient(ellipse at center, rgba(8, 5, 3, 0.32) 0%, rgba(8, 5, 3, 0.72) 100%);
+  transition: background 200ms ease;
   touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer;
 }
+/* Once the mark is graded, the caller fires the actual strike's SFX/VFX
+   immediately rather than waiting on the result banner's hold time — clear
+   the dimming scrim and stage right away so that strike isn't hidden behind
+   this still-opaque overlay for the ~700ms the banner lingers. */
+.qte-layer.qte-clear { background: transparent; }
+.qte-layer.qte-clear .qte-stage,
+.qte-layer.qte-clear .qte-labels { opacity: 0; transition: opacity 200ms ease; }
 .qte-stage {
   position: relative; width: min(46vw, 34dvh, 300px); aspect-ratio: 1;
   display: flex; align-items: center; justify-content: center;
