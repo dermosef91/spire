@@ -148,5 +148,15 @@
     "id": "static_swarm",
     "kind": "enemy",
     "prompt": "A hovering swarm of geometric shards. A cluster of floating, sharp obsidian and copper crystals crackling with static electricity arcs. A central glowing ember-orange spark acts as the core of the swarm, with orange field lines connecting the fragments. Fragmented and volatile. Full figure centered."
+  },
+  {
+    "id": "choir_master",
+    "kind": "enemy",
+    "prompt": "A towering choir-master conductor entity, the grandest of the Spire's kept griots. A tall robed maestro in heavy dark vestments layered with amber geometric embroidery and horizontal kente stripe bands. In place of a head, a brass-throated resonator crowned with a splayed fan of kora strings fanned out like a peacock's tail, each string humming with ember-orange light. Both arms raised mid-conduct, long fingers trailing glowing sound-wave ribbons. Concentric halo rings of orange musical notation orbit its shoulders. A cracked kora gourd and a brass-grafted throat are fused into its chest — a cosmic griot the Spire unwrote into the conductor of its choir. Imposing and ceremonial. Full figure head-to-feet, centered, facing to the left (towards the opponent)."
+  },
+  {
+    "id": "echo_mote",
+    "kind": "enemy",
+    "prompt": "A small floating echo-mote, a single summoned voice of the choir made visible. A compact hovering wisp of dark shadow-stuff coiled around a glowing ember-orange spark core, ringed by one thin concentric orbital line. Faint glitching wireframe afterimages of its own silhouette trail at its edges in cream and orange, and tiny concentric sound-wave ripples pulse outward from it. Digital static and halftone grain. Minor, ghostly and fragile. Full figure centered, small within the frame."
   }
 ]
