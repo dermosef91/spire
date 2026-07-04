@@ -185,6 +185,48 @@ def('skyfall', {
   onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.c.dmg),
 });
 
+// --- Tempo suite: the Bladedancer reads the rhythm layer. Tempo registers
+// before onPlay (see combat.playCard), so these cards count their own strike.
+def('flowing_edge', {
+  name: 'Flowing Edge', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
+  dmg: 5, magic: 2, target: 'enemy',
+  desc: (c) => `Deal ${c.dmg} damage, plus ${c.magic} for each Tempo you have.`,
+  upgrade: (c) => { c.dmg = 7; c.magic = 3; },
+  onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.c.dmg + ctx.c.magic * ctx.tempo()),
+});
+def('dancers_poise', {
+  name: "Dancer's Poise", char: 'amara', type: 'skill', rarity: 'common', cost: 1,
+  block: 4, magic: 1, target: 'self',
+  desc: (c) => `Gain ${c.block} Block, plus ${c.magic} for each Tempo you have.`,
+  upgrade: (c) => { c.block = 6; c.magic = 2; },
+  onPlay: (ctx) => ctx.gainBlock(ctx.c.block + ctx.c.magic * ctx.tempo()),
+});
+def('spiral_finish', {
+  name: 'Spiral Finish', char: 'amara', type: 'attack', rarity: 'uncommon', cost: 2,
+  dmg: 10, magic: 3, target: 'enemy', qteMarks: 2,
+  desc: (c) => `Deal ${c.dmg} damage. Consume ALL your Tempo: +${c.magic} damage for each consumed.`,
+  upgrade: (c) => { c.dmg = 12; c.magic = 4; },
+  onPlay: (ctx) => { const t = ctx.spendAllTempo(); ctx.deal(ctx.enemy, ctx.c.dmg + ctx.c.magic * t); },
+});
+def('war_drum_cadence', {
+  name: 'War-Drum Cadence', char: 'amara', type: 'power', rarity: 'uncommon', cost: 1,
+  magic: 1, target: 'self',
+  desc: (c) => `At the start of your turn, if you have 3 or more Tempo, gain ${c.magic} Resolve.`,
+  upgrade: (c) => { c.magic = 2; },
+  onPlay: (ctx) => ctx.combat.addTrigger('turnStart', () => {
+    if (ctx.combat.tempo() >= 3) ctx.applySelf('strength', ctx.c.magic);
+  }, 'War-Drum Cadence'),
+});
+def('unbroken_dance', {
+  name: 'Unbroken Dance', char: 'amara', type: 'power', rarity: 'rare', cost: 2,
+  magic: 1, target: 'self',
+  desc: (c) => `Whenever you gain Tempo, gain ${c.magic} Block for each Tempo gained.`,
+  upgrade: (c) => { c.magic = 2; },
+  onPlay: (ctx) => ctx.combat.addTrigger('tempoGained', ({ amount }) => {
+    ctx.combat.gainBlockTo(ctx.combat.player, amount * ctx.c.magic, true);
+  }, 'Unbroken Dance'),
+});
+
 // ============================================================== KOFI — Griot of the Cosmos
 // Verses, Blight (poison), cheap cards and relentless tempo.
 

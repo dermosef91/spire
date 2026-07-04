@@ -56,6 +56,11 @@ def('ancestor_bead', {
   desc: 'Whenever you rest at a fire, heal an additional 5 HP.',
   restBonus: 5,
 });
+def('pulse_stone', {
+  name: 'Pulse Stone', rarity: 'common',
+  desc: 'Begin each combat with 3 Tempo.',
+  startCombat: (combat) => { combat.gainTempo(3); combat.fx('relic', { id: 'pulse_stone' }); },
+});
 
 // --------- Uncommon ---------
 def('sun_disk', {
@@ -87,6 +92,18 @@ def('mask_of_masks', {
   name: 'Mask of Masks', rarity: 'uncommon',
   desc: 'At the start of each combat, apply 1 Exposed to ALL enemies.',
   startCombat: (combat) => { for (const e of combat.livingEnemies()) combat.applyPower(e, 'vulnerable', 1, combat.player); combat.fx('relic', { id: 'mask_of_masks' }); },
+});
+def('drummers_bangle', {
+  name: "Drummer's Bangle", rarity: 'uncommon',
+  desc: 'The first time you reach 5 Tempo each combat, gain 1 Àṣẹ and draw 1 card.',
+  startCombat: (combat) => combat.addTrigger('tempoGained', ({ total }) => {
+    if (!combat._bangleUsed && total >= 5) {
+      combat._bangleUsed = true;
+      combat.gainEnergy(1);
+      combat.draw(1);
+      combat.fx('relic', { id: 'drummers_bangle' });
+    }
+  }, "Drummer's Bangle"),
 });
 def('iron_lattice', {
   name: 'Iron Lattice', rarity: 'uncommon',

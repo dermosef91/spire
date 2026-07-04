@@ -98,5 +98,15 @@
     "id": "ascendant_crown",
     "rarity": "boss",
     "prompt": "A majestic, heavy crown forged from dark obsidian and radiating star-iron spikes, encrusted with glowing ember gems. Regal and imposing silhouette. Centered isolated object."
+  },
+  {
+    "id": "pulse_stone",
+    "rarity": "common",
+    "prompt": "A smooth obsidian stone with a glowing heartbeat pulse-line etched across it in ember orange, faint concentric rhythm rings. High contrast woodcut style, clean bold silhouette. Centered isolated object."
+  },
+  {
+    "id": "drummers_bangle",
+    "rarity": "uncommon",
+    "prompt": "A brass wrist bangle strung with tiny drum-shaped charms and cowrie shells, one charm glowing as if struck mid-beat. High contrast woodcut style, clean bold silhouette. Centered isolated object."
   }
 ]

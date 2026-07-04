@@ -874,6 +874,7 @@ export class CombatView {
       });
       c.animating = false;
       c._rhythmMult = mult;
+      c._rhythmGrade = grade; // consumed by combat.playCard for Tempo
       c.fire('rhythm', { grade, card });
       // Strong attack — 3+ QTE marks — charges up for a more epic strike,
       // burning brighter the cleaner the timing.
@@ -1073,6 +1074,12 @@ export class CombatView {
       // Missed parry: tell the player why the hit is about to bite through.
       const el2 = this.elFor(payload.entity);
       if (el2) { floatText(layer, el2, 'BLOCK HALVED', 'debuff'); hitFlash(el2, 'damage'); }
+      return;
+    }
+    if (type === 'tempobreak') {
+      // A missed beat zeroes the Tempo counter — name the loss.
+      const el2 = this.elFor(payload.entity);
+      if (el2) floatText(layer, el2, 'RHYTHM BROKEN', 'debuff');
       return;
     }
     if (type === 'damage') {

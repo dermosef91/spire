@@ -11,12 +11,12 @@ export const CHARACTERS = {
     startGold: 99,
     relic: 'ancestral_cuirass',
     blurb:
-      'A warrior of the all-woman regiment of Dahomey, reforged in star-iron. She fights with Resolve and unbreakable Block, turning ancestral fury into edge and armor.',
+      'A warrior of the all-woman regiment of Dahomey, reforged in star-iron. Her blade keeps Tempo — every clean strike and parry builds the dance, and the dance becomes edge and armor.',
     deck: ['slash', 'slash', 'slash', 'slash', 'slash', 'brace', 'brace', 'brace', 'brace', 'sunder'],
     cardPool: [
-      'twin_fangs', 'ironwave', 'pommel', 'cleave', 'crosscut', 'shrug', 'thunderclap',
-      'rising_strike', 'war_trance', 'ember_within', 'bulwark', 'read_tell', 'shockwave', 'disarm', 'whirlwind',
-      'ancestral_fury', 'blood_offering', 'devour', 'harvest', 'skyfall',
+      'twin_fangs', 'ironwave', 'pommel', 'cleave', 'crosscut', 'shrug', 'thunderclap', 'flowing_edge', 'dancers_poise',
+      'rising_strike', 'war_trance', 'ember_within', 'bulwark', 'read_tell', 'shockwave', 'disarm', 'whirlwind', 'spiral_finish', 'war_drum_cadence',
+      'ancestral_fury', 'blood_offering', 'devour', 'harvest', 'skyfall', 'unbroken_dance',
     ],
   },
   kofi: {
