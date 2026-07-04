@@ -1119,6 +1119,61 @@ export class CombatView {
       this._pendingRelicPulses.push(payload.id);
       return;
     }
+    if (type === 'cardtopile') {
+      this.injectCardAnim(payload.card);
+      return;
+    }
+  }
+
+  // Reveal a card an enemy shuffled into the deck (e.g. Dazed from Rivet): show
+  // it centre-stage long enough to read, then fly it into the draw pile so the
+  // player registers both what was added and where it went.
+  injectCardAnim(card) {
+    if (!this.scene || !this.drawPileEl || !card) return;
+    const node = renderCard(card, { class: 'deck-inject-card' });
+    node.style.left = '50%';
+    node.style.top = '40%';
+    this.scene.appendChild(node);
+
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Measured after insertion; the base transform centres it on left/top.
+    const nodeRect = node.getBoundingClientRect();
+    const drawRect = this.drawPileEl.getBoundingClientRect();
+    const dx = (drawRect.left + drawRect.width / 2) - (nodeRect.left + nodeRect.width / 2);
+    const dy = (drawRect.top + drawRect.height / 2) - (nodeRect.top + nodeRect.height / 2);
+
+    const thump = () => {
+      if (!this.drawPileEl) return;
+      this.drawPileEl.classList.remove('pile-thump');
+      void this.drawPileEl.offsetWidth;
+      this.drawPileEl.classList.add('pile-thump');
+      setTimeout(() => this.drawPileEl && this.drawPileEl.classList.remove('pile-thump'), 420);
+    };
+
+    if (reduce) {
+      // No flight under reduced motion: fade in centre, hold to read, fade out.
+      const anim = node.animate([
+        { transform: 'translate(-50%, -50%) scale(0.96)', opacity: 0 },
+        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: 0.15 },
+        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: 0.82 },
+        { transform: 'translate(-50%, -50%) scale(0.96)', opacity: 0 },
+      ], { duration: 1500, easing: 'ease' });
+      anim.onfinish = () => { node.remove(); thump(); };
+      return;
+    }
+
+    const anim = node.animate([
+      { transform: 'translate(-50%, -50%) scale(0.4) rotate(-8deg)', opacity: 0, offset: 0 },
+      { transform: 'translate(-50%, -50%) scale(1.06) rotate(0deg)', opacity: 1, offset: 0.16 },
+      { transform: 'translate(-50%, -50%) scale(1) rotate(0deg)', opacity: 1, offset: 0.62 },
+      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0.14) rotate(28deg)`, opacity: 0, offset: 1 },
+    ], { duration: 1300, easing: 'cubic-bezier(0.4, 0, 0.25, 1)' });
+    anim.onfinish = () => node.remove();
+
+    // Thump the pile and tag it as the card lands.
+    setTimeout(thump, 1200);
+    setTimeout(() => { if (this.fxLayer && this.drawPileEl) floatText(this.fxLayer, this.drawPileEl, `+${card.name}`, 'debuff'); }, 1170);
   }
 
   // Relic chips are rebuilt fresh on every topbar re-render, so a relic

@@ -90,7 +90,7 @@ def('brass_sentinel', {
   moves: {
     slam: atk('Piston Slam', 10),
     barricade: { name: 'Barricade', intent: { type: 'block', block: 8 }, run: (c, s) => { c.gainBlockTo(s, 8); } },
-    rivet: { name: 'Rivet', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.addCardToPile(c.makeCard('dazed'), 'discard'); } },
+    rivet: { name: 'Rivet', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.addCardToPile(c.makeCard('dazed'), 'draw'); } },
   },
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'barricade';
