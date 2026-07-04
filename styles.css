@@ -2229,33 +2229,67 @@ img.svg-ic { object-fit: contain; }
   .title-meta { font-size: 10px; margin: 6px auto; padding: 4px 14px; }
 
   .scene.charselect {
-    min-height: 100dvh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
-    justify-content: safe center;
     box-sizing: border-box;
     padding: 8px 16px;
+    overflow: hidden;
   }
 
+  /* Grid instead of a centered flex column: row 1 is a header band shared by
+     the heading and the Back button (placed in the same cell so the button
+     pins to the left edge while the heading centers across the full width —
+     no fixed header height or absolute positioning needed), row 2 (the card
+     grid) gets a `minmax(0, 1fr)` track so it stretches to consume all
+     leftover height instead of the old shrink-wrap-then-center-vertically
+     layout that left a large dead band above/below the cards, and row 3 is
+     the optional Ascension selector. */
   .charselect {
     padding-top: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    row-gap: 4px;
     width: 100%;
+    height: 100%;
+    box-sizing: border-box;
   }
-  .charselect h2 { font-size: 18px; margin-top: 0; margin-bottom: 8px; }
+  /* h2 and the Back button both explicitly target row 1 / column 1 — with
+     only one explicit column, leaving column auto on either would make grid
+     auto-placement bump the second one into a new implicit column (it treats
+     an indefinite column as "find a non-overlapping slot") instead of the
+     intentional overlap this layout relies on. */
+  .charselect h2 {
+    grid-row: 1;
+    grid-column: 1;
+    justify-self: center;
+    align-self: center;
+    font-size: 20px;
+    margin: 0;
+  }
+  .charselect > .btn {
+    grid-row: 1;
+    grid-column: 1;
+    justify-self: start;
+    align-self: center;
+    min-height: 32px;
+    min-width: 0;
+    padding: 6px 18px;
+    font-size: 12px;
+    margin: 0;
+  }
   .char-grid {
+    grid-row: 2;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-    margin-bottom: 8px;
+    gap: 14px;
     width: 100%;
-    max-width: 960px;
+    max-width: 1040px;
+    margin: 0 auto;
   }
   .char-card {
-    padding: 10px 8px;
+    padding: 10px 10px;
     gap: 4px;
     --notch: 10px;
     display: flex;
@@ -2263,25 +2297,54 @@ img.svg-ic { object-fit: contain; }
     justify-content: space-between;
     height: 100%;
     box-sizing: border-box;
+    overflow: hidden;
   }
-  .char-glyph { width: clamp(60px, 18vh, 100px); height: clamp(60px, 18vh, 100px); margin: 0 auto 2px; }
-  .char-name { font-size: clamp(14px, 4vh, 18px); line-height: 1.1; }
-  .char-title { font-size: 8.5px; letter-spacing: 0.1em; }
-  .char-hp { font-size: 11px; }
+  /* Sized as a % of the card's (stable) width rather than viewport height:
+     row 2's actual height varies with whether the Ascension selector (row 3)
+     is present, and a vh-based glyph size read that variance as "more room"
+     and grew, only to have flex-shrink silently squash it back down — and
+     shrink the text blocks below their line-clamped height with it, clipping
+     mid-word instead of cleanly eliding. Width is constant regardless of
+     row 3, so this and the `flex-shrink: 0` below remove that coupling. */
+  .char-glyph { width: 34%; aspect-ratio: 1 / 1; height: auto; margin: 0 auto 2px; }
+  .char-name { font-size: clamp(15px, 4.5vh, 22px); line-height: 1.1; flex-shrink: 0; }
+  .char-title { font-size: 9.5px; letter-spacing: 0.1em; flex-shrink: 0; }
+  .char-hp { font-size: 12px; flex-shrink: 0; }
   .char-blurb {
-    min-height: 0; font-size: 10px; line-height: 1.3;
+    min-height: 0; font-size: 11px; line-height: 1.3; flex-shrink: 0;
     display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
   }
   .char-relic {
-    min-height: 0; font-size: 9.5px; padding: 4px 6px;
+    min-height: 0; font-size: 10.5px; padding: 5px 7px; flex-shrink: 0;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .char-relic-label { font-size: 8px; margin-bottom: 2px; }
-  .char-card .btn { min-height: 26px; min-width: 0; padding: 4px 12px; font-size: 11px; margin-top: 4px; }
-  .charselect > .btn { min-height: 30px; padding: 5px 20px; font-size: 12px; margin-top: 4px; }
+  .char-relic-label { font-size: 8.5px; margin-bottom: 2px; }
+  .char-card .btn { min-height: 30px; min-width: 0; padding: 5px 14px; font-size: 12px; margin-top: 4px; flex-shrink: 0; }
 
-  /* Compact Ascension Selector for mobile landscape */
-  .asc-select { margin: 4px auto 2px; }
+  /* Once the Ascension selector (row 3, only shown after a win) claims its
+     own band, row 2 has meaningfully less height to give the cards — with
+     `flex-shrink: 0` protecting text from clipping mid-word, that deficit
+     would otherwise surface as the Begin button (last child) getting pushed
+     out of the card and clipped by `overflow: hidden` instead. `:has()` (also
+     used for relic/potion art elsewhere) lets the card content itself run
+     more compact specifically when that row exists, rather than picking one
+     size that's a compromise for both cases. */
+  .charselect:has(.asc-select) .char-card { padding: 8px 8px; gap: 2px; }
+  .charselect:has(.asc-select) .char-glyph { width: 22%; }
+  .charselect:has(.asc-select) .char-title { font-size: 8.5px; }
+  .charselect:has(.asc-select) .char-hp { font-size: 11px; }
+  .charselect:has(.asc-select) .char-blurb { font-size: 10px; line-height: 1.25; -webkit-line-clamp: 2; }
+  .charselect:has(.asc-select) .char-relic { font-size: 9.5px; padding: 4px 6px; }
+  .charselect:has(.asc-select) .char-card .btn { min-height: 26px; padding: 4px 12px; font-size: 11px; margin-top: 2px; }
+  .charselect:has(.asc-select) .char-lock-ic { width: 36px; height: 36px; }
+
+  /* Compact Ascension Selector for mobile landscape. Capped + independently
+     scrollable: at high Ascension the modifier list (.asc-desc) is cumulative
+     and unbounded (every unlocked level's line stacks up), and this row sits
+     in the same `.charselect` grid as the card row — left uncapped, a long
+     list would keep eating into row 2's `minmax(0, 1fr)` track and squeeze
+     the cards indefinitely. */
+  .asc-select { grid-row: 3; margin: 2px auto 0; max-height: 96px; overflow-y: auto; }
   .asc-row { gap: 8px; }
   .asc-row .btn { min-width: 36px; padding: 3px 8px; font-size: 11px; }
   .asc-label { font-size: 14px; min-width: 120px; text-shadow: 0 0 10px rgba(255,170,60,0.5); }

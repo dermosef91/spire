@@ -725,7 +725,8 @@ export class Combat {
       await wait(750);
       if (this.over || !e.alive) continue;
       if (!isAttack) {
-        this.fx('skillstart', { source: e });
+        const isBlock = e.intent && e.intent.type && e.intent.type.includes('block');
+        this.fx('skillstart', { source: e, pose: isBlock ? 'block' : 'skill' });
       }
       if (this.parryPrompt && isAttack && this.player.block > 0 && this.player.alive) {
         let res = null;

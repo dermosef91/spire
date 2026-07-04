@@ -42,6 +42,21 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   cleared and rebuilt in the DOM on changes, these classes can be temporarily missing
   until next-tick updates reapply them. Instead, fetch the card's `data-uid` attribute first
   and target the element specifically using `[data-uid="..."]`.
+- **Interactive preview-tool gotcha (`mcp__Claude_Preview__*`, distinct from the
+  Playwright scripts above)**: every scene mounts via `Game.setScene()` with a
+  `.scene{opacity:0;transform:translateY(14px)} .scene.show{...}` fade-in
+  (styles.css). Calling a scene method through `preview_eval` (e.g.
+  `__ase.showCharSelect()`) and then immediately measuring with
+  `getBoundingClientRect()` — even after an in-page `await new
+  Promise(r=>setTimeout(r,600))` — can still read the element mid-transition
+  (translateY not yet settled to 0), because `requestAnimationFrame` appears to
+  get throttled on these automation-driven tabs; a real `setTimeout` fires but
+  the rAF that adds the `.show` class, or the CSS transition it triggers, may
+  not have progressed. This showed up as an unexplained ~8-10px vertical offset
+  when verifying a char-select layout change. Fix: before measuring/
+  screenshotting for a real layout check, force the settle directly —
+  `el.style.transition='none'; el.style.opacity='1'; el.style.transform='none'`
+  — rather than trusting a timed wait.
 - **QA screenshot / responsiveness audit**: `npm run qa`
   (`node tools/qa-screenshots.js`) boots the game, drives title → char select →
   map → combat at a landscape phone (812×375) **and** a desktop (1366×850)
@@ -370,15 +385,41 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
 - **Auto-Update Learnings**: On every action/task, if you discover a project-specific gotcha, solve a debugging issue, or establish a new convention/pattern, you must immediately update `CLAUDE.md` and `.agents/AGENTS.md` to persist this learning.
 - **Keyboard Navigation**: Global keyboard navigation is managed by `KeyboardController` in `src/core/keyboard.js`, instantiated in the `Game` constructor as `this.keyboard`. Interactive elements are queried dynamically, supporting Tab/Shift+Tab, Arrow keys, WASD to navigate, Enter/Space to click, Escape to cancel/go back, and numbers `1`-`9` as direct shortcuts. Visual highlight class is `.kb-focus` in `styles.css`. Keyboard focus is automatically cleared when the mouse moves or clicks. Hover/tooltip synchronization is handled by dispatching synthetic `mouseenter` and `mouseleave` events to the active element. For combat integration, `beginCombat()` stores the `CombatView` instance as `this.combatView` on the `Game` instance to coordinate hand selection and enemy targeting. If a QTE is active (`.qte-layer` exists), the global controller completely bypasses interception so WASD/Arrow controls reach the rhythm game.
 - **Landscape-phone breakpoint (`@media (max-height: 560px)`)**: this is the
-  single hook for short viewports. `.title` and `.charselect` are plain
-  vertically-centered/stacked layouts sized for tall screens — on a short
-  landscape phone their content (title + up to 4 buttons; 3 full char cards)
-  overflows the fold, so compact overrides for them live in a **second**
-  `@media (max-height: 560px)` block placed after `.char-glyph`'s base rule
-  (styles.css, near the "character-select portrait" section) — a rule inside
-  a media query does **not** out-rank a later non-media rule of equal
-  specificity, so an override must be placed after what it overrides in
-  source order regardless of the media query. In `.combat-scene`, only
+  single hook for short viewports. `.title` is a plain vertically-centered/
+  stacked layout sized for tall screens — on a short landscape phone its
+  content (title + up to 4 buttons) overflows the fold, so compact overrides
+  live in a **second** `@media (max-height: 560px)` block placed after
+  `.char-glyph`'s base rule (styles.css, near the "character-select portrait"
+  section) — a rule inside a media query does **not** out-rank a later
+  non-media rule of equal specificity, so an override must be placed after
+  what it overrides in source order regardless of the media query.
+  `.charselect` in this breakpoint is a **CSS grid**, not a centered flex
+  column: row 1 overlaps the heading and the Back button in the *same*
+  `grid-row: 1; grid-column: 1` cell (`justify-self: center` vs `start`) so
+  the button pins top-left "next to the headline" with no fixed header height
+  or `position: absolute`; row 2 (the card grid) is `minmax(0, 1fr)` so it
+  stretches to fill all leftover height instead of shrink-wrapping and then
+  centering with dead space above/below; row 3 is the optional Ascension
+  selector. Two gotchas worth knowing before touching this again: (1) **grid
+  auto-placement doesn't overlap items unless *both* axes are explicit** —
+  giving the heading and Back button only `grid-row: 1` (column left `auto`)
+  makes the browser bump the second one into a *new implicit column* instead
+  of stacking it on the first (auto-placement's job is finding a
+  non-overlapping slot; it doesn't know the overlap is intentional), so both
+  need `grid-column: 1` too. (2) **don't size per-card content in `vh`** when
+  the card's row height depends on optional sibling content (row 3 here) —
+  a `vh`-based glyph reads "more room" from the viewport alone, grows, then
+  gets silently squashed back down by `flex-shrink` once row 3 actually
+  appears and eats into row 2, and without `flex-shrink: 0` that same squeeze
+  hits the text blocks too, shrinking a `-webkit-line-clamp` box *below* its
+  line height and clipping mid-word instead of eliding cleanly. Fixed by
+  sizing `.char-glyph` as a `%` of the (height-independent) card width via
+  `aspect-ratio` instead of `vh`, giving every text block `flex-shrink: 0` so
+  line-clamp always resolves to a clean N (or fewer) lines, and adding a
+  `.charselect:has(.asc-select) …` compact preset (same `:has()` pattern as
+  the relic/potion art rules) so card content itself runs smaller specifically
+  when row 3 exists, rather than picking one size that compromises both. In
+  `.combat-scene`, only
   `.battlefield` is absolutely positioned; `.combat-topbar`/`.combat-log`/
   `.hand` are normal flex-column children and `.combat-log`'s
   `margin-top: auto` shoves the log+hand flush to the bottom, so `.hand`'s
