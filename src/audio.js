@@ -143,6 +143,15 @@ class Audio {
       case 'endturn': this.tone(330, 0.1, 'sine', 0.09); this.tone(220, 0.14, 'sine', 0.07, 0.06); break;
       case 'error': this.tone(120, 0.12, 'square', 0.08); break;
       case 'reward': this.tone(523, 0.12, 'triangle', 0.12); this.tone(659, 0.12, 'triangle', 0.12, 0.1); this.tone(784, 0.18, 'triangle', 0.12, 0.2); break;
+      case 'relic': {
+        // Grand ancestral fanfare: rising fifths, a shimmer of harmonics, a low swell.
+        [392, 523, 659, 784, 1046].forEach((f, i) => this.tone(f, 0.34, 'triangle', 0.13, i * 0.09));
+        this.tone(196, 0.7, 'sine', 0.1, 0.02);
+        this.tone(1568, 0.5, 'sine', 0.05, 0.42);
+        this.tone(1318, 0.6, 'sine', 0.06, 0.5);
+        break;
+      }
+      case 'relicland': this.tone(880, 0.09, 'triangle', 0.11); this.tone(1318, 0.14, 'sine', 0.09, 0.04); break;
       case 'hit': this.tone(140, 0.1, 'square', 0.1); break;
       case 'block': this.tone(440, 0.15, 'sine', 0.1); break;
       case 'victory': [523, 659, 784, 1046].forEach((f, i) => this.tone(f, 0.25, 'triangle', 0.12, i * 0.12)); break;

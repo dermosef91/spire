@@ -12,6 +12,8 @@ import { el, clear } from './core/util.js';
 import { saveRun, loadMeta, saveMeta } from './core/save.js';
 import { cardDesc, upgradeCard } from './data/cards.js';
 import { POTIONS } from './data/potions.js';
+import { RELICS } from './data/relics.js';
+import { relicIcon } from './ui/icons.js';
 import { renderCard, topBar, button } from './ui/components.js';
 import { updateBackground } from './ui/backgrounds.js';
 import { background } from './fx/background.js';
@@ -250,6 +252,85 @@ export class Game {
     box.appendChild(controls);
     overlay.appendChild(box);
     document.body.appendChild(overlay);
+  }
+
+  // Celebrate a newly acquired relic: a large reveal overlay (image + description)
+  // with a fanfare, then the relic flies to its slot in the top bar. `onClaim`
+  // is the caller's follow-up (rebuild the scene so the new relic chip exists);
+  // it runs the instant the reveal is dismissed, before the flight begins.
+  relicAcquired(relicId, onClaim) {
+    const r = RELICS[relicId];
+    if (!r) { onClaim(); return; }
+    audio.play('relic');
+
+    const overlay = el('div', { class: 'overlay relic-reveal-overlay' });
+    const box = el('div', { class: `relic-reveal relic-${r.rarity}` });
+    box.appendChild(el('div', { class: 'relic-reveal-rays' }));
+    box.appendChild(el('div', { class: 'relic-reveal-kicker', text: 'Ancestral Relic Acquired' }));
+    const disc = el('div', { class: 'relic-reveal-disc' }, [
+      el('div', { class: 'relic-reveal-halo' }),
+      el('div', { class: 'relic-reveal-icon', html: relicIcon(relicId) }),
+    ]);
+    box.appendChild(disc);
+    box.appendChild(el('div', { class: 'relic-reveal-rarity', text: (r.rarity || '').toUpperCase() }));
+    box.appendChild(el('div', { class: 'relic-reveal-name', text: r.name }));
+    box.appendChild(el('div', { class: 'relic-reveal-desc', html: r.desc }));
+    box.appendChild(el('div', { class: 'relic-reveal-hint', text: this.isTouch() ? 'Tap to claim' : 'Click to claim' }));
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('show'));
+
+    let claimed = false;
+    const claim = () => {
+      if (claimed) return;
+      claimed = true;
+      const icon = disc.querySelector('.relic-reveal-icon');
+      const fromRect = icon.getBoundingClientRect();
+      overlay.remove();
+      onClaim();
+      this.flyRelicToSlot(relicId, fromRect);
+    };
+    overlay.addEventListener('click', claim);
+  }
+
+  // Animate a clone of the relic icon from `fromRect` to its freshly-rendered
+  // chip in the top bar. Purely cosmetic; the relic is already owned by now.
+  flyRelicToSlot(relicId, fromRect) {
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // The just-added relic is the last chip in the (rebuilt) top bar.
+    const chips = document.querySelectorAll('.tb-relics .relic');
+    const target = chips[chips.length - 1];
+    if (reduce || !target) { if (target) target.classList.add('relic-landed'); return; }
+    const toRect = target.getBoundingClientRect();
+
+    const clone = el('div', { class: 'relic-fly', html: relicIcon(relicId) });
+    const fx = fromRect.left + fromRect.width / 2;
+    const fy = fromRect.top + fromRect.height / 2;
+    const tx = toRect.left + toRect.width / 2;
+    const ty = toRect.top + toRect.height / 2;
+    Object.assign(clone.style, {
+      left: `${fx}px`, top: `${fy}px`,
+      width: `${fromRect.width}px`, height: `${fromRect.height}px`,
+    });
+    document.body.appendChild(clone);
+    target.classList.add('relic-incoming');
+
+    let finished = false;
+    const land = () => {
+      if (finished) return;
+      finished = true;
+      clone.remove();
+      target.classList.remove('relic-incoming');
+      target.classList.add('relic-landed');
+      audio.play('relicland');
+    };
+    requestAnimationFrame(() => {
+      const scale = toRect.width / fromRect.width;
+      clone.style.transform = `translate(-50%, -50%) translate(${tx - fx}px, ${ty - fy}px) scale(${scale})`;
+      clone.style.opacity = '0.85';
+    });
+    clone.addEventListener('transitionend', land, { once: true });
+    setTimeout(land, 950);
   }
 
   // Generic "here's what happened, then back to the map" result screen, used by

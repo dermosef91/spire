@@ -19,9 +19,13 @@ export const TreasureScene = {
     choices.appendChild(button('Open the cache', () => {
       const gold = run.rng.int(25, 45);
       run.gold += gold;
-      const name = run.grantRandomRelic();
-      audio.play('reward');
-      this.resultThenMap(`You find ${gold} gold` + (name ? ` and the <b>${name}</b>.` : '.'));
+      const r = run.grantRandomRelic();
+      if (r) {
+        this.relicAcquired(r.id, () => this.resultThenMap(`You find ${gold} gold and the <b>${r.name}</b>.`));
+      } else {
+        audio.play('reward');
+        this.resultThenMap(`You find ${gold} gold.`);
+      }
     }, 'primary'));
     panel.appendChild(choices);
     this.setScene(panel, 'event');

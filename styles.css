@@ -1705,6 +1705,85 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .deck-grid { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; max-width: 1000px; margin-bottom: 16px; }
 .confirm-box { min-width: 280px; } .confirm-row { display: flex; gap: 12px; justify-content: center; margin-top: 12px; }
 
+/* ----------------------- relic acquisition reveal ----------------------- */
+.relic-reveal-overlay { cursor: pointer; z-index: 140; opacity: 0; transition: opacity 0.3s ease; }
+.relic-reveal-overlay.show { opacity: 1; }
+.relic-reveal {
+  position: relative; display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 30px 34px 26px; max-width: 92vw; border-radius: 12px;
+  background: radial-gradient(120% 90% at 50% 12%, #241408 0%, #0c0704 72%);
+  border: 1px solid var(--line); box-shadow: var(--shadow), 0 0 60px rgba(255,106,26,0.25);
+  --accent: var(--orange);
+  animation: relicPop 0.5s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+.relic-reveal.relic-uncommon { --accent: var(--amber); }
+.relic-reveal.relic-rare { --accent: var(--orange-bright); }
+.relic-reveal.relic-boss { --accent: var(--ember); }
+.relic-reveal.relic-starter { --accent: var(--cream); }
+
+.relic-reveal-rays {
+  position: absolute; top: 50%; left: 50%; width: 460px; height: 460px;
+  transform: translate(-50%, -58%); pointer-events: none; z-index: 0;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(255,138,58,0.16) 12deg, transparent 24deg,
+    transparent 36deg, rgba(255,138,58,0.16) 48deg, transparent 60deg);
+  -webkit-mask: radial-gradient(circle, #000 8%, transparent 62%);
+  mask: radial-gradient(circle, #000 8%, transparent 62%);
+  animation: relicRays 14s linear infinite;
+}
+.relic-reveal > *:not(.relic-reveal-rays) { position: relative; z-index: 1; }
+
+.relic-reveal-kicker { color: var(--accent); letter-spacing: 0.22em; text-transform: uppercase;
+  font-size: 12px; font-family: var(--font-display); opacity: 0.85; margin-bottom: 12px; }
+
+.relic-reveal-disc { position: relative; width: 168px; height: 168px; display: grid; place-items: center; margin: 2px 0 6px; }
+.relic-reveal-halo {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 42%, transparent) 0%, transparent 66%);
+  animation: relicHalo 2.4s ease-in-out infinite;
+}
+.relic-reveal-icon {
+  width: 140px; height: 140px; display: grid; place-items: center;
+  border-radius: 50%; background: radial-gradient(circle at 50% 42%, #1c1109, #0a0604);
+  border: 3px solid var(--accent); box-shadow: 0 0 26px color-mix(in srgb, var(--accent) 55%, transparent), inset 0 0 18px rgba(255,122,26,0.3);
+  animation: relicFloat 3.4s ease-in-out infinite;
+}
+.relic-reveal-icon .svg-ic { width: 74%; height: 74%; }
+
+.relic-reveal-rarity { color: var(--accent); letter-spacing: 0.28em; font-size: 12px;
+  font-family: var(--font-display); text-transform: uppercase; margin-top: 8px; opacity: 0.9; }
+.relic-reveal-name { color: var(--cream); font-family: var(--font-display); font-size: 30px;
+  letter-spacing: 0.04em; margin: 4px 0 8px; text-shadow: 0 0 20px color-mix(in srgb, var(--accent) 45%, transparent); }
+.relic-reveal-desc { color: var(--ink); font-size: 16px; line-height: 1.5; max-width: 340px; opacity: 0.94; }
+.relic-reveal-hint { color: var(--muted); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+  margin-top: 18px; animation: relicHintPulse 1.8s ease-in-out infinite; }
+
+/* the icon clone that flies to the top-bar slot */
+.relic-fly {
+  position: fixed; z-index: 200; pointer-events: none; display: grid; place-items: center;
+  border-radius: 50%; background: radial-gradient(circle at 50% 42%, #1c1109, #0a0604);
+  border: 2px solid var(--orange); box-shadow: 0 0 20px rgba(255,106,26,0.6);
+  transform: translate(-50%, -50%); opacity: 1;
+  transition: transform 0.72s cubic-bezier(0.5, 0, 0.2, 1), opacity 0.72s ease;
+}
+.relic-fly .svg-ic { width: 74%; height: 74%; }
+
+/* the destination chip: hidden while the clone travels, then pops into place */
+.tb-relics .relic.relic-incoming { opacity: 0; }
+.tb-relics .relic.relic-landed { animation: relicLand 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+
+@keyframes relicPop { from { opacity: 0; transform: scale(0.86) translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes relicRays { to { transform: translate(-50%, -58%) rotate(360deg); } }
+@keyframes relicHalo { 0%, 100% { opacity: 0.55; transform: scale(0.94); } 50% { opacity: 1; transform: scale(1.08); } }
+@keyframes relicFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes relicHintPulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+@keyframes relicLand { 0% { transform: scale(1.9); box-shadow: 0 0 20px rgba(255,106,26,0.8); } 100% { transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .relic-reveal, .relic-reveal-rays, .relic-reveal-halo, .relic-reveal-icon,
+  .relic-reveal-hint, .relic-fly, .relic-landed { animation: none !important; }
+  .relic-reveal-overlay { transition: none; }
+}
+
 /* Smith upgrade preview: current → reforged, side by side, gated by a confirm. */
 .smith-preview .smith-compare { display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; margin-bottom: 8px; }
 .smith-preview .smith-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }

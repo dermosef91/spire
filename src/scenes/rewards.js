@@ -93,8 +93,10 @@ export const RewardScene = {
           content.appendChild(el('div', { class: 'reward-icon', html: relicIcon('default') }));
           content.appendChild(el('div', { class: 'reward-label', text: 'Ancestral Relic' }));
           row.addEventListener('click', () => {
-            const name = run.grantRandomRelic();
-            rw.taken = true; audio.play('reward'); rebuild();
+            const r = run.grantRandomRelic();
+            rw.taken = true;
+            if (r) this.relicAcquired(r.id, rebuild);
+            else { audio.play('reward'); rebuild(); }
           });
         } else if (rw.type === 'bossrelic') {
           const rel = RELICS[rw.id];
@@ -102,7 +104,8 @@ export const RewardScene = {
           content.appendChild(el('div', { class: 'reward-label', html: `<b>${rel.name}</b> — ${rel.desc}` }));
           row.addEventListener('click', () => {
             run.addRelic(rw.id);
-            rw.taken = true; audio.play('reward'); rebuild();
+            rw.taken = true;
+            this.relicAcquired(rw.id, rebuild);
           });
         } else if (rw.type === 'card') {
           content.appendChild(el('div', { class: 'reward-icon', html: UI.draw }));

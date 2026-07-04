@@ -83,7 +83,7 @@ export class RunState {
     if (!pool.length) return null;
     const r = this.rng.pick(pool);
     this.addRelic(r.id);
-    return r.name;
+    return r;
   }
 
   // A boss-tier relic the run doesn't yet own (the Spire's crowning offer).
