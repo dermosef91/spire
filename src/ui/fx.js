@@ -279,9 +279,27 @@ export function spriteAnim(layer, targetEl, name, opts = {}) {
 export function singleFrameAnim(layer, targetEl, name, opts = {}) {
   if (!layer || !targetEl || reduce()) return Promise.resolve();
   
-  const width = opts.width || 300;
-  const height = opts.height || 200;
+  let scale = opts.scale || 1.15;
+  let filter = opts.filter || 'none';
+  let width = opts.width || 300;
+  let height = opts.height || 200;
   const duration = opts.duration || 450;
+  
+  if (name === 'zap') {
+    filter = 'brightness(2.5) saturate(1.5)';
+    scale = opts.scale || 1.45;
+    width = 320;
+    height = 240;
+  } else if (name === 'splash') {
+    filter = 'brightness(2.8) saturate(1.4)';
+    scale = opts.scale || 1.5;
+    width = 340;
+    height = 260;
+  } else if (name === 'skyfall-hammer') {
+    scale = opts.scale || 1.35;
+    width = 340;
+    height = 260;
+  }
   
   const lr = layer.getBoundingClientRect();
   const tr = targetEl.getBoundingClientRect();
@@ -304,6 +322,7 @@ export function singleFrameAnim(layer, targetEl, name, opts = {}) {
   el.style.backgroundPosition = 'center';
   el.style.backgroundRepeat = 'no-repeat';
   el.style.mixBlendMode = opts.blend || 'screen';
+  el.style.filter = filter;
   el.style.opacity = '0';
   el.style.transition = `transform ${duration}ms cubic-bezier(0.1, 0.8, 0.3, 1), opacity ${duration}ms ease-out`;
   
@@ -311,7 +330,7 @@ export function singleFrameAnim(layer, targetEl, name, opts = {}) {
   
   // Trigger animation next frame
   requestAnimationFrame(() => {
-    el.style.transform = `translate(-50%, -50%) scale(${opts.scale || 1.15}) rotate(${opts.rotate || (Math.random() * 20 - 10)}deg)`;
+    el.style.transform = `translate(-50%, -50%) scale(${scale}) rotate(${opts.rotate || (Math.random() * 20 - 10)}deg)`;
     el.style.opacity = '1';
     
     // Start fading out halfway through
