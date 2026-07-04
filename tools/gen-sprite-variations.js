@@ -81,6 +81,11 @@ function getVariationPrompt(id, basePrompt, pose) {
         .replace('A monumental living stone archway entity', 'A monumental living stone archway entity in dynamic attacking pose')
         .replace('colossal glowing eye floats above the stone lintel', 'colossal glowing eye firing a massive beam of dark void energy downwards');
     }
+    if (id === 'reef_spitter') {
+      return basePrompt
+        .replace('with its shell open', 'lunging forward with its shell open wide')
+        .replace('The inner mouth is a dark pit glowing with intense ember-orange light and dripping luminous green brine.', 'The inner mouth is spewing a jet of luminous green brine and glowing ember-orange venom straight at the viewer.');
+    }
     return basePrompt.replace('standing pose', 'dynamic attacking pose, lunging and striking');
   }
 
@@ -115,6 +120,11 @@ function getVariationPrompt(id, basePrompt, pose) {
         .replace('A monumental living stone archway entity', 'A monumental living stone archway entity in defensive blocking pose')
         .replace('Space-time warping and dark void energy visible inside the archway', 'A dense wall of ancient stone panels and defensive geometric runes sealing the archway');
     }
+    if (id === 'reef_spitter') {
+      return basePrompt
+        .replace('with its shell open', 'with its shell clamped tightly shut in a defensive posture')
+        .replace('The inner mouth is a dark pit glowing with intense ember-orange light and dripping luminous green brine.', 'Faint ember-orange light glows through the sealed seams of the shut shell plates.');
+    }
     return basePrompt.replace('standing pose', 'defensive blocking pose, shielding and guarding');
   }
 
@@ -148,6 +158,11 @@ function getVariationPrompt(id, basePrompt, pose) {
       return basePrompt
         .replace('A monumental living stone archway entity', 'A monumental living stone archway entity in dynamic casting pose')
         .replace('spinning concentric orbital rings', 'spinning concentric orbital rings and ancient celestial key-and-lock sigils rotating rapidly');
+    }
+    if (id === 'reef_spitter') {
+      return basePrompt
+        .replace('with its shell open', 'with its shell open, exhaling a billowing cloud of luminous green toxin')
+        .replace('The inner mouth is a dark pit glowing with intense ember-orange light and dripping luminous green brine.', 'The inner mouth pulses with ember-orange light as it breathes out a spreading blight-cloud of glowing green spores.');
     }
     return basePrompt.replace('standing pose', 'dynamic casting pose, channeling energy with geometric sigils floating around');
   }
@@ -378,7 +393,7 @@ async function main() {
   
   // Filter for champions only, and optionally apply ID filter
   // Filter for champions and specified key enemies, and optionally apply ID filter
-  const targetIds = ['amara', 'kofi', 'zara', 'static_jackal', 'the_gatekeeper', 'husk_drone'];
+  const targetIds = ['amara', 'kofi', 'zara', 'static_jackal', 'the_gatekeeper', 'husk_drone', 'reef_spitter'];
   let entities = manifest.filter(e => targetIds.includes(e.id));
   if (ID_FILTER) {
     entities = entities.filter(e => ID_FILTER.includes(e.id));
