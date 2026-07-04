@@ -95,8 +95,8 @@ export function relicChip(relicId, onHover) {
   const r = RELICS[relicId];
   if (!r) return el('span');
   const cls = `relic relic-${r.rarity}`;
-  const node = el('div', { class: cls, html: relicIcon(relicId), title: `${r.name} — ${r.desc}` });
-  
+  const node = el('div', { class: cls, html: relicIcon(relicId), title: `${r.name} — ${r.desc}`, attrs: { 'data-relic-id': relicId } });
+
   if (hasRelicArt(relicId)) {
     const img = el('img', {
       class: 'relic-art-img',
