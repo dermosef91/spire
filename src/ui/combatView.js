@@ -1044,11 +1044,15 @@ export class CombatView {
         ? this._chargedStrike : 0;
       
       let anim = 'slash';
+      let isSpritesheet = false;
       if (payload.isAttack) {
         if (payload.source) {
           if (payload.source.isPlayer) {
             if (this._lastPlayedCardId === 'skyfall') {
               anim = 'skyfall-hammer';
+            } else if (this._lastPlayedCardId === 'sunder') {
+              anim = 'fault-line';
+              isSpritesheet = true;
             }
           } else {
             const moveId = payload.source.move;
@@ -1073,6 +1077,8 @@ export class CombatView {
           if (payload.isAttack) {
             if (anim === 'slash') {
               slash(layer, el2);
+            } else if (isSpritesheet) {
+              spriteAnim(layer, el2, anim);
             } else {
               singleFrameAnim(layer, el2, anim);
             }
