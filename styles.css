@@ -2183,11 +2183,7 @@ img.svg-ic { object-fit: contain; }
   .title-ornament { margin: 6px auto 8px; }
   .game-subtitle { font-size: 14px; margin-bottom: 8px; }
   .title-lore { font-size: 12px; line-height: 1.4; margin: 6px auto; }
-  .title-buttons {
-    flex-direction: row; flex-wrap: wrap; justify-content: center;
-    max-width: 480px; gap: 8px; margin: 10px auto;
-  }
-  .title-buttons .btn { flex: 1 1 calc(50% - 8px); min-width: 130px; min-height: 32px; padding: 6px 10px; font-size: 11px; }
+  .title-buttons { max-width: 300px; gap: 10px; margin: 10px auto; }
   .title-settings { margin: 8px auto; gap: 10px; }
   .title-setting-btn { padding: 4px 12px; font-size: 11px; }
   .title-meta { font-size: 10px; margin: 6px auto; padding: 4px 14px; }
