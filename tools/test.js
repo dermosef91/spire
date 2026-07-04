@@ -343,6 +343,7 @@ test('a successful parry leaves block untouched by the halving rule', () => {
 
 test('Sundered (noBlock) blocks Ward for one turn, then expires', () => {
   const c = freshCombat();
+  c.player.block = 0;
   c.applyPower(c.player, 'noBlock', 1, c.player);
   c.gainBlock(6);
   assert.equal(c.player.block, 0, 'no Ward gained while Sundered');

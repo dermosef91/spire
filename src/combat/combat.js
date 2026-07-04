@@ -213,7 +213,7 @@ export class Combat {
       hpLost = remaining;
       if (target.isPlayer) this.fire('hpLost', { amount: remaining });
     }
-    this.fx('damage', { target, dmg, hpLost, blocked, isAttack });
+    this.fx('damage', { target, dmg, hpLost, blocked, isAttack, source });
     // Backlash (thorns) when attacked (deactivated)
     // if (isAttack && source && target.powers.thorns) {
     //   this.applyDamage(source, target.powers.thorns, { isAttack: false });
