@@ -597,7 +597,7 @@ export class Combat {
   // ---------------------------------------------------------------- turn flow
   startPlayerTurn(first = false) {
     this.turn += 1;
-    this.player.block = 0;
+    if (!first) this.player.block = 0;
     this._freePowerUsed = false;
     this._usedFAD = false;
     this.cardsThisTurn = 0;
