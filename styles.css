@@ -1882,6 +1882,12 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 @keyframes ringAnim { to { width: 160px; height: 160px; opacity: 0; } }
 .particle { position: absolute; width: 7px; height: 7px; border-radius: 50%; transform: translate(-50%,-50%); box-shadow: 0 0 8px currentColor; animation: particleAnim 0.7s ease-out forwards; }
 @keyframes particleAnim { 0% { opacity: 1; transform: translate(-50%,-50%); } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.4); } }
+/* charge-up for strong attacks (3+ QTE marks): motes converge, core ignites */
+.charge-mote { position: absolute; width: 9px; height: 9px; border-radius: 50%; transform: translate(-50%,-50%); background: currentColor; box-shadow: 0 0 10px currentColor, 0 0 20px currentColor; opacity: 0; animation: chargeMote 0.55s ease-in forwards; }
+@keyframes chargeMote { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.3); } 25% { opacity: 1; } 100% { opacity: 0.9; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.55); } }
+.charge-core { position: absolute; width: 46px; height: 46px; border-radius: 50%; transform: translate(-50%,-50%); opacity: 0; mix-blend-mode: screen; background: radial-gradient(circle, rgba(255,228,158,0.95) 0%, rgba(255,140,40,0.42) 52%, transparent 72%); animation: chargeCore 0.7s ease-out forwards; }
+.charge-core-max { width: 70px; height: 70px; background: radial-gradient(circle, rgba(255,246,214,0.98) 0%, rgba(255,120,40,0.5) 52%, transparent 74%); }
+@keyframes chargeCore { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.2); } 45% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(2); } }
 
 .shine-particle {
   position: absolute;
@@ -1929,6 +1935,11 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .combatant.lunge-right .stage { animation: lungeR 0.34s ease; } .combatant.lunge-left .stage { animation: lungeL 0.34s ease; }
 @keyframes lungeR { 0%,100%{transform:translateX(0)} 40%{transform:translateX(36px) scale(1.05)} }
 @keyframes lungeL { 0%,100%{transform:translateX(0)} 40%{transform:translateX(-36px) scale(1.05)} }
+/* charged lunge (strong 3+ QTE-mark attacks): wind up, then a heavier strike */
+.combatant.lunge-charged.lunge-right .stage { animation: lungeChargedR 0.52s cubic-bezier(0.5,-0.4,0.3,1.4); }
+.combatant.lunge-charged.lunge-left .stage { animation: lungeChargedL 0.52s cubic-bezier(0.5,-0.4,0.3,1.4); }
+@keyframes lungeChargedR { 0%{transform:translateX(0) scale(1)} 26%{transform:translateX(-18px) scale(0.96)} 58%{transform:translateX(60px) scale(1.14)} 100%{transform:translateX(0) scale(1)} }
+@keyframes lungeChargedL { 0%{transform:translateX(0) scale(1)} 26%{transform:translateX(18px) scale(0.96)} 58%{transform:translateX(-60px) scale(1.14)} 100%{transform:translateX(0) scale(1)} }
 .combatant.dying {
   animation: die 0.62s ease forwards;
   transition: min-width 0.62s ease, max-width 0.62s ease, width 0.62s ease, margin-left 0.62s ease, margin-right 0.62s ease, opacity 0.62s ease;
