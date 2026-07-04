@@ -6,7 +6,7 @@ import { el, clear } from '../core/util.js';
 import { renderCard, topBar } from './components.js';
 import { POWERS } from '../data/keywords.js';
 import { audio } from '../audio.js';
-import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine, chargeUp, spriteAnim, singleFrameAnim } from './fx.js';
+import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine, chargeUp, spriteAnim, singleFrameAnim, faultLineVFX } from './fx.js';
 import { runAttackQTE, runParryQTE } from './rhythm.js';
 import { combatModel, INTENT, UI, powerIcon } from './icons.js';
 import { spriteOrSvg, hasSprite } from './sprites.js';
@@ -1078,7 +1078,11 @@ export class CombatView {
             if (anim === 'slash') {
               slash(layer, el2);
             } else if (isSpritesheet) {
-              spriteAnim(layer, el2, anim);
+              if (anim === 'fault-line') {
+                faultLineVFX(layer, el2);
+              } else {
+                spriteAnim(layer, el2, anim);
+              }
             } else {
               singleFrameAnim(layer, el2, anim);
             }

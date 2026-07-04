@@ -347,3 +347,28 @@ export function singleFrameAnim(layer, targetEl, name, opts = {}) {
   });
 }
 
+// Chained multi-phase visual effect for the Fault Line card (sunder).
+// Phase 1: Screen shake & ground crack (spritesheet animation).
+// Phase 2: Magma eruption (heavy shake, expand orange ring, red/orange particle burst).
+// Phase 3: Smoke/ash dissipation (dark grey particle burst).
+export async function faultLineVFX(layer, targetEl) {
+  if (!layer || !targetEl || reduce()) return;
+  
+  const sceneEl = targetEl.closest('.scene') || document.body;
+  
+  // Phase 1: Ground Crack & initial shake
+  screenShake(sceneEl, false);
+  await spriteAnim(layer, targetEl, 'fault-line', { fps: 32 });
+  
+  // Phase 2: Magma Eruption
+  screenShake(sceneEl, true);
+  ring(layer, targetEl, 'rgba(255, 80, 0, 0.95)');
+  burst(layer, targetEl, '#ff4500', 22);
+  
+  // A brief delay to let the fire eruption bloom
+  await new Promise(resolve => setTimeout(resolve, 220));
+  
+  // Phase 3: Smoke/Ash Dissipation
+  burst(layer, targetEl, '#5c5454', 14);
+}
+
