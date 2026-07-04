@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-04T20:45:59.542Z",
+  "generated": "2026-07-04T21:08:01.372Z",
   "dryRun": false,
   "ids": [
     "amara",
@@ -26,6 +26,7 @@
     "kofi_skill",
     "market_thief",
     "market_thief_attack",
+    "market_thief_block",
     "market_thief_skill",
     "mirror_shade",
     "null_scribe",
@@ -35,7 +36,9 @@
     "reef_spitter_block",
     "reef_spitter_skill",
     "rust_maw",
+    "rust_maw_attack",
     "rust_maw_block",
+    "rust_maw_skill",
     "sand_wraith",
     "spark_imp",
     "static_jackal",
