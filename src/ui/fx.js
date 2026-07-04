@@ -67,13 +67,55 @@ export function shake(el, big = false) {
 }
 
 // Lunge an attacker toward its target. dir: 'right' (player→enemy) or 'left'.
-export function lunge(el, dir = 'right') {
+// A `charged` lunge winds up and strikes harder — reserved for strong attacks
+// (3+ QTE marks) that have charged up.
+export function lunge(el, dir = 'right', charged = false) {
   if (!el || reduce()) return;
-  const cls = dir === 'right' ? 'lunge-right' : 'lunge-left';
-  el.classList.remove('lunge-right', 'lunge-left');
+  const base = dir === 'right' ? 'lunge-right' : 'lunge-left';
+  el.classList.remove('lunge-right', 'lunge-left', 'lunge-charged');
   void el.offsetWidth;
-  el.classList.add(cls);
-  setTimeout(() => el.classList.remove(cls), 360);
+  el.classList.add(base);
+  if (charged) el.classList.add('lunge-charged');
+  setTimeout(() => el.classList.remove('lunge-right', 'lunge-left', 'lunge-charged'), charged ? 560 : 360);
+}
+
+// Charge-up flourish for strong attacks (3+ QTE marks). Energy motes converge
+// into the attacker and a bright core ignites, so the ensuing strike lands as
+// the release of stored power. `level` (3–5) burns brighter the cleaner the
+// player's QTE timing. Purely cosmetic; respects reduced motion.
+export function chargeUp(layer, combatantEl, level = 3) {
+  if (!layer || !combatantEl || reduce()) return;
+  const max = level >= 5;
+  const lr = layer.getBoundingClientRect();
+  const tr = combatantEl.getBoundingClientRect();
+  const cx = tr.left - lr.left + tr.width / 2;
+  const cy = tr.top - lr.top + tr.height * 0.46;
+  const color = max ? '#ffe6a0' : '#ffb050';
+
+  // Converging energy motes drawn from a ring that collapses onto the core.
+  const count = Math.min(8 + level * 3, 22);
+  for (let i = 0; i < count; i++) {
+    const ang = (Math.PI * 2 * i) / count + Math.random() * 0.6;
+    const dist = 46 + Math.random() * 62;
+    const p = document.createElement('div');
+    p.className = 'charge-mote';
+    p.style.left = (cx + Math.cos(ang) * dist) + 'px';
+    p.style.top = (cy + Math.sin(ang) * dist) + 'px';
+    p.style.color = color;
+    p.style.setProperty('--dx', (-Math.cos(ang) * dist) + 'px');
+    p.style.setProperty('--dy', (-Math.sin(ang) * dist) + 'px');
+    p.style.animationDelay = (Math.random() * 0.12) + 's';
+    layer.appendChild(p);
+    setTimeout(() => p.remove(), 720);
+  }
+
+  // Bright core igniting over the attacker (screen-blended, no .stage anim).
+  const core = document.createElement('div');
+  core.className = max ? 'charge-core charge-core-max' : 'charge-core';
+  core.style.left = cx + 'px';
+  core.style.top = cy + 'px';
+  layer.appendChild(core);
+  setTimeout(() => core.remove(), 720);
 }
 
 export function slash(layer, targetEl) {

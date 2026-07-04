@@ -6,7 +6,7 @@ import { el, clear } from '../core/util.js';
 import { renderCard, topBar } from './components.js';
 import { POWERS } from '../data/keywords.js';
 import { audio } from '../audio.js';
-import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine } from './fx.js';
+import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine, chargeUp } from './fx.js';
 import { runAttackQTE, runParryQTE } from './rhythm.js';
 import { combatModel, INTENT, UI, powerIcon } from './icons.js';
 import { spriteOrSvg, hasSprite } from './sprites.js';
@@ -824,18 +824,30 @@ export class CombatView {
   async playCard(card, target) {
     this.previewCard = null;
     const c = this.combat;
+    const marks = this.marksFor(card);
+    let chargeLevel = 0;
     if (this.game.rhythmOn() && !this.rhythmSuppressed && card.type === 'attack' && !c.over) {
       c.animating = true; // blocks End Turn and further card input during the QTE
       this.update();
       const { grade, mult } = await runAttackQTE({
-        marks: this.marksFor(card),
+        marks,
         isTouch: this.game.isTouch(),
         isTutorial: !this.game.meta.tutorialDone
       });
       c.animating = false;
       c._rhythmMult = mult;
       c.fire('rhythm', { grade, card });
+      // Strong attack — 3+ QTE marks — charges up for a more epic strike,
+      // burning brighter the cleaner the timing.
+      if (marks >= 3) chargeLevel = grade === 'perfect' ? 5 : grade === 'miss' ? 3 : 4;
+    } else if (card.type === 'attack' && marks >= 3 && !c.over) {
+      // Rhythm off: heavy attacks still land a charged strike.
+      chargeLevel = 4;
     }
+    // Read synchronously by the onFx attack/damage handlers dispatched during
+    // combat.playCard below; cleared on the next tick.
+    this._chargedStrike = chargeLevel;
+    if (chargeLevel) setTimeout(() => { this._chargedStrike = 0; }, 0);
     audio.play('playcard');
     audio.play(card.type === 'attack' ? 'attack' : 'skill');
     // brief play animation on the card element
@@ -948,7 +960,9 @@ export class CombatView {
     }
     if (type === 'attackstart') {
       const src = this.elFor(payload.source);
-      lunge(src, payload.source && payload.source.isPlayer ? 'right' : 'left');
+      const charged = !!(payload.source && payload.source.isPlayer) && this._chargedStrike >= 3;
+      lunge(src, payload.source && payload.source.isPlayer ? 'right' : 'left', charged);
+      if (charged) chargeUp(layer, src, this._chargedStrike);
 
       // Give the player's swing a beat to land before the enemy-side impact
       // fx/sfx fire, so the hit reads as a consequence of the animation
@@ -1008,15 +1022,24 @@ export class CombatView {
       const el2 = this.elFor(payload.target);
       if (!el2) return;
       const isDelayedPlayerHit = this._playerAttackHit && !payload.target.isPlayer;
+      // Capture the charge level now — it is cleared before the delayed render.
+      const chLevel = (this._chargedStrike >= 3 && payload.isAttack && !payload.target.isPlayer)
+        ? this._chargedStrike : 0;
       const applyDamageFx = () => {
         if (payload.hpLost > 0) {
           const size = Math.round(Math.min(60, 26 + payload.hpLost * 1.4));
           floatText(layer, el2, String(payload.hpLost), 'damage', { size });
           hitFlash(el2, 'damage');
-          const big = payload.hpLost >= 14;
+          const big = payload.hpLost >= 14 || chLevel > 0;
           shake(el2, big);
           if (payload.isAttack) slash(layer, el2);
           if (payload.target.isPlayer || big) screenShake(this.scene, big);
+          if (chLevel > 0) {
+            // Charged release: a heavier burst + ring on the strike.
+            const gold = chLevel >= 5;
+            ring(layer, el2, gold ? 'rgba(255,224,140,0.95)' : 'rgba(255,176,80,0.9)');
+            burst(layer, el2, gold ? '#ffe6a0' : '#ffb050', gold ? 22 : 14);
+          }
           // Reactive backdrop pulse: red when the player is hurt, amber on big hits.
           const bg = background();
           if (bg) {
