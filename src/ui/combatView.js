@@ -1051,12 +1051,15 @@ export class CombatView {
         const eid = eidOf(payload.source);
         this.tempPoses[eid] = true;
         this.setSpritePose(payload.source, payload.pose || 'skill');
-        
+
         const srcEl = this.elFor(payload.source);
         if (srcEl) {
           shine(layer, srcEl);
         }
-        
+        if (!payload.source.isPlayer && payload.source.move === 'howl') {
+          audio.play('growl');
+        }
+
         setTimeout(() => {
           delete this.tempPoses[eid];
           if (payload.source.alive) {

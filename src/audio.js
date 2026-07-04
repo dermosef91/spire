@@ -15,6 +15,7 @@ const SOUNDS = {
   slime: 'assets/sounds/slime.wav',
   zap: 'assets/sounds/zap.mp3',
   splash: 'assets/sounds/splash.mp3',
+  growl: 'assets/sounds/growl.mp3',
 };
 
 // Tiny procedural sound + ambient pad using WebAudio — no asset files required.
@@ -139,6 +140,7 @@ class Audio {
     if (name === 'slime') gain = 0.45;
     if (name === 'zap') gain = 0.45;
     if (name === 'splash') gain = 0.45;
+    if (name === 'growl') gain = 0.45;
     
     // Try to play from user WAV/MP3 asset files first
     const played = this.playBuffer(name, gain);
@@ -177,6 +179,7 @@ class Audio {
       case 'zap': this.tone(880, 0.08, 'sawtooth', 0.12); this.tone(1200, 0.05, 'sine', 0.08, 0.02); break;
       case 'slime': this.tone(150, 0.15, 'triangle', 0.12); this.tone(100, 0.2, 'sine', 0.08, 0.05); break;
       case 'splash': this.tone(300, 0.2, 'triangle', 0.12); this.tone(450, 0.15, 'sine', 0.08, 0.04); break;
+      case 'growl': this.tone(110, 0.28, 'sawtooth', 0.12); this.tone(70, 0.32, 'square', 0.09, 0.04); break;
       default: break;
     }
   }
