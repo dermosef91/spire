@@ -258,6 +258,7 @@ export class CombatView {
       onPotion: (p, i) => this.tryPotion(p, i),
       onHover: (o, n, on) => this.game.tooltip(o, n, on),
     }));
+    this.applyRelicPulses();
 
     this.updateCombatant(c.player);
     for (const e of c.enemies) {
@@ -1108,6 +1109,31 @@ export class CombatView {
       const el2 = this.elFor(payload.entity); if (!el2) return;
       shine(layer, el2);
       return;
+    }
+    if (type === 'relic') {
+      // Queued rather than applied immediately: the topbar (and its relic
+      // chips) is rebuilt fresh on the notify() that follows this fx call,
+      // so the node to pulse doesn't exist yet — update() drains the queue
+      // right after rebuilding it.
+      this._pendingRelicPulses = this._pendingRelicPulses || [];
+      this._pendingRelicPulses.push(payload.id);
+      return;
+    }
+  }
+
+  // Relic chips are rebuilt fresh on every topbar re-render, so a relic
+  // triggered just before that rebuild needs its pulse re-applied to the
+  // new node rather than the (about-to-be-discarded) old one.
+  applyRelicPulses() {
+    if (!this._pendingRelicPulses || !this._pendingRelicPulses.length) return;
+    const ids = this._pendingRelicPulses;
+    this._pendingRelicPulses = [];
+    for (const id of ids) {
+      const node = this.topbarHolder.querySelector(`.relic[data-relic-id="${id}"]`);
+      if (!node) continue;
+      node.classList.remove('relic-pulse');
+      void node.offsetWidth;
+      node.classList.add('relic-pulse');
     }
   }
 

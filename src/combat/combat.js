@@ -535,7 +535,7 @@ export class Combat {
     const cost = this.cardCost(card);
     const spent = card.cost === 'X' ? this.energy : cost;
     this.energy -= spent;
-    if (card.type === 'power' && this.freePowerEachTurn && cost === 0) this._freePowerUsed = true;
+    if (card.type === 'power' && this.freePowerEachTurn && cost === 0) { this._freePowerUsed = true; this.fx('relic', { id: 'cosmic_egg' }); }
 
     // remove from hand
     const hi = this.hand.indexOf(card);
@@ -543,7 +543,7 @@ export class Combat {
 
     // First-attack-double relic
     this._cardDamageMult = 1;
-    if (card.type === 'attack' && this.firstAttackDouble && !this._usedFAD) { this._cardDamageMult = 2; this._usedFAD = true; }
+    if (card.type === 'attack' && this.firstAttackDouble && !this._usedFAD) { this._cardDamageMult = 2; this._usedFAD = true; this.fx('relic', { id: 'ancestor_idol' }); }
 
     this.cardsThisTurn += 1;
     this.cardsPlayedTotal += 1;

@@ -12,29 +12,29 @@ function def(id, bp) { RELICS[id] = { id, ...bp }; }
 def('ancestral_cuirass', {
   name: 'Ancestral Cuirass', rarity: 'starter', char: 'amara',
   desc: 'At the start of each combat, gain 3 Block.',
-  startCombat: (combat) => combat.gainBlockTo(combat.player, 3, true),
+  startCombat: (combat) => { combat.gainBlockTo(combat.player, 3, true); combat.fx('relic', { id: 'ancestral_cuirass' }); },
 });
 def('griot_drum', {
   name: "Griot's Drum", rarity: 'starter', char: 'kofi',
   desc: 'At the start of each combat, apply 1 Sapped to ALL enemies.',
-  startCombat: (combat) => { for (const e of combat.livingEnemies()) combat.applyPower(e, 'weak', 1, combat.player); },
+  startCombat: (combat) => { for (const e of combat.livingEnemies()) combat.applyPower(e, 'weak', 1, combat.player); combat.fx('relic', { id: 'griot_drum' }); },
 });
 def('star_lens', {
   name: 'Star Lens', rarity: 'starter', char: 'zara',
   desc: 'At the start of each combat, Channel 1 Storm.',
-  startCombat: (combat) => combat.channel('storm', 1),
+  startCombat: (combat) => { combat.channel('storm', 1); combat.fx('relic', { id: 'star_lens' }); },
 });
 
 // --------- Common ---------
 def('brass_anklet', {
   name: 'Brass Anklet', rarity: 'common',
   desc: 'Gain 1 extra Àṣẹ on the first turn of each combat.',
-  startCombat: (combat) => { combat.bonusEnergyTurn1 = (combat.bonusEnergyTurn1 || 0) + 1; },
+  startCombat: (combat) => { combat.bonusEnergyTurn1 = (combat.bonusEnergyTurn1 || 0) + 1; combat.fx('relic', { id: 'brass_anklet' }); },
 });
 def('kente_wrap', {
   name: 'Kente Wrap', rarity: 'common',
   desc: 'At the start of each combat, gain 4 Block.',
-  startCombat: (combat) => combat.gainBlockTo(combat.player, 4, true),
+  startCombat: (combat) => { combat.gainBlockTo(combat.player, 4, true); combat.fx('relic', { id: 'kente_wrap' }); },
 });
 def('cowrie_purse', {
   name: 'Cowrie Purse', rarity: 'common',
@@ -63,7 +63,7 @@ def('sun_disk', {
   desc: 'Every 3rd turn, gain 1 extra Àṣẹ.',
   startCombat: (combat) => combat.addTrigger('turnStart', () => {
     combat._sunDisk = (combat._sunDisk || 0) + 1;
-    if (combat._sunDisk % 3 === 0) combat.gainEnergy(1);
+    if (combat._sunDisk % 3 === 0) { combat.gainEnergy(1); combat.fx('relic', { id: 'sun_disk' }); }
   }, 'Sun Disk'),
 });
 def('obsidian_charm', {
@@ -72,7 +72,7 @@ def('obsidian_charm', {
   startCombat: (combat) => {
     combat._obsidianUsed = false;
     combat.addTrigger('hpLost', () => {
-      if (!combat._obsidianUsed) { combat._obsidianUsed = true; combat.applyPower(combat.player, 'strength', 3, combat.player); }
+      if (!combat._obsidianUsed) { combat._obsidianUsed = true; combat.applyPower(combat.player, 'strength', 3, combat.player); combat.fx('relic', { id: 'obsidian_charm' }); }
     }, 'Obsidian Charm');
   },
 });
@@ -80,19 +80,19 @@ def('talking_drum', {
   name: 'Talking Drum', rarity: 'uncommon',
   desc: 'Whenever you play 3 cards in a single turn, draw 1 card.',
   startCombat: (combat) => combat.addTrigger('cardPlayed', () => {
-    if (combat.cardsThisTurn > 0 && combat.cardsThisTurn % 3 === 0) combat.draw(1);
+    if (combat.cardsThisTurn > 0 && combat.cardsThisTurn % 3 === 0) { combat.draw(1); combat.fx('relic', { id: 'talking_drum' }); }
   }, 'Talking Drum'),
 });
 def('mask_of_masks', {
   name: 'Mask of Masks', rarity: 'uncommon',
   desc: 'At the start of each combat, apply 1 Exposed to ALL enemies.',
-  startCombat: (combat) => { for (const e of combat.livingEnemies()) combat.applyPower(e, 'vulnerable', 1, combat.player); },
+  startCombat: (combat) => { for (const e of combat.livingEnemies()) combat.applyPower(e, 'vulnerable', 1, combat.player); combat.fx('relic', { id: 'mask_of_masks' }); },
 });
 def('iron_lattice', {
   name: 'Iron Lattice', rarity: 'uncommon',
   desc: 'At the end of your turn, if you have 0 Block, gain 6 Block.',
   startCombat: (combat) => combat.addTrigger('turnEnd', () => {
-    if (combat.player.block === 0) combat.gainBlockTo(combat.player, 6, true);
+    if (combat.player.block === 0) { combat.gainBlockTo(combat.player, 6, true); combat.fx('relic', { id: 'iron_lattice' }); }
   }, 'Iron Lattice'),
 });
 
@@ -100,7 +100,7 @@ def('iron_lattice', {
 def('twin_serpent', {
   name: 'Twin Serpent Ring', rarity: 'rare',
   desc: 'At the start of each combat, draw 2 extra cards on turn 1.',
-  startCombat: (combat) => { combat._extraOpenDraw = (combat._extraOpenDraw || 0) + 2; },
+  startCombat: (combat) => { combat._extraOpenDraw = (combat._extraOpenDraw || 0) + 2; combat.fx('relic', { id: 'twin_serpent' }); },
 });
 def('heart_of_nyumbani', {
   name: 'Heart of Nyumbani', rarity: 'rare',
@@ -122,7 +122,7 @@ def('eternal_flame', {
   name: 'Eternal Flame', rarity: 'boss',
   desc: 'Gain 1 extra Àṣẹ each turn. At the start of each combat, add a Wound to your draw pile.',
   energyBonus: 1,
-  startCombat: (combat) => combat.addCardToPile(combat.makeCard('wound'), 'draw'),
+  startCombat: (combat) => { combat.addCardToPile(combat.makeCard('wound'), 'draw'); combat.fx('relic', { id: 'eternal_flame' }); },
 });
 def('ascendant_crown', {
   name: 'Ascendant Crown', rarity: 'boss',
