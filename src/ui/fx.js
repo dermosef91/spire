@@ -119,7 +119,7 @@ export function chargeUp(layer, combatantEl, level = 3) {
 }
 
 export function slash(layer, targetEl) {
-  spriteAnim(layer, targetEl, 'slash');
+  singleFrameAnim(layer, targetEl, 'slash', { rotate: -30 });
 }
 
 export function ring(layer, targetEl, color) {
@@ -272,6 +272,59 @@ export function spriteAnim(layer, targetEl, name, opts = {}) {
     
     el.style.backgroundPosition = '0px 0px';
     requestAnimationFrame(tick);
+  });
+}
+
+// Spawns and plays a single frame visual effect (e.g. 1536x1024 stretched cover, fading/scaling).
+export function singleFrameAnim(layer, targetEl, name, opts = {}) {
+  if (!layer || !targetEl || reduce()) return Promise.resolve();
+  
+  const width = opts.width || 300;
+  const height = opts.height || 200;
+  const duration = opts.duration || 450;
+  
+  const lr = layer.getBoundingClientRect();
+  const tr = targetEl.getBoundingClientRect();
+  
+  const el = document.createElement('div');
+  el.className = `single-frame-vfx vfx-${name}`;
+  
+  const cx = tr.left - lr.left + tr.width / 2;
+  const cy = tr.top - lr.top + tr.height / 2;
+  
+  el.style.position = 'absolute';
+  el.style.pointerEvents = 'none';
+  el.style.width = width + 'px';
+  el.style.height = height + 'px';
+  el.style.left = cx + 'px';
+  el.style.top = cy + 'px';
+  el.style.transform = 'translate(-50%, -50%) scale(0.6)';
+  el.style.backgroundImage = `url('assets/animation sprites/${name}.png')`;
+  el.style.backgroundSize = 'contain';
+  el.style.backgroundPosition = 'center';
+  el.style.backgroundRepeat = 'no-repeat';
+  el.style.mixBlendMode = opts.blend || 'screen';
+  el.style.opacity = '0';
+  el.style.transition = `transform ${duration}ms cubic-bezier(0.1, 0.8, 0.3, 1), opacity ${duration}ms ease-out`;
+  
+  layer.appendChild(el);
+  
+  // Trigger animation next frame
+  requestAnimationFrame(() => {
+    el.style.transform = `translate(-50%, -50%) scale(${opts.scale || 1.15}) rotate(${opts.rotate || (Math.random() * 20 - 10)}deg)`;
+    el.style.opacity = '1';
+    
+    // Start fading out halfway through
+    setTimeout(() => {
+      el.style.opacity = '0';
+    }, duration * 0.5);
+  });
+  
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      el.remove();
+      resolve();
+    }, duration);
   });
 }
 
