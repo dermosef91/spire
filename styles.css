@@ -1768,12 +1768,19 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   animation: relicHalo 2.4s ease-in-out infinite;
 }
 .relic-reveal-icon {
-  width: 140px; height: 140px; display: grid; place-items: center;
+  position: relative; width: 140px; height: 140px; display: grid; place-items: center;
   border-radius: 50%; background: radial-gradient(circle at 50% 42%, #1c1109, #0a0604);
   border: 3px solid var(--accent); box-shadow: 0 0 26px color-mix(in srgb, var(--accent) 55%, transparent), inset 0 0 18px rgba(255,122,26,0.3);
   animation: relicFloat 3.4s ease-in-out infinite;
 }
 .relic-reveal-icon .svg-ic { width: 74%; height: 74%; }
+/* Image-based relics (the real generated sprite) override the plain SVG disc —
+   same "art overrides icon" swap as the top-bar relicChip(). */
+.relic-reveal-icon:has(.relic-art-img) {
+  border: none; background: none; box-shadow: none;
+  filter: drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 65%, transparent));
+}
+.relic-reveal-icon:has(.relic-art-img) .svg-ic { display: none; }
 
 .relic-reveal-rarity { color: var(--accent); letter-spacing: 0.28em; font-size: 12px;
   font-family: var(--font-display); text-transform: uppercase; margin-top: 8px; opacity: 0.9; }
@@ -1792,6 +1799,11 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   transition: transform 0.72s cubic-bezier(0.5, 0, 0.2, 1), opacity 0.72s ease;
 }
 .relic-fly .svg-ic { width: 74%; height: 74%; }
+.relic-fly:has(.relic-art-img) {
+  border: none; background: none; box-shadow: none;
+  filter: drop-shadow(0 0 12px rgba(255,106,26,0.65));
+}
+.relic-fly:has(.relic-art-img) .svg-ic { display: none; }
 
 /* the destination chip: hidden while the clone travels, then pops into place */
 .tb-relics .relic.relic-incoming { opacity: 0; }
