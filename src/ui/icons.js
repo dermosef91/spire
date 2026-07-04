@@ -40,22 +40,24 @@ export const UI = {
   heart: S(`<path d="M50 78 C18 55 22 28 40 28 C49 28 50 38 50 38 C50 38 51 28 60 28 C78 28 82 55 50 78Z" fill="${E}" stroke="${O}" stroke-width="4"/>`),
   // Rhythm QTE: feathered chevron-stack swipe arrow (drawn pointing up; other
   // directions rotate the .qte-dir wrapper in CSS) — brightest/widest at the
-  // tip, tapering and fading toward the tail, with a spike at each end.
+  // tip, tapering and fading toward the back. Deliberately short (4 chevrons,
+  // no tapering-to-a-point tail/tip spike): the original 8-chevron version
+  // narrowed to a small triangular cap that read as its own little arrowhead
+  // pointing the *opposite* way, making the swipe direction ambiguous.
   qteChevrons: (() => {
     let s = `<path d="M50 2 V16" stroke="${A}" stroke-width="1.4" opacity="0.85"/>`;
-    const n = 8;
+    const n = 4;
     for (let i = 0; i < n; i++) {
       const t = i / (n - 1);
       const hw = 30 - 21 * t;      // half-width: 30 → 9
       const y = 15 + i * 15;       // apex y
       const band = 13 - 7 * t;     // band thickness: 13 → 6
       const arm = hw * 0.75;       // vertical drop of the arms
-      const fill = i < 2 ? '#ffe6bd' : i < 4 ? '#ffc478' : '#ee9c44';
+      const fill = i < 2 ? '#ffe6bd' : '#ffc478';
       const op = (1 - 0.6 * t).toFixed(2);
       s += `<path d="M50 ${y} L${50 + hw} ${y + arm} V${y + arm + band} L50 ${y + band} L${50 - hw} ${y + arm + band} V${y + arm} Z" fill="${fill}" opacity="${op}"/>`;
     }
-    s += `<path d="M50 154 L55 134 L50 139 L45 134 Z" fill="#ee9c44" opacity="0.6"/>`;
-    return S(s, { vb: '0 0 100 158' });
+    return S(s, { vb: '0 0 100 92' });
   })(),
   // Faint concentric ornament rings behind the QTE arrow (static backdrop).
   qteRings: S(
