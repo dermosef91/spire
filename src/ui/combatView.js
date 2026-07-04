@@ -863,7 +863,7 @@ export class CombatView {
       const pEnt = this.combat.player;
       const eid = eidOf(pEnt);
       this.tempPoses[eid] = true;
-      this.setSpritePose(pEnt, 'skill');
+      this.setSpritePose(pEnt, (card.block || 0) > 0 ? 'block' : 'skill');
       
       setTimeout(() => {
         delete this.tempPoses[eid];
@@ -1013,7 +1013,7 @@ export class CombatView {
       if (payload.source) {
         const eid = eidOf(payload.source);
         this.tempPoses[eid] = true;
-        this.setSpritePose(payload.source, 'skill');
+        this.setSpritePose(payload.source, payload.pose || 'skill');
         
         const srcEl = this.elFor(payload.source);
         if (srcEl) {
