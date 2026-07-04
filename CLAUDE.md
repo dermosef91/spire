@@ -138,6 +138,29 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   (2) **Summoning** — `Combat.summonEnemy(id, {max=4})` pushes a fresh enemy mid-combat, board-capped, and sets `e._justSummoned` so `enemyPhase` skips it for one phase (its intent is telegraphed during the player's turn first). The view builds the new combatant node **lazily in `update()`** (any living enemy with no `els[id]` node gets one, with a `.summoning` entrance class) — `fx('summon')` fires *before* that node exists (notify is a microtask), so its burst is deferred with a small `setTimeout`. Summoner + minion: `choir_master` / `echo_mote` (Act 3).
   (3) **Enrage** — a blueprint `enrage: { turn, strength }`; `enemyPhase` grants the Resolve once on/after that enemy's own `turn`, with `fx('enrage')`. Applied to `brass_colossus` and `chrome_archon` (walls that could otherwise be stalled out).
   `_phased`/`_enraged` drive persistent `.phased`/`.enraged` auras toggled in `updateCombatant` (they survive in-place re-renders). **Crowded-board layout:** the enemy side is only ~half the screen, so 3+ foes wrapped into the hand; `combatView.update()` toggles `.enemies-3`/`.enemies-4` on `.enemy-side`, and CSS shrinks the `--med` token (which drives every combatant sub-size) so they fit one row at both desktop and landscape-phone widths.
+  **Crowded-hand overlap:** a wide hand no longer overflows past the pinned
+  energy orb / End Turn and rely on `.hand`'s horizontal scroll to reach the
+  rest — `CombatView.applyHandSpacing()` (called from `renderHand()`, before
+  the rAF-deferred draw-pile fly-in reads card positions) measures the fanned
+  hand's natural width (card width × N + the CSS `gap` × (N-1)) against
+  `.hand`'s actual available width and, once it doesn't fit, replaces the
+  flexbox `gap` (which can't go negative) with explicit per-card `margin-left`
+  that *can* — cards overlap instead of spilling offscreen. Overlap is capped
+  at 55% of a card's width so text/cost stay legible; a hand too big even for
+  that still falls back to the pre-existing horizontal scroll for the
+  remainder. A card is never permanently hidden: hover/`.selected`/
+  `.previewing` already lift a card to a higher `z-index` (styles.css), and
+  since play is two-tap, tapping an overlapped card straightens+enlarges it
+  via `.previewing` before a second tap commits — so any card can always be
+  read in full first. On a normal hand that already fits, the computed margin
+  equals the original `gap` exactly, so this is a no-op visually. To make more
+  room in the first place on mobile landscape (`@media (max-height: 560px)`),
+  the energy orb/End Turn/draw+discard+exhaust piles were also pulled closer
+  to the screen edges (smaller `--energy-shift`, tighter `combat-controls`
+  padding, a ~13%-shrunk End Turn button just in this breakpoint, tighter
+  pile insets) with `.hand`'s `margin-left`/`margin-right` recomputed to
+  match — see the comment above `.hand` in that media block for the exact
+  numbers if either geometry changes again.
 - `map/mapgen.js` — branching seeded act maps.
 - `ui/` — `components` (cards/relics/potions/top bar), `combatView` (updates
   combatants **in place** so FX can animate), `fx` (floating numbers, shakes,
@@ -470,6 +493,7 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
 - **Relic Art**: Run `node tools/gen-relic-art.js` (reads `tools/relics.manifest.json`, outputs to `assets/relic-art/`). Image-based relics are rendered larger (`44px` on desktop, `34px` on mobile landscape) with no borders/backgrounds, utilizing rarity-specific `drop-shadow` glows (and an intensified orange glow on hover).
 - **Potion Art**: Run `node tools/gen-potion-art.js` (reads `tools/potions.manifest.json`, outputs to `assets/potion-art/`). Image-based potions are styled with no borders/backgrounds, and glow orange on hover (`transform: scale(1.16)`).
 - **Map Icon Art**: Run `node tools/gen-map-icons.js` (reads `tools/map-icons.manifest.json`, outputs to `assets/icons/`). Image-based map icons are styled without borders/backgrounds and scaled uniformly on the map.
+- **Gold coin icon**: `UI.coin` (`src/ui/icons.js`) is a manually-supplied PNG (`assets/icons/coin.png`, resized to 256×256 with `sips -Z 256`, not run through the `gen-map-icons.js` palette-quantize pipeline since it isn't AI-generated) rather than the old inline SVG — same `<img class="svg-ic">` pattern as the `NODE` map icons. It's a single shared icon reused by the top-bar gold display, every post-combat reward screen, and the shop, so recolor/replace it in one place rather than per call site.
 - **Transparency Gotcha**: For clean transparency masking on woodcut assets, always prompt with "Transparent background" and avoid contradictory "Pure black background" tags. The model will produce a bright checkerboard background that is safely keyed out by the default `isNeutralBright` filter (checking RGB balance above `150`). Do not use flood-fill or dark key-outs as they destroy the black linework inside the assets.
 - **Options**: The generator scripts support `--dry-run` (writes SVG/HTML placeholder files, no API keys needed), `--force` (regenerate existing), and `--ids id1,id2` (run specific assets). Requires `OPENAI_API_KEY` for live runs.
 - **Sprite Facing Direction Gotcha**: In combat, player characters (champions) stand on the left and must face **right** (towards enemies). Enemies stand on the right and must face **left** (towards player). Generated sprites that face the wrong direction can be mirrored horizontally using `sharp`'s `.flop()`. Prompt generation and variation prompt rules in `tools/sprites.manifest.json` and `tools/gen-sprite-variations.js` should explicitly specify facing direction to guide DALL-E.

@@ -40,22 +40,24 @@ export const UI = {
   heart: S(`<path d="M50 78 C18 55 22 28 40 28 C49 28 50 38 50 38 C50 38 51 28 60 28 C78 28 82 55 50 78Z" fill="${E}" stroke="${O}" stroke-width="4"/>`),
   // Rhythm QTE: feathered chevron-stack swipe arrow (drawn pointing up; other
   // directions rotate the .qte-dir wrapper in CSS) — brightest/widest at the
-  // tip, tapering and fading toward the tail, with a spike at each end.
+  // tip, tapering and fading toward the back. Deliberately short (4 chevrons,
+  // no tapering-to-a-point tail/tip spike): the original 8-chevron version
+  // narrowed to a small triangular cap that read as its own little arrowhead
+  // pointing the *opposite* way, making the swipe direction ambiguous.
   qteChevrons: (() => {
     let s = `<path d="M50 2 V16" stroke="${A}" stroke-width="1.4" opacity="0.85"/>`;
-    const n = 8;
+    const n = 4;
     for (let i = 0; i < n; i++) {
       const t = i / (n - 1);
       const hw = 30 - 21 * t;      // half-width: 30 → 9
       const y = 15 + i * 15;       // apex y
       const band = 13 - 7 * t;     // band thickness: 13 → 6
       const arm = hw * 0.75;       // vertical drop of the arms
-      const fill = i < 2 ? '#ffe6bd' : i < 4 ? '#ffc478' : '#ee9c44';
+      const fill = i < 2 ? '#ffe6bd' : '#ffc478';
       const op = (1 - 0.6 * t).toFixed(2);
       s += `<path d="M50 ${y} L${50 + hw} ${y + arm} V${y + arm + band} L50 ${y + band} L${50 - hw} ${y + arm + band} V${y + arm} Z" fill="${fill}" opacity="${op}"/>`;
     }
-    s += `<path d="M50 154 L55 134 L50 139 L45 134 Z" fill="#ee9c44" opacity="0.6"/>`;
-    return S(s, { vb: '0 0 100 158' });
+    return S(s, { vb: '0 0 100 92' });
   })(),
   // Faint concentric ornament rings behind the QTE arrow (static backdrop).
   qteRings: S(
@@ -63,7 +65,8 @@ export const UI = {
     + `<circle cx="50" cy="50" r="47" stroke="${A}" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.35"/>`
     + orbitDots(50, 50, 42, 6, 1.4, A)
   ),
-  coin: S(`<circle cx="50" cy="50" r="30" fill="${A}" stroke="${C}" stroke-width="3"/><circle cx="50" cy="50" r="22" fill="none" stroke="#6a3a10" stroke-width="2"/><path d="M44 40 q12 10 0 20 M56 40 q-12 10 0 20" stroke="#6a3a10" stroke-width="3"/>`),
+  // Gold — a custom PNG icon.
+  coin: `<img src="assets/icons/coin.png" class="svg-ic" alt="Gold" />`,
   energy: S(`${rays(50, 50, 30, 42, 12, O, 0.6, 2)}<circle cx="50" cy="50" r="26" fill="none" stroke="${O}" stroke-width="4"/><path d="M54 30 L40 54 H50 L46 70 L62 44 H52 Z" fill="${A}" stroke="${C}" stroke-width="2"/>`),
   shield: S(`<path d="M50 18 L78 28 V52 C78 70 64 80 50 84 C36 80 22 70 22 52 V28 Z" fill="#123" stroke="#9fc2ff" stroke-width="4"/><path d="M50 30 V72" stroke="#9fc2ff" stroke-width="3" opacity="0.7"/>`),
   draw: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115 135" class="svg-ic" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="12" y="12" width="68" height="100" rx="5" fill="#0c0806" stroke="#5c544a" stroke-width="1.5" opacity="0.4" transform="rotate(-10 46 62)"/><rect x="17" y="15" width="68" height="100" rx="5" fill="#0d0805" stroke="#7e746a" stroke-width="1.8" opacity="0.8" transform="rotate(-7 51 65)"/><g transform="rotate(-4 56 68)"><rect x="22" y="18" width="68" height="100" rx="5" fill="#0f0906" stroke="#dcd4cc" stroke-width="2"/><rect x="26" y="22" width="60" height="92" rx="3.5" stroke="#ffab47" stroke-width="0.8" opacity="0.3"/><path d="M 28 28 L 28 24 L 32 24" stroke="#ffab47" stroke-width="1"/><path d="M 84 28 L 84 24 L 80 24" stroke="#ffab47" stroke-width="1"/><path d="M 28 104 L 28 108 L 32 108" stroke="#ffab47" stroke-width="1"/><path d="M 84 104 L 84 108 L 80 108" stroke="#ffab47" stroke-width="1"/><line x1="29" y1="68" x2="83" y2="68" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><line x1="56" y1="36" x2="56" y2="100" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><circle cx="29" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="83" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="36" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="100" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="68" r="22" stroke="#dcd4cc" stroke-width="1.2"/><circle cx="56" cy="68" r="17" stroke="#ffab47" stroke-width="0.8" stroke-dasharray="1 2"/><circle cx="56" cy="68" r="13" stroke="#ff6a1a" stroke-width="2"/><circle cx="56" cy="68" r="8" stroke="#ffab47" stroke-width="1" fill="#130b07"/><circle cx="56" cy="68" r="3" fill="#ffab47"/></g></svg>`,

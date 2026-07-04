@@ -611,6 +611,14 @@ export class CombatView {
       }
     });
 
+    // Overlap cards instead of overflowing/scrolling once a wide hand no
+    // longer fits the available width (mainly landscape phones, where a big
+    // hand used to run off past the pinned energy orb / End Turn and require
+    // a horizontal scroll to reach). Must run before the rAF-deferred fly-in
+    // animation below reads card positions, so it lands on the final,
+    // overlapped layout rather than the pre-overlap one.
+    this.applyHandSpacing(hand, N);
+
     // 3. Animate new cards flying from draw pile
     if (newCardsToAnimate.length > 0 && this.drawPileEl) {
       requestAnimationFrame(() => {
@@ -665,6 +673,35 @@ export class CombatView {
           });
         }
       });
+    }
+  }
+
+  // Replaces the flexbox `gap` between hand cards with explicit per-card
+  // margins so the spacing can go negative (cards overlapping) once the fan
+  // no longer fits `hand`'s available width — a wide hand then reads as an
+  // overlapped stack instead of spilling past the container and needing a
+  // horizontal scroll. A card can always still be seen in full: hover/
+  // .selected/.previewing already lift it to a higher z-index (styles.css).
+  // Overlap is capped at 55% of a card's width so a very large hand still
+  // leaves each card's cost/title readable before falling back to the
+  // existing horizontal scroll for the remainder.
+  applyHandSpacing(hand, N) {
+    const cardNodes = hand.children;
+    if (!cardNodes.length) return;
+    const style = window.getComputedStyle(hand);
+    const baseGap = parseFloat(style.columnGap) || 0;
+    const available = hand.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const cardWidth = cardNodes[0].offsetWidth;
+    if (!cardWidth || !available) return;
+    const natural = cardWidth * N + baseGap * (N - 1);
+    let gap = baseGap;
+    if (natural > available && N > 1) {
+      const reduction = (natural - available) / (N - 1);
+      gap = Math.max(baseGap - reduction, -cardWidth * 0.55);
+    }
+    hand.style.gap = '0px';
+    for (let i = 0; i < cardNodes.length; i++) {
+      cardNodes[i].style.marginLeft = i === 0 ? '0px' : `${gap}px`;
     }
   }
 
