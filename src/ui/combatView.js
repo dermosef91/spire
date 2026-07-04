@@ -389,15 +389,15 @@ export class CombatView {
     if (it.type === 'attack' || it.type === 'attackdebuff') {
       const dmg = c.calcAttackDamage(it.dmg, enemy, c.player);
       const hits = it.hits || 1;
-      wrap.appendChild(el('span', { class: 'intent-atk', html: `<i class="intent-ic">${INTENT.attack}</i>${dmg}${hits > 1 ? `×${hits}` : ''}` }));
+      wrap.appendChild(el('span', { class: 'intent-atk', attrs: { 'data-intent-type': 'attack' }, html: `<i class="intent-ic">${INTENT.attack}</i>${dmg}${hits > 1 ? `×${hits}` : ''}` }));
     }
-    if (it.type === 'attackdebuff' || it.type === 'debuff' || it.type === 'debuffblock') wrap.appendChild(el('span', { class: 'intent-deb', html: `<i class="intent-ic">${INTENT.debuff}</i>` }));
+    if (it.type === 'attackdebuff' || it.type === 'debuff' || it.type === 'debuffblock') wrap.appendChild(el('span', { class: 'intent-deb', attrs: { 'data-intent-type': 'debuff' }, html: `<i class="intent-ic">${INTENT.debuff}</i>` }));
     if (it.type === 'block' || it.type === 'buffblock' || it.type === 'debuffblock') {
       const blockAmt = it.block || 0;
-      wrap.appendChild(el('span', { class: 'intent-def', html: `<i class="intent-ic">${INTENT.block}</i>${blockAmt > 0 ? blockAmt : ''}` }));
+      wrap.appendChild(el('span', { class: 'intent-def', attrs: { 'data-intent-type': 'block' }, html: `<i class="intent-ic">${INTENT.block}</i>${blockAmt > 0 ? blockAmt : ''}` }));
     }
-    if (it.type === 'buff' || it.type === 'buffblock') wrap.appendChild(el('span', { class: 'intent-buf', html: `<i class="intent-ic">${INTENT.buff}</i>` }));
-    if (it.type === 'unknown') wrap.appendChild(el('span', { class: 'intent-unk', html: `<i class="intent-ic">${INTENT.unknown}</i>` }));
+    if (it.type === 'buff' || it.type === 'buffblock') wrap.appendChild(el('span', { class: 'intent-buf', attrs: { 'data-intent-type': 'buff' }, html: `<i class="intent-ic">${INTENT.buff}</i>` }));
+    if (it.type === 'unknown') wrap.appendChild(el('span', { class: 'intent-unk', attrs: { 'data-intent-type': 'unknown' }, html: `<i class="intent-ic">${INTENT.unknown}</i>` }));
     wrap.title = it.name || '';
   }
 

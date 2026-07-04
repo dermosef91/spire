@@ -89,6 +89,16 @@ export const INTENT = {
   unknown: `<svg ${NS} viewBox="0 0 100 100" class="svg-ic" fill="none"><path d="M38 40 C38 28 62 28 62 42 C62 52 50 52 50 62" stroke="${O}" stroke-width="8" stroke-linecap="round"/><circle cx="50" cy="76" r="5" fill="${O}"/></svg>`,
 };
 
+// Human-readable explanations for each intent icon, shown in a popup when the
+// icon is clicked (enemies telegraph their next move as one or more of these).
+export const INTENT_INFO = {
+  attack: { label: 'Aggressive', desc: 'This enemy intends to deal damage with an Attack.' },
+  block: { label: 'Defensive', desc: 'This enemy intends to gain Block.' },
+  buff: { label: 'Strategic', desc: 'This enemy intends to use a Buff.' },
+  debuff: { label: 'Threatening', desc: 'This enemy intends to apply a Debuff.' },
+  unknown: { label: 'Unknown', desc: "This enemy's intent cannot be predicted." },
+};
+
 /* ============================== MAP NODES ============================== */
 // Carved line-art glyphs themed via the per-node `color` (currentColor) with
 // ember/amber accents. Built to read as silhouettes at ~26px on the act map.

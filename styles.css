@@ -923,7 +923,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .card-desc { font-size: clamp(9px, calc(var(--card-h) * 0.062), 20px); text-align: center; color: var(--ink); line-height: 1.3; padding: 2px; flex: 1;
   display: flex; align-items: center; justify-content: center; font-family: var(--font-body); overflow: hidden; min-width: 0; }
 .card-desc-in { display: block; width: 100%; overflow-wrap: anywhere; }
-.kw { color: var(--orange); font-weight: 600; }
+.kw { color: var(--orange); font-weight: 600; cursor: pointer; text-decoration: underline dotted rgba(255,176,80,0.6); text-underline-offset: 2px; }
+.tooltip .kw { pointer-events: auto; }
 .card.sold { display: grid; place-items: center; color: var(--muted); font-family: var(--font-display); letter-spacing: 0.2em; }
 .card.playing { animation: cardPlay 0.32s ease forwards; }
 @keyframes cardPlay { to { transform: translateY(-46px) scale(1.14); opacity: 0; } }
@@ -1233,6 +1234,7 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   background: rgba(8,4,2,0.95); border-right: 1px solid var(--orange); border-bottom: 1px solid var(--orange); }
 .intent-atk { color: var(--ember); } .intent-def { color: #9fc2ff; } .intent-buf { color: var(--amber); }
 .intent-deb { color: var(--orange); } .intent-unk { color: var(--muted); }
+.intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk { cursor: pointer; display: inline-flex; align-items: center; }
 
 .combat-scene.targeting .enemy.targetable { cursor: pointer; }
 .combat-scene.targeting .enemy.targetable .med-core { animation: targetPulse 1s ease-in-out infinite; }
