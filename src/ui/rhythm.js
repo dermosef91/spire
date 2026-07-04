@@ -217,10 +217,18 @@ export async function runAttackQTE({ marks = 1, isTouch = false, isTutorial = fa
       : grades.includes('miss') ? 'miss' : 'good';
     const mult = grade === 'perfect' ? MULT_PERFECT : grade === 'miss' ? MULT_MISS : MULT_GOOD;
     if (grade === 'perfect') audio.play('reward');
-    await showResult(ui.layer, grade === 'perfect' ? `PERFECT! ×${MULT_PERFECT}` : grade === 'miss' ? `MISS ×${MULT_MISS}` : 'GOOD', grade);
+    // Resolve immediately on the graded hit so the caller can fire the
+    // strike's SFX/VFX right away — the grade banner is purely cosmetic and
+    // must not hold up the actual attack. Clear the dimming scrim/stage so
+    // the strike isn't hidden behind them, and let the banner play out and
+    // tear down the overlay in the background.
+    ui.layer.classList.add('qte-clear');
+    showResult(ui.layer, grade === 'perfect' ? `PERFECT! ×${MULT_PERFECT}` : grade === 'miss' ? `MISS ×${MULT_MISS}` : 'GOOD', grade)
+      .then(() => ui.destroy());
     return { grade, mult };
-  } finally {
+  } catch (err) {
     ui.destroy();
+    throw err;
   }
 }
 
