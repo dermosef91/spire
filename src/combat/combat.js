@@ -137,6 +137,8 @@ export class Combat {
     // Pick initial enemy intents
     for (const e of this.enemies) this.pickEnemyMove(e);
 
+    // From here on, deck insertions are player-visible and should animate.
+    this._deckFxReady = true;
     this.startPlayerTurn(true);
   }
 
@@ -427,6 +429,9 @@ export class Combat {
     else if (pile === 'draw') { const i = this.rng.int(0, this.drawPile.length); this.drawPile.splice(i, 0, card); }
     else if (pile === 'drawTop') { this.drawPile.push(card); }
     else this.discardPile.push(card);
+    // Cosmetic: reveal cards shuffled into the deck mid-combat (e.g. enemy-inflicted
+    // statuses like Dazed) so the player sees what was added and where it landed.
+    if (this._deckFxReady && (pile === 'draw' || pile === 'drawTop')) this.fx('cardtopile', { card, pile });
     this.notify();
   }
 
