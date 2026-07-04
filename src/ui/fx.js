@@ -119,15 +119,7 @@ export function chargeUp(layer, combatantEl, level = 3) {
 }
 
 export function slash(layer, targetEl) {
-  if (!layer || !targetEl || reduce()) return;
-  const lr = layer.getBoundingClientRect();
-  const tr = targetEl.getBoundingClientRect();
-  const s = document.createElement('div');
-  s.className = 'slash-fx';
-  s.style.left = (tr.left - lr.left + tr.width / 2) + 'px';
-  s.style.top = (tr.top - lr.top + tr.height / 2) + 'px';
-  layer.appendChild(s);
-  setTimeout(() => s.remove(), 420);
+  spriteAnim(layer, targetEl, 'slash');
 }
 
 export function ring(layer, targetEl, color) {
@@ -217,5 +209,69 @@ export function shine(layer, targetEl, n = 24) {
     layer.appendChild(p);
     setTimeout(() => p.remove(), 1600);
   }
+}
+
+// Spawns and plays a spritesheet animation (6 columns, 4 rows, 24 frames).
+export function spriteAnim(layer, targetEl, name, opts = {}) {
+  if (!layer || !targetEl || reduce()) return Promise.resolve();
+  
+  const frameWidth = 256;
+  const frameHeight = 256;
+  const cols = 6;
+  const rows = 4;
+  const totalFrames = opts.frames || 24;
+  const fps = opts.fps || 35;
+  
+  const lr = layer.getBoundingClientRect();
+  const tr = targetEl.getBoundingClientRect();
+  
+  const el = document.createElement('div');
+  el.className = `sprite-vfx sprite-vfx-${name}`;
+  
+  const cx = tr.left - lr.left + tr.width / 2;
+  const cy = tr.top - lr.top + tr.height / 2;
+  
+  el.style.position = 'absolute';
+  el.style.pointerEvents = 'none';
+  el.style.width = frameWidth + 'px';
+  el.style.height = frameHeight + 'px';
+  el.style.left = cx + 'px';
+  el.style.top = cy + 'px';
+  el.style.transform = 'translate(-50%, -50%)';
+  el.style.backgroundImage = `url('assets/animation sprites/${name}.png')`;
+  el.style.backgroundSize = `${frameWidth * cols}px ${frameHeight * rows}px`;
+  el.style.mixBlendMode = opts.blend || 'screen';
+  
+  layer.appendChild(el);
+  
+  return new Promise((resolve) => {
+    let frame = 0;
+    const interval = 1000 / fps;
+    let lastTime = performance.now();
+    
+    function tick(now) {
+      if (frame >= totalFrames) {
+        el.remove();
+        resolve();
+        return;
+      }
+      
+      const elapsed = now - lastTime;
+      if (elapsed >= interval) {
+        lastTime = now - (elapsed % interval);
+        
+        const col = frame % cols;
+        const row = Math.floor(frame / cols);
+        
+        el.style.backgroundPosition = `-${col * frameWidth}px -${row * frameHeight}px`;
+        
+        frame++;
+      }
+      requestAnimationFrame(tick);
+    }
+    
+    el.style.backgroundPosition = '0px 0px';
+    requestAnimationFrame(tick);
+  });
 }
 

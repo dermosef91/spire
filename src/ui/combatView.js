@@ -6,7 +6,7 @@ import { el, clear } from '../core/util.js';
 import { renderCard, topBar } from './components.js';
 import { POWERS } from '../data/keywords.js';
 import { audio } from '../audio.js';
-import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine, chargeUp } from './fx.js';
+import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine, chargeUp, spriteAnim } from './fx.js';
 import { runAttackQTE, runParryQTE } from './rhythm.js';
 import { combatModel, INTENT, UI, powerIcon } from './icons.js';
 import { spriteOrSvg, hasSprite } from './sprites.js';
@@ -848,9 +848,19 @@ export class CombatView {
     // Read synchronously by the onFx attack/damage handlers dispatched during
     // combat.playCard below; cleared on the next tick.
     this._chargedStrike = chargeLevel;
+    this._lastPlayedCardId = card.id;
     if (chargeLevel) setTimeout(() => { this._chargedStrike = 0; }, 0);
+    setTimeout(() => { this._lastPlayedCardId = null; }, 0);
     audio.play('playcard');
-    audio.play(card.type === 'attack' ? 'attack' : 'skill');
+    let sound = card.type === 'attack' ? 'attack' : 'skill';
+    if (card.id === 'skyfall' || card.id === 'falling_star') {
+      sound = 'thunder';
+    } else if (card.id === 'static_burst') {
+      sound = 'zap';
+    } else if (card.id === 'blight_needle') {
+      sound = 'slime';
+    }
+    audio.play(sound);
     // brief play animation on the card element
     const cardEl = this.handHolder.querySelector(`.card[data-uid="${card.uid}"]`);
     if (cardEl) { cardEl.classList.add('playing'); }
@@ -981,7 +991,19 @@ export class CombatView {
         this.setSpritePose(payload.source, 'attack');
         
         if (!payload.source.isPlayer) {
-          audio.play('attack');
+          let sound = 'attack';
+          const moveId = payload.source.move;
+          const enemyId = payload.source.id;
+          if (moveId === 'zap' || moveId === 'jolt' || moveId === 'spark' || moveId === 'scatter' || moveId === 'surge' || moveId === 'multibeam') {
+            sound = 'zap';
+          } else if (moveId === 'barrage' && enemyId === 'the_gatekeeper') {
+            sound = 'thunder';
+          } else if (moveId === 'spit' || moveId === 'venom' || moveId === 'latch' || moveId === 'siphon') {
+            sound = 'slime';
+          } else if (moveId === 'splash') {
+            sound = 'splash';
+          }
+          audio.play(sound);
         }
         
         setTimeout(() => {
@@ -1026,6 +1048,27 @@ export class CombatView {
       // Capture the charge level now — it is cleared before the delayed render.
       const chLevel = (this._chargedStrike >= 3 && payload.isAttack && !payload.target.isPlayer)
         ? this._chargedStrike : 0;
+      
+      let anim = 'slash';
+      if (payload.isAttack) {
+        if (payload.source) {
+          if (payload.source.isPlayer) {
+            if (this._lastPlayedCardId === 'skyfall') {
+              anim = 'skyfall-hammer';
+            }
+          } else {
+            const moveId = payload.source.move;
+            if (moveId === 'zap' || moveId === 'jolt') {
+              anim = 'zap';
+            } else if (moveId === 'spit') {
+              anim = 'spit';
+            } else if (moveId === 'splash') {
+              anim = 'splash';
+            }
+          }
+        }
+      }
+
       const applyDamageFx = () => {
         if (payload.hpLost > 0) {
           const size = Math.round(Math.min(60, 26 + payload.hpLost * 1.4));
@@ -1033,7 +1076,13 @@ export class CombatView {
           hitFlash(el2, 'damage');
           const big = payload.hpLost >= 14 || chLevel > 0;
           shake(el2, big);
-          if (payload.isAttack) slash(layer, el2);
+          if (payload.isAttack) {
+            if (anim === 'slash') {
+              slash(layer, el2);
+            } else {
+              spriteAnim(layer, el2, anim);
+            }
+          }
           if (payload.target.isPlayer || big) screenShake(this.scene, big);
           if (chLevel > 0) {
             // Charged release: a heavier burst + ring on the strike.

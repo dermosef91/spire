@@ -11,6 +11,10 @@ const SOUNDS = {
   draw: 'assets/sounds/pickcard.mp3',
   playcard: 'assets/sounds/playcards.mp3',
   'attack-blocked': 'assets/sounds/attack-blocked.mp3',
+  thunder: 'assets/sounds/thunder.mp3',
+  slime: 'assets/sounds/slime.wav',
+  zap: 'assets/sounds/zap.mp3',
+  splash: 'assets/sounds/splash.mp3',
 };
 
 // Tiny procedural sound + ambient pad using WebAudio — no asset files required.
@@ -131,6 +135,10 @@ class Audio {
     if (name === 'draw') gain = 0.4;
     if (name === 'playcard') gain = 0.45;
     if (name === 'attack-blocked') gain = 0.45;
+    if (name === 'thunder') gain = 0.45;
+    if (name === 'slime') gain = 0.45;
+    if (name === 'zap') gain = 0.45;
+    if (name === 'splash') gain = 0.45;
     
     // Try to play from user WAV/MP3 asset files first
     const played = this.playBuffer(name, gain);
@@ -165,6 +173,10 @@ class Audio {
       case 'draw': this.tone(600, 0.06, 'triangle', 0.04); break;
       case 'playcard': this.tone(400, 0.08, 'sine', 0.08); break;
       case 'attack-blocked': this.tone(220, 0.12, 'triangle', 0.12); this.tone(180, 0.15, 'sine', 0.08, 0.04); break;
+      case 'thunder': this.tone(90, 0.4, 'sawtooth', 0.15); this.tone(45, 0.6, 'square', 0.1, 0.05); break;
+      case 'zap': this.tone(880, 0.08, 'sawtooth', 0.12); this.tone(1200, 0.05, 'sine', 0.08, 0.02); break;
+      case 'slime': this.tone(150, 0.15, 'triangle', 0.12); this.tone(100, 0.2, 'sine', 0.08, 0.05); break;
+      case 'splash': this.tone(300, 0.2, 'triangle', 0.12); this.tone(450, 0.15, 'sine', 0.08, 0.04); break;
       default: break;
     }
   }
