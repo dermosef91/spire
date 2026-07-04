@@ -277,6 +277,22 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
 - The **Ascendant Crown is the "weld"**: it's now a real boss reward
   (`RunState.pickBossRelicId()` + the `bossrelic` reward row in `game.js`). Boss
   relics were previously unobtainable — don't re-exclude them.
+- **Relic acquisition is celebrated** via `Game.relicAcquired(relicId, onClaim)`
+  + `Game.flyRelicToSlot(relicId, fromRect)` (shared plumbing in `game.js`, so
+  every scene mixin can call `this.relicAcquired(...)`). It shows a large
+  `.relic-reveal-overlay` (icon + rarity + name + desc) with the `relic`
+  fanfare SFX; on tap it runs `onClaim` (which must **re-render the scene so
+  the new relic chip exists in `.tb-relics`** — the flight targets the *last*
+  chip there) then animates a `.relic-fly` clone into the top-bar slot, landing
+  with the `relicland` chime. Wired into all five grant paths: the `relic` and
+  `bossrelic` reward rows (`scenes/rewards.js`), treasure (`scenes/treasure.js`),
+  the shop `buy()` relic branch (`scenes/shop.js`), and — generically, by
+  diffing `run.relics.length` before/after `ch.effect(run)` — relic-granting
+  events (`scenes/event.js`). Because of this, **`RunState.grantRandomRelic()`
+  now returns the relic *object*** (not its name string); callers use `r.id`
+  and `r.name` (the relic-granting event texts and the `tools/test.js` event
+  mock — which must stub `relicAcquired(id, onClaim){ onClaim(); }` — depend on
+  this). Respects `prefers-reduced-motion` (reveal still shown, flight skipped).
 - **Enemy backstory is baked into the sprite art, not icons/tooltips.** The
   "former champion" tells (Agojie cowrie/star-iron on brass_sentinel &
   gilded_warden; griot kora/brass-throat on hollow_cantor & void_chanter;
