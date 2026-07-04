@@ -14,6 +14,7 @@ import { cardDesc, upgradeCard } from './data/cards.js';
 import { POTIONS } from './data/potions.js';
 import { RELICS } from './data/relics.js';
 import { relicIcon } from './ui/icons.js';
+import { hasRelicArt } from './ui/relic-art.js';
 import { renderCard, topBar, button } from './ui/components.js';
 import { updateBackground } from './ui/backgrounds.js';
 import { background } from './fx/background.js';
@@ -254,6 +255,22 @@ export class Game {
     document.body.appendChild(overlay);
   }
 
+  // Build the visual for a relic: the line-art SVG as a base, with the real
+  // generated sprite (assets/relic-art/<id>.png) overlaid on top when one
+  // exists — same "art overrides icon" pattern as relicChip() in components.js.
+  relicVisual(relicId, cls) {
+    const node = el('div', { class: cls, html: relicIcon(relicId) });
+    if (hasRelicArt(relicId)) {
+      const img = el('img', {
+        class: 'relic-art-img',
+        attrs: { src: `assets/relic-art/${relicId}.png`, alt: '', draggable: 'false' },
+      });
+      img.onerror = () => { img.remove(); };
+      node.appendChild(img);
+    }
+    return node;
+  }
+
   // Celebrate a newly acquired relic: a large reveal overlay (image + description)
   // with a fanfare, then the relic flies to its slot in the top bar. `onClaim`
   // is the caller's follow-up (rebuild the scene so the new relic chip exists);
@@ -269,7 +286,7 @@ export class Game {
     box.appendChild(el('div', { class: 'relic-reveal-kicker', text: 'Ancestral Relic Acquired' }));
     const disc = el('div', { class: 'relic-reveal-disc' }, [
       el('div', { class: 'relic-reveal-halo' }),
-      el('div', { class: 'relic-reveal-icon', html: relicIcon(relicId) }),
+      this.relicVisual(relicId, 'relic-reveal-icon'),
     ]);
     box.appendChild(disc);
     box.appendChild(el('div', { class: 'relic-reveal-rarity', text: (r.rarity || '').toUpperCase() }));
@@ -303,7 +320,7 @@ export class Game {
     if (reduce || !target) { if (target) target.classList.add('relic-landed'); return; }
     const toRect = target.getBoundingClientRect();
 
-    const clone = el('div', { class: 'relic-fly', html: relicIcon(relicId) });
+    const clone = this.relicVisual(relicId, 'relic-fly');
     const fx = fromRect.left + fromRect.width / 2;
     const fy = fromRect.top + fromRect.height / 2;
     const tx = toRect.left + toRect.width / 2;
