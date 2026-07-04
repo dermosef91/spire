@@ -213,6 +213,9 @@ test('gold-changing event choices resolve without throwing', () => {
     run,
     resultThenMap(text) { result = text; },
     gameOver() { throw new Error('unexpected death'); },
+    // The relic-granting branch routes through the celebration overlay; in a
+    // headless test just run the claim callback (as the reduced-motion path does).
+    relicAcquired(_id, onClaim) { onClaim(); },
   }, ev, choice);
 
   assert.equal(run.gold, 54, 'gold cost applied once');

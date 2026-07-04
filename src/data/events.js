@@ -54,7 +54,7 @@ export const EVENTS = [
       {
         label: 'Weigh your coin (Lose 45 gold, gain a Relic)',
         condition: (run) => run.gold >= 45,
-        effect: (run) => { run.gold -= 45; const r = run.grantRandomRelic(); return r ? `Your gold sinks away (−45) and the scale offers up ${r} in its place.` : 'Your gold sinks away — but the scale has nothing left to weigh against it.'; },
+        effect: (run) => { run.gold -= 45; const r = run.grantRandomRelic(); return r ? `Your gold sinks away (−45) and the scale offers up the <b>${r.name}</b> in its place.` : 'Your gold sinks away — but the scale has nothing left to weigh against it.'; },
       },
       { label: 'Refuse to be weighed', effect: () => 'You keep your measure to yourself and move on.' },
     ],
@@ -69,7 +69,7 @@ export const EVENTS = [
     choices: [
       {
         label: 'Offer blood (Lose 10 HP, gain a Relic)',
-        effect: (run) => { run.takeDamage(10); const r = run.grantRandomRelic(); return r ? `You bleed into the salt (−10 HP). The shells clatter and yield ${r}.` : 'You bleed into the salt (−10 HP), but the pool has nothing to give.'; },
+        effect: (run) => { run.takeDamage(10); const r = run.grantRandomRelic(); return r ? `You bleed into the salt (−10 HP). The shells clatter and yield the <b>${r.name}</b>.` : 'You bleed into the salt (−10 HP), but the pool has nothing to give.'; },
       },
       {
         label: 'Offer coin (Lose 55 gold, heal to full)',
@@ -137,7 +137,7 @@ export const EVENTS = [
     choices: [
       {
         label: 'Join the harmony (Gain a Relic, take 2 Static)',
-        effect: (run) => { const r = run.grantRandomRelic(); run.addCardById('static_curse'); run.addCardById('static_curse'); return r ? `The choir opens and takes you in. You rise with ${r} — but two threads of Static now sing in your deck.` : 'The choir opens, yet finds nothing new to gift you. Two threads of Static lodge in your deck all the same.'; },
+        effect: (run) => { const r = run.grantRandomRelic(); run.addCardById('static_curse'); run.addCardById('static_curse'); return r ? `The choir opens and takes you in. You rise with the <b>${r.name}</b> — but two threads of Static now sing in your deck.` : 'The choir opens, yet finds nothing new to gift you. Two threads of Static lodge in your deck all the same.'; },
       },
       {
         label: 'Hum a single note (Heal 25 HP)',

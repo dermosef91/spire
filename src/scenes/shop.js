@@ -100,8 +100,15 @@ export const ShopScene = {
     const item = shop[kind][i];
     if (item.sold) return;
     if (run.gold < item.price) { audio.play('error'); return; }
+    if (kind === 'relics') {
+      run.gold -= item.price; item.sold = true;
+      run.addRelic(item.id);
+      this.tooltip(null, null, false);
+      audio.play('coin');
+      this.relicAcquired(item.id, () => this.showShop());
+      return;
+    }
     if (kind === 'cards') { run.addCardById(item.card.id, item.card.upgraded); }
-    else if (kind === 'relics') { run.addRelic(item.id); }
     else if (kind === 'potions') { if (!run.addPotion(item.id)) { audio.play('error'); return; } }
     run.gold -= item.price; item.sold = true;
     this.tooltip(null, null, false);
