@@ -149,7 +149,7 @@ export function topBar(run, extra = {}) {
   const potionWrap = el('div', { class: 'tb-potions' });
   for (let i = 0; i < run.maxPotions; i++) {
     if (run.potions[i]) potionWrap.appendChild(potionChip(run.potions[i], i, extra.onPotion, extra.onHover));
-    else potionWrap.appendChild(el('div', { class: 'potion empty', text: '+' }));
+    else potionWrap.appendChild(el('div', { class: 'potion empty', html: potionIcon(), attrs: { 'aria-label': 'Empty potion slot' } }));
   }
   right.appendChild(potionWrap);
   const relicWrap = el('div', { class: 'tb-relics' });

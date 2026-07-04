@@ -596,7 +596,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .potion { position: relative; width: 30px; height: 34px; border-radius: 7px 7px 12px 12px; display: grid; place-items: center; font-size: 15px; cursor: pointer;
   background: linear-gradient(180deg, rgba(255,200,140,0.25), var(--pcolor, #b5602a)); border: 1px solid rgba(255,210,160,0.5); color: #1a0c04; transition: transform 0.12s; }
 .potion:hover { transform: scale(1.14); }
-.potion.empty { background: rgba(255,170,80,0.05); border: 1px dashed rgba(255,170,80,0.25); color: rgba(255,170,80,0.3); cursor: default; }
+.potion.empty { background: rgba(255,170,80,0.04); border: 1px dashed rgba(255,170,80,0.22); color: rgba(255,170,80,0.3); cursor: default; }
+.potion.empty .svg-ic { width: 82%; height: 82%; opacity: 0.22; filter: saturate(0.4); }
 
 .potion-art-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 2; }
 
@@ -1006,7 +1007,7 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .glyph { position: absolute; z-index: 2; width: calc(var(--med) * 1.85); height: calc(var(--med) * 1.85); display: grid; place-items: center; overflow: visible; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.7)); animation: medFloat 3.6s ease-in-out infinite; pointer-events: none; bottom: 12px; }
 .player .glyph { width: calc(var(--med) * 2.05); height: calc(var(--med) * 2.05); bottom: 16px; }
 .enemy:nth-child(2n) .glyph { animation-duration: 4.1s; } .enemy:nth-child(3n) .glyph { animation-duration: 4.6s; }
-@keyframes medFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes medFloat { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-8px) scale(1.035); } }
 .ground-shadow { width: calc(var(--med) * 1.1); height: calc(var(--med) * 0.14); margin-top: 4px; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(255,106,26,0.32), transparent); filter: blur(3px); animation: shadowPulse 3.6s ease-in-out infinite; }
 @keyframes shadowPulse { 0%,100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(0.85); opacity: 0.42; } }
@@ -1209,8 +1210,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   gap: 6px;
   align-items: center;
   font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
   white-space: nowrap;
   background: linear-gradient(180deg, rgba(18,10,6,0.95), rgba(8,4,2,0.95));
   padding: 4px 11px;
@@ -2058,7 +2059,7 @@ img.svg-ic { object-fit: contain; }
 /* inline icon wrappers */
 .tb-ic { display: inline-grid; place-items: center; width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
 .pip-ic { display: inline-grid; place-items: center; width: 1.1em; height: 1.1em; vertical-align: -0.18em; }
-.intent-ic { display: inline-grid; place-items: center; width: 22px; height: 22px; vertical-align: -0.35em; }
+.intent-ic { display: inline-grid; place-items: center; width: 28px; height: 28px; vertical-align: -0.4em; }
 .pile-ic { display: inline-grid; place-items: center; width: 20px; height: 20px; vertical-align: -0.3em; margin-right: 3px; }
 
 /* relics / potions / nodes / rewards / legend */
