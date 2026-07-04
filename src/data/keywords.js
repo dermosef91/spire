@@ -128,3 +128,33 @@ export const KEYWORDS = {
 export function powerName(key) {
   return POWERS[key]?.name || key;
 }
+
+// Glossary entries for highlighted terms that aren't POWERS/KEYWORDS entries
+// themselves (Zara's Spirit orbs + verbs) — see components.js's EXTRA_KEYWORDS,
+// which lists the same names for highlighting.
+const EXTRA_GLOSSARY = {
+  Storm: 'A Spirit orb. Passively strikes a random enemy each turn; Evoke it to strike harder immediately.',
+  Tide: 'A Spirit orb. Passively grants Block each turn; Evoke it to gain a burst of Block immediately.',
+  Shade: 'A Spirit orb. Stores power each turn; Evoke it to unleash all its stored damage at once.',
+  Sun: 'A Spirit orb. Passively grants Àṣẹ next turn; Evoke it to gain Àṣẹ immediately.',
+  Evoke: 'Trigger a Spirit orb’s strong effect immediately, then it fades.',
+  Channel: 'Place a Spirit orb into an empty slot.',
+};
+
+// Reverse index: displayed keyword text -> { name, desc }, built from POWERS
+// (keyed by internal id), KEYWORDS and EXTRA_GLOSSARY (keyed by display name).
+const KEYWORD_INDEX = (() => {
+  const idx = {};
+  for (const key of Object.keys(POWERS)) idx[POWERS[key].name] = { name: POWERS[key].name, desc: POWERS[key].desc };
+  for (const name of Object.keys(KEYWORDS)) idx[name] = { name, desc: KEYWORDS[name] };
+  for (const name of Object.keys(EXTRA_GLOSSARY)) idx[name] = { name, desc: EXTRA_GLOSSARY[name] };
+  return idx;
+})();
+
+// Look up a highlighted keyword's glossary entry by its displayed text, for
+// the click-to-explain popup on `.kw` spans (see game.js's setupGlossaryPopups).
+export function keywordInfo(text) {
+  const hit = KEYWORD_INDEX[text];
+  if (!hit) return null;
+  return { name: hit.name, desc: hit.desc.replace('{n}', 'X') };
+}

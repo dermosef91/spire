@@ -13,9 +13,10 @@ import { saveRun, loadMeta, saveMeta } from './core/save.js';
 import { cardDesc, upgradeCard } from './data/cards.js';
 import { POTIONS } from './data/potions.js';
 import { RELICS } from './data/relics.js';
-import { relicIcon } from './ui/icons.js';
+import { relicIcon, INTENT_INFO } from './ui/icons.js';
 import { hasRelicArt } from './ui/relic-art.js';
-import { renderCard, topBar, button } from './ui/components.js';
+import { renderCard, topBar, button, highlightKeywords } from './ui/components.js';
+import { keywordInfo } from './data/keywords.js';
 import { updateBackground } from './ui/backgrounds.js';
 import { background } from './fx/background.js';
 import { audio } from './audio.js';
@@ -39,9 +40,13 @@ export class Game {
     this.touch = isTouchDevice();
     this.tip = el('div', { class: 'tooltip', id: 'tooltip' });
     document.body.appendChild(this.tip);
+    this.kw = el('div', { class: 'tooltip kw-popup', id: 'kwPopup' });
+    document.body.appendChild(this.kw);
+    this.kwNode = null;
     this.meta = loadMeta();
     this.selectedAscension = Math.min(this.meta.ascension || 0, this.meta.maxAscension || 0);
     this.setupMobile();
+    this.setupGlossaryPopups();
     this.keyboard = new KeyboardController(this);
   }
 
@@ -67,10 +72,75 @@ export class Game {
 
     // A tap/click anywhere that is not an inspectable chip/card/tooltip dismisses the tooltip.
     document.addEventListener('pointerdown', (e) => {
-      if (!e.target.closest('.relic, .potion, .card, .tooltip, .pip, .block-badge')) {
+      if (!e.target.closest('.relic, .potion, .card, .tooltip, .pip, .block-badge, .kw, .intent')) {
         this.tooltip(null, null, false);
       }
     }, true);
+  }
+
+  // ----------------------------------------------------------- glossary popups
+  // A small popup (separate from the main hover tooltip) explaining a keyword
+  // ("Exposed" -> its status-effect description) or an enemy intent icon
+  // ("Strategic" -> "This enemy intends to use a Buff.").
+  setupGlossaryPopups() {
+    // Click/tap only (not hover): cards lift on `:hover`, which shifts a
+    // highlighted keyword span out from under a stationary cursor and would
+    // make a hover-preview flicker open and shut. A click needs no follow-up
+    // pointer movement, so it isn't affected.
+    const closeKw = () => { this.kw.style.display = 'none'; this.kwNode = null; };
+
+    // Hand cards are played via a pointerdown-driven drag/tap gesture (see
+    // CombatView.onCardPointerDown), which fires and resolves before any
+    // 'click' event does. Stop it at the source so tapping a keyword inside a
+    // card's text doesn't also play the card.
+    document.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.kw, .intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk')) e.stopPropagation();
+    }, true);
+
+    // Click (mouse or touch): toggles the popup for a keyword span or an
+    // intent icon (a second click on the same one closes it), and stops the
+    // click from also playing the card / targeting the enemy underneath.
+    // Captured so it runs before those handlers.
+    document.addEventListener('click', (e) => {
+      const kwSpan = e.target.closest('.kw');
+      if (kwSpan) {
+        e.stopPropagation();
+        const info = keywordInfo(kwSpan.textContent);
+        if (!info) return;
+        if (this.kwNode === kwSpan) { closeKw(); return; }
+        this.infoPopup(`<b>${info.name}</b><br>${info.desc}`, kwSpan);
+        return;
+      }
+      const intentIcon = e.target.closest('.intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk');
+      if (intentIcon) {
+        e.stopPropagation();
+        const info = INTENT_INFO[intentIcon.dataset.intentType];
+        if (!info) return;
+        if (this.kwNode === intentIcon) { closeKw(); return; }
+        this.infoPopup(`<b>${info.label}</b><br>${info.desc}`, intentIcon);
+        return;
+      }
+      if (this.kwNode) closeKw();
+    }, true);
+  }
+
+  // Positions a floating box (main tooltip or glossary popup) near `node`.
+  positionBox(box, node, width) {
+    box.style.display = 'block';
+    box.style.width = width + 'px';
+    const r = node.getBoundingClientRect();
+    let left = r.left + r.width / 2 - width / 2;
+    left = Math.max(8, Math.min(window.innerWidth - width - 8, left));
+    box.style.left = left + 'px';
+    let top = r.top - box.offsetHeight - 10;
+    if (top < 8) top = r.bottom + 10;
+    box.style.top = top + 'px';
+  }
+
+  infoPopup(html, node) {
+    this.kw.innerHTML = html;
+    this.positionBox(this.kw, node, 220);
+    this.kwNode = node;
   }
 
   // A small yes/no confirm overlay (used for irreversible touch actions like potions).
@@ -139,23 +209,14 @@ export class Game {
     if (!on) { this.tip.style.display = 'none'; return; }
     let html = '';
     if (kind === 'card') {
-      html = `<b>${obj.name}</b> · ${obj.cost === 'X' ? 'X' : obj.cost} Àṣẹ · ${obj.type}<br>${cardDesc(obj)}`;
+      html = `<b>${obj.name}</b> · ${obj.cost === 'X' ? 'X' : obj.cost} Àṣẹ · ${obj.type}<br>${highlightKeywords(cardDesc(obj))}`;
     } else if (obj.desc !== undefined && obj.rarity !== undefined && POTIONS[obj.id]) {
-      html = `<b>${obj.name}</b><br>${obj.desc}`;
+      html = `<b>${obj.name}</b><br>${highlightKeywords(obj.desc)}`;
     } else if (obj.desc !== undefined) {
-      html = `<b>${obj.name}</b><br>${obj.desc}`;
+      html = `<b>${obj.name}</b><br>${highlightKeywords(obj.desc)}`;
     } else return;
     this.tip.innerHTML = html;
-    this.tip.style.display = 'block';
-    const r = node.getBoundingClientRect();
-    const tw = 240;
-    let left = r.left + r.width / 2 - tw / 2;
-    left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
-    this.tip.style.left = left + 'px';
-    this.tip.style.width = tw + 'px';
-    let top = r.top - this.tip.offsetHeight - 10;
-    if (top < 8) top = r.bottom + 10;
-    this.tip.style.top = top + 'px';
+    this.positionBox(this.tip, node, 240);
   }
 
   // ----------------------------------------------------------- shared overlays
