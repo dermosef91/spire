@@ -584,7 +584,7 @@ export class CombatView {
       const node = renderCard(card, {
         disabled: !playable,
         class: 'in-hand ' + affordable + combo + (this.pendingCard && this.pendingCard.uid === card.uid ? 'selected ' : '') + (isPreview ? 'previewing' : ''),
-        onHover: (cd, n, on) => { if (!this.drag) this.game.tooltip(cd, n, on, 'card'); },
+        onHover: (cd, n, on) => { if (!this.drag) this.game.tooltip(cd, n, on, 'card-full'); },
       });
 
       const diff = idx - mid;

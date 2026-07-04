@@ -15,7 +15,7 @@ import { POTIONS } from './data/potions.js';
 import { RELICS } from './data/relics.js';
 import { relicIcon, INTENT_INFO } from './ui/icons.js';
 import { hasRelicArt } from './ui/relic-art.js';
-import { renderCard, topBar, button, highlightKeywords } from './ui/components.js';
+import { renderCard, topBar, button, highlightKeywords, keywordsIn } from './ui/components.js';
 import { keywordInfo } from './data/keywords.js';
 import { updateBackground } from './ui/backgrounds.js';
 import { background } from './fx/background.js';
@@ -208,8 +208,18 @@ export class Game {
   tooltip(obj, node, on, kind) {
     if (!on) { this.tip.style.display = 'none'; return; }
     let html = '';
-    if (kind === 'card') {
+    if (kind === 'card-full') {
+      // The fanned combat hand is small and rotated, so its printed text is
+      // hard to read — this is the one spot that repeats it enlarged.
       html = `<b>${obj.name}</b> · ${obj.cost === 'X' ? 'X' : obj.cost} Àṣẹ · ${obj.type}<br>${highlightKeywords(cardDesc(obj))}`;
+    } else if (kind === 'card') {
+      // Everywhere else a card is already shown at a readable size (shop,
+      // rewards, deck views, previews), so repeating its full text would just
+      // duplicate what's printed on the card. Show only the glossary entries
+      // for any effect keywords it contains instead.
+      const entries = keywordsIn(cardDesc(obj)).map((n) => keywordInfo(n)).filter(Boolean);
+      if (!entries.length) { this.tip.style.display = 'none'; return; }
+      html = entries.map((e) => `<b>${e.name}</b><br>${e.desc}`).join('<br><br>');
     } else if (obj.desc !== undefined && obj.rarity !== undefined && POTIONS[obj.id]) {
       html = `<b>${obj.name}</b><br>${highlightKeywords(obj.desc)}`;
     } else if (obj.desc !== undefined) {
