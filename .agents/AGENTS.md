@@ -39,6 +39,8 @@
 
 - **Map Icon Custom Art**: Map icons can load custom PNG illustrations generated using the `gpt-image-2` model via `tools/gen-map-icons.js`. Uses the same calibration style-key and transparency post-processing filter as relics, and are scaled uniformly on the map.
 
+- **Gold coin icon**: `UI.coin` (`src/ui/icons.js`) is a manually-supplied PNG (`assets/icons/coin.png`, resized to 256×256 with `sips -Z 256` — not run through the `gen-map-icons.js` palette-quantize pipeline, since it isn't AI-generated) rather than the old inline SVG, using the same `<img class="svg-ic">` pattern as the `NODE` map icons. It's one shared icon reused by the top-bar gold display, every post-combat reward screen, and the shop — change it in one place rather than per call site.
+
 - **Keyboard Navigation**: Global keyboard navigation is managed by `KeyboardController` in `src/core/keyboard.js`. Interactive elements are queried dynamically across overlays and scenes. Supports arrow/WASD/Tab navigation, Escape for canceling, and numbers `1`-`9` as direct shortcuts (except during combat hand play). Emits synthetic `mouseenter`/`mouseleave` to drive tooltips/hover states. Focus class is `.kb-focus`. Keyboard focus must be bypassed/disabled during rhythm QTEs (`.qte-layer` exists) so directional commands correctly drive the mini-game.
 
 - **QA map-scroll flake**: the desktop Act-map QA shot can occasionally catch `.map-scroller` before its initial `scrollTop` lands (the reachable bottom-row nodes then read as "extends past viewport" control-offscreen issues). If the map is the only screen flagged and only with `control-offscreen` on `.map-node.reachable`, re-run `npm run qa` before suspecting a real regression.
