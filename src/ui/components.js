@@ -91,6 +91,18 @@ export function highlightKeywords(text) {
   return text.replace(HIGHLIGHT_RE, '<span class="kw">$1</span>');
 }
 
+// Distinct keyword names found in `text`, in first-appearance order — used to
+// build a "here's what these effects mean" glossary popup instead of
+// re-printing text already visible on the card face.
+export function keywordsIn(text) {
+  const seen = new Set();
+  const out = [];
+  for (const m of text.matchAll(HIGHLIGHT_RE)) {
+    if (!seen.has(m[1])) { seen.add(m[1]); out.push(m[1]); }
+  }
+  return out;
+}
+
 export function relicChip(relicId, onHover) {
   const r = RELICS[relicId];
   if (!r) return el('span');
