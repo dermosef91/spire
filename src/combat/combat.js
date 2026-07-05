@@ -209,7 +209,11 @@ export class Combat {
   // Deliberate spend (finisher cards): no falter fx, returns the amount spent.
   spendAllTempo() {
     const t = this.tempo();
-    if (t > 0) { delete this.player.powers.tempo; this.notify(); }
+    if (t > 0) {
+      delete this.player.powers.tempo;
+      this.fx('temporelease', { entity: this.player, amount: t });
+      this.notify();
+    }
     return t;
   }
   registerStrikeGrade(grade) {
