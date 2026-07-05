@@ -611,7 +611,7 @@ test('Cyclone Dance consumes ALL Tempo for AoE damage', () => {
   c.gainTempo(3); // +1 from the strike itself = 4 consumed
   const before = c.enemies.map((e) => e.hp);
   playCrafted(c, 'whirlwind', null);
-  for (let i = 0; i < 2; i++) assert.equal(before[i] - c.enemies[i].hp, 4 + 2 * 4, 'each foe took 4 + 2×4');
+  for (let i = 0; i < 2; i++) assert.equal(before[i] - c.enemies[i].hp, 2 + 2 * 4, 'each foe took 2 + 2×4');
   assert.equal(c.tempo(), 0, 'Tempo pool emptied');
 });
 

@@ -139,8 +139,8 @@ def('disarm', {
   onPlay: (ctx) => ctx.applyEnemy('strength', -ctx.c.magic),
 });
 def('whirlwind', {
-  name: 'Cyclone Dance', char: 'amara', type: 'attack', rarity: 'uncommon', cost: 2,
-  dmg: 4, magic: 2, target: 'all', qteMarks: 3,
+  name: 'Cyclone Dance', char: 'amara', type: 'attack', rarity: 'uncommon', cost: 3,
+  dmg: 2, magic: 2, target: 'all', qteMarks: 3,
   desc: (c) => `Deal ${c.dmg} damage to ALL enemies. Consume ALL your Tempo: +${c.magic} damage for each consumed.`,
   upgrade: (c) => { c.dmg = 6; c.magic = 3; },
   onPlay: (ctx) => { const t = ctx.spendAllTempo(); ctx.dealAll(ctx.c.dmg + ctx.c.magic * t); },
