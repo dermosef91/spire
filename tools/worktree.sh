@@ -8,9 +8,12 @@
 #   tools/worktree.sh list           show all worktrees + their branches
 #
 # Open each Claude session on its own worktree folder. The script symlinks the
-# primary checkout's node_modules into the worktree (playwright for
-# `npm run smoke` / `npm run qa`; the game itself is dependency-free) and
-# prints a stable per-topic PORT so two sessions can run `npm start` at once.
+# primary checkout's node_modules (playwright for `npm run smoke` / `npm run
+# qa`; the game itself is dependency-free), tools/node_modules (openai/sharp
+# for the asset generators) and .env (OPENAI_API_KEY etc.) into the worktree —
+# all three are untracked/gitignored, so a fresh worktree has none of them
+# otherwise — and prints a stable per-topic PORT so two sessions can run
+# `npm start` at once.
 set -euo pipefail
 
 cmd="${1:-list}"
@@ -34,6 +37,11 @@ case "$cmd" in
     # Share the primary checkout's node_modules (untracked, so worktrees don't
     # get one). Needed for smoke/qa's ambient playwright; harmless otherwise.
     [ -d "$primary/node_modules" ] && ln -s "$primary/node_modules" "$dir/node_modules"
+    # Same story for tools/node_modules (openai/sharp for the asset generators)
+    # and the root .env (OPENAI_API_KEY etc.) — both untracked/gitignored, so
+    # a fresh worktree has neither unless we symlink them in.
+    [ -d "$primary/tools/node_modules" ] && ln -s "$primary/tools/node_modules" "$dir/tools/node_modules"
+    [ -f "$primary/.env" ] && ln -s "$primary/.env" "$dir/.env"
     # Stable per-topic dev-server port (8100-8199), away from 8080/8091.
     port=$((8100 + $(printf '%s' "$t" | cksum | cut -d' ' -f1) % 100))
     echo ""
@@ -50,9 +58,11 @@ case "$cmd" in
     t="$(slug "$topic")"
     dir="$parent/spire-wt-$t"
     branch="claude/$t"
-    # Drop the node_modules symlink we planted — git counts it as an
-    # untracked file and refuses to remove the worktree otherwise.
+    # Drop the symlinks we planted — git counts them as untracked files
+    # and refuses to remove the worktree otherwise.
     [ -L "$dir/node_modules" ] && rm "$dir/node_modules"
+    [ -L "$dir/tools/node_modules" ] && rm "$dir/tools/node_modules"
+    [ -L "$dir/.env" ] && rm "$dir/.env"
     git -C "$primary" worktree remove "$dir" || {
       echo "worktree has uncommitted changes; commit/stash them there, or:"
       echo "  git -C $primary worktree remove --force $dir"; exit 1; }

@@ -299,6 +299,17 @@ its own worktree instead:
 - Gotcha: `.gitignore` must contain `node_modules` **without** a trailing
   slash — `node_modules/` only matches real directories, so the worktree's
   symlink would show up as untracked noise in `git status`.
+- **Secrets (`.env`, `OPENAI_API_KEY`) don't exist in a fresh worktree either**
+  — same root cause as `node_modules`: the repo root `.env` is gitignored
+  (untracked), and a worktree only gets tracked files unless something
+  explicitly symlinks the rest in. `tools/worktree.sh new` now symlinks the
+  primary checkout's `.env` and `tools/node_modules` (openai/sharp) alongside
+  the existing `node_modules` symlink; `done` cleans up all three. If you're
+  in an **IDE-managed** worktree (`.claude/worktrees/...`) instead — those
+  aren't created by `tools/worktree.sh`, so nothing symlinks anything — and a
+  live asset-gen run needs a key, check the primary checkout's `.env`
+  (`/Users/moritzgrassy/spire/.env`) directly rather than assuming it's
+  missing from the machine entirely.
 
 ## Story framing & endings (the Spire's lie)
 The world runs on one reveal: **the Spire "welcomes climbers home" by rendering
