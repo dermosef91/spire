@@ -370,7 +370,15 @@ export class Game {
   // with a fanfare, then the relic flies to its slot in the top bar. `onClaim`
   // is the caller's follow-up (rebuild the scene so the new relic chip exists);
   // it runs the instant the reveal is dismissed, before the flight begins.
-  relicAcquired(relicId, onClaim) {
+  //
+  // Pass `opts.deferred: true` for relics the run doesn't own yet (the relic
+  // is NOT added to `run.relics` before this call) to offer an explicit
+  // Claim / Leave it choice instead of "click anywhere to claim" — used by
+  // the treasure cache, where the relic is found rather than deliberately
+  // picked. `opts.onLeave` runs if the player walks away; the relic is never
+  // granted in that case.
+  relicAcquired(relicId, onClaim, opts = {}) {
+    const { deferred = false, onLeave } = opts;
     const r = RELICS[relicId];
     if (!r) { onClaim(); return; }
     audio.play('relic');
@@ -387,10 +395,6 @@ export class Game {
     box.appendChild(el('div', { class: 'relic-reveal-rarity', text: (r.rarity || '').toUpperCase() }));
     box.appendChild(el('div', { class: 'relic-reveal-name', text: r.name }));
     box.appendChild(el('div', { class: 'relic-reveal-desc', html: r.desc }));
-    box.appendChild(el('div', { class: 'relic-reveal-hint', text: this.isTouch() ? 'Tap to claim' : 'Click to claim' }));
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => overlay.classList.add('show'));
 
     let claimed = false;
     const claim = () => {
@@ -399,10 +403,29 @@ export class Game {
       const icon = disc.querySelector('.relic-reveal-icon');
       const fromRect = icon.getBoundingClientRect();
       overlay.remove();
+      if (deferred) this.run.addRelic(relicId);
       onClaim();
       this.flyRelicToSlot(relicId, fromRect);
     };
-    overlay.addEventListener('click', claim);
+
+    if (deferred) {
+      const actions = el('div', { class: 'relic-reveal-actions' });
+      actions.appendChild(button('Claim', claim, 'primary'));
+      actions.appendChild(button('Leave it', () => {
+        if (claimed) return;
+        claimed = true;
+        overlay.remove();
+        if (onLeave) onLeave();
+      }));
+      box.appendChild(actions);
+    } else {
+      box.appendChild(el('div', { class: 'relic-reveal-hint', text: this.isTouch() ? 'Tap to claim' : 'Click to claim' }));
+      overlay.addEventListener('click', claim);
+    }
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('show'));
   }
 
   // Animate a clone of the relic icon from `fromRect` to its freshly-rendered

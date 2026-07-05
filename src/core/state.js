@@ -86,6 +86,15 @@ export class RunState {
     return r;
   }
 
+  // Same pool/odds as grantRandomRelic() but doesn't grant it — used where the
+  // player gets to see the relic before deciding whether to claim it.
+  peekRandomRelic() {
+    const pool = Object.values(RELICS).filter(
+      (r) => !this.relics.includes(r.id) && r.rarity !== 'starter' && r.rarity !== 'boss'
+    );
+    return pool.length ? this.rng.pick(pool) : null;
+  }
+
   // A boss-tier relic the run doesn't yet own (the Spire's crowning offer).
   // Returns the id to display; the caller grants it via addRelic if taken.
   pickBossRelicId() {

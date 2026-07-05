@@ -1807,6 +1807,11 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .relic-reveal-hint { color: var(--muted); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
   margin-top: 18px; animation: relicHintPulse 1.8s ease-in-out infinite; }
 
+/* Claim / Leave it choice (treasure cache): the backdrop stops being a giant
+   button, so the overlay itself shouldn't look clickable anymore. */
+.relic-reveal-overlay:has(.relic-reveal-actions) { cursor: default; }
+.relic-reveal-actions { display: flex; gap: 12px; margin-top: 20px; }
+
 /* the icon clone that flies to the top-bar slot */
 .relic-fly {
   position: fixed; z-index: 200; pointer-events: none; display: grid; place-items: center;
