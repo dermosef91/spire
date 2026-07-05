@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-04T21:08:01.372Z",
+  "generated": "2026-07-05T12:21:44.687Z",
   "dryRun": false,
   "ids": [
     "amara",
@@ -7,6 +7,9 @@
     "amara_block",
     "amara_skill",
     "brass_sentinel",
+    "brass_sentinel_attack",
+    "brass_sentinel_block",
+    "brass_sentinel_skill",
     "echo_wraith",
     "ember_colossus",
     "gilded_warden",
