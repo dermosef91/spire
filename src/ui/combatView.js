@@ -51,8 +51,23 @@ export class CombatView {
   // bound once, so it must be rebound here.
   bindParryPrompt() {
     this.combat.parryPrompt = this.game.rhythmOn()
-      ? () => runParryQTE({ isTouch: this.game.isTouch(), isTutorial: !this.game.meta.tutorialDone })
+      ? (e) => runParryQTE({ isTouch: this.game.isTouch(), isTutorial: !this.game.meta.tutorialDone, marks: this.parryMarksFor(e) })
       : null;
+  }
+
+  // Bigger incoming attacks demand more than a single timed press: one
+  // directional swipe per blow (multi-hit flurries), capped at 3, plus a
+  // bump for a single heavy nuke even at hits=1 so telegraphed boss swings
+  // still read as a harder parry.
+  parryMarksFor(e) {
+    const move = e && e.bp && e.bp.moves[e.move];
+    const intent = move && move.intent;
+    const dmg = (intent && intent.dmg) || 0;
+    const hits = (intent && intent.hits) || 1;
+    let marks = Math.min(3, hits);
+    if (dmg >= 20) marks = Math.max(marks, 2);
+    if (dmg >= 30) marks = Math.max(marks, 3);
+    return marks;
   }
 
   mount(root) {
