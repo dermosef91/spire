@@ -83,4 +83,14 @@ its own worktree instead:
 - Gotcha: `.gitignore` must contain `node_modules` **without** a trailing
   slash — `node_modules/` only matches real directories, so the worktree's
   symlink would show up as untracked noise in `git status`.
+- **A fresh worktree has no `.env` either** (same reason as `node_modules`:
+  it's gitignored/untracked, so only the primary checkout has it unless
+  something symlinks it in). `tools/worktree.sh new` symlinks the primary's
+  `.env` and `tools/node_modules` (openai/sharp, needed for the live asset
+  generators) alongside `node_modules`; `done` removes all three. **IDE-managed
+  worktrees** (`.claude/worktrees/...`) are *not* created by `tools/worktree.sh`
+  and get none of these symlinks — if a live `OPENAI_API_KEY`-gated script
+  reports the key missing there, check `/Users/moritzgrassy/spire/.env` in the
+  primary checkout before assuming the key isn't set anywhere, and symlink
+  (or copy) it and `tools/node_modules` into the worktree manually.
 - **Encounter difficulty tiers (weak/normal/hard)**: monster fights escalate *within* an act. `startMonster()` (`src/scenes/combat.js`) picks the tier from the per-act fight counter `run._actMonster` — fights 1–2 `weak`, 3–4 `normal`, 5+ `hard` — and `pickEncounter()` (`src/scenes/map.js`) falls back to `normal` when the act's table defines no `hard` pool. `_actMonster` is persisted in the run save as `actMonster` (`state.js` toJSON/fromJSON) so a reload mid-act doesn't reset the run to weak fights. Only Act 1 has a `hard` pool so far — added because Act 1 went flat once the deck outgrew its many low-HP normals (spark_imp was 8–11 HP; several fights totaled <40 HP). When retuning, aim for total-HP bands of roughly weak ≲ 30 / normal ~30–65 / hard ~45–85, and keep packs to **two** enemies — no encounter has ever shipped 3, so the `.enemy-side` layout at landscape-phone widths is unproven for it.
