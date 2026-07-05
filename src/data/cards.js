@@ -196,10 +196,10 @@ def('flowing_edge', {
 });
 def('dancers_poise', {
   name: "Dancer's Poise", char: 'amara', type: 'skill', rarity: 'common', cost: 1,
-  block: 4, magic: 1, target: 'self',
-  desc: (c) => `Gain ${c.block} Block, plus ${c.magic} for each Tempo you have.`,
-  upgrade: (c) => { c.block = 6; c.magic = 2; },
-  onPlay: (ctx) => ctx.gainBlock(ctx.c.block + ctx.c.magic * ctx.tempo()),
+  magic: 1, target: 'self',
+  desc: (c) => `Gain ${c.magic} Block for each Tempo you have.`,
+  upgrade: (c) => { c.magic = 2; },
+  onPlay: (ctx) => ctx.gainBlock(ctx.c.magic * ctx.tempo()),
 });
 def('spiral_finish', {
   name: 'Spiral Finish', char: 'amara', type: 'attack', rarity: 'uncommon', cost: 2,
