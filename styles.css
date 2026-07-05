@@ -2842,7 +2842,27 @@ img.svg-ic { object-fit: contain; }
 
 .kb-focus.map-node {
   transform: translate(-50%, -50%) scale(1.35) !important;
-  box-shadow: 0 0 12px var(--orange) !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 10px var(--orange)) !important;
+}
+
+/* Enemy targeting: glow the sprite's own alpha shape (drop-shadow), not a
+   box around its container — a plain box-shadow on .combatant reads as a
+   hard square behind sprites with transparent PNG cutouts. Mirrors the
+   mouse-hover targetable glow above. */
+.kb-focus.combatant {
+  box-shadow: none !important;
+  transform: none !important;
+}
+.kb-focus.combatant .stage {
+  transform: scale(1.15) !important;
+  filter: drop-shadow(0 0 28px rgba(255, 176, 80, 0.95)) !important;
+  transition: transform 0.15s ease, filter 0.15s ease !important;
+}
+
+.kb-focus.potion:has(.potion-art-img) {
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 10px var(--orange)) !important;
 }
 
 .kb-focus.char-card {
@@ -2867,6 +2887,10 @@ img.svg-ic { object-fit: contain; }
   }
   .kb-focus.map-node {
     transform: translate(-50%, -50%) !important;
+  }
+  .kb-focus.combatant .stage {
+    transform: none !important;
+    transition: none !important;
   }
   .pip:hover, .block-badge:hover {
     transform: none !important;
