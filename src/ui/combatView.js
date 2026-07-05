@@ -259,6 +259,7 @@ export class CombatView {
       onHover: (o, n, on) => this.game.tooltip(o, n, on),
     }));
     this.applyRelicPulses();
+    this.applyGoldFx();
 
     this.updateCombatant(c.player);
     for (const e of c.enemies) {
@@ -386,12 +387,16 @@ export class CombatView {
     const it = enemy.intent;
     if (!it) { wrap.appendChild(el('span', { text: '…' })); return; }
     const c = this.combat;
-    if (it.type === 'attack' || it.type === 'attackdebuff') {
+    if (it.type === 'attack' || it.type === 'attackdebuff' || it.type === 'attacksteal') {
       const dmg = c.calcAttackDamage(it.dmg, enemy, c.player);
       const hits = it.hits || 1;
       wrap.appendChild(el('span', { class: 'intent-atk', attrs: { 'data-intent-type': 'attack' }, html: `<i class="intent-ic">${INTENT.attack}</i>${dmg}${hits > 1 ? `×${hits}` : ''}` }));
     }
     if (it.type === 'attackdebuff' || it.type === 'debuff' || it.type === 'debuffblock') wrap.appendChild(el('span', { class: 'intent-deb', attrs: { 'data-intent-type': 'debuff' }, html: `<i class="intent-ic">${INTENT.debuff}</i>` }));
+    if (it.type === 'attacksteal') {
+      const goldAmt = it.gold || 0;
+      wrap.appendChild(el('span', { class: 'intent-steal', attrs: { 'data-intent-type': 'steal' }, html: `<i class="intent-ic">${INTENT.steal}</i>${goldAmt > 0 ? goldAmt : ''}` }));
+    }
     if (it.type === 'block' || it.type === 'buffblock' || it.type === 'debuffblock') {
       const blockAmt = it.block || 0;
       wrap.appendChild(el('span', { class: 'intent-def', attrs: { 'data-intent-type': 'block' }, html: `<i class="intent-ic">${INTENT.block}</i>${blockAmt > 0 ? blockAmt : ''}` }));
@@ -1231,6 +1236,15 @@ export class CombatView {
       this.injectCardAnim(payload.card);
       return;
     }
+    if (type === 'gold') {
+      // Topbar (and its .tb-gold node) is rebuilt fresh on the notify() that
+      // follows this fx call, so queue it the same way relic pulses are —
+      // update() drains the queue right after rebuilding the topbar.
+      this._pendingGoldFx = this._pendingGoldFx || [];
+      this._pendingGoldFx.push(payload.amount);
+      audio.play('coin');
+      return;
+    }
   }
 
   // Reveal a card an enemy shuffled into the deck (e.g. Dazed from Rivet): show
@@ -1297,6 +1311,20 @@ export class CombatView {
       node.classList.remove('relic-pulse');
       void node.offsetWidth;
       node.classList.add('relic-pulse');
+    }
+  }
+
+  applyGoldFx() {
+    if (!this._pendingGoldFx || !this._pendingGoldFx.length) return;
+    const amounts = this._pendingGoldFx;
+    this._pendingGoldFx = [];
+    const node = this.topbarHolder.querySelector('.tb-gold');
+    if (!node) return;
+    for (const amount of amounts) {
+      floatHTML(this.fxLayer, node, `<i class="pip-ic">${UI.coin}</i>${amount > 0 ? '+' : ''}${amount}`, 'debuff');
+      node.classList.remove('gold-flash');
+      void node.offsetWidth;
+      node.classList.add('gold-flash');
     }
   }
 

@@ -358,6 +358,30 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
 - Mechanic names stay readable; afrofuturist flavor lives in card/enemy/relic
   text and the world, not in renaming core mechanics.
 - Mobile + reduced-motion must keep working; test both orientations after UI work.
+- **Gold-stealing enemy moves must telegraph and confirm the theft** (established
+  fixing Market Thief's silent `swipe`): give the move's `intent` a distinct
+  `type` (e.g. `attacksteal`, handled in `renderIntent`/`combatView.js` as an
+  extra icon span alongside `attack`'s sword+dmg — add the new type to the
+  `attack`-icon `if` too so damage still shows) plus any numeric fields the
+  icon needs (`gold`), and register the type in both `INTENT`/`INTENT_INFO`
+  (`icons.js`) and the `.intent-*` selector lists in `game.js` (pointerdown
+  stopPropagation + the click-popup `closest()`) so the icon's info-popup
+  works like every other intent. Fire a dedicated `fx` type from the move's
+  `run()` (e.g. `c.fx('gold', { amount: -stolen })`, using the *actual*
+  amount deducted, not the nominal one, since `run.gold` clamps at 0) for the
+  "after" feedback. Because `CombatView.update()` fully rebuilds the top bar
+  (`clear(this.topbarHolder).appendChild(topBar(...))`) every tick, a
+  same-tick `onFx` handler can't touch `.tb-gold` — it doesn't exist yet at
+  fire time. Queue the amount instead and drain it in a small
+  `applyGoldFx()` called right after the topbar rebuild in `update()`,
+  exactly like the pre-existing `_pendingRelicPulses`/`applyRelicPulses()`
+  pattern for relic chips — reach for that pattern whenever an `fx` needs to
+  flash/float over a topbar element. Separately: `Combat.pickEnemyMove` only
+  ever copied the move's bare `intent` object onto `e.intent`, never merging
+  in the move's `name` — so `renderIntent`'s `wrap.title = it.name` (meant to
+  be the icon's native hover title) was **dead code, always blank**, for
+  every enemy in the game, not just this one. Fixed generally by having
+  `pickEnemyMove` spread `{ ...move.intent, name: move.name }`.
 - **No emoji, anywhere in-game**: all iconography (enemy/character art, status
   effects, intents, UI chrome) is custom line-art SVG from `src/ui/icons.js`
   (`UI`, `INTENT`, `NODE`, `POWER_SVG`/`powerIcon()`, `RELIC_SVG`/`relicIcon()`,

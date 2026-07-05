@@ -94,7 +94,7 @@ export class Game {
     // 'click' event does. Stop it at the source so tapping a keyword inside a
     // card's text doesn't also play the card.
     document.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.kw, .intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk')) e.stopPropagation();
+      if (e.target.closest('.kw, .intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk, .intent-steal')) e.stopPropagation();
     }, true);
 
     // Click (mouse or touch): toggles the popup for a keyword span or an
@@ -111,7 +111,7 @@ export class Game {
         this.infoPopup(`<b>${info.name}</b><br>${info.desc}`, kwSpan);
         return;
       }
-      const intentIcon = e.target.closest('.intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk');
+      const intentIcon = e.target.closest('.intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk, .intent-steal');
       if (intentIcon) {
         e.stopPropagation();
         const info = INTENT_INFO[intentIcon.dataset.intentType];

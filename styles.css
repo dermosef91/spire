@@ -563,6 +563,12 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .tb-char { color: var(--orange); } .tb-char b { color: var(--cream); }
 .tb-hp { color: var(--amber); } .tb-hp b { color: #ffd9a0; }
 .tb-gold b { color: var(--orange); }
+.tb-gold.gold-flash { animation: goldFlash 0.7s ease-out; }
+@keyframes goldFlash {
+  0% { filter: brightness(1); }
+  35% { filter: brightness(2) saturate(1.6) hue-rotate(-20deg); }
+  100% { filter: brightness(1); }
+}
 .tb-act { color: var(--orange); letter-spacing: 0.16em; text-transform: uppercase; font-size: 14px !important; }
 .tb-relics, .tb-potions { display: flex; gap: 7px; flex-wrap: wrap; }
 
@@ -1233,8 +1239,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .intent::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%) rotate(45deg); width: 9px; height: 9px;
   background: rgba(8,4,2,0.95); border-right: 1px solid var(--orange); border-bottom: 1px solid var(--orange); }
 .intent-atk { color: var(--ember); } .intent-def { color: #9fc2ff; } .intent-buf { color: var(--amber); }
-.intent-deb { color: var(--orange); } .intent-unk { color: var(--muted); }
-.intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk { cursor: pointer; display: inline-flex; align-items: center; }
+.intent-deb { color: var(--orange); } .intent-unk { color: var(--muted); } .intent-steal { color: var(--amber); }
+.intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk, .intent-steal { cursor: pointer; display: inline-flex; align-items: center; }
 
 .combat-scene.targeting .enemy.targetable { cursor: pointer; }
 .combat-scene.targeting .enemy.targetable .med-core { animation: targetPulse 1s ease-in-out infinite; }
@@ -2186,7 +2192,7 @@ html { -webkit-text-size-adjust: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .game-title, .glyph, .ground-shadow, .intent, .med-ring, .medallion::after, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene, .rest-fire, .targeting-prompt, .relic-pulse { animation: none !important; }
+  .game-title, .glyph, .ground-shadow, .intent, .med-ring, .medallion::after, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene, .rest-fire, .targeting-prompt, .relic-pulse, .gold-flash { animation: none !important; }
   .map-node.reachable::after, .node-boss::after { animation: none !important; }
   .card::after, .btn::after, .end-turn::after { animation: none !important; }
   .card:hover, .card.in-hand:hover { transform: none !important; }

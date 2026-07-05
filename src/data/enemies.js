@@ -103,7 +103,16 @@ def('brass_sentinel', {
 def('market_thief', {
   name: 'Market Thief', act: 1, hpMin: 26, hpMax: 32,
   moves: {
-    swipe: { name: 'Swipe', intent: { type: 'attack', dmg: 7 }, run: (c, s) => { c.enemyAttack(s, 7); if (!s.fled) c.run.gold = Math.max(0, c.run.gold - 8); } },
+    swipe: {
+      name: 'Purse Snatch', intent: { type: 'attacksteal', dmg: 7, gold: 8 },
+      run: (c, s) => {
+        c.enemyAttack(s, 7);
+        if (s.fled) return;
+        const stolen = Math.min(8, c.run.gold);
+        c.run.gold -= stolen;
+        if (stolen > 0) c.fx('gold', { amount: -stolen });
+      },
+    },
     flee: { name: 'Flee', intent: { type: 'unknown' }, run: (c, s) => c.enemyFlee(s) },
   },
   pick: (s, c, rng) => (s.turn >= 4 ? 'flee' : 'swipe'),
