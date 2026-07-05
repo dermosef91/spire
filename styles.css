@@ -1178,19 +1178,23 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
      1.5px  1.5px 0 #000,
      0px 0px 4px #000;
 }
+/* Status pips sit beside the combatant, stacked in a column, instead of
+   centered below the nameplate — centered there, they used to end up hidden
+   behind the fanned hand in combat. Player pips go to the left (away from
+   the board center), enemy pips to the right (also away from center), so
+   neither ever sits under the hand. */
 .powers {
   position: absolute;
-  bottom: calc(25% - 36px);
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 25%;
   display: flex;
+  flex-direction: column;
   gap: 5px;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 170px;
+  max-width: 140px;
   z-index: 5;
   pointer-events: auto;
 }
+.player .powers { right: calc(100% + 10px); align-items: flex-end; }
+.enemy .powers { left: calc(100% + 10px); align-items: flex-start; }
 .pip {
   font-family: var(--font-display);
   font-size: 12px;
@@ -2134,6 +2138,9 @@ html { -webkit-text-size-adjust: 100%; }
   .hptext { font-size: 10px; }
   .combatant-badge { width: 14px; height: 14px; }
   .block-badge { min-width: 24px; height: 24px; font-size: 12px; bottom: 5px; left: -12px; }
+  /* The block badge already sticks out to the left of the nameplate here, so
+     push the player's power-pip column out past it or the two collide. */
+  .player .powers { right: calc(100% + 32px); }
   .intent { bottom: calc(var(--med) * 1.85 + 8px); font-size: 14px; } .orbs { bottom: calc(25% + 42px); } .orbs .orb { width: 26px; height: 26px; }
   .combat-log { min-height: 12px; font-size: 11px; margin: auto 0 1px; }
   /* Pulled in tighter than the base rule so the safe zone below (.hand's
@@ -2171,9 +2178,9 @@ html { -webkit-text-size-adjust: 100%; }
   }
   /* Characters are shorter in landscape and the (lowered) hand covers their
      feet, so lift the name/HP block onto the torso where it clears the card
-     tops, and raise the power pips to sit just under it. */
+     tops, and keep the power pips level with it. */
   .combatant-info { bottom: 44%; }
-  .powers { bottom: calc(44% - 34px); }
+  .powers { bottom: 44%; }
   /* The resting fan's downward dip (--shift, set inline by combatView and
      growing as |diff|^1.5 for wider hands) would reach ~48px on a full
      10-card hand and, with the hand now sitting lower, get cropped by
