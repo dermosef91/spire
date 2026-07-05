@@ -2616,29 +2616,34 @@ img.svg-ic { object-fit: contain; }
   position: relative; width: min(46vw, 34dvh, 300px); aspect-ratio: 1;
   display: flex; align-items: center; justify-content: center;
 }
+/* The target ring is the one goal line the player must land the closing note
+   on — it needs to read as unmistakably "this one" against the ornament rings
+   and the note itself, so it gets the strongest, most saturated glow of the
+   three and stays that way for the whole approach (not just on-hit). */
 .qte-target {
   position: absolute; inset: 22%; border-radius: 50%;
-  border: 2px solid var(--line);
-  box-shadow: 0 0 14px rgba(255, 106, 26, 0.25), inset 0 0 14px rgba(255, 106, 26, 0.1);
+  border: 3px solid var(--orange-bright);
+  box-shadow: 0 0 26px rgba(255, 138, 58, 0.65), inset 0 0 18px rgba(255, 138, 58, 0.3);
   transition: border-color 100ms linear, box-shadow 100ms linear;
 }
-.qte-parry .qte-target { border-color: var(--blue); box-shadow: 0 0 22px rgba(159, 194, 255, 0.4), inset 0 0 16px rgba(159, 194, 255, 0.15); }
+.qte-parry .qte-target { border-color: var(--blue-bright); box-shadow: 0 0 26px rgba(159, 194, 255, 0.65), inset 0 0 18px rgba(159, 194, 255, 0.3); }
+/* The closing note is deliberately dimmer/thinner than the target so it
+   reads as "approaching marker", not a second candidate for the goal ring. */
 .qte-note {
   position: absolute; inset: 22%; border-radius: 50%;
-  border: 3px solid var(--orange-bright); box-shadow: var(--glow);
+  border: 2px solid var(--cream); opacity: 0.55;
   will-change: transform; pointer-events: none;
 }
-.qte-parry .qte-note { border-color: var(--blue-bright); box-shadow: 0 0 22px rgba(159, 194, 255, 0.45); }
-/* Faint concentric ornament rings behind the arrow (static, reduced-motion safe). */
+.qte-parry .qte-note { border-color: var(--cream); }
+/* Concentric ornament rings behind the arrow (static, reduced-motion safe) —
+   desaturated and faint so they read as backdrop texture, never competing
+   with the target ring for "which circle do I aim at". */
 .qte-rings {
   position: absolute; inset: -8%;
-  opacity: 0.75; pointer-events: none;
+  opacity: 0.3; pointer-events: none;
+  filter: grayscale(1) brightness(0.85);
 }
 .qte-rings .svg-ic { width: 100%; height: 100%; }
-/* The ornament rings are a baked-color SVG (not currentColor) — hue-shift the
-   ember tones toward the block-blue accent for the parry QTE rather than
-   forking a second SVG constant just for this faint backdrop. */
-.qte-parry .qte-rings { filter: hue-rotate(190deg) saturate(1.15); }
 /* Feathered chevron-stack swipe arrow; drawn pointing up, rotated per direction. */
 .qte-dir {
   position: absolute; inset: 0; z-index: 2;
