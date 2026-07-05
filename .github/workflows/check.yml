@@ -1,0 +1,52 @@
+name: CI
+
+# Gate for the auto-merge → auto-deploy flow. The game ships with zero runtime
+# dependencies, but the repo carries two plain-Node test suites; this runs both
+# on every PR (before a self-merge) and on pushes to main (the merge commit that
+# triggers the Pages deploy). Keep it green before merging.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  # Fast, dependency-free logic tests for the DOM-free core (rng, run-state,
+  # mapgen, cards, combat).
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Logic tests
+        run: npm test
+
+  # End-to-end smoke: boots the real static site and drives title → New Run →
+  # character → map → combat in headless Chromium, failing on any uncaught JS
+  # error. Playwright is installed only in CI — it is never a project dependency.
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright + Chromium
+        run: |
+          npm install -g playwright
+          playwright install --with-deps chromium
+
+      - name: E2E smoke
+        run: npm run smoke

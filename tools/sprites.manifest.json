@@ -27,32 +27,32 @@
   {
     "id": "brass_sentinel",
     "kind": "enemy",
-    "prompt": "A massive blocky brass-plated golem standing rigid. Flat rectangular head with a single horizontal visor slit glowing deep ember. Heavy riveted chest plate with a circular power core in the abdomen emanating orange rings. Squat powerful stance, thick segmented arms with gear joints. Antenna crest on top of head. Industrial and imposing. Full figure head-to-feet, centered."
+    "prompt": "A majestic, towering golem constructed from heavy plates of burnished brass and dark iron. Flat rectangular head with a single horizontal visor slit glowing with intense ember-orange light. Intricate geometric African-inspired tribal patterns etched into the brass chest plates. A circular power core in the center of its torso radiates glowing concentric energy rings. Segmented gear-jointed limbs and heavy brass fists. A dented cowrie-shell collar and a single snapped star-iron blade are fused into its chest plating — the ghost of an Agojie bladedancer the Spire welded into a wall. Imposing, robotic, and powerful. Full figure head-to-feet, centered, facing to the left (towards the opponent)."
   },
   {
     "id": "market_thief",
     "kind": "enemy",
-    "prompt": "A hooded nimble figure in dark layered wrappings, crouching stance. Only glowing amber eyes visible under the deep cowl. One hand clutches a stolen golden coin with concentric ring engravings. Lean build, tattered cloak edges dissolving into shadow wisps. Geometric shadow patterns on the cloak. Full figure, centered."
+    "prompt": "A hooded nimble figure in dark layered wrappings, crouching low in a ready stance. Only glowing amber eyes visible under the deep cowl. One hand clutches a stolen golden coin with concentric ring engravings. Lean athletic build, tattered cloak edges dissolving into shadow wisps. Geometric shadow patterns on the cloak. Full figure head-to-feet, leaving a wide safety margin at the bottom of the frame so no feet or details are cut off. Centered."
   },
   {
     "id": "gilded_warden",
     "kind": "enemy",
-    "prompt": "An imposing temple guardian in ornamental golden armor with radiating sun-ray shoulder plates. Tall helm with a single vertical crest spike, cross-shaped visor glowing with inner ember light. Ceremonial spear held vertically, spear tip catching orange rim light. Concentric halo rings behind the head. Regal and immovable stance. Full figure head-to-feet, centered."
+    "prompt": "An imposing temple guardian in ornamental golden armor with radiating sun-ray shoulder plates. Tall helm with a single vertical crest spike, cross-shaped visor glowing with inner ember light. Ceremonial spear held vertically, spear tip catching orange rim light. Concentric halo rings behind the head. Faded scarification marks and a broken cowrie strand still cross the golden breastplate, marks of the Agojie champion sealed inside the armor. Regal and immovable stance. Full figure head-to-feet, centered."
   },
   {
     "id": "the_gatekeeper",
     "kind": "enemy",
-    "prompt": "A monumental living stone archway entity — two massive carved pillars form its legs, a great glowing orange eye above the lintel. Concentric orbital rings spin around the eye. Ancient carved glyphs and geometric patterns cover the stone surface. Ember light seeps from cracks. Doorway between the pillars shows void darkness. Imposing and ancient. Full figure, centered."
+    "prompt": "A monumental living stone archway entity of epic proportions. Two massive, towering carved black stone pillars etched with glowing ember-orange ancient glyphs form its legs. A colossal glowing eye floats above the stone lintel, surrounded by spinning concentric orbital rings. Space-time warping and dark void energy visible inside the archway. Ancient, intimidating, and majestic. Full figure, centered."
   },
   {
     "id": "sand_wraith",
     "kind": "enemy",
-    "prompt": "A flowing spectral figure made of swirling sand particles with a single large eye in a featureless smooth face, eye glowing ember-orange. Tattered robes dissolving into sand grain particles at the edges. Hourglass-like torso shape. Drifting weightless floating posture, trailing sand wisps. Concentric rings around the eye. Full figure, centered."
+    "prompt": "A flowing spectral figure made of swirling sand particles with a single large eye in a featureless smooth face, eye glowing ember-orange. Tattered robes dissolving into sand grain particles at the edges. Hourglass-like torso shape. Drifting weightless floating posture, trailing sand wisps. Concentric rings around the eye. A tarnished star diadem and three dead, unlit spirit orbs orbit it slowly — a star-weaver the Archive drained to dust. Full figure, centered."
   },
   {
     "id": "mirror_shade",
     "kind": "enemy",
-    "prompt": "A diamond-shaped mirror entity that refracts orange light. Crystalline faceted obsidian body with sharp geometric angles, a small glowing amber core at its center. Faint orange afterimage reflections trailing from edges. Floating in space, radiating concentric geometric patterns. Angular and alien. Full figure, centered."
+    "prompt": "A diamond-shaped mirror entity that refracts orange light. Crystalline faceted obsidian body with sharp geometric angles, a small glowing amber core at its center. Faint orange afterimage reflections trailing from edges. Floating in space, radiating concentric geometric patterns. A shattered star diadem is embedded in its top facet and dim spirit orbs hang frozen around it, the cast-off shell of a star-weaver. Angular and alien. Full figure, centered."
   },
   {
     "id": "chrome_serpent",
@@ -72,7 +72,7 @@
   {
     "id": "void_chanter",
     "kind": "enemy",
-    "prompt": "A hooded cultist figure with a dark void sphere hovering above its head, the sphere ringed by concentric orange orbital lines. Featureless black face beneath the cowl, mouth open in a silent chant. Dark robes trailing into nothingness at the hem. Ominous radiating darkness aura with halftone grain. Full figure, centered."
+    "prompt": "A hooded cultist figure with a dark void sphere hovering above its head, the sphere ringed by concentric orange orbital lines. Featureless black face beneath the cowl, mouth open in a silent chant. Dark robes trailing into nothingness at the hem. A broken kora string and a brass sound-graft still ring its open throat, the leftovers of a griot unwritten into a chorus. Ominous radiating darkness aura with halftone grain. Full figure, centered."
   },
   {
     "id": "static_seraph",
@@ -88,5 +88,75 @@
     "id": "heart_of_static",
     "kind": "enemy",
     "prompt": "A massive pulsating heart-shaped core of pure crackling static energy, surrounded by multiple concentric spinning orbital rings of increasing size. Radiating lightning rays and ember-orange energy bolts in all directions. Central bright glowing core with deep ember heart. The final boss — overwhelming cosmic scale, filling the frame. Centered."
+  },
+  {
+    "id": "reef_spitter",
+    "kind": "enemy",
+    "prompt": "A defensive oceanic reef spitter creature resembling a barbed metallic clam with its shell open. Spiked black obsidian shell plates with glowing orange circuit-line grooves and amber trim. The inner mouth is a dark pit glowing with intense ember-orange light and dripping luminous green brine. Intimidating and alien. Full figure centered."
+  },
+  {
+    "id": "tide_priest",
+    "kind": "enemy",
+    "prompt": "A mystical conch priest of the sunken market, standing centered. A spiraling conch-shell helm, wearing layered flowing ceremonial robes with geometric patterns in ember-orange and amber. Surrounded by a radiating energy aura and glowing concentric light rings. Serene yet powerful stance. Full figure head-to-feet."
+  },
+  {
+    "id": "spark_imp",
+    "kind": "enemy",
+    "prompt": "A crackling, hovering electric spark imp sprite. A jagged, energetic entity formed of golden lightning bolts and starburst rays in amber and orange. Intense glowing ember-orange eyes at its core, surrounded by crackling electrical static arcs. Dynamic and volatile. Full figure centered."
+  },
+  {
+    "id": "rust_maw",
+    "kind": "enemy",
+    "prompt": "A coiled mechanical maw ringed with jagged rusted teeth. The circular body is made of heavy plates of rusted black iron, gear-joints, and orange copper bands. The inner mouth has concentric rings of sharp brass teeth surrounding a glowing ember-orange energy core. Intimidating and robotic. Full figure centered."
+  },
+  {
+    "id": "ink_leech",
+    "kind": "enemy",
+    "prompt": "A sinuous segmented mechanical leech hovering in an elegant coiled S-shape. Glossy black obsidian body segments with glowing ember-orange circuit lines and connectors. A circular barbed sucker mouth at its head, radiating concentric energy rings. Parasitic and alien. Full figure centered."
+  },
+  {
+    "id": "null_scribe",
+    "kind": "enemy",
+    "prompt": "A scholarly robotic scribe hovering centered. The torso is an ornate frame made of dark iron and brass, holding a long unspooling parchment scroll with glowing geometric runes and blacked-out redactions. A featureless mask with a single glowing ember-orange eye is at its center. Full figure head-to-feet."
+  },
+  {
+    "id": "glyph_sentry",
+    "kind": "enemy",
+    "prompt": "A hovering geometric rune-star sentry. A sharp, eight-pointed star composed of layered obsidian plates and orange circuitry. A brilliant, pulsating ember-orange energy core at the center, surrounded by spinning concentric rings. Ancient and mechanical. Full figure centered."
+  },
+  {
+    "id": "obsidian_maw",
+    "kind": "enemy",
+    "prompt": "A hovering, jagged obsidian geode entity. A fragmented black crystalline stone body with sharp geometric angles. The body splits open down the center like a gnashing mouth, revealing a glowing rift of crackling ember-orange energy and jagged crystalline teeth. Impressive and geological. Full figure centered."
+  },
+  {
+    "id": "echo_wraith",
+    "kind": "enemy",
+    "prompt": "A spectral echo wraith figure. A slender, robed figure of dark shadow wisps with glowing amber eyes. Flanked on both sides by semi-transparent, glitching wireframe echoes of its own silhouette in glowing orange and cream. Digital static and halftone noise. A faint broken star diadem flickers above its brow and one dim spirit orb drifts at its shoulder — the smeared afterimage of a star-weaver still half-unwritten. Full figure head-to-feet, centered."
+  },
+  {
+    "id": "hollow_cantor",
+    "kind": "enemy",
+    "prompt": "A slender hollow cantor figure in a scholarly robe, standing centered. Dark heavy vestments with amber geometric embroidery. The head is topped with a burning candle casting flickering rays of orange and cream light. Serene glowing ember-orange eyes visible beneath a deep cowl. A cracked kora gourd and a brass-grafted throat hang at its chest — the remains of a cosmic griot the Spire hollowed and kept. Full figure head-to-feet."
+  },
+  {
+    "id": "ember_colossus",
+    "kind": "enemy",
+    "prompt": "A hulking, massive magma colossus golem. Constructed from rough, blocky plates of dark volcanic basalt rock. Intense lava cracks and glowing veins of ember-orange magma web across its torso and arms. A wide face with glowing orange eyes and a bared magma grin. Imposing and powerful. Full figure head-to-feet, centered."
+  },
+  {
+    "id": "static_swarm",
+    "kind": "enemy",
+    "prompt": "A hovering swarm of geometric shards. A cluster of floating, sharp obsidian and copper crystals crackling with static electricity arcs. A central glowing ember-orange spark acts as the core of the swarm, with orange field lines connecting the fragments. Fragmented and volatile. Full figure centered."
+  },
+  {
+    "id": "choir_master",
+    "kind": "enemy",
+    "prompt": "A towering choir-master conductor entity, the grandest of the Spire's kept griots. A tall robed maestro in heavy dark vestments layered with amber geometric embroidery and horizontal kente stripe bands. In place of a head, a brass-throated resonator crowned with a splayed fan of kora strings fanned out like a peacock's tail, each string humming with ember-orange light. Both arms raised mid-conduct, long fingers trailing glowing sound-wave ribbons. Concentric halo rings of orange musical notation orbit its shoulders. A cracked kora gourd and a brass-grafted throat are fused into its chest — a cosmic griot the Spire unwrote into the conductor of its choir. Imposing and ceremonial. Full figure head-to-feet, centered, facing to the left (towards the opponent)."
+  },
+  {
+    "id": "echo_mote",
+    "kind": "enemy",
+    "prompt": "A small floating echo-mote, a single summoned voice of the choir made visible. A compact hovering wisp of dark shadow-stuff coiled around a glowing ember-orange spark core, ringed by one thin concentric orbital line. Faint glitching wireframe afterimages of its own silhouette trail at its edges in cream and orange, and tiny concentric sound-wave ripples pulse outward from it. Digital static and halftone grain. Minor, ghostly and fragile. Full figure centered, small within the frame."
   }
 ]

@@ -38,18 +38,49 @@ function orbitDots(cx, cy, r, count, dotR = 3, col = A) {
 /* ============================== UI ICONS ============================== */
 export const UI = {
   heart: S(`<path d="M50 78 C18 55 22 28 40 28 C49 28 50 38 50 38 C50 38 51 28 60 28 C78 28 82 55 50 78Z" fill="${E}" stroke="${O}" stroke-width="4"/>`),
-  coin: S(`<circle cx="50" cy="50" r="30" fill="${A}" stroke="${C}" stroke-width="3"/><circle cx="50" cy="50" r="22" fill="none" stroke="#6a3a10" stroke-width="2"/><path d="M44 40 q12 10 0 20 M56 40 q-12 10 0 20" stroke="#6a3a10" stroke-width="3"/>`),
+  // Rhythm QTE: feathered chevron-stack swipe arrow (drawn pointing up; other
+  // directions rotate the .qte-dir wrapper in CSS) — brightest/widest at the
+  // tip, tapering and fading toward the back. Deliberately short (4 chevrons,
+  // no tapering-to-a-point tail/tip spike): the original 8-chevron version
+  // narrowed to a small triangular cap that read as its own little arrowhead
+  // pointing the *opposite* way, making the swipe direction ambiguous.
+  qteChevrons: (() => {
+    let s = `<path d="M50 2 V16" stroke="${A}" stroke-width="1.4" opacity="0.85"/>`;
+    const n = 4;
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1);
+      const hw = 30 - 21 * t;      // half-width: 30 → 9
+      const y = 15 + i * 15;       // apex y
+      const band = 13 - 7 * t;     // band thickness: 13 → 6
+      const arm = hw * 0.75;       // vertical drop of the arms
+      const fill = i < 2 ? '#ffe6bd' : '#ffc478';
+      const op = (1 - 0.6 * t).toFixed(2);
+      s += `<path d="M50 ${y} L${50 + hw} ${y + arm} V${y + arm + band} L50 ${y + band} L${50 - hw} ${y + arm + band} V${y + arm} Z" fill="${fill}" opacity="${op}"/>`;
+    }
+    return S(s, { vb: '0 0 100 92' });
+  })(),
+  // Faint concentric ornament rings behind the QTE arrow (static backdrop).
+  qteRings: S(
+    rings(50, 50, 3, 14, O, 0.4)
+    + `<circle cx="50" cy="50" r="47" stroke="${A}" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.35"/>`
+    + orbitDots(50, 50, 42, 6, 1.4, A)
+  ),
+  // Gold — a custom PNG icon.
+  coin: `<img src="assets/icons/coin.png" class="svg-ic" alt="Gold" />`,
   energy: S(`${rays(50, 50, 30, 42, 12, O, 0.6, 2)}<circle cx="50" cy="50" r="26" fill="none" stroke="${O}" stroke-width="4"/><path d="M54 30 L40 54 H50 L46 70 L62 44 H52 Z" fill="${A}" stroke="${C}" stroke-width="2"/>`),
   shield: S(`<path d="M50 18 L78 28 V52 C78 70 64 80 50 84 C36 80 22 70 22 52 V28 Z" fill="#123" stroke="#9fc2ff" stroke-width="4"/><path d="M50 30 V72" stroke="#9fc2ff" stroke-width="3" opacity="0.7"/>`),
-  draw: S(`<rect x="30" y="26" width="34" height="48" rx="4" transform="rotate(-10 47 50)" fill="#16100b" stroke="${O}" stroke-width="4"/><circle cx="47" cy="50" r="9" fill="none" stroke="${A}" stroke-width="3"/>`),
+  draw: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115 135" class="svg-ic" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="12" y="12" width="68" height="100" rx="5" fill="#0c0806" stroke="#5c544a" stroke-width="1.5" opacity="0.4" transform="rotate(-10 46 62)"/><rect x="17" y="15" width="68" height="100" rx="5" fill="#0d0805" stroke="#7e746a" stroke-width="1.8" opacity="0.8" transform="rotate(-7 51 65)"/><g transform="rotate(-4 56 68)"><rect x="22" y="18" width="68" height="100" rx="5" fill="#0f0906" stroke="#dcd4cc" stroke-width="2"/><rect x="26" y="22" width="60" height="92" rx="3.5" stroke="#ffab47" stroke-width="0.8" opacity="0.3"/><path d="M 28 28 L 28 24 L 32 24" stroke="#ffab47" stroke-width="1"/><path d="M 84 28 L 84 24 L 80 24" stroke="#ffab47" stroke-width="1"/><path d="M 28 104 L 28 108 L 32 108" stroke="#ffab47" stroke-width="1"/><path d="M 84 104 L 84 108 L 80 108" stroke="#ffab47" stroke-width="1"/><line x1="29" y1="68" x2="83" y2="68" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><line x1="56" y1="36" x2="56" y2="100" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><circle cx="29" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="83" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="36" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="100" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="68" r="22" stroke="#dcd4cc" stroke-width="1.2"/><circle cx="56" cy="68" r="17" stroke="#ffab47" stroke-width="0.8" stroke-dasharray="1 2"/><circle cx="56" cy="68" r="13" stroke="#ff6a1a" stroke-width="2"/><circle cx="56" cy="68" r="8" stroke="#ffab47" stroke-width="1" fill="#130b07"/><circle cx="56" cy="68" r="3" fill="#ffab47"/></g></svg>`,
   discard: S(`<rect x="30" y="30" width="40" height="44" rx="4" fill="#16100b" stroke="${O}" stroke-width="4"/><path d="M38 44 L62 64 M62 44 L38 64" stroke="${E}" stroke-width="4"/>`),
   exhaust: S(`<rect x="32" y="30" width="36" height="44" rx="4" fill="#16100b" stroke="${O}" stroke-width="4" opacity="0.8"/><path d="M50 26 C60 36 40 40 50 52 C60 64 40 68 50 78" stroke="${A}" stroke-width="3" fill="none"/>`),
-  drawStack: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 135" class="svg-ic" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="23" y="10" width="68" height="100" rx="5" fill="#0d0805" stroke="#7e746a" stroke-width="1.8" transform="rotate(5 57 60)"/><g transform="rotate(-4 50 68)"><rect x="15" y="18" width="68" height="100" rx="5" fill="#0f0906" stroke="#dcd4cc" stroke-width="2"/><rect x="19" y="22" width="60" height="92" rx="3.5" stroke="#ffab47" stroke-width="0.8" opacity="0.3"/><path d="M 21 28 L 21 24 L 25 24" stroke="#ffab47" stroke-width="1"/><path d="M 77 28 L 77 24 L 73 24" stroke="#ffab47" stroke-width="1"/><path d="M 21 104 L 21 108 L 25 108" stroke="#ffab47" stroke-width="1"/><path d="M 77 104 L 77 108 L 73 108" stroke="#ffab47" stroke-width="1"/><line x1="22" y1="68" x2="78" y2="68" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><line x1="50" y1="36" x2="50" y2="100" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><circle cx="22" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="78" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="50" cy="36" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="50" cy="100" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="50" cy="68" r="22" stroke="#dcd4cc" stroke-width="1.2"/><circle cx="50" cy="68" r="17" stroke="#ffab47" stroke-width="0.8" stroke-dasharray="1 2"/><circle cx="50" cy="68" r="13" stroke="#ff6a1a" stroke-width="2"/><circle cx="50" cy="68" r="8" stroke="#ffab47" stroke-width="1" fill="#130b07"/><circle cx="50" cy="68" r="3" fill="#ffab47"/></g></svg>`,
-  discardStack: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 135" class="svg-ic" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="23" y="10" width="68" height="100" rx="5" fill="#0d0805" stroke="#7e746a" stroke-width="1.8" transform="rotate(5 57 60)"/><g transform="rotate(-4 50 68)"><rect x="15" y="18" width="68" height="100" rx="5" fill="#0f0906" stroke="#dcd4cc" stroke-width="2"/><rect x="19" y="22" width="60" height="92" rx="3.5" stroke="#ffab47" stroke-width="0.8" opacity="0.3"/><path d="M 21 28 L 21 24 L 25 24" stroke="#ffab47" stroke-width="1"/><path d="M 77 28 L 77 24 L 73 24" stroke="#ffab47" stroke-width="1"/><path d="M 21 104 L 21 108 L 25 108" stroke="#ffab47" stroke-width="1"/><path d="M 77 104 L 77 108 L 73 108" stroke="#ffab47" stroke-width="1"/><line x1="22" y1="68" x2="78" y2="68" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><line x1="50" y1="36" x2="50" y2="100" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><circle cx="22" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="78" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="50" cy="36" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="50" cy="100" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="50" cy="68" r="22" stroke="#dcd4cc" stroke-width="1.2"/><circle cx="50" cy="68" r="17" stroke="#ffab47" stroke-width="0.8" stroke-dasharray="1 2"/><circle cx="50" cy="68" r="13" stroke="#ff6a1a" stroke-width="2"/><circle cx="50" cy="68" r="8" stroke="#ffab47" stroke-width="1" fill="#130b07"/><circle cx="50" cy="68" r="3" fill="#ffab47"/></g></svg>`,
-  exhaustStack: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 135" class="svg-ic" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="23" y="10" width="68" height="100" rx="5" fill="#07060b" stroke="#4a5270" stroke-width="1.8" opacity="0.6" transform="rotate(5 57 60)"/><g transform="rotate(-4 50 68)"><rect x="15" y="18" width="68" height="100" rx="5" fill="#090710" stroke="#8fa3db" stroke-width="2" opacity="0.9"/><rect x="19" y="22" width="60" height="92" rx="3.5" stroke="#bc8aff" stroke-width="0.8" opacity="0.3"/><path d="M 21 28 L 21 24 L 25 24" stroke="#bc8aff" stroke-width="1"/><path d="M 77 28 L 77 24 L 73 24" stroke="#bc8aff" stroke-width="1"/><path d="M 21 104 L 21 108 L 25 108" stroke="#bc8aff" stroke-width="1"/><path d="M 77 104 L 77 108 L 73 108" stroke="#bc8aff" stroke-width="1"/><path d="M50 36 C60 48 40 52 50 68 C60 84 40 88 50 100" stroke="#8fa3db" stroke-width="2.5" fill="none" opacity="0.75"/><path d="M50 44 C56 52 44 56 50 68 C56 80 44 84 50 92" stroke="#bc8aff" stroke-width="1.5" fill="none" opacity="0.6"/></g></svg>`,
+  drawStack: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115 135" class="svg-ic" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="12" y="12" width="68" height="100" rx="5" fill="#0c0806" stroke="#5c544a" stroke-width="1.5" opacity="0.4" transform="rotate(-10 46 62)"/><rect x="17" y="15" width="68" height="100" rx="5" fill="#0d0805" stroke="#7e746a" stroke-width="1.8" opacity="0.8" transform="rotate(-7 51 65)"/><g transform="rotate(-4 56 68)"><rect x="22" y="18" width="68" height="100" rx="5" fill="#0f0906" stroke="#dcd4cc" stroke-width="2"/><rect x="26" y="22" width="60" height="92" rx="3.5" stroke="#ffab47" stroke-width="0.8" opacity="0.3"/><path d="M 28 28 L 28 24 L 32 24" stroke="#ffab47" stroke-width="1"/><path d="M 84 28 L 84 24 L 80 24" stroke="#ffab47" stroke-width="1"/><path d="M 28 104 L 28 108 L 32 108" stroke="#ffab47" stroke-width="1"/><path d="M 84 104 L 84 108 L 80 108" stroke="#ffab47" stroke-width="1"/><line x1="29" y1="68" x2="83" y2="68" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><line x1="56" y1="36" x2="56" y2="100" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><circle cx="29" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="83" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="36" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="100" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="68" r="22" stroke="#dcd4cc" stroke-width="1.2"/><circle cx="56" cy="68" r="17" stroke="#ffab47" stroke-width="0.8" stroke-dasharray="1 2"/><circle cx="56" cy="68" r="13" stroke="#ff6a1a" stroke-width="2"/><circle cx="56" cy="68" r="8" stroke="#ffab47" stroke-width="1" fill="#130b07"/><circle cx="56" cy="68" r="3" fill="#ffab47"/></g></svg>`,
+  discardStack: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115 135" class="svg-ic" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="32" y="12" width="68" height="100" rx="5" fill="#0c0806" stroke="#5c544a" stroke-width="1.5" opacity="0.4" transform="rotate(8 66 62)"/><rect x="27" y="15" width="68" height="100" rx="5" fill="#0d0805" stroke="#7e746a" stroke-width="1.8" opacity="0.8" transform="rotate(4 61 65)"/><g transform="rotate(-4 56 68)"><rect x="22" y="18" width="68" height="100" rx="5" fill="#0f0906" stroke="#dcd4cc" stroke-width="2"/><rect x="26" y="22" width="60" height="92" rx="3.5" stroke="#ffab47" stroke-width="0.8" opacity="0.3"/><path d="M 28 28 L 28 24 L 32 24" stroke="#ffab47" stroke-width="1"/><path d="M 84 28 L 84 24 L 80 24" stroke="#ffab47" stroke-width="1"/><path d="M 28 104 L 28 108 L 32 108" stroke="#ffab47" stroke-width="1"/><path d="M 84 104 L 84 108 L 80 108" stroke="#ffab47" stroke-width="1"/><line x1="29" y1="68" x2="83" y2="68" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><line x1="56" y1="36" x2="56" y2="100" stroke="#dcd4cc" stroke-width="0.8" opacity="0.5"/><circle cx="29" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="83" cy="68" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="36" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="100" r="1" fill="#dcd4cc" opacity="0.8"/><circle cx="56" cy="68" r="22" stroke="#dcd4cc" stroke-width="1.2"/><circle cx="56" cy="68" r="17" stroke="#ffab47" stroke-width="0.8" stroke-dasharray="1 2"/><circle cx="56" cy="68" r="13" stroke="#ff6a1a" stroke-width="2"/><circle cx="56" cy="68" r="8" stroke="#ffab47" stroke-width="1" fill="#130b07"/><circle cx="56" cy="68" r="3" fill="#ffab47"/></g></svg>`,
+  exhaustStack: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115 135" class="svg-ic" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="32" y="12" width="68" height="100" rx="5" fill="#07060b" stroke="#353b50" stroke-width="1.5" opacity="0.3" transform="rotate(8 66 62)"/><rect x="27" y="15" width="68" height="100" rx="5" fill="#07060b" stroke="#4a5270" stroke-width="1.8" opacity="0.6" transform="rotate(4 61 65)"/><g transform="rotate(-4 56 68)"><rect x="22" y="18" width="68" height="100" rx="5" fill="#090710" stroke="#8fa3db" stroke-width="2" opacity="0.9"/><rect x="26" y="22" width="60" height="92" rx="3.5" stroke="#bc8aff" stroke-width="0.8" opacity="0.3"/><path d="M 28 28 L 28 24 L 32 24" stroke="#bc8aff" stroke-width="1"/><path d="M 84 28 L 84 24 L 80 24" stroke="#bc8aff" stroke-width="1"/><path d="M 28 104 L 28 108 L 32 108" stroke="#bc8aff" stroke-width="1"/><path d="M 84 104 L 84 108 L 80 108" stroke="#bc8aff" stroke-width="1"/><path d="M56 36 C66 48 46 52 56 68 C66 84 46 88 56 100" stroke="#8fa3db" stroke-width="2.5" fill="none" opacity="0.75"/><path d="M56 44 C62 52 50 56 56 68 C62 80 50 84 56 92" stroke="#bc8aff" stroke-width="1.5" fill="none" opacity="0.6"/></g></svg>`,
   gear: S(`<circle cx="50" cy="50" r="14" fill="none" stroke="${O}" stroke-width="5"/>${rays(50, 50, 20, 30, 8, O, 1, 6)}`),
   fullscreen: S(`<path d="M28 40 V28 H40 M60 28 H72 V40 M72 60 V72 H60 M40 72 H28 V60" stroke="${O}" stroke-width="5"/>`),
+  soundOn: S(`<path d="M36 40 H44 L56 28 V72 L44 60 H36 Z" stroke="${O}" stroke-width="5" fill="none"/><path d="M66 38 A18 18 0 0 1 66 62 M76 30 A30 30 0 0 1 76 70" stroke="${O}" stroke-width="5" fill="none"/>`),
+  soundOff: S(`<path d="M36 40 H44 L56 28 V72 L44 60 H36 Z" stroke="${O}" stroke-width="5" fill="none"/><path d="M66 42 L78 58 M78 42 L66 58" stroke="${O}" stroke-width="5" fill="none"/>`),
   skull: S(`<path d="M50 22 C32 22 24 36 24 48 C24 58 30 62 32 68 L34 78 H66 L68 68 C70 62 76 58 76 48 C76 36 68 22 50 22Z" fill="#16100b" stroke="${O}" stroke-width="4"/><circle cx="40" cy="50" r="6" fill="${E}"/><circle cx="60" cy="50" r="6" fill="${E}"/>`),
+  lock: S(`<path d="M36 46 V36 C36 24 64 24 64 36 V46" fill="none" stroke="${O}" stroke-width="5"/><rect x="28" y="46" width="44" height="34" rx="4" fill="#16100b" stroke="${O}" stroke-width="4"/><circle cx="50" cy="62" r="5" fill="${A}"/>`),
 };
 
 /* ============================== INTENTS ============================== */
@@ -61,15 +92,34 @@ export const INTENT = {
   unknown: `<svg ${NS} viewBox="0 0 100 100" class="svg-ic" fill="none"><path d="M38 40 C38 28 62 28 62 42 C62 52 50 52 50 62" stroke="${O}" stroke-width="8" stroke-linecap="round"/><circle cx="50" cy="76" r="5" fill="${O}"/></svg>`,
 };
 
+// Human-readable explanations for each intent icon, shown in a popup when the
+// icon is clicked (enemies telegraph their next move as one or more of these).
+export const INTENT_INFO = {
+  attack: { label: 'Aggressive', desc: 'This enemy intends to deal damage with an Attack.' },
+  block: { label: 'Defensive', desc: 'This enemy intends to gain Block.' },
+  buff: { label: 'Strategic', desc: 'This enemy intends to use a Buff.' },
+  debuff: { label: 'Threatening', desc: 'This enemy intends to apply a Debuff.' },
+  unknown: { label: 'Unknown', desc: "This enemy's intent cannot be predicted." },
+};
+
 /* ============================== MAP NODES ============================== */
+// Carved line-art glyphs themed via the per-node `color` (currentColor) with
+// ember/amber accents. Built to read as silhouettes at ~26px on the act map.
 export const NODE = {
-  monster: S(`<path d="M30 70 L70 30 M30 30 L70 70" stroke="currentColor" stroke-width="9"/>`),
-  elite: S(`<path d="M50 20 L60 42 L84 44 L66 60 L72 84 L50 70 L28 84 L34 60 L16 44 L40 42 Z" fill="none" stroke="currentColor" stroke-width="6"/>`),
-  boss: S(`${rings(50, 50, 2, 16, 'currentColor', 0.5)}<circle cx="50" cy="50" r="16" fill="#1a0603" stroke="currentColor" stroke-width="5"/><path d="M34 40 L40 52 L50 36 L60 52 L66 40 V62 H34Z" fill="currentColor"/>`),
-  event: S(`<path d="M40 42 C40 28 64 30 62 44 C60 54 50 54 50 64" stroke="currentColor" stroke-width="8"/><circle cx="50" cy="78" r="5" fill="currentColor"/>`),
-  shop: S(`<path d="M28 38 H72 L68 64 H32 Z" fill="none" stroke="currentColor" stroke-width="5"/><path d="M36 38 L40 26 H60 L64 38" stroke="currentColor" stroke-width="5"/><circle cx="42" cy="72" r="4" fill="currentColor"/><circle cx="58" cy="72" r="4" fill="currentColor"/>`),
-  rest: S(`<path d="M50 24 C58 40 72 44 64 62 C60 72 40 72 36 62 C28 44 42 40 50 24Z" fill="${E}" stroke="currentColor" stroke-width="4"/><path d="M50 40 C54 50 60 52 56 62" stroke="${A}" stroke-width="3"/>`),
-  treasure: S(`<rect x="26" y="42" width="48" height="32" rx="4" fill="#16100b" stroke="currentColor" stroke-width="5"/><path d="M26 42 C26 28 74 28 74 42" stroke="currentColor" stroke-width="5"/><rect x="46" y="50" width="8" height="12" fill="${A}"/>`),
+  // Combat — a custom PNG icon.
+  monster: `<img src="assets/icons/combat.png" class="svg-ic" alt="Combat" />`,
+  // Elite — a custom PNG icon.
+  elite: `<img src="assets/icons/elite.png" class="svg-ic" alt="Elite" />`,
+  // Boss — a custom PNG icon.
+  boss: `<img src="assets/icons/boss.png" class="svg-ic" alt="Boss" />`,
+  // Unknown event — a custom PNG icon.
+  event: `<img src="assets/icons/event.png" class="svg-ic" alt="Event" />`,
+  // Bazaar — a custom PNG icon.
+  shop: `<img src="assets/icons/bazaar.png" class="svg-ic" alt="Bazaar" />`,
+  // Rest — a custom PNG icon.
+  rest: `<img src="assets/icons/rest.png" class="svg-ic" alt="Rest" />`,
+  // Treasure — a custom PNG icon.
+  treasure: `<img src="assets/icons/treasure.png" class="svg-ic" alt="Treasure" />`,
 };
 
 /* ============================== POWERS / STATUS ============================== */
@@ -83,6 +133,9 @@ const POWER_SVG = {
   artifact: `<path d="M50 22 L74 38 V62 L50 78 L26 62 V38Z" fill="none" stroke="${A}" stroke-width="5"/>`,
   intangible: `<path d="M32 76 V36 C32 18 68 18 68 36 V76 L60 68 L52 76 L44 68 L36 76Z" fill="#2a2a3a" stroke="${C}" stroke-width="3" opacity="0.8"/>`,
   focus: `<circle cx="50" cy="50" r="10" fill="${A}"/>${rays(50, 50, 16, 30, 8, O, 0.9, 4)}`,
+  // Tempo — a metronome: tapered body with a swung pendulum arm.
+  tempo: `<path d="M36 78 L46 24 H54 L64 78 Z" fill="none" stroke="${O}" stroke-width="4"/><path d="M50 70 L65 38" stroke="${A}" stroke-width="5"/><circle cx="65" cy="38" r="5" fill="${A}"/><path d="M38 78 H62" stroke="${O}" stroke-width="4"/>`,
+  invincibility: `<path d="M50 20 L78 32 V54 C78 72 65 82 50 88 C35 82 22 72 22 54 V32Z" fill="none" stroke="${A}" stroke-width="5"/><path d="M50 30 L68 38 V54 C68 66 60 73 50 78 C40 73 32 66 32 54 V38Z" fill="${O}" stroke="${C}" stroke-width="3"/>`,
   vulnerable: `<circle cx="50" cy="50" r="24" fill="none" stroke="${O}" stroke-width="5"/><circle cx="50" cy="50" r="10" fill="${E}"/>`,
   weak: `<path d="M34 36 C30 56 44 64 50 76 C56 64 70 56 66 36" stroke="${O}" stroke-width="6" fill="none"/>`,
   frail: `<path d="M50 22 V46 M50 46 L40 56 M50 46 L60 56 M50 56 V78" stroke="${O}" stroke-width="5"/>`,
@@ -390,6 +443,130 @@ const ENE = {
       <circle cx="50" cy="50" r="22" fill="none" stroke="${A}" stroke-width="1" opacity="0.6"/>
       <path d="M50 32 C62 44 62 44 50 50 C38 56 38 56 50 68" stroke="${A}" stroke-width="3" fill="none"/>
       <circle cx="50" cy="50" r="6.5" fill="${O}"/><circle cx="50" cy="50" r="2.6" fill="${C}"/>
+    </g>`),
+
+  // ---- Act 1 additions ----
+  // Poisoner — a barbed clam with a dripping brine maw.
+  reef_spitter: S(`
+    <g class="m-breathe">
+      <path d="M22 62 Q50 40 78 62 Q64 74 50 74 Q36 74 22 62Z" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M24 60 Q50 44 76 60" stroke="${A}" stroke-width="1.6" fill="none" opacity="0.7"/>
+      <path d="M30 63 L28 55 M40 66 L39 57 M60 66 L61 57 M70 63 L72 55" stroke="${A}" stroke-width="1.6"/>
+      <path d="M40 66 Q50 58 60 66 Q50 72 40 66Z" fill="#0a1410" stroke="${E}" stroke-width="2"/>
+      <circle cx="50" cy="66" r="2.6" fill="${E}"/>
+      <path d="M42 74 q-1 8 0 10 M58 74 q1 8 0 10" stroke="#6ee0a0" stroke-width="2.2" fill="none" opacity="0.8"/>
+    </g>`),
+  // Support / healer — a robed conch that pours a mending aura.
+  tide_priest: S(`
+    <g class="m-spin" opacity="0.5">${rings(50, 44, 2, 12, A, 0.4)}</g>
+    <g class="m-drift">
+      <path d="M32 84 C32 54 68 54 68 84Z" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M32 84 C32 54 50 54 50 54 L50 84Z" fill="#000" opacity="0.26"/>
+      <path d="M40 54 C36 30 64 30 60 54Z" fill="${MD}" stroke="${A}" stroke-width="2.2"/>
+      <path d="M44 42 Q50 34 56 42 Q50 50 44 42Z" fill="#0d1a1c" stroke="${E}" stroke-width="1.8"/>
+      <circle cx="50" cy="42" r="2.2" fill="${E}"/>
+      <path d="M50 22 v6 M44 26 l4 3 M56 26 l-4 3" stroke="#7fe6c0" stroke-width="2" opacity="0.8"/>
+    </g>`),
+  // Glass cannon — a spark mote crackling with too much charge.
+  spark_imp: S(`
+    <g class="m-flicker">${rays(50, 52, 12, 24, 8, A, 0.7, 2)}</g>
+    <g class="m-bob">
+      <path d="M50 32 L60 52 L52 52 L58 70 L40 48 L48 48 Z" fill="${A}" stroke="${C}" stroke-width="2"/>
+      <circle cx="50" cy="50" r="12" fill="none" stroke="${O}" stroke-width="2" opacity="0.6"/>
+      <circle cx="46" cy="46" r="2" fill="${E}"/><circle cx="55" cy="47" r="2" fill="${E}"/>
+    </g>`),
+  // Elite charger — a coiled maw ringed with jagged rusted teeth.
+  rust_maw: S(`
+    <g class="m-breathe">
+      <circle cx="50" cy="54" r="26" fill="${DK}" stroke="${O}" stroke-width="2.8"/>
+      <circle cx="50" cy="54" r="26" fill="#000" opacity="0.2"/>
+      <path d="M28 46 L34 56 L40 46 L46 56 L52 46 L58 56 L64 46 L70 56" stroke="${A}" stroke-width="2.6" fill="none"/>
+      <path d="M30 62 L36 52 L42 62 L48 52 L54 62 L60 52 L66 62" stroke="${A}" stroke-width="2.6" fill="none"/>
+      <circle cx="50" cy="54" r="7" fill="#180a04" stroke="${E}" stroke-width="2.4"/>
+      <circle cx="50" cy="54" r="2.4" fill="${E}"/>
+    </g>`),
+
+  // ---- Act 2 additions ----
+  // Life-drain — a segmented leech with a barbed sucker.
+  ink_leech: S(`
+    <g class="m-coil">
+      <path d="M28 76 Q26 44 50 40 Q74 36 72 20" fill="none" stroke="${O}" stroke-width="7"/>
+      <path d="M28 76 Q26 44 50 40 Q74 36 72 20" fill="none" stroke="${DK}" stroke-width="4"/>
+      <circle cx="30" cy="72" r="7" fill="${DKv}" stroke="${E}" stroke-width="2.4"/>
+      <circle cx="30" cy="72" r="2.6" fill="${E}"/>
+      <path d="M40 58 h6 M44 48 h6 M56 40 h6" stroke="${A}" stroke-width="1.6" opacity="0.7"/>
+      <path d="M72 20 l-4 6 h8 Z" fill="${E}"/>
+    </g>`),
+  // Curse-flooder — a masked scribe unspooling a redacting scroll.
+  null_scribe: S(`
+    <g class="m-drift">
+      <rect x="34" y="26" width="32" height="52" rx="3" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M34 26 q-6 3 0 6 M66 26 q6 3 0 6 M34 72 q-6 3 0 6 M66 72 q6 3 0 6" stroke="${A}" stroke-width="2" fill="none"/>
+      <path d="M40 38 H60 M40 46 H60 M40 54 H54" stroke="#000" stroke-width="3" opacity="0.5"/>
+      <path d="M40 38 H60 M40 46 H60 M40 54 H54" stroke="${A}" stroke-width="1" opacity="0.6"/>
+      <circle cx="50" cy="62" r="6" fill="#0a0810" stroke="${E}" stroke-width="2"/><circle cx="50" cy="62" r="2" fill="${E}"/>
+    </g>`),
+  // Charger — a hovering rune-star charging to a bright core.
+  glyph_sentry: S(`
+    <g class="m-spin" opacity="0.6">${rings(50, 50, 2, 16, A, 0.5)}</g>
+    <g class="m-pulse">
+      <path d="M50 20 L58 42 L80 50 L58 58 L50 80 L42 58 L20 50 L42 42Z" fill="${DKv}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M50 30 L55 46 L70 50 L55 54 L50 70 L45 54 L30 50 L45 46Z" fill="none" stroke="${A}" stroke-width="1.4"/>
+      <circle cx="50" cy="50" r="7" fill="#0a0810" stroke="${E}" stroke-width="2.4"/><circle cx="50" cy="50" r="2.6" fill="${E}"/>
+    </g>`),
+  // Elite berserker — a jagged obsidian void with a gnashing seam.
+  obsidian_maw: S(`
+    <g class="m-breathe">
+      <polygon points="50,18 78,40 70,74 50,84 30,74 22,40" fill="#0d0714" stroke="${O}" stroke-width="2.8"/>
+      <polygon points="50,18 78,40 70,74 50,84" fill="#000" opacity="0.32"/>
+      <path d="M34 46 L42 54 L34 60 M66 46 L58 54 L66 60" stroke="${E}" stroke-width="3" fill="none"/>
+      <path d="M38 68 L44 62 L50 68 L56 62 L62 68" stroke="${A}" stroke-width="2.6" fill="none"/>
+      <circle cx="50" cy="40" r="3" fill="${E}"/>
+    </g>`),
+
+  // ---- Act 3 additions ----
+  // Phaser — a wraith flanked by flickering echoes of itself.
+  echo_wraith: S(`
+    <g class="m-flicker" opacity="0.35">
+      <path d="M40 82 C34 52 66 52 60 82Z" fill="none" stroke="${A}" stroke-width="2" transform="translate(-9 0)"/>
+      <path d="M40 82 C34 52 66 52 60 82Z" fill="none" stroke="${A}" stroke-width="2" transform="translate(9 0)"/>
+    </g>
+    <g class="m-drift">
+      <path d="M36 84 C30 50 70 50 64 84Z" fill="${DKv}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M36 84 C31 54 50 51 50 51 L50 84Z" fill="#000" opacity="0.3"/>
+      <path d="M40 50 C40 28 60 28 60 50 L54 56 H46Z" fill="${DKv}" stroke="${A}" stroke-width="2.2"/>
+      <circle cx="45" cy="44" r="2.4" fill="${E}"/><circle cx="55" cy="44" r="2.4" fill="${E}"/>
+    </g>`),
+  // Support / healer — a candle-crowned cantor pouring a warding light.
+  hollow_cantor: S(`
+    <g class="m-flicker">${rays(50, 22, 4, 12, 6, A, 0.6, 2)}</g>
+    <g class="m-drift">
+      <path d="M33 84 C33 52 67 52 67 84Z" fill="${DK}" stroke="${O}" stroke-width="2.6"/>
+      <path d="M33 84 C33 52 50 52 50 52 L50 84Z" fill="#000" opacity="0.26"/>
+      <rect x="42" y="30" width="16" height="22" rx="3" fill="${MD}" stroke="${A}" stroke-width="2"/>
+      <path d="M50 30 Q46 24 50 18 Q54 24 50 30Z" fill="${E}" stroke="${A}" stroke-width="1.4"/>
+      <circle cx="46" cy="42" r="2" fill="${E}"/><circle cx="54" cy="42" r="2" fill="${E}"/>
+    </g>`),
+  // Berserker — a hulking magma golem seamed with fire.
+  ember_colossus: S(`
+    <g class="m-breathe">
+      <path d="M26 84 L32 46 Q50 36 68 46 L74 84Z" fill="#160a06" stroke="${O}" stroke-width="2.8"/>
+      <path d="M26 84 L32 46 Q41 41 50 40 L50 84Z" fill="#000" opacity="0.28"/>
+      <path d="M40 50 L46 58 L40 64 M60 50 L54 58 L60 64" stroke="${E}" stroke-width="3" fill="none"/>
+      <path d="M36 72 Q50 66 64 72" stroke="${E}" stroke-width="2.6" fill="none"/>
+      <path d="M44 46 L48 54 L44 60 M56 46 L52 54 L56 60" stroke="${A}" stroke-width="1.4" opacity="0.7"/>
+      <path d="M30 40 L36 30 M70 40 L64 30" stroke="${E}" stroke-width="2.4"/>
+    </g>`),
+  // Swarm — a scattered cluster of charged static shards.
+  static_swarm: S(`
+    <g class="m-flicker">
+      <path d="M50 24 L56 40 L50 46 L44 40Z" fill="${A}" stroke="${C}" stroke-width="1.4"/>
+      <path d="M30 44 L38 50 L34 58 L26 54Z" fill="${DK}" stroke="${O}" stroke-width="1.8"/>
+      <path d="M70 44 L74 54 L66 58 L62 50Z" fill="${DK}" stroke="${O}" stroke-width="1.8"/>
+      <path d="M40 62 L48 66 L44 74 L36 70Z" fill="${DK}" stroke="${A}" stroke-width="1.8"/>
+      <path d="M60 62 L66 70 L58 74 L54 66Z" fill="${DK}" stroke="${A}" stroke-width="1.8"/>
+      <path d="M50 46 L34 54 M50 46 L66 54 M44 70 L50 60 L58 70" stroke="${E}" stroke-width="1.4" opacity="0.7"/>
+      <circle cx="50" cy="52" r="3" fill="${E}"/>
     </g>`),
 };
 

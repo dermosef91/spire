@@ -1,0 +1,78 @@
+// Combat entry/exit: starting a fight (monster/elite/boss), mounting the combat
+// view + first-play tutorial, and handling the aftermath (HP write-back, relic
+// hooks, rewards).
+//
+// Mixed onto Game.prototype (see game.js). The combat view is constructed with
+// `this` (the Game) so it can call back into tooltip/isTouch; `view.onEnd` wires
+// the beginCombat → afterCombat → showRewards chain.
+
+import { el } from '../core/util.js';
+import { saveMeta } from '../core/save.js';
+import { RELICS } from '../data/relics.js';
+import { Combat } from '../combat/combat.js';
+import { CombatView } from '../ui/combatView.js';
+import { CombatTutorial, MultiEnemyTutorial } from '../ui/tutorial.js';
+import { background } from '../fx/background.js';
+import { audio } from '../audio.js';
+
+export const CombatScene = {
+  startMonster() {
+    this.run._actMonster = (this.run._actMonster || 0) + 1;
+    // Fights escalate within an act: the first two draw from the `weak` pool,
+    // the 5th onward from `hard` (where the act defines one — pickEncounter
+    // falls back to `normal`), so the act keeps pace with a growing deck.
+    const n = this.run._actMonster;
+    const tier = n <= 2 ? 'weak' : (n >= 5 ? 'hard' : 'normal');
+    // Pin the very first monster fight to a guaranteed attack-opener so the
+    // tutorial's "the foe is about to strike" step is always true.
+    const isTutorialFight = !this.meta.tutorialDone && this.run._actMonster === 1;
+    const encounter = isTutorialFight ? ['husk_drone'] : this.pickEncounter(tier);
+    this.beginCombat(encounter, 'monster');
+  },
+  startElite() { this.beginCombat(this.pickEncounter('elite'), 'elite'); },
+  startBoss() { this.beginCombat(this.pickEncounter('boss'), 'boss'); },
+
+  beginCombat(enemyIds, kind) {
+    audio.setCombat(true, kind === 'boss');
+    const bg = background(); if (bg) bg.setCombat(true);
+    const combat = new Combat(this.run, enemyIds, { kind });
+    window.__combat = combat; // console debugging, like window.__ase
+    const view = new CombatView(this, combat);
+    this.combatView = view;
+    view.onEnd = (c) => this.afterCombat(c, kind);
+    const holder = el('div', { class: 'combat-holder' });
+    this.setScene(holder, 'combat');
+    view.mount(holder);
+    // First-ever combat: run the interactive tutorial once the opening draw
+    // settles.
+    if (!this.meta.tutorialDone && kind === 'monster') {
+      const finishTutorial = () => { this.meta.tutorialDone = true; saveMeta(this.meta); };
+      setTimeout(() => {
+        if (combat.over) { finishTutorial(); return; }
+        new CombatTutorial(this, combat, finishTutorial).start();
+      }, 1700); // after the Battle Start popup + deferred opening draw settle
+    } else if (!this.meta.multiEnemyTutorialDone && combat.enemies.length > 1 && kind === 'monster') {
+      const finishMulti = () => { this.meta.multiEnemyTutorialDone = true; saveMeta(this.meta); };
+      setTimeout(() => {
+        if (combat.over) { finishMulti(); return; }
+        new MultiEnemyTutorial(this, combat, finishMulti).start();
+      }, 1700);
+    }
+  },
+
+  afterCombat(combat, kind) {
+    this.combatView = null;
+    audio.setCombat(false);
+    const bg = background(); if (bg) bg.setCombat(false);
+    // Write HP back
+    this.run.hp = Math.max(0, combat.player.hp);
+    if (!combat.victory) { this.gameOver(false); return; }
+    audio.play('reward');
+    // combat-end relic hooks
+    for (const rid of this.run.relics) {
+      const r = RELICS[rid];
+      if (r && r.combatEnd) r.combatEnd(this.run);
+    }
+    this.showRewards(kind);
+  },
+};

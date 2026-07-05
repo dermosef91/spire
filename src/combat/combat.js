@@ -2,7 +2,7 @@
 // state through methods, then the bound `onUpdate` callback re-renders. Enemy
 // turns are async so the view can animate between sub-steps.
 
-import { createCard, upgradeCard, canUpgrade } from '../data/cards.js';
+import { createCard, upgradeCard } from '../data/cards.js';
 import { ENEMIES } from '../data/enemies.js';
 import { POWERS } from '../data/keywords.js';
 import { RELICS } from '../data/relics.js';
@@ -10,6 +10,7 @@ import { wait } from '../core/util.js';
 
 const BASE_ENERGY = 3;
 const HAND_LIMIT = 10;
+const TEMPO_CAP = 10;
 
 export class Combat {
   constructor(run, enemyIds, opts = {}) {
@@ -23,12 +24,24 @@ export class Combat {
     this.over = false;
     this.victory = false;
     this.animating = false;
+    this._notifyScheduled = false; // coalesces same-tick notify() calls, see notify()
+
+    // Rhythm QTE seams. The view sets `_rhythmMult` and `_rhythmGrade` (from
+    // the attack QTE) before playCard, and injects `parryPrompt` — an async fn
+    // resolving { success } — awaited during the enemy phase. All default to
+    // inert so the engine runs unchanged without a view or with Rhythm Mode
+    // off: a null grade counts as a clean ('good') strike, so Tempo still
+    // builds for non-rhythm players.
+    this._rhythmMult = 1;
+    this._rhythmGrade = null;
+    this.parryPrompt = null;
+    this._parried = false;
+    this._qtePrompted = false;
 
     // Player entity mirrors run state; HP is written back to run on combat end.
     this.player = {
       isPlayer: true,
       name: run.character.name,
-      glyph: run.character.glyph,
       hp: run.hp,
       maxHp: run.maxHp,
       block: 0,
@@ -61,7 +74,7 @@ export class Combat {
 
     // Misc combat-wide flags toggled by cards/relics
     this.firstAttackDouble = false;
-    this.echoForm = false;
+    this.mirrorChannel = false; // Mirrorcast: Spirits channel twice
     this.freePowerEachTurn = false;
     this.bloodBloom = false;
     this.fairyShield = false;
@@ -69,6 +82,7 @@ export class Combat {
     // counters
     this.cardsThisTurn = 0;
     this.versesThisTurn = 0;
+    this.versesThisCombat = 0;
     this.cardsPlayedTotal = 0;
     this.noMoreDraw = false;
     this._extraOpenDraw = 0;
@@ -78,13 +92,17 @@ export class Combat {
   makeEnemy(id, idx) {
     const bp = ENEMIES[id];
     if (!bp) throw new Error('Unknown enemy ' + id);
-    const hp = this.rng.int(bp.hpMin, bp.hpMax);
+    let hp = this.rng.int(bp.hpMin, bp.hpMax);
+    hp = Math.round(hp * this.run.enemyHpMult(bp)); // ascension HP scaling
+    const block = bp.startBlock || 0;
     return {
       id, bp, idx,
-      name: bp.name, glyph: bp.glyph,
-      hp, maxHp: hp, block: 0,
+      name: bp.name,
+      hp, maxHp: hp, block,
       powers: {}, alive: true,
       isPlayer: false,
+      dmgCapPerTurn: bp.dmgCapPerTurn || 0, // per-player-turn damage cap (0 = uncapped)
+      dmgTakenThisTurn: 0,
       turn: 1, history: [], last: null,
       move: null, intent: null,
       run: this.run,
@@ -112,15 +130,38 @@ export class Combat {
     const innate = this.drawPile.filter((c) => c.innate);
     for (const c of innate) { this.drawPile.splice(this.drawPile.indexOf(c), 1); this.hand.push(c); }
 
+    // Ascension 11 (Crowned in Wrath): bosses begin combat with 2 Resolve.
+    if (this.run.ascension >= 11) {
+      for (const e of this.enemies) if (e.bp.boss) this.applyPower(e, 'strength', 2, e);
+    }
+
+    // Display the per-turn damage cap as an Invincibility pip (informational).
+    for (const e of this.enemies) if (e.dmgCapPerTurn > 0) e.powers.invincibility = e.dmgCapPerTurn;
+
     // Pick initial enemy intents
     for (const e of this.enemies) this.pickEnemyMove(e);
 
+    // From here on, deck insertions are player-visible and should animate.
+    this._deckFxReady = true;
     this.startPlayerTurn(true);
   }
 
   // ---------------------------------------------------------------- logging / notify
   log(msg) { this.logs.push(msg); if (this.logs.length > 60) this.logs.shift(); this.onLog(msg); }
-  notify() { this.onUpdate(); }
+  // Coalesce multiple synchronous notify() calls (e.g. draw() firing one,
+  // then a caller firing another right after to refresh the log) into a
+  // single deferred onUpdate(). Without this, a second same-tick render tears
+  // down and rebuilds the hand's DOM nodes before the first render's
+  // requestAnimationFrame-scheduled draw-in animation gets to run on them,
+  // silently killing the card-fly-in-from-draw-pile animation.
+  notify() {
+    if (this._notifyScheduled) return;
+    this._notifyScheduled = true;
+    Promise.resolve().then(() => {
+      this._notifyScheduled = false;
+      this.onUpdate();
+    });
+  }
 
   // ---------------------------------------------------------------- triggers
   addTrigger(event, fn, name, once = false) {
@@ -142,20 +183,72 @@ export class Combat {
   isOrbUser() { return this.run.character.id === 'zara'; }
   focus() { return this.player.powers.focus || 0; }
 
+  // ---------------------------------------------------------------- Tempo
+  // The rhythm layer made visible to the card game. Tempo is a player-only
+  // power (so it rides the generic pip/tooltip/float rendering): clean strikes
+  // build it (+1, +2 on a Perfect), a successful parry adds +1, and a missed
+  // beat — a missed strike QTE or a missed parry — breaks it back to 0. With
+  // Rhythm Mode off every attack registers as 'good', so Tempo still builds
+  // (steadily, without the Perfect upside or the miss risk). Cards read it via
+  // ctx.tempo() or consume it via ctx.spendAllTempo(); relics listen on the
+  // 'tempoGained' trigger.
+  tempo() { return this.player.powers.tempo || 0; }
+  gainTempo(n) {
+    const add = Math.min(n, TEMPO_CAP - this.tempo());
+    if (add <= 0) return;
+    this.applyPower(this.player, 'tempo', add, this.player);
+    this.fire('tempoGained', { amount: add, total: this.tempo() });
+  }
+  breakTempo() {
+    if (this.tempo() <= 0) return;
+    delete this.player.powers.tempo;
+    this.log('Your rhythm breaks.');
+    this.fx('tempobreak', { entity: this.player });
+    this.notify();
+  }
+  // Deliberate spend (finisher cards): no falter fx, returns the amount spent.
+  spendAllTempo() {
+    const t = this.tempo();
+    if (t > 0) { delete this.player.powers.tempo; this.notify(); }
+    return t;
+  }
+  registerStrikeGrade(grade) {
+    if (grade === 'miss') this.breakTempo();
+    else this.gainTempo(grade === 'perfect' ? 2 : 1);
+  }
+
   // ---------------------------------------------------------------- damage & block math
+  // Sapped (weak) and Exposed (vulnerable) are HIT-COUNTED, not turn-timed:
+  // each attack hit consumes one stack (in applyDamage) and gets the modifier.
+  // This reads current stacks without consuming, so it doubles as the
+  // "what would the next hit do" preview math.
   calcAttackDamage(base, source, target) {
     let dmg = base + (source.powers.strength || 0);
     if (source.powers.weak) dmg = Math.floor(dmg * 0.75);
     if (target && target.powers.vulnerable) dmg = Math.floor(dmg * 1.5);
     return Math.max(0, dmg);
   }
+  // Consume one stack of a hit-counted power (see keywords.js: no ticksDown on
+  // vulnerable/weak/frail — they expire by being used, not by the clock).
+  consumeStack(entity, key) {
+    if (!entity || !entity.powers[key]) return;
+    entity.powers[key] -= 1;
+    if (entity.powers[key] <= 0) delete entity.powers[key];
+  }
 
-  // Apply a chunk of damage to an entity through Ward, returns HP actually lost.
+  // Apply a chunk of damage to an entity through Block, returns HP actually lost.
   applyDamage(target, amount, { isAttack = false, source = null } = {}) {
     if (!target.alive) return 0;
     let dmg = amount;
     if (target.powers.intangible && dmg > 1) dmg = 1;
-    // Heart of Static caps single-hit damage taken? (only thematic — skip)
+    // Per-turn damage cap (Heart of Static's Invincibility): clamp what this
+    // enemy can take across a single player turn, then bank it. Resets each
+    // player turn in startPlayerTurn.
+    if (target.dmgCapPerTurn > 0) {
+      const allowance = Math.max(0, target.dmgCapPerTurn - target.dmgTakenThisTurn);
+      if (dmg > allowance) { dmg = allowance; this.fx('warded', { target }); }
+      target.dmgTakenThisTurn += dmg;
+    }
     let remaining = dmg;
     if (target.block > 0) {
       const blocked = Math.min(target.block, remaining);
@@ -169,13 +262,54 @@ export class Combat {
       hpLost = remaining;
       if (target.isPlayer) this.fire('hpLost', { amount: remaining });
     }
-    this.fx('damage', { target, dmg, hpLost, blocked, isAttack });
-    // Backlash (thorns) when attacked
-    if (isAttack && source && target.powers.thorns) {
-      this.applyDamage(source, target.powers.thorns, { isAttack: false });
+    this.fx('damage', { target, dmg, hpLost, blocked, isAttack, source });
+    // Hit-counted debuffs: this hit used up one Exposed on the target and one
+    // Sapped on the attacker (blocked hits still consume — the window was
+    // spent on this swing either way). The multipliers were already applied
+    // by calcAttackDamage/orbDamage before the hit landed.
+    if (isAttack) {
+      this.consumeStack(target, 'vulnerable');
+      this.consumeStack(source, 'weak');
     }
+    // Backlash (thorns) when attacked (deactivated)
+    // if (isAttack && source && target.powers.thorns) {
+    //   this.applyDamage(source, target.powers.thorns, { isAttack: false });
+    // }
     this.checkDeath(target);
+    if (!target.isPlayer) this.checkPhase(target);
     return hpLost;
+  }
+
+  // Boss/enemy phase transition: when a blueprint declares a `phase` and the
+  // enemy's HP first crosses the threshold, it transforms once — logs, plays a
+  // dramatic fx, runs onEnter, and re-picks its intent so the telegraph reflects
+  // the new phase. `pick()` reads `s._phased` to branch its move table.
+  checkPhase(e) {
+    if (!e || e.isPlayer || !e.alive || e._phased) return;
+    const ph = e.bp.phase;
+    if (!ph || e.hp > e.maxHp * (ph.at ?? 0.5)) return;
+    e._phased = true;
+    this.log(ph.log || `${e.name} transforms!`);
+    this.fx('phase', { target: e, name: ph.name || 'Second Phase' });
+    if (ph.onEnter) ph.onEnter(this, e);
+    if (e.alive && !this.over) this.pickEnemyMove(e);
+    this.notify();
+  }
+
+  // Spawn a fresh enemy mid-combat (summoners). It waits one enemy phase before
+  // acting (its intent is telegraphed during the player's turn first) and the
+  // board is capped so summon-spam can't overwhelm the layout or the player.
+  summonEnemy(id, { max = 4 } = {}) {
+    if (this.livingEnemies().length >= max) return null;
+    const e = this.makeEnemy(id, this.enemies.length);
+    if (e.dmgCapPerTurn > 0) e.powers.invincibility = e.dmgCapPerTurn;
+    e._justSummoned = true;
+    this.enemies.push(e);
+    this.pickEnemyMove(e);
+    this.log(`${e.name} answers the call!`);
+    this.fx('summon', { target: e });
+    this.notify();
+    return e;
   }
 
   checkDeath(entity) {
@@ -198,23 +332,46 @@ export class Combat {
 
   onEnemyDeath(enemy) {
     this.log(`${enemy.name} is destroyed.`);
-    if (this.bloodBloom && enemy.powers.poison) {
-      const dmg = enemy.powers.poison;
-      for (const e of this.livingEnemies()) this.applyDamage(e, dmg, { isAttack: false });
-      this.log(`Blight Bloom bursts for ${dmg}!`);
+    // Blight outlives its host: baseline, a dead foe's remaining Blight leaps
+    // to a random living enemy. Blight Bloom (rare power) upgrades that into
+    // an instant burst on ALL others and replaces the spread.
+    if (enemy.powers.poison) {
+      const p = enemy.powers.poison;
+      if (this.bloodBloom) {
+        for (const e of this.livingEnemies()) this.applyDamage(e, p, { isAttack: false });
+        this.log(`Blight Bloom bursts for ${p}!`);
+      } else {
+        const host = this.randomEnemy();
+        if (host) {
+          this.applyPower(host, 'poison', p, this.player);
+          this.log(`The Blight leaps to ${host.name}!`);
+        }
+      }
     }
     if (this.livingEnemies().length === 0) this.win();
+  }
+
+  // An enemy leaves combat without dying (e.g. the Market Thief's Flee). No
+  // on-death effects fire, but the fight must still end if no one remains.
+  enemyFlee(enemy) {
+    if (!enemy.alive) return;
+    enemy.alive = false;
+    enemy.fled = true;
+    this.log(`${enemy.name} flees!`);
+    this.fx('death', { target: enemy });
+    if (this.livingEnemies().length === 0) this.win();
+    this.notify();
   }
 
   // Player attack
   deal(target, base, hits = 1) {
     if (!target || !target.alive) { target = this.randomEnemy(); if (!target) return 0; }
     let total = 0;
-    const mult = this._cardDamageMult || 1;
+    const mult = (this._cardDamageMult || 1) * (this._rhythmMult || 1);
     this.fx('attackstart', { source: this.player, target });
     for (let i = 0; i < hits; i++) {
       if (!target.alive) break;
-      const dmg = this.calcAttackDamage(base, this.player, target) * mult;
+      const dmg = Math.floor(this.calcAttackDamage(base, this.player, target) * mult);
       total += this.applyDamage(target, dmg, { isAttack: true, source: this.player });
     }
     this.notify();
@@ -223,9 +380,10 @@ export class Combat {
   dealAll(base, hits = 1) {
     let total = 0;
     this.fx('attackstart', { source: this.player });
+    const mult = (this._cardDamageMult || 1) * (this._rhythmMult || 1);
     for (let i = 0; i < hits; i++) {
       for (const e of this.livingEnemies()) {
-        const dmg = this.calcAttackDamage(base, this.player, e) * (this._cardDamageMult || 1);
+        const dmg = Math.floor(this.calcAttackDamage(base, this.player, e) * mult);
         total += this.applyDamage(e, dmg, { isAttack: true, source: this.player });
       }
     }
@@ -234,7 +392,7 @@ export class Combat {
   }
   dealAllRaw(amount) { for (const e of this.livingEnemies()) this.applyDamage(e, amount, { isAttack: true, source: this.player }); this.notify(); }
 
-  // Orb / non-attack damage (ignores Resolve & Sapped, respects Exposed + Ward)
+  // Orb / non-attack damage (ignores Resolve & Sapped, respects Exposed + Block)
   orbDamage(target, base) {
     if (!target || !target.alive) return 0;
     let dmg = base;
@@ -245,9 +403,29 @@ export class Combat {
   // Enemy attack on player
   enemyAttack(enemy, base, hits = 1) {
     this.fx('attackstart', { source: enemy, target: this.player });
+    const realBlock = this.player.block;
+    const qtePrompted = this._qtePrompted;
+    const parried = this._parried;
+
+    this._qtePrompted = false;
+    this._parried = false;
+
+    if (qtePrompted && !parried) {
+      // Missed parry: half the block shatters, the rest still absorbs and is
+      // consumed as normal. (Was: block fully bypassed — too punishing.)
+      // A missed beat also breaks Tempo.
+      this.player.block = Math.floor(realBlock / 2);
+      this.fx('parrymiss', { entity: this.player, lost: realBlock - this.player.block });
+      this.log(`Parry missed — ${enemy.name}'s hit shatters half your Block.`);
+      this.breakTempo();
+    } else if (qtePrompted && parried) {
+      // A clean parry keeps the dance going.
+      this.gainTempo(1);
+    }
+
     for (let i = 0; i < hits; i++) {
       if (!this.player.alive) break;
-      const dmg = this.calcAttackDamage(base, enemy, this.player);
+      const dmg = Math.round(this.calcAttackDamage(base, enemy, this.player) * this.run.enemyDamageMult());
       this.applyDamage(this.player, dmg, { isAttack: true, source: enemy });
     }
     this.notify();
@@ -257,7 +435,9 @@ export class Combat {
     // player block from cards: dexterity + frail + noBlock
     if (this.player.powers.noBlock) return;
     let b = amount + (this.player.powers.dexterity || 0);
-    if (this.player.powers.frail) b = Math.floor(b * 0.75);
+    // Brittle is hit-counted like the other debuffs: each card Block gain
+    // consumes one stack for its 25% reduction (no turn tick).
+    if (this.player.powers.frail) { b = Math.floor(b * 0.75); this.consumeStack(this.player, 'frail'); }
     b = Math.max(0, b);
     this.player.block += b;
     if (b > 0) this.fx('block', { entity: this.player, amount: b });
@@ -273,7 +453,10 @@ export class Combat {
   gainBlockTo(entity, amount, raw = false) {
     if (entity.isPlayer && entity.powers.noBlock) return;
     let b = amount;
-    if (!raw && entity.isPlayer) { b += (entity.powers.dexterity || 0); if (entity.powers.frail) b = Math.floor(b * 0.75); }
+    if (!raw && entity.isPlayer) {
+      b += (entity.powers.dexterity || 0);
+      if (entity.powers.frail) { b = Math.floor(b * 0.75); this.consumeStack(entity, 'frail'); }
+    }
     b = Math.max(0, b);
     entity.block += b;
     if (b > 0) this.fx('block', { entity, amount: b });
@@ -307,10 +490,11 @@ export class Combat {
       return;
     }
     target.powers[key] = (target.powers[key] || 0) + amount;
-    // Clamp debuff-style stacks at 0 minimum
-    if (['vulnerable', 'weak', 'frail', 'poison', 'regen', 'metallicize', 'thorns', 'dexterity', 'focus', 'intangible', 'artifact'].includes(key)) {
-      if (target.powers[key] <= 0) delete target.powers[key];
-    } else if (target.powers[key] === 0) {
+    // 'signed' powers (e.g. Resolve) may hold a negative value and are removed
+    // only at exactly 0; everything else clamps away at <= 0. (See POWERS.)
+    if (def && def.signed) {
+      if (target.powers[key] === 0) delete target.powers[key];
+    } else if (target.powers[key] <= 0) {
       delete target.powers[key];
     }
     if (amount !== 0) this.fx('power', { target, key, amount });
@@ -323,6 +507,9 @@ export class Combat {
     else if (pile === 'draw') { const i = this.rng.int(0, this.drawPile.length); this.drawPile.splice(i, 0, card); }
     else if (pile === 'drawTop') { this.drawPile.push(card); }
     else this.discardPile.push(card);
+    // Cosmetic: reveal cards shuffled into the deck mid-combat (e.g. enemy-inflicted
+    // statuses like Dazed) so the player sees what was added and where it landed.
+    if (this._deckFxReady && (pile === 'draw' || pile === 'drawTop')) this.fx('cardtopile', { card, pile });
     this.notify();
   }
 
@@ -347,13 +534,10 @@ export class Combat {
 
   gainEnergy(n) { this.energy += n; this.notify(); }
 
-  upgradeAllInCombat() {
-    for (const c of [...this.hand, ...this.drawPile, ...this.discardPile]) if (canUpgrade(c)) upgradeCard(c);
-    this.notify();
-  }
-
   // ---------------------------------------------------------------- orbs (Zara)
   channel(type, n = 1) {
+    // Mirrorcast: every Channel arrives twice.
+    if (this.mirrorChannel) n *= 2;
     for (let i = 0; i < n; i++) {
       if (this.orbs.length >= this.orbSlots && this.orbs.length > 0) {
         const evoked = this.orbs.shift();
@@ -361,7 +545,7 @@ export class Combat {
       }
       this.orbs.push({ type, value: 0 });
     }
-    this.log(`Channel ${type[0].toUpperCase() + type.slice(1)}.`);
+    this.log(`Channel ${type[0].toUpperCase() + type.slice(1)}${n > 1 ? ` ×${n}` : ''}.`);
     this.notify();
   }
   evoke(times = 1) {
@@ -422,6 +606,9 @@ export class Combat {
       heal: (n) => self.heal(n),
       channel: (t, n = 1) => self.channel(t, n),
       evoke: (n = 1) => self.evoke(n),
+      tempo: () => self.tempo(),
+      gainTempo: (n) => self.gainTempo(n),
+      spendAllTempo: () => self.spendAllTempo(),
       exhaustThis: () => { card._forceExhaust = true; },
     };
   }
@@ -431,7 +618,7 @@ export class Combat {
     const cost = this.cardCost(card);
     const spent = card.cost === 'X' ? this.energy : cost;
     this.energy -= spent;
-    if (card.type === 'power' && this.freePowerEachTurn && cost === 0) this._freePowerUsed = true;
+    if (card.type === 'power' && this.freePowerEachTurn && cost === 0) { this._freePowerUsed = true; this.fx('relic', { id: 'cosmic_egg' }); }
 
     // remove from hand
     const hi = this.hand.indexOf(card);
@@ -439,23 +626,31 @@ export class Combat {
 
     // First-attack-double relic
     this._cardDamageMult = 1;
-    if (card.type === 'attack' && this.firstAttackDouble && !this._usedFAD) { this._cardDamageMult = 2; this._usedFAD = true; }
+    if (card.type === 'attack' && this.firstAttackDouble && !this._usedFAD) { this._cardDamageMult = 2; this._usedFAD = true; this.fx('relic', { id: 'ancestor_idol' }); }
 
     this.cardsThisTurn += 1;
     this.cardsPlayedTotal += 1;
-    if (card.verse) this.versesThisTurn += 1;
+    if (card.verse) { this.versesThisTurn += 1; this.versesThisCombat += 1; }
+
+    // Tempo registers BEFORE onPlay: the QTE already resolved, so this strike
+    // is part of the flow it creates — a Tempo-scaling card counts its own
+    // clean strike, and a missed finisher fizzles (breaks Tempo, then deals
+    // its now-bonusless damage at the miss multiplier). Deliberate design:
+    // misses hurt twice, that tension is the point of the rhythm layer.
+    if (card.type === 'attack') {
+      this.registerStrikeGrade(this._rhythmGrade || 'good');
+      this._rhythmGrade = null;
+    }
 
     this.log(`You play ${card.name}.`);
+    if (card.type === 'skill') {
+      this.fx('useSkill', { entity: this.player });
+    }
     const ctx = this.makeCtx(card, target);
     card._bp.onPlay(ctx);
 
-    // Echo Form: replay first card of the turn once more
-    const isFirst = this.cardsThisTurn === 1;
-    if (this.echoForm && isFirst && card.type !== 'power') {
-      card._bp.onPlay(this.makeCtx(card, target && target.alive ? target : this.randomEnemy()));
-    }
-
     this._cardDamageMult = 1;
+    this._rhythmMult = 1;
     this.fire('cardPlayed', { card });
     if (card.verse) this.fire('versePlayed', { card });
 
@@ -484,12 +679,15 @@ export class Combat {
   // ---------------------------------------------------------------- turn flow
   startPlayerTurn(first = false) {
     this.turn += 1;
-    this.player.block = 0;
+    if (!first) this.player.block = 0;
     this._freePowerUsed = false;
     this._usedFAD = false;
     this.cardsThisTurn = 0;
     this.versesThisTurn = 0;
     this.noMoreDraw = false;
+
+    // reset per-turn damage caps (e.g. Heart of Static's Invincibility)
+    for (const e of this.enemies) e.dmgTakenThisTurn = 0;
 
     // start-of-turn poison on player
     this.tickPoison(this.player);
@@ -499,6 +697,10 @@ export class Combat {
     this.energyNextTurn = 0;
 
     this.fire('turnStart');
+
+    // Announce the handoff back to the player. The first turn is covered by the
+    // Battle Start popup, so skip the banner there.
+    if (!first) this.fx('announce', { text: 'Your Turn', kind: 'player' });
 
     // draw
     const drawCount = 5 + (first ? this._extraOpenDraw : 0);
@@ -518,11 +720,17 @@ export class Combat {
   }
 
   tickTurnDebuffs(entity) {
-    for (const key of ['vulnerable', 'weak', 'frail', 'intangible']) {
-      if (entity.powers[key]) {
+    // Decrement every active power flagged ticksDown at the owner's turn boundary.
+    for (const key of Object.keys(entity.powers)) {
+      if (POWERS[key]?.ticksDown) {
         entity.powers[key] -= 1;
         if (entity.powers[key] <= 0) delete entity.powers[key];
       }
+    }
+    // Resolve Down: at end of turn, sap Strength/Resolve by the stacked amount, then clear.
+    if (entity.powers.strengthDown) {
+      this.applyPower(entity, 'strength', -entity.powers.strengthDown, entity);
+      delete entity.powers.strengthDown;
     }
   }
 
@@ -558,22 +766,61 @@ export class Combat {
 
     await this.enemyPhase();
 
-    if (!this.over) this.startPlayerTurn(false);
+    if (!this.over) {
+      // Brief pause after the enemy phase settles so "Your Turn" doesn't fire
+      // in the same instant the last enemy's hit lands.
+      await wait(600);
+      this.startPlayerTurn(false);
+    }
     this.animating = false;
     this.notify();
   }
 
   async enemyPhase() {
+    // Announce the enemy turn and let the banner read before any foe acts, so
+    // the first strike doesn't land in the same instant the phase begins.
+    this.fx('announce', { text: 'Enemy Turn', kind: 'enemy' });
+    await wait(850);
     for (const e of this.enemies) {
       if (!e.alive || this.over) continue;
+      // A foe summoned during this same phase waits until the next one to act
+      // (its intent is already telegraphed for the player's turn in between).
+      if (e._justSummoned) { e._justSummoned = false; continue; }
       e.block = 0;
       this.tickPoison(e);
       if (!e.alive || this.over) continue;
+      // Enrage: a guaranteed escalation clock. On/after the blueprint's turn it
+      // gains Resolve once, punishing decks that try to stall the fight out.
+      const en = e.bp.enrage;
+      if (en && !e._enraged && e.turn >= en.turn) {
+        e._enraged = true;
+        this.log(`${e.name} enrages!`);
+        this.fx('enrage', { target: e });
+        this.applyPower(e, 'strength', en.strength, e);
+      }
       const move = e.bp.moves[e.move];
       this.log(`${e.name} uses ${move.name}.`);
+      const isAttack = e.intent && e.intent.type && e.intent.type.startsWith('attack');
+      // Float the move name over the enemy, then give it a beat before the
+      // action resolves so the attack/skill reads as a consequence of the name.
+      this.fx('enemyMove', { source: e, name: move.name, isAttack });
+      await wait(750);
+      if (this.over || !e.alive) continue;
+      if (!isAttack) {
+        const isBlock = e.intent && e.intent.type && e.intent.type.includes('block');
+        this.fx('skillstart', { source: e, pose: isBlock ? 'block' : 'skill' });
+      }
+      if (this.parryPrompt && isAttack && this.player.block > 0 && this.player.alive) {
+        let res = null;
+        try { res = await this.parryPrompt(e); } catch (_) { res = null; }
+        this._parried = !!(res && res.success);
+        this._qtePrompted = true;
+      }
       move.run(this, e);
+      this._qtePrompted = false;
+      this._parried = false;
       this.notify();
-      await wait(420);
+      await wait(550);
       e.history.push(e.move);
       e.last = e.move;
       e.turn += 1;
@@ -589,10 +836,6 @@ export class Combat {
     e.move = id;
     e.intent = e.bp.moves[id].intent;
   }
-
-  // After enemies finish acting we pick their next intent at the start of player turn?
-  // We pick at enemy-turn end for clarity:
-  // (called inside enemyPhase loop above is not — pick here so intent is shown next player turn)
 
   // ---------------------------------------------------------------- end states
   win() {

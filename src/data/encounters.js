@@ -1,56 +1,82 @@
 // Encounter tables per act. Each entry is a list of enemy ids that spawn together.
-// `weak` encounters are used for the first couple of fights in an act.
+// `weak` encounters are used for the first couple of fights in an act; `hard`
+// (optional per act, falls back to `normal`) kicks in late in the act once the
+// player's deck has grown — see startMonster()/pickEncounter() in scenes.
 
+// Encounters deliberately mix archetype ROLES so each fight poses a different
+// question: a healer beside an attacker (kill-priority), a poisoner beside a
+// turtle (race vs. wall), a glass-cannon swarm (burst check), etc.
 export const ENCOUNTERS = {
   1: {
     weak: [
       ['husk_drone'],
       ['static_jackal'],
-      ['husk_drone', 'husk_drone'],
+      ['reef_spitter'],                        // lone poisoner — learn the clock
     ],
     normal: [
-      ['static_jackal', 'husk_drone'],
-      ['brass_sentinel'],
-      ['market_thief', 'husk_drone'],
-      ['static_jackal', 'static_jackal'],
-      ['brass_sentinel', 'husk_drone'],
+      ['spark_imp', 'spark_imp'],              // twin glass cannons — burst check
+      ['husk_drone', 'husk_drone'],            // sturdy pair — grind check
+      ['tide_priest', 'static_jackal'],        // healer + attacker — kill priority
+      ['brass_sentinel'],                      // retaliator wall
+      ['market_thief', 'husk_drone'],          // thief pressure
+      ['tide_priest', 'spark_imp'],            // healer feeds a ramping cannon
+      ['static_jackal', 'reef_spitter'],       // swarm + poison
+    ],
+    hard: [
+      ['reef_spitter', 'brass_sentinel'],      // poison behind a turtle — race the wall
+      ['brass_sentinel', 'static_jackal'],     // wall + flurry — split your answers
+      ['tide_priest', 'brass_sentinel'],       // healer behind a wall — kill priority
+      ['tide_priest', 'reef_spitter'],         // heal + poison — attrition race
     ],
     elite: [
       ['gilded_warden'],
-      ['gilded_warden', 'husk_drone'],
+      ['rust_maw'],
+      ['gilded_warden', 'spark_imp'],
     ],
     boss: [['the_gatekeeper']],
   },
   2: {
     weak: [
       ['sand_wraith'],
-      ['mirror_shade'],
+      ['ink_leech'],                           // lone life-drain — out-pace it
+      ['glyph_sentry'],                        // lone charger — block the lance
     ],
     normal: [
-      ['sand_wraith', 'mirror_shade'],
-      ['chrome_serpent'],
-      ['mirror_shade', 'mirror_shade'],
-      ['chrome_serpent', 'sand_wraith'],
+      ['sand_wraith', 'mirror_shade'],         // debuff + retaliator
+      ['chrome_serpent'],                      // poison/control
+      ['null_scribe', 'ink_leech'],            // deck jam + sustain — end it fast
+      ['glyph_sentry', 'sand_wraith'],         // charger + debuffer
+      ['ink_leech', 'ink_leech'],              // double drain — sustain race
+      ['mirror_shade', 'null_scribe'],         // wall + warded flooder
+      ['chrome_serpent', 'reef_spitter'],      // stacked poison
     ],
     elite: [
       ['brass_colossus'],
-      ['mirror_shade', 'chrome_serpent'],
+      ['obsidian_maw'],
+      ['obsidian_maw', 'null_scribe'],         // berserker + deck jam
     ],
     boss: [['the_archivist']],
   },
   3: {
     weak: [
       ['void_chanter'],
-      ['static_seraph'],
+      ['echo_wraith'],                         // lone phaser — don't waste burst
+      ['static_swarm'],                        // lone swarm + curses
     ],
     normal: [
-      ['void_chanter', 'void_chanter'],
-      ['static_seraph', 'void_chanter'],
-      ['static_seraph', 'static_seraph'],
+      ['hollow_cantor', 'ember_colossus'],     // healer feeding a berserker
+      ['static_seraph', 'void_chanter'],       // charger + debuffer
+      ['echo_wraith', 'static_swarm'],         // phaser + swarm
+      ['ember_colossus'],                      // solo berserker — a pure clock
+      ['hollow_cantor', 'echo_wraith'],        // healer + phaser — attrition
+      ['static_swarm', 'void_chanter'],        // curses + hexes
+      ['choir_master'],                        // summoner — cut the conductor or drown
+      ['choir_master', 'void_chanter'],        // summoner behind a hexer
     ],
     elite: [
       ['chrome_archon'],
-      ['chrome_archon', 'void_chanter'],
+      ['chrome_archon', 'hollow_cantor'],      // elite backed by a healer
+      ['ember_colossus', 'ember_colossus'],
     ],
     boss: [['heart_of_static']],
   },
@@ -63,7 +89,7 @@ export const ACT_NAMES = {
 };
 
 export const ACT_BLURB = {
-  1: 'Below the Obsidian Spire sprawls a flooded bazaar of brass and bone, where corrupted guardians barter in static.',
-  2: 'Endless shelves of forgotten names spiral upward. The Archive remembers everything — and forgets you on purpose.',
-  3: 'At the summit the Static sings. Here the Ancestors once touched the cosmos. Cleanse the Heart, or be unwritten.',
+  1: 'They say the Spire lifts its champions home to the Ancestors. The climb begins in the flooded market at its root, where the old guardians bar the way — brass and bone that were, they whisper, climbers once themselves.',
+  2: 'The Archive files every name that ever climbed. It remembers all of them, shelf on shelf — and it already has a page for you, as though your ascent were long finished and only waiting to be read back.',
+  3: 'At the summit the Static sings in a thousand kept voices. This is where climbers are welcomed home. Reach the Heart that renders them, and learn what that welcome is made of.',
 };

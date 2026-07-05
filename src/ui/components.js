@@ -3,10 +3,13 @@ import { el } from '../core/util.js';
 import { cardDesc } from '../data/cards.js';
 import { RELICS } from '../data/relics.js';
 import { POTIONS } from '../data/potions.js';
-import { POWERS } from '../data/keywords.js';
+import { POWERS, KEYWORDS } from '../data/keywords.js';
 import { UI, cardArt, relicIcon, potionIcon, powerIcon } from './icons.js';
 import { fullscreenSupported, toggleFullscreen } from '../core/fullscreen.js';
 import { hasCardArt } from './card-art.js';
+import { hasRelicArt } from './relic-art.js';
+import { hasPotionArt } from './potion-art.js';
+import { audio } from '../audio.js';
 
 export function renderCard(card, opts = {}) {
   const typeClass = `type-${card.type}`;
@@ -52,16 +55,50 @@ export function renderCard(card, opts = {}) {
     node.addEventListener('mouseenter', () => opts.onHover(card, node, true));
     node.addEventListener('mouseleave', () => opts.onHover(card, node, false));
   }
+  node.addEventListener('mousemove', (e) => {
+    const rect = node.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const px = ((e.clientX - rect.left) / rect.width) - 0.5;
+    const py = ((e.clientY - rect.top) / rect.height) - 0.5;
+    node.style.setProperty('--mx', String(px));
+    node.style.setProperty('--my', String(py));
+  });
+  node.addEventListener('mouseleave', () => {
+    node.style.removeProperty('--mx');
+    node.style.removeProperty('--my');
+  });
   return node;
 }
 
+// Keywords to visually highlight in card and tooltip text. Derived from the
+// status-effect and glossary tables (the source of truth in keywords.js) plus a
+// few UI verbs and Spirit/orb names that aren't themselves POWERS/KEYWORDS
+// entries, so adding a status effect keeps it highlighted automatically.
+const EXTRA_KEYWORDS = ['Storm', 'Tide', 'Shade', 'Sun', 'Evoke', 'Channel', 'Max HP'];
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// Match longest names first (single-pass alternation) so multi-word names like
+// "Resolve Down" win over the "Resolve" that is a substring of them.
+const HIGHLIGHT_RE = new RegExp(
+  '\\b(' + [...new Set([
+    ...Object.values(POWERS).map((p) => p.name),
+    ...Object.keys(KEYWORDS),
+    ...EXTRA_KEYWORDS,
+  ])].sort((a, b) => b.length - a.length).map(escapeRe).join('|') + ')\\b',
+  'g'
+);
+
 export function highlightKeywords(text) {
-  const kws = ['Ward', 'Resolve', 'Grace', 'Exposed', 'Sapped', 'Brittle', 'Blight', 'Phase',
-    'Verse', 'Spirit', 'Storm', 'Tide', 'Shade', 'Sun', 'Focus', 'Àṣẹ', 'Backlash', 'Bronzeplate',
-    'Exhaust', 'Ethereal', 'Innate', 'Retain', 'Regrowth', 'Charm', 'Evoke', 'Channel', 'Max HP'];
-  let out = text;
-  for (const k of kws) {
-    out = out.replace(new RegExp(`\\b(${k})\\b`, 'g'), '<span class="kw">$1</span>');
+  return text.replace(HIGHLIGHT_RE, '<span class="kw">$1</span>');
+}
+
+// Distinct keyword names found in `text`, in first-appearance order — used to
+// build a "here's what these effects mean" glossary popup instead of
+// re-printing text already visible on the card face.
+export function keywordsIn(text) {
+  const seen = new Set();
+  const out = [];
+  for (const m of text.matchAll(HIGHLIGHT_RE)) {
+    if (!seen.has(m[1])) { seen.add(m[1]); out.push(m[1]); }
   }
   return out;
 }
@@ -70,7 +107,17 @@ export function relicChip(relicId, onHover) {
   const r = RELICS[relicId];
   if (!r) return el('span');
   const cls = `relic relic-${r.rarity}`;
-  const node = el('div', { class: cls, html: relicIcon(relicId), title: `${r.name} — ${r.desc}` });
+  const node = el('div', { class: cls, html: relicIcon(relicId), title: `${r.name} — ${r.desc}`, attrs: { 'data-relic-id': relicId } });
+
+  if (hasRelicArt(relicId)) {
+    const img = el('img', {
+      class: 'relic-art-img',
+      attrs: { src: `assets/relic-art/${relicId}.png`, alt: '', draggable: 'false' },
+    });
+    img.onerror = () => { img.style.display = 'none'; };
+    node.appendChild(img);
+  }
+
   if (onHover) {
     node.addEventListener('mouseenter', () => onHover(r, node, true));
     node.addEventListener('mouseleave', () => onHover(r, node, false));
@@ -84,6 +131,16 @@ export function potionChip(potionId, idx, onClick, onHover) {
   const p = POTIONS[potionId];
   if (!p) return el('span');
   const node = el('div', { class: 'potion', style: { '--pcolor': p.color }, html: potionIcon(), title: `${p.name} — ${p.desc}` });
+  
+  if (hasPotionArt(potionId)) {
+    const img = el('img', {
+      class: 'potion-art-img',
+      attrs: { src: `assets/potion-art/${potionId}.png`, alt: '', draggable: 'false' },
+    });
+    img.onerror = () => { img.remove(); };
+    node.appendChild(img);
+  }
+
   if (onClick) node.addEventListener('click', () => onClick(p, idx));
   if (onHover) {
     node.addEventListener('mouseenter', () => onHover(p, node, true));
@@ -104,12 +161,53 @@ export function topBar(run, extra = {}) {
   const potionWrap = el('div', { class: 'tb-potions' });
   for (let i = 0; i < run.maxPotions; i++) {
     if (run.potions[i]) potionWrap.appendChild(potionChip(run.potions[i], i, extra.onPotion, extra.onHover));
-    else potionWrap.appendChild(el('div', { class: 'potion empty', text: '+' }));
+    else potionWrap.appendChild(el('div', { class: 'potion empty', html: potionIcon(), attrs: { 'aria-label': 'Empty potion slot' } }));
   }
   right.appendChild(potionWrap);
   const relicWrap = el('div', { class: 'tb-relics' });
   for (const rid of run.relics) relicWrap.appendChild(relicChip(rid, extra.onHover));
   right.appendChild(relicWrap);
+
+  const muteBtn = el('button', {
+    class: 'tb-mute',
+    html: audio.muted ? UI.soundOff : UI.soundOn,
+    attrs: {
+      'aria-label': audio.muted ? 'Unmute all sounds' : 'Mute all sounds',
+      title: audio.muted ? 'Unmute Sound' : 'Mute Sound'
+    },
+    on: {
+      click: () => {
+        const isMuted = audio.toggleMute();
+        muteBtn.innerHTML = isMuted ? UI.soundOff : UI.soundOn;
+        muteBtn.setAttribute('aria-label', isMuted ? 'Unmute all sounds' : 'Mute all sounds');
+        muteBtn.setAttribute('title', isMuted ? 'Unmute Sound' : 'Mute Sound');
+      }
+    }
+  });
+  right.appendChild(muteBtn);
+
+  // Rhythm (timed-hit QTE) toggle — mirrors the title-screen setting so it can
+  // be flipped mid-run without leaving the fight. Reads the live Game via the
+  // window.__ase handle (topBar has no game reference of its own).
+  const game = window.__ase;
+  if (game && typeof game.setRhythm === 'function') {
+    const rhythmTitle = (on) => (on ? 'Rhythm timing: On' : 'Rhythm timing: Off');
+    const rhythmBtn = el('button', {
+      class: `tb-rhythm${game.rhythmOn() ? '' : ' off'}`,
+      html: UI.qteRings,
+      attrs: { 'aria-label': rhythmTitle(game.rhythmOn()), title: rhythmTitle(game.rhythmOn()) },
+      on: {
+        click: () => {
+          const on = game.setRhythm(!game.rhythmOn());
+          rhythmBtn.classList.toggle('off', !on);
+          rhythmBtn.setAttribute('aria-label', rhythmTitle(on));
+          rhythmBtn.setAttribute('title', rhythmTitle(on));
+          audio.play('click');
+        }
+      }
+    });
+    right.appendChild(rhythmBtn);
+  }
 
   if (fullscreenSupported()) {
     right.appendChild(el('button', {
@@ -125,7 +223,7 @@ export function topBar(run, extra = {}) {
 
 export function powerPips(entity) {
   const wrap = el('div', { class: 'powers' });
-  if (entity.block > 0) wrap.appendChild(el('div', { class: 'pip pip-block', html: `<i class="pip-ic">${powerIcon('block')}</i> ${entity.block}`, title: 'Ward — absorbs damage' }));
+  if (entity.block > 0) wrap.appendChild(el('div', { class: 'pip pip-block', html: `<i class="pip-ic">${powerIcon('block')}</i> ${entity.block}`, title: 'Block — absorbs damage' }));
   for (const [key, val] of Object.entries(entity.powers)) {
     if (!val) continue;
     const def = POWERS[key];
@@ -135,6 +233,16 @@ export function powerPips(entity) {
   }
   return wrap;
 }
+
+export const FLOURISH_LEFT = `<svg class="btn-svg-flourish-left" viewBox="0 0 24 24" width="18" height="18">
+        <path d="M18 6 L10 12 L18 18 M12 6 L4 12 L12 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <line x1="22" y1="8" x2="22" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+       </svg>`;
+
+export const FLOURISH_RIGHT = `<svg class="btn-svg-flourish-right" viewBox="0 0 24 24" width="18" height="18">
+        <path d="M6 6 L14 12 L6 18 M12 6 L20 12 L12 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <line x1="2" y1="8" x2="2" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+       </svg>`;
 
 export function button(label, onClick, cls = '') {
   const isPrimary = cls.split(' ').includes('primary');
@@ -148,19 +256,13 @@ export function button(label, onClick, cls = '') {
         <circle cx="22" cy="22" r="7" fill="#ff5a00" />
         <circle cx="22" cy="22" r="2.5" fill="#fff" />
        </svg>`
-    : `<svg class="btn-svg-flourish-left" viewBox="0 0 24 24" width="18" height="18">
-        <path d="M18 6 L10 12 L18 18 M12 6 L4 12 L12 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-        <line x1="22" y1="8" x2="22" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-       </svg>`;
+    : FLOURISH_LEFT;
 
   const rightOrn = isPrimary
     ? `<svg class="btn-svg-chevron-right" viewBox="0 0 16 16" width="16" height="16">
         <path d="M3 3 L9 8 L3 13 M8 3 L14 8 L8 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
        </svg>`
-    : `<svg class="btn-svg-flourish-right" viewBox="0 0 24 24" width="18" height="18">
-        <path d="M6 6 L14 12 L6 18 M12 6 L20 12 L12 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-        <line x1="2" y1="8" x2="2" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-       </svg>`;
+    : FLOURISH_RIGHT;
 
   return el('button', {
     class: `btn ${cls}`,
@@ -172,6 +274,20 @@ export function button(label, onClick, cls = '') {
       <span class="btn-ornament left">${leftOrn}</span>
       <span class="btn-ornament right">${rightOrn}</span>
     `,
-    on: { click: onClick }
+    on: {
+      click: onClick,
+      mousemove: (e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+        const px = ((e.clientX - rect.left) / rect.width) - 0.5;
+        const py = ((e.clientY - rect.top) / rect.height) - 0.5;
+        e.currentTarget.style.setProperty('--mx', String(px));
+        e.currentTarget.style.setProperty('--my', String(py));
+      },
+      mouseleave: (e) => {
+        e.currentTarget.style.removeProperty('--mx');
+        e.currentTarget.style.removeProperty('--my');
+      }
+    }
   });
 }

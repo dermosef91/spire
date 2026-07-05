@@ -7,22 +7,44 @@ import { RELICS } from '../data/relics.js';
 import { createCard, upgradeCard, canUpgrade } from '../data/cards.js';
 import { generateMap } from '../map/mapgen.js';
 
+// Ascension ladder — each level ADDS its modifier on top of every lower level,
+// so the climb grows steadily crueler. Unlocked one at a time by winning at the
+// current highest level. Level 0 is the baseline (no modifiers).
+export const ASCENSION_LEVELS = [
+  { lvl: 1, name: 'Bloodied Elites', desc: 'Elite enemies have 25% more HP.' },
+  { lvl: 2, name: 'Swollen Ranks', desc: 'All enemies have 12% more HP.' },
+  { lvl: 3, name: 'Lean Purse', desc: 'Begin each run with 25% less gold.' },
+  { lvl: 4, name: 'Shallow Rest', desc: 'Ancestor Fires heal 20% of Max HP (was 30%).' },
+  { lvl: 5, name: 'Lingering Static', desc: 'Begin each run with a Wound curse in your deck.' },
+  { lvl: 6, name: 'Cruel Crowns', desc: 'Bosses have 25% more HP.' },
+  { lvl: 7, name: 'Frayed Vessel', desc: 'Begin each run at 90% HP.' },
+  { lvl: 8, name: 'Relentless Spire', desc: 'Elites and normal enemies gain a further 10% HP.' },
+  { lvl: 9, name: 'Sharpened Static', desc: 'All enemies deal 10% more damage.' },
+  { lvl: 10, name: 'Hoarded Reserves', desc: 'Carry one fewer potion (2 slots).' },
+  { lvl: 11, name: 'Crowned in Wrath', desc: 'Bosses begin combat with 2 Resolve.' },
+  { lvl: 12, name: 'The Spire Bites', desc: 'Enemies deal a further 10% more damage.' },
+];
+export const MAX_ASCENSION = ASCENSION_LEVELS.length;
+
 export class RunState {
-  constructor(charId, seed = randomSeed()) {
+  constructor(charId, seed = randomSeed(), ascension = 0) {
     const ch = CHARACTERS[charId];
     this.seed = seed;
     this.rng = new RNG(seed);
     this.characterId = charId;
     this.character = ch;
+    this.ascension = Math.max(0, Math.min(MAX_ASCENSION, ascension | 0));
     this.maxHp = ch.maxHp;
     this.hp = ch.maxHp;
     this.gold = ch.startGold;
+    if (this.ascension >= 3) this.gold = Math.floor(this.gold * 0.75); // A3 Lean Purse
     this.act = 1;
-    this.floor = 0;
-    this.maxPotions = 3;
+    this.maxPotions = (this.ascension >= 10) ? 2 : 3; // A10 Hoarded Reserves
     this.potions = [];
     this.relics = [];
     this.deck = ch.deck.map((id) => ({ id, upgraded: false }));
+    if (this.ascension >= 5) this.deck.push({ id: 'wound', upgraded: false }); // A5 Lingering Static
+    if (this.ascension >= 7) this.hp = Math.floor(this.maxHp * 0.9); // A7 Frayed Vessel
     this.encountersCleared = 0;
     this.eliteCleared = 0;
     this.bossesDefeated = 0;
@@ -35,6 +57,9 @@ export class RunState {
     this.map = generateMap(this.rng, this.act);
     this.position = null; // {row, col}
     this.lastResult = null;
+
+    this.elapsedTime = 0;
+    this.sessionStartTime = Date.now();
   }
 
   // -------- relics --------
@@ -58,7 +83,38 @@ export class RunState {
     if (!pool.length) return null;
     const r = this.rng.pick(pool);
     this.addRelic(r.id);
-    return r.name;
+    return r;
+  }
+
+  // A boss-tier relic the run doesn't yet own (the Spire's crowning offer).
+  // Returns the id to display; the caller grants it via addRelic if taken.
+  pickBossRelicId() {
+    const pool = Object.values(RELICS).filter(
+      (r) => r.rarity === 'boss' && !this.relics.includes(r.id)
+    );
+    return pool.length ? this.rng.pick(pool).id : null;
+  }
+
+  // -------- ascension modifiers --------
+  // HP multiplier applied to an enemy blueprint when a fight begins.
+  enemyHpMult(bp) {
+    const a = this.ascension || 0;
+    let m = 1;
+    if (a >= 2) m *= 1.12;                      // A2 Swollen Ranks (all)
+    if (a >= 8 && !bp.boss) m *= 1.10;          // A8 Relentless Spire (non-boss)
+    if (bp.elite && a >= 1) m *= 1.25;          // A1 Bloodied Elites
+    if (bp.boss && a >= 6) m *= 1.25;           // A6 Cruel Crowns
+    return m;
+  }
+  restHealFraction() { return (this.ascension >= 4) ? 0.20 : 0.30; } // A4 Shallow Rest
+
+  // Damage multiplier applied to every enemy attack (ascension scaling).
+  enemyDamageMult() {
+    const a = this.ascension || 0;
+    let m = 1;
+    if (a >= 9) m *= 1.10;   // A9 Sharpened Static
+    if (a >= 12) m *= 1.10;  // A12 The Spire Bites
+    return m;
   }
 
   // -------- hp / gold --------
@@ -94,18 +150,30 @@ export class RunState {
   }
   removePotionAt(i) { this.potions.splice(i, 1); }
 
+  updateElapsedTime() {
+    if (this.sessionStartTime) {
+      const now = Date.now();
+      this.elapsedTime += Math.floor((now - this.sessionStartTime) / 1000);
+      this.sessionStartTime = now;
+    }
+  }
+
   // -------- serialization --------
   toJSON() {
+    this.updateElapsedTime();
     return {
       seed: this.seed,
       rngState: this.rng.state,
       characterId: this.characterId,
+      ascension: this.ascension,
       maxHp: this.maxHp, hp: this.hp, gold: this.gold,
-      act: this.act, floor: this.floor,
+      act: this.act,
       potions: this.potions, relics: this.relics, deck: this.deck,
       encountersCleared: this.encountersCleared, eliteCleared: this.eliteCleared,
+      actMonster: this._actMonster || 0,
       bossesDefeated: this.bossesDefeated, usedEvents: this.usedEvents,
       map: this.map, position: this.position,
+      elapsedTime: this.elapsedTime,
     };
   }
 
@@ -116,19 +184,23 @@ export class RunState {
     run.rng.state = data.rngState;
     run.characterId = data.characterId;
     run.character = CHARACTERS[data.characterId];
+    run.ascension = data.ascension || 0;
     run.maxHp = data.maxHp; run.hp = data.hp; run.gold = data.gold;
-    run.act = data.act; run.floor = data.floor;
+    run.act = data.act;
     run.maxPotions = 3;
     run.potions = data.potions || [];
     run.relics = data.relics || [];
     run.deck = data.deck || [];
     run.encountersCleared = data.encountersCleared || 0;
+    run._actMonster = data.actMonster || 0;
     run.eliteCleared = data.eliteCleared || 0;
     run.bossesDefeated = data.bossesDefeated || 0;
     run.usedEvents = data.usedEvents || [];
     run.map = data.map;
     run.position = data.position;
     run.lastResult = null;
+    run.elapsedTime = data.elapsedTime || 0;
+    run.sessionStartTime = Date.now();
     return run;
   }
 }

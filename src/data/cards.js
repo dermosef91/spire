@@ -17,7 +17,7 @@ function def(id, bp) {
 }
 
 // ============================================================== AMARA — Agojie Bladedancer
-// Strength ("Resolve"), Ward, raw blades and ancestral fury.
+// Strength ("Resolve"), Block, raw blades and ancestral fury.
 
 def('slash', {
   name: 'Blade Arc', char: 'amara', type: 'attack', rarity: 'basic', cost: 1,
@@ -29,12 +29,12 @@ def('slash', {
 def('brace', {
   name: 'Iron Stance', char: 'amara', type: 'skill', rarity: 'basic', cost: 1,
   block: 5, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward.`,
+  desc: (c) => `Gain ${c.block} Block.`,
   upgrade: (c) => { c.block = 8; },
   onPlay: (ctx) => ctx.gainBlock(ctx.c.block),
 });
 def('sunder', {
-  name: 'Sunder', char: 'amara', type: 'attack', rarity: 'basic', cost: 2,
+  name: 'Fault Line', char: 'amara', type: 'attack', rarity: 'basic', cost: 2,
   dmg: 8, magic: 2, target: 'enemy',
   desc: (c) => `Deal ${c.dmg} damage. Apply ${c.magic} Exposed.`,
   upgrade: (c) => { c.dmg = 10; c.magic = 3; },
@@ -42,27 +42,27 @@ def('sunder', {
 });
 def('twin_fangs', {
   name: 'Twin Fangs', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
-  dmg: 5, hits: 2, target: 'enemy',
+  dmg: 5, hits: 2, target: 'enemy', qteMarks: 2,
   desc: (c) => `Deal ${c.dmg} damage twice.`,
   upgrade: (c) => { c.dmg = 7; },
   onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.c.dmg, ctx.c.hits),
 });
 def('ironwave', {
-  name: 'Ironwave', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
-  dmg: 5, block: 5, target: 'enemy',
-  desc: (c) => `Gain ${c.block} Ward. Deal ${c.dmg} damage.`,
-  upgrade: (c) => { c.dmg = 7; c.block = 7; },
-  onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.deal(ctx.enemy, ctx.c.dmg); },
+  name: 'Obsidian Tide', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
+  dmg: 6, target: 'enemy',
+  desc: (c) => `Deal ${c.dmg} damage. Gain Block equal to the HP damage dealt.`,
+  upgrade: (c) => { c.dmg = 9; },
+  onPlay: (ctx) => { const hp = ctx.deal(ctx.enemy, ctx.c.dmg); if (hp > 0) ctx.gainBlock(hp); },
 });
 def('pommel', {
-  name: 'Pommel Strike', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
-  dmg: 9, magic: 1, target: 'enemy',
-  desc: (c) => `Deal ${c.dmg} damage. Draw ${c.magic} card${c.magic > 1 ? 's' : ''}.`,
-  upgrade: (c) => { c.dmg = 10; c.magic = 2; },
-  onPlay: (ctx) => { ctx.deal(ctx.enemy, ctx.c.dmg); ctx.draw(ctx.c.magic); },
+  name: 'Hilt Crack', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
+  dmg: 8, magic: 4, target: 'enemy',
+  desc: (c) => `Deal ${c.dmg} damage. Draw 1 card — 2 if you have ${c.magic}+ Tempo.`,
+  upgrade: (c) => { c.dmg = 10; c.magic = 3; },
+  onPlay: (ctx) => { ctx.deal(ctx.enemy, ctx.c.dmg); ctx.draw(ctx.tempo() >= ctx.c.magic ? 2 : 1); },
 });
 def('cleave', {
-  name: 'Cleave', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
+  name: 'Ember Sweep', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
   dmg: 8, target: 'all',
   desc: (c) => `Deal ${c.dmg} damage to ALL enemies.`,
   upgrade: (c) => { c.dmg = 11; },
@@ -76,46 +76,46 @@ def('crosscut', {
   onPlay: (ctx) => { ctx.deal(ctx.enemy, ctx.c.dmg); ctx.applyEnemy('weak', ctx.c.magic); },
 });
 def('shrug', {
-  name: 'Shrug It Off', char: 'amara', type: 'skill', rarity: 'common', cost: 1,
-  block: 8, magic: 1, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward. Draw ${c.magic} card.`,
-  upgrade: (c) => { c.block = 11; },
-  onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.draw(ctx.c.magic); },
+  name: 'Weather the Blow', char: 'amara', type: 'skill', rarity: 'common', cost: 1,
+  block: 6, magic: 1, target: 'self',
+  desc: (c) => `Gain ${c.block} Block. Gain ${c.magic} Tempo.`,
+  upgrade: (c) => { c.block = 9; },
+  onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.gainTempo(ctx.c.magic); },
 });
 def('thunderclap', {
-  name: 'Thunderclap', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
+  name: 'Concussive Roar', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
   dmg: 4, magic: 1, target: 'all',
   desc: (c) => `Deal ${c.dmg} damage and apply ${c.magic} Exposed to ALL enemies.`,
   upgrade: (c) => { c.dmg = 7; },
   onPlay: (ctx) => { ctx.dealAll(ctx.c.dmg); ctx.applyAll('vulnerable', ctx.c.magic); },
 });
 def('rising_strike', {
-  name: 'Rising Strike', char: 'amara', type: 'attack', rarity: 'uncommon', cost: 2,
+  name: 'Rising Talon', char: 'amara', type: 'attack', rarity: 'uncommon', cost: 2,
   dmg: 13, magic: 1, target: 'enemy',
   desc: (c) => `Deal ${c.dmg} damage. Apply ${c.magic} Sapped and ${c.magic} Exposed.`,
-  upgrade: (c) => { c.dmg = 13; c.magic = 2; },
+  upgrade: (c) => { c.dmg = 16; c.magic = 2; },
   onPlay: (ctx) => { ctx.deal(ctx.enemy, ctx.c.dmg); ctx.applyEnemy('weak', ctx.c.magic); ctx.applyEnemy('vulnerable', ctx.c.magic); },
 });
 def('war_trance', {
-  name: 'War Trance', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 0,
-  magic: 3, target: 'self', exhaust: false,
-  desc: (c) => `Draw ${c.magic} cards. You may not draw additional cards this turn.`,
-  upgrade: (c) => { c.magic = 4; },
-  onPlay: (ctx) => { ctx.draw(ctx.c.magic); ctx.combat.noMoreDraw = true; },
+  name: "Hunter's Calm", char: 'amara', type: 'skill', rarity: 'uncommon', cost: 0,
+  magic: 2, target: 'self', exhaust: true,
+  desc: (c) => `Gain ${c.magic} Resolve. Draw 2 cards. Exhaust.`,
+  upgrade: (c) => { c.magic = 3; },
+  onPlay: (ctx) => { ctx.applySelf('strength', ctx.c.magic); ctx.draw(2); },
 });
 def('ember_within', {
-  name: 'Ember Within', char: 'amara', type: 'power', rarity: 'uncommon', cost: 1,
+  name: 'Emberheart', char: 'amara', type: 'power', rarity: 'uncommon', cost: 1,
   magic: 2, target: 'self',
   desc: (c) => `Gain ${c.magic} Resolve.`,
   upgrade: (c) => { c.magic = 3; },
   onPlay: (ctx) => ctx.applySelf('strength', ctx.c.magic),
 });
 def('bulwark', {
-  name: 'Bulwark', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 1,
-  target: 'self',
-  desc: (c) => `Double your current Ward.`,
-  upgrade: (c) => { c.cost = 0; },
-  onPlay: (ctx) => { ctx.gainBlockRaw(ctx.self.block); },
+  name: 'Obsidian Wall', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 1,
+  block: 8, magic: 4, target: 'self',
+  desc: (c) => `Gain ${c.block} Block. Gain ${c.magic} Bronzeplate.`,
+  upgrade: (c) => { c.magic = 6; },
+  onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.applySelf('metallicize', ctx.c.magic); },
 });
 def('read_tell', {
   name: 'Read the Tell', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 1,
@@ -125,42 +125,42 @@ def('read_tell', {
   onPlay: (ctx) => { if (ctx.enemy && ctx.enemy.intent && ctx.enemy.intent.type === 'attack') ctx.applySelf('strength', ctx.c.magic); },
 });
 def('shockwave', {
-  name: 'Shockwave', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 2,
+  name: 'Seismic Fault', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 2,
   magic: 3, target: 'all', exhaust: true,
-  desc: (c) => `Apply ${c.magic} Sapped and ${c.magic} Exposed to ALL enemies. Exhaust.`,
-  upgrade: (c) => { c.magic = 5; },
-  onPlay: (ctx) => { ctx.applyAll('weak', ctx.c.magic); ctx.applyAll('vulnerable', ctx.c.magic); },
+  desc: (c) => `Apply ${c.magic} Exposed to ALL enemies. Draw 1 card. Exhaust.`,
+  upgrade: (c) => { c.magic = 4; },
+  onPlay: (ctx) => { ctx.applyAll('vulnerable', ctx.c.magic); ctx.draw(1); },
 });
 def('disarm', {
-  name: 'Disarm', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 1,
+  name: 'Break the Spear', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 1,
   magic: 2, target: 'enemy', exhaust: true,
   desc: (c) => `Enemy loses ${c.magic} Resolve. Exhaust.`,
   upgrade: (c) => { c.magic = 3; },
   onPlay: (ctx) => ctx.applyEnemy('strength', -ctx.c.magic),
 });
 def('whirlwind', {
-  name: 'Whirlwind', char: 'amara', type: 'attack', rarity: 'uncommon', cost: 'X',
-  dmg: 5, target: 'all',
-  desc: (c) => `Deal ${c.dmg} damage to ALL enemies X times.`,
-  upgrade: (c) => { c.dmg = 8; },
-  onPlay: (ctx) => { for (let i = 0; i < ctx.X; i++) ctx.dealAll(ctx.c.dmg); },
+  name: 'Cyclone Dance', char: 'amara', type: 'attack', rarity: 'uncommon', cost: 2,
+  dmg: 4, magic: 2, target: 'all', qteMarks: 3,
+  desc: (c) => `Deal ${c.dmg} damage to ALL enemies. Consume ALL your Tempo: +${c.magic} damage for each consumed.`,
+  upgrade: (c) => { c.dmg = 6; c.magic = 3; },
+  onPlay: (ctx) => { const t = ctx.spendAllTempo(); ctx.dealAll(ctx.c.dmg + ctx.c.magic * t); },
 });
 def('ancestral_fury', {
-  name: 'Ancestral Fury', char: 'amara', type: 'power', rarity: 'rare', cost: 3,
-  magic: 2, target: 'self',
-  desc: (c) => `At the start of each turn, gain ${c.magic} Resolve.`,
-  upgrade: (c) => { c.cost = 3; c.magic = 3; },
-  onPlay: (ctx) => ctx.combat.addTrigger('turnStart', () => ctx.applySelf('strength', ctx.c.magic), 'Ancestral Fury'),
+  name: 'Rite of Fury', char: 'amara', type: 'power', rarity: 'rare', cost: 3,
+  magic: 1, target: 'self',
+  desc: (c) => `Gain 2 Resolve. At the start of each turn, gain ${c.magic} Resolve.`,
+  upgrade: (c) => { c.magic = 2; },
+  onPlay: (ctx) => { ctx.applySelf('strength', 2); ctx.combat.addTrigger('turnStart', () => ctx.applySelf('strength', ctx.c.magic), 'Rite of Fury'); },
 });
 def('blood_offering', {
-  name: 'Blood Offering', char: 'amara', type: 'skill', rarity: 'rare', cost: 0,
-  magic: 6, target: 'self', exhaust: true,
-  desc: (c) => `Lose ${c.magic} HP. Gain 2 Àṣẹ. Draw 3 cards. Exhaust.`,
-  upgrade: (c) => { c.exhaust = true; c.retain = false; },
-  onPlay: (ctx) => { ctx.loseHpSelf(ctx.c.magic); ctx.gainEnergy(2); ctx.draw(3); },
+  name: 'Crimson Rite', char: 'amara', type: 'skill', rarity: 'rare', cost: 0,
+  magic: 5, target: 'self', exhaust: true,
+  desc: (c) => `Lose ${c.magic} HP. Gain 2 Àṣẹ. Draw ${c.upgraded ? 3 : 2} cards. Exhaust.`,
+  upgrade: (c) => { c.upgraded = true; },
+  onPlay: (ctx) => { ctx.loseHpSelf(ctx.c.magic); ctx.gainEnergy(2); ctx.draw(ctx.c.upgraded ? 3 : 2); },
 });
 def('devour', {
-  name: 'Devour', char: 'amara', type: 'attack', rarity: 'rare', cost: 1,
+  name: 'Sate', char: 'amara', type: 'attack', rarity: 'rare', cost: 1,
   dmg: 10, magic: 3, target: 'enemy', exhaust: true,
   desc: (c) => `Deal ${c.dmg} damage. If this kills, raise your Max HP by ${c.magic}. Exhaust.`,
   upgrade: (c) => { c.dmg = 12; c.magic = 4; },
@@ -171,11 +171,11 @@ def('devour', {
   },
 });
 def('harvest', {
-  name: 'Harvest', char: 'amara', type: 'attack', rarity: 'rare', cost: 2,
-  dmg: 4, target: 'all', exhaust: true,
-  desc: (c) => `Deal ${c.dmg} damage to ALL enemies. Heal HP equal to unblocked damage dealt. Exhaust.`,
-  upgrade: (c) => { c.dmg = 6; },
-  onPlay: (ctx) => { const dealt = ctx.dealAll(ctx.c.dmg); ctx.heal(dealt); },
+  name: 'Reaping Arc', char: 'amara', type: 'attack', rarity: 'rare', cost: 2,
+  dmg: 6, magic: 3, target: 'all', exhaust: true,
+  desc: (c) => `Deal ${c.dmg} damage to ALL enemies. Heal ${c.magic} HP for each enemy struck. Exhaust.`,
+  upgrade: (c) => { c.dmg = 8; c.magic = 4; },
+  onPlay: (ctx) => { const n = ctx.combat.livingEnemies().length; ctx.dealAll(ctx.c.dmg); ctx.heal(n * ctx.c.magic); },
 });
 def('skyfall', {
   name: 'Skyfall Hammer', char: 'amara', type: 'attack', rarity: 'rare', cost: 3,
@@ -183,6 +183,48 @@ def('skyfall', {
   desc: (c) => `Deal ${c.dmg} damage.`,
   upgrade: (c) => { c.dmg = 42; },
   onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.c.dmg),
+});
+
+// --- Tempo suite: the Bladedancer reads the rhythm layer. Tempo registers
+// before onPlay (see combat.playCard), so these cards count their own strike.
+def('flowing_edge', {
+  name: 'Flowing Edge', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
+  magic: 2, target: 'enemy',
+  desc: (c) => `Deal ${c.magic} damage for each Tempo you have.`,
+  upgrade: (c) => { c.magic = 3; },
+  onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.c.magic * ctx.tempo()),
+});
+def('dancers_poise', {
+  name: "Dancer's Poise", char: 'amara', type: 'skill', rarity: 'common', cost: 1,
+  magic: 1, target: 'self',
+  desc: (c) => `Gain ${c.magic} Block for each Tempo you have.`,
+  upgrade: (c) => { c.magic = 2; },
+  onPlay: (ctx) => ctx.gainBlock(ctx.c.magic * ctx.tempo()),
+});
+def('spiral_finish', {
+  name: 'Spiral Finish', char: 'amara', type: 'attack', rarity: 'uncommon', cost: 2,
+  dmg: 10, magic: 3, target: 'enemy', qteMarks: 2,
+  desc: (c) => `Deal ${c.dmg} damage. Consume ALL your Tempo: +${c.magic} damage for each consumed.`,
+  upgrade: (c) => { c.dmg = 12; c.magic = 4; },
+  onPlay: (ctx) => { const t = ctx.spendAllTempo(); ctx.deal(ctx.enemy, ctx.c.dmg + ctx.c.magic * t); },
+});
+def('war_drum_cadence', {
+  name: 'War-Drum Cadence', char: 'amara', type: 'power', rarity: 'uncommon', cost: 1,
+  magic: 1, target: 'self',
+  desc: (c) => `At the start of your turn, if you have 3 or more Tempo, gain ${c.magic} Resolve.`,
+  upgrade: (c) => { c.magic = 2; },
+  onPlay: (ctx) => ctx.combat.addTrigger('turnStart', () => {
+    if (ctx.combat.tempo() >= 3) ctx.applySelf('strength', ctx.c.magic);
+  }, 'War-Drum Cadence'),
+});
+def('unbroken_dance', {
+  name: 'Unbroken Dance', char: 'amara', type: 'power', rarity: 'rare', cost: 2,
+  magic: 1, target: 'self',
+  desc: (c) => `Whenever you gain Tempo, gain ${c.magic} Block for each Tempo gained.`,
+  upgrade: (c) => { c.magic = 2; },
+  onPlay: (ctx) => ctx.combat.addTrigger('tempoGained', ({ amount }) => {
+    ctx.combat.gainBlockTo(ctx.combat.player, amount * ctx.c.magic, true);
+  }, 'Unbroken Dance'),
 });
 
 // ============================================================== KOFI — Griot of the Cosmos
@@ -198,7 +240,7 @@ def('jab', {
 def('refrain', {
   name: 'Refrain', char: 'kofi', type: 'skill', rarity: 'basic', cost: 1,
   block: 5, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward.`,
+  desc: (c) => `Gain ${c.block} Block.`,
   upgrade: (c) => { c.block = 8; },
   onPlay: (ctx) => ctx.gainBlock(ctx.c.block),
 });
@@ -219,7 +261,7 @@ def('blight_needle', {
 def('quickstep', {
   name: 'Quickstep', char: 'kofi', type: 'skill', rarity: 'common', cost: 1,
   block: 6, magic: 1, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward. Draw ${c.magic} card.`,
+  desc: (c) => `Gain ${c.block} Block. Draw ${c.magic} card.`,
   upgrade: (c) => { c.block = 8; },
   onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.draw(ctx.c.magic); },
 });
@@ -238,9 +280,9 @@ def('crescendo', {
   onPlay: (ctx) => ctx.draw(ctx.c.magic),
 });
 def('deflect', {
-  name: 'Deflect', char: 'kofi', type: 'skill', rarity: 'common', cost: 0,
+  name: 'Backstop', char: 'kofi', type: 'skill', rarity: 'common', cost: 0,
   block: 4, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward.`,
+  desc: (c) => `Gain ${c.block} Block.`,
   upgrade: (c) => { c.block = 7; },
   onPlay: (ctx) => ctx.gainBlock(ctx.c.block),
 });
@@ -254,7 +296,7 @@ def('shard_burst', {
 def('backbeat', {
   name: 'Backbeat', char: 'kofi', type: 'skill', rarity: 'common', cost: 1,
   block: 6, magic: 1, target: 'enemy',
-  desc: (c) => `Gain ${c.block} Ward. Apply ${c.magic} Sapped.`,
+  desc: (c) => `Gain ${c.block} Block. Apply ${c.magic} Sapped.`,
   upgrade: (c) => { c.block = 8; c.magic = 2; },
   onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.applyEnemy('weak', ctx.c.magic); },
 });
@@ -282,11 +324,18 @@ def('accelerando', {
   onPlay: (ctx) => { ctx.gainEnergy(1); ctx.draw(ctx.c.magic); },
 });
 def('catalyst', {
-  name: 'Catalyst', char: 'kofi', type: 'skill', rarity: 'uncommon', cost: 1,
+  name: 'Fester', char: 'kofi', type: 'skill', rarity: 'uncommon', cost: 1,
   target: 'enemy', exhaust: true,
-  desc: (c) => `${c.upgraded ? 'Triple' : 'Double'} an enemy's Blight. Exhaust.`,
-  upgrade: (c) => { c.upgraded = true; },
-  onPlay: (ctx) => { if (ctx.enemy) { const cur = ctx.enemy.powers.poison || 0; const mult = ctx.c.upgraded ? 2 : 1; if (cur) ctx.combat.applyPower(ctx.enemy, 'poison', cur * mult, ctx.self); } },
+  desc: (c) => `An enemy suffers its Blight as damage immediately. Its Blight is not reduced. Draw 1 card. Exhaust.`,
+  upgrade: (c) => { c.cost = 0; },
+  onPlay: (ctx) => {
+    if (ctx.enemy && ctx.enemy.powers.poison) {
+      const p = ctx.enemy.powers.poison;
+      ctx.combat.log(`${ctx.enemy.name} festers for ${p}!`);
+      ctx.combat.loseHp(ctx.enemy, p);
+    }
+    ctx.draw(1);
+  },
 });
 def('bouncing_verse', {
   name: 'Bouncing Verse', char: 'kofi', type: 'attack', rarity: 'uncommon', cost: 1,
@@ -320,12 +369,11 @@ def('the_long_song', {
   }, 'The Long Song'),
 });
 def('grand_finale', {
-  name: 'Grand Finale', char: 'kofi', type: 'attack', rarity: 'rare', cost: 0,
-  dmg: 50, target: 'all',
-  desc: (c) => `Can only be played if it is the last card in your hand. Deal ${c.dmg} damage to ALL enemies.`,
-  upgrade: (c) => { c.dmg = 60; },
-  playable: (ctx) => ctx.combat.hand.length === 1,
-  onPlay: (ctx) => ctx.dealAll(ctx.c.dmg),
+  name: 'Final Chorus', char: 'kofi', type: 'attack', rarity: 'rare', cost: 2,
+  dmg: 8, target: 'all', qteMarks: 3,
+  desc: (c) => `Deal damage to ALL enemies equal to ${c.dmg}× the Verses you played this combat.`,
+  upgrade: (c) => { c.dmg = 10; },
+  onPlay: (ctx) => ctx.dealAll(ctx.c.dmg * ctx.combat.versesThisCombat),
 });
 
 // ============================================================== ZARA — Star-Weaver
@@ -341,7 +389,7 @@ def('pulse', {
 def('barrier', {
   name: 'Barrier', char: 'zara', type: 'skill', rarity: 'basic', cost: 1,
   block: 5, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward.`,
+  desc: (c) => `Gain ${c.block} Block.`,
   upgrade: (c) => { c.block = 8; },
   onPlay: (ctx) => ctx.gainBlock(ctx.c.block),
 });
@@ -374,30 +422,30 @@ def('frostbind', {
   onPlay: (ctx) => { ctx.deal(ctx.enemy, ctx.c.dmg); ctx.channel('tide', ctx.c.magic); },
 });
 def('coolhead', {
-  name: 'Coolhead', char: 'zara', type: 'skill', rarity: 'common', cost: 1,
+  name: 'Still Waters', char: 'zara', type: 'skill', rarity: 'common', cost: 1,
   magic: 1, target: 'self',
   desc: (c) => `Channel ${c.magic} Tide. Draw ${c.upgraded ? 2 : 1} card${c.upgraded ? 's' : ''}.`,
   upgrade: (c) => { c.upgraded = true; },
   onPlay: (ctx) => { ctx.channel('tide', ctx.c.magic); ctx.draw(ctx.c.upgraded ? 2 : 1); },
 });
 def('capacitor', {
-  name: 'Capacitor', char: 'zara', type: 'skill', rarity: 'common', cost: 1,
+  name: 'Reservoir', char: 'zara', type: 'skill', rarity: 'common', cost: 1,
   block: 7, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward. Gain 1 Àṣẹ next turn.`,
+  desc: (c) => `Gain ${c.block} Block. Gain 1 Àṣẹ next turn.`,
   upgrade: (c) => { c.block = 10; },
   onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.combat.energyNextTurn += 1; },
 });
 def('chaos', {
-  name: 'Chaos', char: 'zara', type: 'skill', rarity: 'common', cost: 1,
+  name: 'Wild Spirit', char: 'zara', type: 'skill', rarity: 'common', cost: 1,
   magic: 1, target: 'self',
   desc: (c) => `Channel ${c.magic} random Spirit.`,
   upgrade: (c) => { c.magic = 2; },
   onPlay: (ctx) => { for (let i = 0; i < ctx.c.magic; i++) ctx.channel(ctx.rng.pick(['storm', 'tide', 'shade', 'sun'])); },
 });
 def('glacier', {
-  name: 'Glacier', char: 'zara', type: 'skill', rarity: 'common', cost: 2,
+  name: 'Icewall', char: 'zara', type: 'skill', rarity: 'common', cost: 2,
   block: 7, magic: 2, target: 'self',
-  desc: (c) => `Gain ${c.block} Ward. Channel ${c.magic} Tide.`,
+  desc: (c) => `Gain ${c.block} Block. Channel ${c.magic} Tide.`,
   upgrade: (c) => { c.block = 10; },
   onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.channel('tide', ctx.c.magic); },
 });
@@ -416,14 +464,14 @@ def('attune', {
   onPlay: (ctx) => ctx.applySelf('focus', ctx.c.magic),
 });
 def('doomgloom', {
-  name: 'Doom & Gloom', char: 'zara', type: 'attack', rarity: 'uncommon', cost: 2,
+  name: 'Gathering Dark', char: 'zara', type: 'attack', rarity: 'uncommon', cost: 2,
   dmg: 10, magic: 1, target: 'all',
   desc: (c) => `Deal ${c.dmg} damage to ALL enemies. Channel ${c.magic} Shade.`,
   upgrade: (c) => { c.dmg = 14; },
   onPlay: (ctx) => { ctx.dealAll(ctx.c.dmg); ctx.channel('shade', ctx.c.magic); },
 });
 def('skim', {
-  name: 'Skim', char: 'zara', type: 'skill', rarity: 'uncommon', cost: 1,
+  name: 'Stargaze', char: 'zara', type: 'skill', rarity: 'uncommon', cost: 1,
   magic: 3, target: 'self',
   desc: (c) => `Draw ${c.magic} cards.`,
   upgrade: (c) => { c.magic = 4; },
@@ -444,11 +492,11 @@ def('summon_sun', {
   onPlay: (ctx) => ctx.channel('sun', ctx.c.magic),
 });
 def('overclock', {
-  name: 'Overclock', char: 'zara', type: 'power', rarity: 'rare', cost: 1,
+  name: 'Overdrive', char: 'zara', type: 'power', rarity: 'rare', cost: 1,
   magic: 4, target: 'self',
   desc: (c) => `Gain ${c.magic} Focus. At the start of your turn, lose 1 Focus.`,
   upgrade: (c) => { c.magic = 5; },
-  onPlay: (ctx) => { ctx.applySelf('focus', ctx.c.magic); ctx.combat.addTrigger('turnStart', () => ctx.applySelf('focus', -1), 'Overclock'); },
+  onPlay: (ctx) => { ctx.applySelf('focus', ctx.c.magic); ctx.combat.addTrigger('turnStart', () => ctx.applySelf('focus', -1), 'Overdrive'); },
 });
 def('stormcall', {
   name: 'Stormcall', char: 'zara', type: 'skill', rarity: 'rare', cost: 1,
@@ -458,11 +506,11 @@ def('stormcall', {
   onPlay: (ctx) => { ctx.channel('storm', ctx.c.magic); ctx.combat.stormAll = true; },
 });
 def('echo_form', {
-  name: 'Echo Form', char: 'zara', type: 'power', rarity: 'rare', cost: 3,
+  name: 'Mirrorcast', char: 'zara', type: 'power', rarity: 'rare', cost: 3,
   target: 'self',
-  desc: (c) => `The first card you play each turn is played twice.${''}`,
+  desc: (c) => `Spirits you Channel arrive twice.`,
   upgrade: (c) => { c.cost = 2; },
-  onPlay: (ctx) => { ctx.combat.echoForm = true; },
+  onPlay: (ctx) => { ctx.combat.mirrorChannel = true; },
 });
 def('falling_star', {
   name: 'Falling Star', char: 'zara', type: 'attack', rarity: 'rare', cost: 5,
@@ -488,37 +536,40 @@ def('flash', {
   onPlay: (ctx) => ctx.draw(ctx.c.upgraded ? 3 : 2),
 });
 def('panic_button', {
-  name: 'Panic Button', char: 'colorless', type: 'skill', rarity: 'uncommon', cost: 0,
-  block: 30, target: 'self', exhaust: true,
-  desc: (c) => `Gain ${c.block} Ward. You cannot gain Ward next turn. Exhaust.`,
-  upgrade: (c) => { c.block = 40; },
-  onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.combat.addTrigger('turnStart', () => ctx.applySelf('noBlock', 1), 'Panic Button', true); },
+  name: 'Last Resort', char: 'colorless', type: 'skill', rarity: 'uncommon', cost: 0,
+  block: 12, target: 'self', exhaust: true,
+  desc: (c) => `Gain ${c.block} Block. Your rhythm breaks — Tempo drops to 0. Exhaust.`,
+  upgrade: (c) => { c.block = 16; },
+  onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.combat.breakTempo(); },
 });
 def('apotheosis', {
-  name: 'Apotheosis', char: 'colorless', type: 'skill', rarity: 'rare', cost: 2,
+  name: 'Transcendence', char: 'colorless', type: 'skill', rarity: 'rare', cost: 1,
   target: 'self', exhaust: true,
-  desc: (c) => `Upgrade ALL of your cards for the rest of combat. Exhaust.`,
-  upgrade: (c) => { c.cost = 1; },
-  onPlay: (ctx) => ctx.combat.upgradeAllInCombat(),
+  desc: (c) => `Upgrade all cards in your hand for the rest of combat. Draw 1 card. Exhaust.`,
+  upgrade: (c) => { c.cost = 0; },
+  onPlay: (ctx) => {
+    for (const h of ctx.combat.hand) if (canUpgrade(h)) upgradeCard(h);
+    ctx.draw(1);
+  },
 });
 
 // ============================================================== STATUS & CURSE
 def('wound', {
-  name: 'Wound', char: 'status', type: 'status', rarity: 'special', cost: -1,
+  name: 'Scar', char: 'status', type: 'status', rarity: 'special', cost: -1,
   target: 'none', unplayable: true,
   desc: () => `Unplayable.`,
   upgrade: () => {},
   onPlay: () => {},
 });
 def('dazed', {
-  name: 'Dazed', char: 'status', type: 'status', rarity: 'special', cost: -1,
+  name: 'Reeling', char: 'status', type: 'status', rarity: 'special', cost: -1,
   target: 'none', unplayable: true, ethereal: true,
   desc: () => `Unplayable. Ethereal.`,
   upgrade: () => {},
   onPlay: () => {},
 });
 def('static_curse', {
-  name: 'Static', char: 'curse', type: 'curse', rarity: 'special', cost: -1,
+  name: 'Glitch', char: 'curse', type: 'curse', rarity: 'special', cost: -1,
   target: 'none', unplayable: true,
   desc: () => `Unplayable. While in hand, lose 1 HP at end of turn.`,
   upgrade: () => {},
@@ -526,7 +577,7 @@ def('static_curse', {
   inHandTurnEnd: (ctx) => ctx.loseHpSelf(1),
 });
 def('regret', {
-  name: 'Regret', char: 'curse', type: 'curse', rarity: 'special', cost: -1,
+  name: 'Sorrow', char: 'curse', type: 'curse', rarity: 'special', cost: -1,
   target: 'none', unplayable: true,
   desc: () => `Unplayable. At end of turn, lose 1 HP for each card in hand.`,
   upgrade: () => {},

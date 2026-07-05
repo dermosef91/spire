@@ -1,13 +1,29 @@
-// Enemies of the Spire. Each blueprint defines HP range, a glyph, a move table,
+// Enemies of the Spire. Each blueprint defines HP range, a move table,
 // and an AI (pick) that returns the id of the next move. Moves declare `intent`
 // metadata for the UI and a `run(combat, self)` that resolves on the enemy turn.
 //
 // Combat API used here:
 //   combat.enemyAttack(self, dmg, hits)   — strength/weak/vuln applied, hits player
-//   combat.gainBlockTo(self, n)           — enemy gains Ward
+//   combat.gainBlockTo(self, n)           — enemy gains Block
 //   combat.applyPower(target, key, n, src)
 //   combat.addCardToPile(card, pile)      — e.g. statuses into player piles
 //   combat.player
+//
+// DESIGN — every enemy is built around a distinct "combat puzzle" so no two
+// encounters feel alike. Archetypes in play:
+//   • Ramper / glass cannon — low HP, grows Resolve each turn → burst it down.
+//   • Swarm — many small hits → punished by Block, rewards Backlash.
+//   • Retaliator / turtle — Block + Backlash → wants big single hits, not flurries.
+//   • Debuffer — stacks Sapped/Brittle/Exposed → pressures your defense.
+//   • Poisoner — stacks Blight → a race against the clock.
+//   • Charger — telegraphs a huge nuke every few turns → block-timing puzzle.
+//   • Support / healer — heals & buffs allies → kill-priority puzzle in groups.
+//   • Summoner — calls fresh minions onto the board → cut the caller or drown.
+//   • Curse-flooder — jams your deck with Dazed/Wounds → deck disruption.
+//   • Life-drain — heals itself as it hits → out-pace its sustain.
+//   • Warded — Charm resists your debuffs → forces raw damage.
+//   • Berserker — escalating Resolve, no defense → a damage clock.
+//   • Phaser — periodic Phase (intangible) → don't waste your burst.
 
 export const ENEMIES = {};
 function def(id, bp) { ENEMIES[id] = { id, ...bp }; }
@@ -18,108 +34,280 @@ const atk = (name, dmg, hits = 1) => ({
   run: (c, s) => c.enemyAttack(s, dmg, hits),
 });
 
+// Helper: heal an enemy and flash the heal FX.
+const eHeal = (c, e, n) => {
+  if (!e || !e.alive || n <= 0) return;
+  e.hp = Math.min(e.maxHp, e.hp + n);
+  c.fx('heal', { entity: e, amount: n });
+  c.notify();
+};
+// The most-wounded living ally (by HP fraction). Used by supports/healers.
+const weakestAlly = (c) => {
+  const allies = c.enemies.filter((e) => e.alive);
+  if (!allies.length) return null;
+  return allies.reduce((a, b) => (b.hp / b.maxHp < a.hp / a.maxHp ? b : a));
+};
+// A random living ally other than `self`, or `self` when it stands alone.
+const otherAlly = (c, self) => {
+  const others = c.enemies.filter((e) => e.alive && e !== self);
+  return others.length ? c.rng.pick(others) : self;
+};
+
+// --- Player-state reads for context-aware AI. Enemies use these so their move
+// choice reacts to how the fight is actually going instead of a fixed cycle. ---
+const playerLowHp = (c, frac = 0.35) => c.player.hp <= c.player.maxHp * frac;
+const playerBlocked = (c, min = 1) => (c.player.block || 0) >= min;
+const playerLacks = (c, key) => !c.player.powers[key];
+const selfLowHp = (s, frac = 0.4) => s.hp <= s.maxHp * frac;
+
 // ===================== ACT 1 — The Sunken Market =====================
+
+// Basic attacker — light pressure, an occasional self-buff. The tutorial foe.
 def('husk_drone', {
-  name: 'Husk Drone', glyph: '🛸', act: 1, hpMin: 10, hpMax: 14,
+  name: 'Husk Drone', act: 1, hpMin: 24, hpMax: 32, startBlock: 6,
   moves: {
     zap: atk('Zap', 6),
-    buzz: { name: 'Overcharge', intent: { type: 'buff' }, run: (c, s) => c.applyPower(s, 'strength', 2, s) },
+    buzz: { name: 'Overcharge', intent: { type: 'buffblock', block: 4 }, run: (c, s) => { c.applyPower(s, 'strength', 2, s); c.gainBlockTo(s, 4); } },
   },
   pick: (s, c, rng) => (s.history.filter((m) => m === 'buzz').length === 0 && s.turn === 1 ? 'zap' : (s.turn % 3 === 0 ? 'buzz' : 'zap')),
 });
+
+// Swarm / debuffer — quick flurries and Sapped. Block eats its little bites.
 def('static_jackal', {
-  name: 'Static Jackal', glyph: '🐺', act: 1, hpMin: 13, hpMax: 17,
+  name: 'Static Jackal', act: 1, hpMin: 20, hpMax: 26,
   moves: {
     bite: atk('Snap', 8),
-    howl: { name: 'Howl', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'weak', 1, s) },
+    howl: { name: 'Howl', intent: { type: 'debuffblock', block: 5 }, run: (c, s) => { c.applyPower(c.player, 'weak', 1, s); c.gainBlockTo(s, 5); } },
     lunge: atk('Lunge', 5, 2),
   },
   pick: (s, c, rng) => rng.pick(['bite', 'lunge', 'howl']),
 });
+
+// Retaliator / turtle — parks Block and Backlash, then a heavy Slam. Flurries
+// hurt you back; answer it with one big hit or by holding your attacks.
 def('brass_sentinel', {
-  name: 'Brass Sentinel', glyph: '🗿', act: 1, hpMin: 20, hpMax: 25,
+  name: 'Brass Sentinel', act: 1, hpMin: 44, hpMax: 54, startBlock: 6,
   moves: {
-    slam: atk('Slam', 9),
-    guard: { name: 'Lock Down', intent: { type: 'block', block: 8 }, run: (c, s) => c.gainBlockTo(s, 8) },
-    rivet: { name: 'Rivet', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.addCardToPile(c.makeCard('dazed'), 'discard'); } },
+    slam: atk('Piston Slam', 10),
+    barricade: { name: 'Barricade', intent: { type: 'block', block: 8 }, run: (c, s) => { c.gainBlockTo(s, 8); } },
+    rivet: { name: 'Rivet', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.addCardToPile(c.makeCard('dazed'), 'draw'); } },
   },
-  pick: (s, c, rng) => (s.turn % 3 === 0 ? 'guard' : rng.pick(['slam', 'rivet'])),
+  pick: (s, c, rng) => {
+    if (s.turn === 1) return 'barricade';
+    if (s.last === 'barricade') return 'slam';
+    return s.turn % 3 === 0 ? 'barricade' : rng.pick(['slam', 'rivet']);
+  },
 });
+
+// Gold thief — chips your purse and flees. Kill it fast or eat the loss.
 def('market_thief', {
-  name: 'Market Thief', glyph: '🦝', act: 1, hpMin: 16, hpMax: 20,
+  name: 'Market Thief', act: 1, hpMin: 26, hpMax: 32,
   moves: {
     swipe: { name: 'Swipe', intent: { type: 'attack', dmg: 7 }, run: (c, s) => { c.enemyAttack(s, 7); if (!s.fled) c.run.gold = Math.max(0, c.run.gold - 8); } },
-    flee: { name: 'Flee', intent: { type: 'unknown' }, run: (c, s) => { s.alive = false; s.fled = true; } },
+    flee: { name: 'Flee', intent: { type: 'unknown' }, run: (c, s) => c.enemyFlee(s) },
   },
   pick: (s, c, rng) => (s.turn >= 4 ? 'flee' : 'swipe'),
 });
 
-// Act 1 elites
+// Poisoner — light attacks but stacks Blight fast. A race: end it before the
+// poison snowballs, or bring healing.
+def('reef_spitter', {
+  name: 'Reef Spitter', act: 1, hpMin: 22, hpMax: 27,
+  moves: {
+    spit: { name: 'Brine Spit', intent: { type: 'attackdebuff', dmg: 4 }, run: (c, s) => { c.enemyAttack(s, 4); c.applyPower(c.player, 'poison', 3, s); } },
+    cloud: { name: 'Blight Cloud', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'poison', 4, s) },
+    snap: atk('Shell Snap', 7),
+  },
+  pick: (s, c, rng) => {
+    if (s.turn === 1) return 'spit';
+    return s.turn % 3 === 0 ? 'snap' : rng.pick(['spit', 'cloud']);
+  },
+});
+
+// Support / healer — barely attacks, but mends the most-wounded ally and lends
+// it Resolve. In a group it is the priority target; alone it is harmless.
+def('tide_priest', {
+  name: 'Tide Priest', act: 1, hpMin: 25, hpMax: 31,
+  moves: {
+    mend: { name: 'Tidal Mending', intent: { type: 'buff' }, run: (c, s) => { eHeal(c, weakestAlly(c) || s, 10); } },
+    anoint: { name: 'Anoint', intent: { type: 'buff' }, run: (c, s) => c.applyPower(otherAlly(c, s), 'strength', 2, s) },
+    splash: atk('Splash', 5),
+  },
+  pick: (s, c, rng) => {
+    const hurt = c.enemies.some((e) => e.alive && e !== s && e.hp < e.maxHp * 0.6);
+    if (hurt) return 'mend';
+    return s.turn % 2 === 0 ? 'anoint' : 'splash';
+  },
+});
+
+// Glass cannon / ramper — low HP, grows Resolve and swings for more each round.
+// It re-kindles every few turns, so it can't be safely ignored; burst it down.
+def('spark_imp', {
+  name: 'Spark Imp', act: 1, hpMin: 13, hpMax: 17,
+  moves: {
+    kindle: { name: 'Kindle', intent: { type: 'buff' }, run: (c, s) => c.applyPower(s, 'strength', 3, s) },
+    jolt: atk('Jolt', 6),
+  },
+  pick: (s, c, rng) => (s.turn === 1 || s.turn % 4 === 0 ? 'kindle' : 'jolt'),
+});
+
+// Act 1 elite — Warden: enrages, hardening and hitting harder as the fight drags.
 def('gilded_warden', {
-  name: 'Gilded Warden', glyph: '👹', act: 1, elite: true, hpMin: 58, hpMax: 64,
+  name: 'Gilded Warden', act: 1, elite: true, hpMin: 58, hpMax: 64,
   moves: {
     cleave: atk('Wide Cleave', 14),
     barrage: atk('Brass Barrage', 5, 3),
     fortify: { name: 'Fortify', intent: { type: 'buffblock', block: 12 }, run: (c, s) => { c.gainBlockTo(s, 12); c.applyPower(s, 'strength', 2, s); } },
+    wrath: { name: 'Gild Wrath', intent: { type: 'buff' }, run: (c, s) => c.applyPower(s, 'strength', 4, s) },
   },
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'cleave';
+    if (s.hp < s.maxHp * 0.4 && s.last !== 'wrath') return 'wrath';
     if (s.last === 'cleave') return 'fortify';
-    if (s.last === 'fortify') return 'barrage';
+    if (s.last === 'fortify' || s.last === 'wrath') return 'barrage';
     return 'cleave';
   },
 });
 
-// Act 1 boss
+// Act 1 elite — Rust Maw: a charger. Winds up (Backlash while it coils), then
+// unleashes a huge bite. Watch the tell and stack Block for the crush turn.
+def('rust_maw', {
+  name: 'Rust Maw', act: 1, elite: true, hpMin: 62, hpMax: 68,
+  moves: {
+    gnash: atk('Gnash', 8, 2),
+    coil: { name: 'Coil', intent: { type: 'buffblock', block: 10 }, run: (c, s) => { c.gainBlockTo(s, 10); c.applyPower(s, 'strength', 3, s); } },
+    crush: { name: 'Rusted Crush', intent: { type: 'attack', dmg: 24 }, run: (c, s) => c.enemyAttack(s, 24) },
+  },
+  pick: (s, c, rng) => {
+    const cyc = ['gnash', 'coil', 'crush'];
+    return cyc[(s.turn - 1) % cyc.length];
+  },
+});
+
+// Act 1 boss — measured cycle of hits, walls and debuffs. At half health it
+// casts off its seals: phase 2 drops the defensive Seal entirely and just
+// batters an already-weakened hero.
 def('the_gatekeeper', {
-  name: 'The Gatekeeper', glyph: '⛩️', act: 1, boss: true, hpMin: 250, hpMax: 250,
+  name: 'The Gatekeeper', act: 1, boss: true, hpMin: 250, hpMax: 250,
   moves: {
     judge: atk('Judgement', 16),
     barrage: atk('Sevenfold Strike', 4, 4),
-    seal: { name: 'Seal the Gate', intent: { type: 'buffblock', block: 18 }, run: (c, s) => { c.gainBlockTo(s, 18); c.applyPower(c.player, 'frail', 2, s); } },
+    seal: { name: 'Seal the Gate', intent: { type: 'debuffblock', block: 18 }, run: (c, s) => { c.gainBlockTo(s, 18); c.applyPower(c.player, 'frail', 2, s); } },
     decree: { name: 'Decree', intent: { type: 'debuff' }, run: (c, s) => { c.applyPower(c.player, 'weak', 2, s); c.applyPower(c.player, 'vulnerable', 2, s); } },
   },
+  phase: {
+    at: 0.5, name: 'The Gate Unbars',
+    log: 'The Gatekeeper casts off its seals — the Gate unbars!',
+    onEnter: (c, s) => { c.applyPower(s, 'strength', 3, s); c.gainBlockTo(s, 18); },
+  },
   pick: (s, c, rng) => {
+    if (s._phased) {
+      // No more turtling — set you up with Decree, then hammer.
+      const cyc = ['decree', 'judge', 'barrage', 'judge'];
+      return cyc[(s.turn - 1) % cyc.length];
+    }
     const cycle = ['judge', 'seal', 'barrage', 'decree'];
     return cycle[(s.turn - 1) % cycle.length];
   },
 });
 
 // ===================== ACT 2 — The Brass Archive =====================
+
+// Debuffer with bite — Rend hits hard, Soul Drain leeches back a little life
+// and stacks Brittle. Withers the Resolve of anyone leaning on Strength.
 def('sand_wraith', {
-  name: 'Sand Wraith', glyph: '👁️', act: 2, hpMin: 28, hpMax: 34,
+  name: 'Sand Wraith', act: 2, hpMin: 28, hpMax: 34,
   moves: {
     rend: atk('Rend', 11),
-    drain: { name: 'Soul Drain', intent: { type: 'attackdebuff', dmg: 8 }, run: (c, s) => { c.enemyAttack(s, 8); c.applyPower(c.player, 'frail', 2, s); } },
+    drain: { name: 'Soul Drain', intent: { type: 'attackdebuff', dmg: 8 }, run: (c, s) => { c.enemyAttack(s, 8); c.applyPower(c.player, 'frail', 2, s); eHeal(c, s, 4); } },
+    wither: { name: 'Wither', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'strengthDown', 2, s) },
   },
-  pick: (s, c, rng) => rng.pick(['rend', 'drain']),
+  pick: (s, c, rng) => {
+    if ((c.player.powers.strength || 0) >= 3 && playerLacks(c, 'strengthDown')) return 'wither';
+    return rng.weighted([{ value: 'rend', weight: 2 }, { value: 'drain', weight: 3 }]);
+  },
 });
+
+// Retaliator — Reflect stacks heavy Backlash. Multi-hit decks shred themselves
+// on it; single big blows are the answer.
 def('mirror_shade', {
-  name: 'Mirror Shade', glyph: '🪞', act: 2, hpMin: 30, hpMax: 36,
+  name: 'Mirror Shade', act: 2, hpMin: 30, hpMax: 36,
   moves: {
     shard: atk('Shard Volley', 6, 2),
-    reflect: { name: 'Reflect', intent: { type: 'buffblock', block: 14 }, run: (c, s) => { c.gainBlockTo(s, 14); c.applyPower(s, 'thorns', 3, s); } },
+    reflect: { name: 'Reflect', intent: { type: 'block', block: 14 }, run: (c, s) => { c.gainBlockTo(s, 14); } },
     glare: { name: 'Glare', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'vulnerable', 2, s) },
   },
   pick: (s, c, rng) => (s.turn % 3 === 0 ? 'reflect' : rng.pick(['shard', 'glare'])),
 });
+
+// Poisoner / control — Constrict saps you and shields; Venom stacks Blight.
 def('chrome_serpent', {
-  name: 'Chrome Serpent', glyph: '🐍', act: 2, hpMin: 40, hpMax: 46,
+  name: 'Chrome Serpent', act: 2, hpMin: 40, hpMax: 46,
   moves: {
-    constrict: { name: 'Constrict', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'weak', 2, s) },
+    constrict: { name: 'Constrict', intent: { type: 'debuffblock', block: 8 }, run: (c, s) => { c.applyPower(c.player, 'weak', 2, s); c.gainBlockTo(s, 8); } },
     crush: atk('Crush', 16),
-    venom: { name: 'Venom Spit', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.applyPower(c.player, 'poison', 4, s); } },
+    venom: { name: 'Venom Spit', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.applyPower(c.player, 'poison', 5, s); } },
   },
   pick: (s, c, rng) => (s.turn === 1 ? 'constrict' : rng.pick(['crush', 'venom'])),
 });
 
-// Act 2 elite
+// Life-drain — every bite heals it. If you can't out-damage its sustain it will
+// grind you down. Poison and burst spike through the healing.
+def('ink_leech', {
+  name: 'Ink Leech', act: 2, hpMin: 26, hpMax: 32,
+  moves: {
+    latch: { name: 'Latch', intent: { type: 'attack', dmg: 9 }, run: (c, s) => { c.enemyAttack(s, 9); eHeal(c, s, 6); } },
+    siphon: { name: 'Siphon', intent: { type: 'attackdebuff', dmg: 5 }, run: (c, s) => { c.enemyAttack(s, 5); c.applyPower(c.player, 'weak', 1, s); eHeal(c, s, 4); } },
+    gorge: { name: 'Gorge', intent: { type: 'buff' }, run: (c, s) => eHeal(c, s, 10) },
+  },
+  pick: (s, c, rng) => {
+    if (s.hp < s.maxHp * 0.35) return 'gorge';
+    return rng.pick(['latch', 'siphon']);
+  },
+});
+
+// Curse-flooder / warded — jams Dazed and Wounds into your deck, wraps itself in
+// Charm so your debuffs slide off. A deck-disruption puzzle: it wants a long
+// fight, so end it quickly or rely on Exhaust.
+def('null_scribe', {
+  name: 'Null Scribe', act: 2, hpMin: 30, hpMax: 36,
+  moves: {
+    redact: { name: 'Redact', intent: { type: 'debuff' }, run: (c, s) => { c.addCardToPile(c.makeCard('dazed'), 'draw'); c.addCardToPile(c.makeCard('dazed'), 'draw'); } },
+    scrawl: { name: 'Scrawl Wound', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.addCardToPile(c.makeCard('wound'), 'discard'); } },
+    ward: { name: 'Ward', intent: { type: 'buffblock', block: 8 }, run: (c, s) => { c.gainBlockTo(s, 8); c.applyPower(s, 'artifact', 2, s); } },
+  },
+  pick: (s, c, rng) => {
+    if (s.turn === 1) return 'ward';
+    const cyc = ['redact', 'scrawl', 'ward', 'scrawl'];
+    return cyc[(s.turn - 2) % cyc.length];
+  },
+});
+
+// Charger — small pokes while it charges (Backlash + Resolve), then a devastating
+// Lance. The intent telegraphs the crush turn; time your Block.
+def('glyph_sentry', {
+  name: 'Glyph Sentry', act: 2, hpMin: 34, hpMax: 40, startBlock: 8,
+  moves: {
+    spark: atk('Rune Spark', 7),
+    charge: { name: 'Charge Glyph', intent: { type: 'buffblock', block: 12 }, run: (c, s) => { c.gainBlockTo(s, 12); c.applyPower(s, 'strength', 4, s); } },
+    lance: { name: 'Prism Lance', intent: { type: 'attack', dmg: 22 }, run: (c, s) => c.enemyAttack(s, 22) },
+  },
+  pick: (s, c, rng) => {
+    const cyc = ['spark', 'charge', 'lance'];
+    return cyc[(s.turn - 1) % cyc.length];
+  },
+});
+
+// Act 2 elite — Colossus: alternates a huge Quake, a twin punch, and re-plating
+// with Backlash. A stat-check on both offense and your ability to break Block.
 def('brass_colossus', {
-  name: 'Brass Colossus', glyph: '🤖', act: 2, elite: true, hpMin: 120, hpMax: 130,
+  name: 'Brass Colossus', act: 2, elite: true, hpMin: 120, hpMax: 130, startBlock: 15,
+  // Enrages on turn 6 (+5 Resolve) so a defensive deck can't safely wall it out forever.
+  enrage: { turn: 6, strength: 5 },
   moves: {
     quake: atk('Quake', 22),
     twin: atk('Piston Punch', 9, 2),
-    plate: { name: 'Replate', intent: { type: 'buffblock', block: 20 }, run: (c, s) => { c.gainBlockTo(s, 20); c.applyPower(s, 'metallicize', 4, s); } },
+    plate: { name: 'Replate', intent: { type: 'block', block: 20 }, run: (c, s) => { c.gainBlockTo(s, 20); } },
     overload: { name: 'Overload', intent: { type: 'buff' }, run: (c, s) => c.applyPower(s, 'strength', 4, s) },
   },
   pick: (s, c, rng) => {
@@ -129,68 +317,228 @@ def('brass_colossus', {
   },
 });
 
-// Act 2 boss
+// Act 2 elite — Obsidian Maw: a berserker. No defense, only escalation — it
+// gains Resolve every turn and hits harder each round. A pure damage clock.
+def('obsidian_maw', {
+  name: 'Obsidian Maw', act: 2, elite: true, hpMin: 108, hpMax: 116,
+  moves: {
+    rend: atk('Obsidian Rend', 13),
+    devour: { name: 'Devour', intent: { type: 'attack', dmg: 10, hits: 2 }, run: (c, s) => c.enemyAttack(s, 10, 2) },
+    hunger: { name: 'Growing Hunger', intent: { type: 'buff' }, run: (c, s) => c.applyPower(s, 'strength', 3, s) },
+  },
+  pick: (s, c, rng) => {
+    if (s.turn === 1) return 'hunger';
+    // Escalates: every third turn it feeds its hunger again.
+    if (s.turn % 3 === 0) return 'hunger';
+    return s.turn % 2 === 0 ? 'devour' : 'rend';
+  },
+});
+
+// Act 2 boss — a deck-jamming controller. Below half health it reopens every
+// page at once (Total Recall): it stops shielding, dumps more Dazed on entry,
+// and leans on its multi-hit Purge and deck jam to bury you.
 def('the_archivist', {
-  name: 'The Archivist', glyph: '📚', act: 2, boss: true, hpMin: 320, hpMax: 320,
+  name: 'The Archivist', act: 2, boss: true, hpMin: 320, hpMax: 320,
   moves: {
     erase: atk('Erase', 20),
     catalog: { name: 'Catalog', intent: { type: 'attackdebuff', dmg: 10 }, run: (c, s) => { c.enemyAttack(s, 10); c.addCardToPile(c.makeCard('dazed'), 'draw'); c.addCardToPile(c.makeCard('dazed'), 'draw'); } },
-    censor: { name: 'Censor', intent: { type: 'buffblock', block: 25 }, run: (c, s) => { c.gainBlockTo(s, 25); c.applyPower(c.player, 'weak', 2, s); } },
+    censor: { name: 'Censor', intent: { type: 'debuffblock', block: 25 }, run: (c, s) => { c.gainBlockTo(s, 25); c.applyPower(c.player, 'weak', 2, s); } },
     purge: { name: 'Purge', intent: { type: 'attack', dmg: 7, hits: 3 }, run: (c, s) => c.enemyAttack(s, 7, 3) },
   },
+  phase: {
+    at: 0.5, name: 'Total Recall',
+    log: 'The Archivist reopens every page at once — Total Recall!',
+    onEnter: (c, s) => { c.applyPower(s, 'strength', 3, s); for (let i = 0; i < 2; i++) c.addCardToPile(c.makeCard('dazed'), 'draw'); },
+  },
   pick: (s, c, rng) => {
+    if (s._phased) {
+      const cyc = ['catalog', 'purge', 'erase', 'purge'];
+      return cyc[(s.turn - 1) % cyc.length];
+    }
     const cyc = ['catalog', 'erase', 'censor', 'purge'];
     return cyc[(s.turn - 1) % cyc.length];
   },
 });
 
 // ===================== ACT 3 — The Static Crown =====================
+
+// Debuffer — hexes you with Exposed + Sapped, unnames your Resolve, then wails.
+// Prioritizes whichever debuff you're missing before it swings.
 def('void_chanter', {
-  name: 'Void Chanter', glyph: '🌑', act: 3, hpMin: 42, hpMax: 48,
+  name: 'Void Chanter', act: 3, hpMin: 42, hpMax: 48,
   moves: {
     wail: atk('Wail', 13),
     hex: { name: 'Hex', intent: { type: 'debuff' }, run: (c, s) => { c.applyPower(c.player, 'vulnerable', 2, s); c.applyPower(c.player, 'weak', 2, s); } },
+    unname: { name: 'Unname', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'strengthDown', 2, s) },
   },
-  pick: (s, c, rng) => (s.turn % 2 === 0 ? 'hex' : 'wail'),
+  pick: (s, c, rng) => {
+    if (s.turn === 1 || playerLacks(c, 'vulnerable')) return 'hex';
+    return rng.weighted([{ value: 'unname', weight: 2 }, { value: 'wail', weight: 3 }]);
+  },
 });
+
+// Charger — beams and blesses itself, then a colossal Smite. High burst you must
+// block for, wrapped in self-buffs.
 def('static_seraph', {
-  name: 'Static Seraph', glyph: '😇', act: 3, hpMin: 50, hpMax: 58,
+  name: 'Static Seraph', act: 3, hpMin: 50, hpMax: 58,
   moves: {
     beam: atk('Beam', 10, 2),
     bless: { name: 'False Blessing', intent: { type: 'buffblock', block: 16 }, run: (c, s) => { c.gainBlockTo(s, 16); c.applyPower(s, 'strength', 3, s); } },
     smite: atk('Smite', 25),
   },
-  pick: (s, c, rng) => (s.turn % 3 === 0 ? 'smite' : rng.pick(['beam', 'bless'])),
+  // Telegraphs Smite every third turn; otherwise builds Resolve before it swings.
+  pick: (s, c, rng) => {
+    if (s.turn % 3 === 0) return 'smite';
+    return (s.powers.strength || 0) < 3 ? 'bless' : 'beam';
+  },
+});
+
+// Phaser — periodically slips into Phase, shrugging off a whole turn of damage.
+// Don't dump your burst into a phased turn; chip it or wait it out.
+def('echo_wraith', {
+  name: 'Echo Wraith', act: 3, hpMin: 44, hpMax: 50,
+  moves: {
+    flurry: atk('Echo Flurry', 5, 3),
+    rake: atk('Rake', 14),
+    phase: { name: 'Phase Shift', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'intangible', 2, s); c.applyPower(c.player, 'weak', 1, s); } },
+  },
+  // Phases on a cycle; when you're turtled up it punches through with the single
+  // big Rake instead of a flurry Block soaks.
+  pick: (s, c, rng) => {
+    if (s.turn % 3 === 0) return 'phase';
+    if (playerBlocked(c, 10)) return 'rake';
+    return rng.weighted([{ value: 'flurry', weight: 2 }, { value: 'rake', weight: 2 }]);
+  },
+});
+
+// Support / healer — mends allies and lends them Resolve while chipping at you.
+// The lynchpin of Act 3 packs: cut it down before it snowballs the group.
+def('hollow_cantor', {
+  name: 'Hollow Cantor', act: 3, hpMin: 46, hpMax: 52,
+  moves: {
+    dirge: { name: 'Dirge', intent: { type: 'buff' }, run: (c, s) => { eHeal(c, weakestAlly(c) || s, 12); c.applyPower(otherAlly(c, s), 'strength', 2, s); } },
+    hymn: { name: 'Warding Hymn', intent: { type: 'buffblock', block: 12 }, run: (c, s) => { c.gainBlockTo(otherAlly(c, s), 10); c.applyPower(s, 'artifact', 1, s); } },
+    lash: atk('Candle Lash', 11),
+  },
+  pick: (s, c, rng) => {
+    const hurt = c.enemies.some((e) => e.alive && e !== s && e.hp < e.maxHp * 0.55);
+    if (hurt) return 'dirge';
+    return s.turn % 2 === 0 ? 'hymn' : 'lash';
+  },
+});
+
+// Berserker — no defense, pure escalation. Feeds its Resolve and swings ever
+// harder. A brutal damage race: kill it or be flattened.
+def('ember_colossus', {
+  name: 'Ember Colossus', act: 3, hpMin: 56, hpMax: 64,
+  moves: {
+    stomp: atk('Magma Stomp', 16),
+    sunder: { name: 'Sunder', intent: { type: 'attackdebuff', dmg: 12 }, run: (c, s) => { c.enemyAttack(s, 12); c.applyPower(c.player, 'frail', 2, s); } },
+    seethe: { name: 'Seethe', intent: { type: 'buff' }, run: (c, s) => c.applyPower(s, 'strength', 4, s) },
+  },
+  pick: (s, c, rng) => {
+    if (s.turn === 1) return 'seethe';
+    if (s.turn % 3 === 0) return 'seethe';
+    return s.turn % 2 === 0 ? 'sunder' : 'stomp';
+  },
+});
+
+// Swarm / curse-flooder — flurries of tiny hits and Static curses that bleed you
+// while they clog your hand. Block blunts the flurry; Exhaust clears the curses.
+def('static_swarm', {
+  name: 'Static Swarm', act: 3, hpMin: 40, hpMax: 46,
+  moves: {
+    scatter: atk('Scatterstatic', 3, 5),
+    surge: atk('Surge', 12),
+    corrupt: { name: 'Corrupt', intent: { type: 'debuff' }, run: (c, s) => { c.addCardToPile(c.makeCard('static_curse'), 'discard'); c.applyPower(c.player, 'weak', 1, s); } },
+  },
+  pick: (s, c, rng) => {
+    if (s.turn % 3 === 0) return 'corrupt';
+    return rng.pick(['scatter', 'surge']);
+  },
+});
+
+// Summoner — conducts a choir of Echo Motes onto the board and buffs the swarm.
+// Left alone it drowns you in bodies; the answer is to cut the conductor down
+// before the choir grows. Minions wait a turn before their first strike.
+def('choir_master', {
+  name: 'Choir Master', act: 3, hpMin: 54, hpMax: 62,
+  moves: {
+    conduct: { name: 'Conduct', intent: { type: 'unknown' }, run: (c, s) => { c.summonEnemy('echo_mote'); c.summonEnemy('echo_mote'); } },
+    crescendo: { name: 'Crescendo', intent: { type: 'buff' }, run: (c, s) => { for (const e of c.enemies) if (e.alive && e !== s) c.applyPower(e, 'strength', 2, s); } },
+    lash: atk('Baton Lash', 12),
+  },
+  pick: (s, c, rng) => {
+    const motes = c.enemies.filter((e) => e.alive && e.id === 'echo_mote').length;
+    if (s.turn === 1 || motes === 0) return 'conduct';      // fill (or refill) the choir
+    if (motes >= 2 && s.last !== 'crescendo') return 'crescendo'; // amplify the swarm
+    return 'lash';
+  },
+});
+
+// Minion — the Choir Master's summoned voice. Individually trivial, dangerous in
+// numbers, especially once Crescendo lends them Resolve.
+def('echo_mote', {
+  name: 'Echo Mote', act: 3, hpMin: 9, hpMax: 13,
+  moves: {
+    sting: atk('Sting', 4),
+  },
+  pick: (s, c, rng) => 'sting',
 });
 
 // Act 3 elite
 def('chrome_archon', {
-  name: 'Chrome Archon', glyph: '👾', act: 3, elite: true, hpMin: 160, hpMax: 170,
+  name: 'Chrome Archon', act: 3, elite: true, hpMin: 160, hpMax: 170, startBlock: 20,
+  // Enrages on turn 6 (+6 Resolve): its Reweave wall makes it easy to stall, so
+  // there's a hard clock forcing you to break through before it snowballs.
+  enrage: { turn: 6, strength: 6 },
   moves: {
     annihilate: atk('Annihilate', 30),
     swarm: atk('Nanoswarm', 6, 4),
-    reweave: { name: 'Reweave', intent: { type: 'buffblock', block: 24 }, run: (c, s) => { c.gainBlockTo(s, 24); c.applyPower(s, 'strength', 3, s); c.applyPower(s, 'metallicize', 5, s); } },
+    reweave: { name: 'Reweave', intent: { type: 'buffblock', block: 24 }, run: (c, s) => { c.gainBlockTo(s, 24); c.applyPower(s, 'strength', 3, s); } },
   },
+  // Reweaves its wall when wounded, drops Annihilate on an undefended hero (but
+  // never twice running), and chips with Nanoswarm otherwise.
   pick: (s, c, rng) => {
-    const cyc = ['swarm', 'reweave', 'annihilate'];
-    return cyc[(s.turn - 1) % cyc.length];
+    if (selfLowHp(s, 0.45) && s.last !== 'reweave') return 'reweave';
+    if (!playerBlocked(c, 15) && s.last !== 'annihilate') return 'annihilate';
+    return rng.weighted([{ value: 'swarm', weight: 2 }, { value: 'reweave', weight: 1 }]);
   },
 });
 
 // Act 3 final boss
 def('heart_of_static', {
-  name: 'Heart of Static', glyph: '💠', act: 3, boss: true, finalBoss: true, hpMin: 800, hpMax: 800,
+  name: 'Heart of Static', act: 3, boss: true, finalBoss: true, hpMin: 800, hpMax: 800,
+  dmgCapPerTurn: 100, // Invincibility: absorbs at most 100 damage per player turn.
   moves: {
     blast: atk('Reality Blast', 42),
     multibeam: atk('Cascade', 5, 6),
-    static_field: { name: 'Static Field', intent: { type: 'debuff' }, run: (c, s) => { for (let i = 0; i < 3; i++) c.addCardToPile(c.makeCard('dazed'), 'draw'); c.applyPower(c.player, 'weak', 1, s); } },
+    static_field: { name: 'Static Field', intent: { type: 'debuffblock', block: 20 }, run: (c, s) => { for (let i = 0; i < 3; i++) c.addCardToPile(c.makeCard('dazed'), 'draw'); c.applyPower(c.player, 'weak', 1, s); c.gainBlockTo(s, 20); } },
     rebuild: { name: 'Rebuild', intent: { type: 'buffblock', block: 30 }, run: (c, s) => { c.gainBlockTo(s, 30); c.applyPower(s, 'strength', 4, s); } },
   },
   buff: { name: 'Invincibility', desc: 'Caps the damage taken in a single turn.' },
+  // At half health the Heart tears open (The Static Screams): it walls up, gains
+  // heavy Resolve, and its phase-2 rotation drops the deck-jam filler to swing
+  // with Reality Blast and Cascade far more often.
+  phase: {
+    at: 0.5, name: 'The Static Screams',
+    log: 'The Heart tears open — the Static SCREAMS!',
+    onEnter: (c, s) => { c.applyPower(s, 'strength', 5, s); c.gainBlockTo(s, 40); },
+  },
+  // Reacts to the board: opens by clogging your deck, punishes an undefended hero
+  // with its big nuke, jams more Static when you have tempo, and rebuilds when hurt.
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'static_field';
-    const cyc = ['blast', 'multibeam', 'rebuild', 'static_field', 'multibeam', 'blast'];
-    return cyc[(s.turn - 2) % cyc.length];
+    if (s._phased) {
+      if (s.last === 'rebuild') return 'blast';
+      if (selfLowHp(s, 0.25) && s.last !== 'rebuild') return 'rebuild';
+      if (!playerBlocked(c, 25)) return rng.weighted([{ value: 'blast', weight: 3 }, { value: 'multibeam', weight: 2 }]);
+      return rng.weighted([{ value: 'multibeam', weight: 3 }, { value: 'blast', weight: 2 }, { value: 'static_field', weight: 1 }]);
+    }
+    if (s.last === 'rebuild') return 'blast'; // follow the wall with a swing
+    if (selfLowHp(s, 0.5) && s.last !== 'rebuild') return 'rebuild';
+    if (!playerBlocked(c, 20)) return rng.weighted([{ value: 'blast', weight: 3 }, { value: 'multibeam', weight: 1 }]);
+    return rng.weighted([{ value: 'multibeam', weight: 3 }, { value: 'static_field', weight: 2 }, { value: 'blast', weight: 1 }]);
   },
 });
 
