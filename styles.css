@@ -1732,6 +1732,11 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .overlay-box h3 { color: var(--orange); font-size: 24px; margin-bottom: 16px; letter-spacing: 0.08em; }
 .deck-grid { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; max-width: 1000px; margin-bottom: 16px; }
 .confirm-box { min-width: 280px; } .confirm-row { display: flex; gap: 12px; justify-content: center; margin-top: 12px; }
+.shop-confirm { max-width: 340px; }
+.shop-confirm-icon { display: flex; justify-content: center; margin-bottom: 10px; }
+.shop-confirm-icon .relic, .shop-confirm-icon .potion { width: 64px; height: 64px; cursor: default; }
+.shop-confirm-icon .relic:hover, .shop-confirm-icon .potion:hover { transform: none; }
+.shop-confirm-price { font-family: var(--font-display); font-weight: 700; color: var(--orange); font-size: 15px; letter-spacing: 0.06em; margin-top: 4px; }
 
 /* ----------------------- relic acquisition reveal ----------------------- */
 .relic-reveal-overlay { cursor: pointer; z-index: 140; opacity: 0; transition: opacity 0.3s ease; }
