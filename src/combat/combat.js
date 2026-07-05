@@ -834,7 +834,10 @@ export class Combat {
   pickEnemyMove(e) {
     const id = e.bp.pick(e, this, this.rng);
     e.move = id;
-    e.intent = e.bp.moves[id].intent;
+    // Merge the move's name in so the intent icon's native hover title (see
+    // renderIntent in combatView.js) reads the move's flavor name instead of
+    // being blank.
+    e.intent = { ...e.bp.moves[id].intent, name: e.bp.moves[id].name };
   }
 
   // ---------------------------------------------------------------- end states

@@ -90,6 +90,7 @@ export const INTENT = {
   buff: `<svg ${NS} viewBox="0 0 100 100" class="svg-ic" fill="none"><path d="M50 22 L72 54 H58 V78 H42 V54 H28 Z" fill="${A}" stroke="${C}" stroke-width="3"/></svg>`,
   debuff: `<svg ${NS} viewBox="0 0 100 100" class="svg-ic" fill="none"><path d="M50 78 L28 46 H42 V22 H58 V46 H72 Z" fill="${O}" stroke="${C}" stroke-width="3"/></svg>`,
   unknown: `<svg ${NS} viewBox="0 0 100 100" class="svg-ic" fill="none"><path d="M38 40 C38 28 62 28 62 42 C62 52 50 52 50 62" stroke="${O}" stroke-width="8" stroke-linecap="round"/><circle cx="50" cy="76" r="5" fill="${O}"/></svg>`,
+  steal: UI.coin,
 };
 
 // Human-readable explanations for each intent icon, shown in a popup when the
@@ -100,6 +101,7 @@ export const INTENT_INFO = {
   buff: { label: 'Strategic', desc: 'This enemy intends to use a Buff.' },
   debuff: { label: 'Threatening', desc: 'This enemy intends to apply a Debuff.' },
   unknown: { label: 'Unknown', desc: "This enemy's intent cannot be predicted." },
+  steal: { label: 'Thieving', desc: 'This enemy intends to steal gold from you.' },
 };
 
 /* ============================== MAP NODES ============================== */
