@@ -291,9 +291,17 @@ export class CombatView {
         this.updateCombatant(e);
       }
       else if (this.els[id] && !this.els[id]._removing) {
-        const node = this.els[id]; node._removing = true; node.classList.add('dying');
-        setTimeout(() => { node.remove(); }, 620);
+        const node = this.els[id]; node._removing = true;
         delete this.els[id];
+        // Give the killing hit a 0.5s beat to land before the enemy visibly
+        // collapses, on top of the existing same-tick-player-attack delay
+        // (matches the 'death' fx timing below) — otherwise the collapse
+        // animation could start before the hit's damage number/flash even show.
+        const hitDelay = (this._playerAttackHit && !e.isPlayer) ? 300 : 0;
+        setTimeout(() => {
+          node.classList.add('dying');
+          setTimeout(() => { node.remove(); }, 620);
+        }, hitDelay + 500);
       }
     }
 
@@ -340,7 +348,11 @@ export class CombatView {
       }
       c.parryPrompt = null;
       this.scene.classList.add(c.victory ? 'won' : 'lost');
-      setTimeout(() => this.onEnd && this.onEnd(c), 850);
+      // Victory now waits a bit longer than a loss: the killing enemy's death
+      // collapse is deliberately delayed ~0.5s+ (see the 'death' fx / dying
+      // branch above), so the reward hand-off needs the extra room or it cuts
+      // that animation short.
+      setTimeout(() => this.onEnd && this.onEnd(c), c.victory ? 1350 : 850);
     }
   }
 
@@ -1225,12 +1237,11 @@ export class CombatView {
         el2.classList.add('dying');
         const bg = background(); if (bg) bg.pulse('gold', 1.2);
       };
-      // Keep the death burst in step with the (possibly delayed) killing hit.
-      if (this._playerAttackHit && !payload.target.isPlayer) {
-        setTimeout(applyDeathFx, 300);
-      } else {
-        applyDeathFx();
-      }
+      // Give the killing hit a 0.5s beat to land before the death burst/collapse
+      // fires, on top of the existing hit-landing delay for a same-tick player
+      // attack, so the enemy doesn't die in the same instant it's struck.
+      const hitDelay = (this._playerAttackHit && !payload.target.isPlayer) ? 300 : 0;
+      setTimeout(applyDeathFx, hitDelay + 500);
       return;
     }
     if (type === 'useSkill') {
