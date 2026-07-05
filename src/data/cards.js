@@ -189,10 +189,10 @@ def('skyfall', {
 // before onPlay (see combat.playCard), so these cards count their own strike.
 def('flowing_edge', {
   name: 'Flowing Edge', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
-  dmg: 5, magic: 2, target: 'enemy',
-  desc: (c) => `Deal ${c.dmg} damage, plus ${c.magic} for each Tempo you have.`,
-  upgrade: (c) => { c.dmg = 7; c.magic = 3; },
-  onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.c.dmg + ctx.c.magic * ctx.tempo()),
+  magic: 2, target: 'enemy',
+  desc: (c) => `Deal ${c.magic} damage for each Tempo you have.`,
+  upgrade: (c) => { c.magic = 3; },
+  onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.c.magic * ctx.tempo()),
 });
 def('dancers_poise', {
   name: "Dancer's Poise", char: 'amara', type: 'skill', rarity: 'common', cost: 1,

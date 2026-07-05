@@ -409,8 +409,8 @@ test('Flowing Edge scales with Tempo (counting its own strike)', () => {
   c.hand.push(card);
   c.energy = 3;
   c.playCard(card, enemy);
-  // 3 Tempo + 1 from this strike = 4 → 5 + 2×4 = 13 damage.
-  assert.equal(hpBefore - enemy.hp, 13, 'damage read the post-strike Tempo');
+  // 3 Tempo + 1 from this strike = 4 → 2×4 = 8 damage (no base damage).
+  assert.equal(hpBefore - enemy.hp, 8, 'damage read the post-strike Tempo');
 });
 
 test('Spiral Finish consumes ALL Tempo for bonus damage', () => {
