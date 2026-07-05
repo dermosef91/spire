@@ -221,7 +221,7 @@ export function topBar(run, extra = {}) {
   // confirm overlay as potions/purchases since it's just as irreversible.
   if (game) {
     right.appendChild(el('button', {
-      class: 'tb-abandon', html: UI.skull, attrs: { 'aria-label': 'Abandon run and return to title', title: 'Abandon Run' },
+      class: 'tb-abandon', html: UI.exit, attrs: { 'aria-label': 'Abandon run and return to title', title: 'Abandon Run' },
       on: {
         click: () => {
           audio.play('click');
