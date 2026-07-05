@@ -412,7 +412,7 @@ body.scene-combat #bg-image.show {
    CARDS — black slab, ember double-frame, art panel, type pill
    ============================================================ */
 .card {
-  position: relative; width: var(--card-w); height: var(--card-h); border-radius: 8px; padding: 6px 7px; flex: 0 0 auto;
+  position: relative; width: var(--card-w); height: auto; min-height: var(--card-h); border-radius: 8px; padding: 6px 7px; flex: 0 0 auto;
   display: flex; flex-direction: column; user-select: none; cursor: pointer;
   background: linear-gradient(180deg, #16100b 0%, #0c0806 100%);
   border: 1.5px solid var(--c-border);
@@ -483,10 +483,10 @@ body.scene-combat #bg-image.show {
   animation: costRingSpin 40s linear infinite;
 }
 @keyframes costRingSpin { to { transform: rotate(360deg); } }
-.card-name { font-family: var(--font-display); font-size: clamp(10px, calc(var(--card-h) * 0.072), 14px); text-align: center; color: var(--cream); letter-spacing: 0.04em;
+.card-name { font-family: var(--font-display); font-size: clamp(9px, calc(var(--card-h) * 0.062), 12px); text-align: center; color: var(--cream); letter-spacing: 0.04em;
   text-transform: uppercase; line-height: 1.05; min-height: 1.1em; margin: 1px 0 3px; padding: 0 14px; text-shadow: 0 1px 3px #000; }
 .card.upgraded .card-name { color: var(--amber); }
-.card-art { position: relative; height: clamp(38px, calc(var(--card-h) * 0.36), 74px); border-radius: 4px; margin: 0 1px 2px; overflow: hidden;
+.card-art { position: relative; height: clamp(38px, calc(var(--card-h) * 0.36), 74px); border-radius: 4px; margin: 0 1px; overflow: hidden;
   background: radial-gradient(circle at 50% 48%, #241307 0%, #0a0604 78%);
   border: 1px solid rgba(255,170,80,0.18); display: grid; place-items: center; }
 .art-motif { position: absolute; inset: 0; opacity: 0.8;
@@ -496,15 +496,15 @@ body.scene-combat #bg-image.show {
   -webkit-mask: radial-gradient(circle at 50% 50%, #000 18%, transparent 72%); mask: radial-gradient(circle at 50% 50%, #000 18%, transparent 72%); }
 .art-glyph { position: relative; font-size: 40px; filter: var(--duotone) drop-shadow(0 2px 8px rgba(0,0,0,0.7)); }
 .card-art-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; border-radius: 3px; }
-.card-type { text-align: center; margin: 1px 0 3px; }
-.card-type span { display: inline-block; font-family: var(--font-display); font-size: clamp(7px, calc(var(--card-h) * 0.046), 9px); letter-spacing: 0.2em; color: #190a02;
-  background: var(--orange); padding: 2px clamp(6px, calc(var(--card-h) * 0.05), 10px); border-radius: 2px; font-weight: 600; }
+.card-type { position: relative; text-align: center; margin: -6px 0 2px; z-index: 3; }
+.card-type span { display: inline-block; font-family: var(--font-display); font-size: clamp(6px, calc(var(--card-h) * 0.036), 7.5px); letter-spacing: 0.16em; color: #190a02;
+  background: var(--orange); padding: 1px clamp(5px, calc(var(--card-h) * 0.038), 8px); border-radius: 2px; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
 .card.type-attack .card-type span { background: var(--c-attack); }
 .card.type-skill .card-type span { background: #c4d2e2; }
 .card.type-power .card-type span { background: var(--c-power); }
 .card.type-status .card-type span, .card.type-curse .card-type span { background: #6a625a; color: #1a1714; }
-.card-desc { font-size: clamp(9px, calc(var(--card-h) * 0.062), 13px); text-align: center; color: var(--ink); line-height: 1.3; padding: 2px; flex: 1;
-  display: flex; align-items: center; justify-content: center; font-family: var(--font-body); overflow: hidden; min-width: 0; }
+.card-desc { font-size: clamp(9px, calc(var(--card-h) * 0.062), 13px); text-align: center; color: var(--ink); line-height: 1.25; padding: 2px; flex: 1;
+  display: flex; align-items: center; justify-content: center; font-family: var(--font-body); overflow: visible; min-width: 0; }
 .card-desc-in { display: block; width: 100%; overflow-wrap: anywhere; }
 .kw { color: var(--orange); font-weight: 600; }
 .card.sold { display: grid; place-items: center; color: var(--muted); font-family: var(--font-display); letter-spacing: 0.2em; }
@@ -1281,6 +1281,5 @@ html { -webkit-text-size-adjust: 100%; }
 /* Card-choice / deck overlays and the shop scroll independently of the combat
    viewport, so their cards stay readable and GROW to fit text (never clip). */
 .overlay, .shop-scene { --card-h: clamp(190px, 30vh, 216px); }
-.overlay .card, .shop-scene .card { height: auto; min-height: var(--card-h); }
-.overlay .card-desc, .shop-scene .card-desc { overflow: visible; padding-bottom: 4px; }
+.overlay .card-desc, .shop-scene .card-desc { padding-bottom: 4px; }
 .overlay .card-row, .overlay .deck-grid { max-height: 76vh; overflow-y: auto; align-items: stretch; }
