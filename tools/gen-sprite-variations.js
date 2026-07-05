@@ -86,6 +86,10 @@ function getVariationPrompt(id, basePrompt, pose) {
         .replace('with its shell open', 'lunging forward with its shell open wide')
         .replace('The inner mouth is a dark pit glowing with intense ember-orange light and dripping luminous green brine.', 'The inner mouth is spewing a jet of luminous green brine and glowing ember-orange venom straight at the viewer.');
     }
+    if (id === 'brass_sentinel') {
+      return basePrompt
+        .replace('Segmented gear-jointed limbs and heavy brass fists.', 'Segmented gear-jointed limbs winding up in a dynamic attacking pose, one massive brass fist rearing back and the other driving forward in a piston-driven punch, cracks of ember-orange energy bursting from the point of impact.');
+    }
     return basePrompt.replace('standing pose', 'dynamic attacking pose, lunging and striking');
   }
 
@@ -125,6 +129,11 @@ function getVariationPrompt(id, basePrompt, pose) {
         .replace('with its shell open', 'with its shell clamped tightly shut in a defensive posture')
         .replace('The inner mouth is a dark pit glowing with intense ember-orange light and dripping luminous green brine.', 'Faint ember-orange light glows through the sealed seams of the shut shell plates.');
     }
+    if (id === 'brass_sentinel') {
+      return basePrompt
+        .replace('Segmented gear-jointed limbs and heavy brass fists.', 'Segmented gear-jointed limbs braced wide in a defensive blocking pose, both heavy brass fists raised and crossed in front of its visor as brass shield-plates unfold outward from its forearms.')
+        .replace('A circular power core in the center of its torso radiates glowing concentric energy rings.', 'A circular power core in the center of its torso dims and pulses steadily, feeding power into the raised shield-plates.');
+    }
     return basePrompt.replace('standing pose', 'defensive blocking pose, shielding and guarding');
   }
 
@@ -163,6 +172,10 @@ function getVariationPrompt(id, basePrompt, pose) {
       return basePrompt
         .replace('with its shell open', 'with its shell open, exhaling a billowing cloud of luminous green toxin')
         .replace('The inner mouth is a dark pit glowing with intense ember-orange light and dripping luminous green brine.', 'The inner mouth pulses with ember-orange light as it breathes out a spreading blight-cloud of glowing green spores.');
+    }
+    if (id === 'brass_sentinel') {
+      return basePrompt
+        .replace('A dented cowrie-shell collar and a single snapped star-iron blade are fused into its chest plating', 'In dynamic action pose, its chest plating grinding open to reveal the dented cowrie-shell collar and the single snapped star-iron blade fused inside, both glowing with fierce ember-orange light as a spray of glowing brass rivets fires outward from its opened chest');
     }
     return basePrompt.replace('standing pose', 'dynamic casting pose, channeling energy with geometric sigils floating around');
   }
@@ -393,7 +406,7 @@ async function main() {
   
   // Filter for champions only, and optionally apply ID filter
   // Filter for champions and specified key enemies, and optionally apply ID filter
-  const targetIds = ['amara', 'kofi', 'zara', 'static_jackal', 'the_gatekeeper', 'husk_drone', 'reef_spitter'];
+  const targetIds = ['amara', 'kofi', 'zara', 'static_jackal', 'the_gatekeeper', 'husk_drone', 'reef_spitter', 'brass_sentinel'];
   let entities = manifest.filter(e => targetIds.includes(e.id));
   if (ID_FILTER) {
     entities = entities.filter(e => ID_FILTER.includes(e.id));
