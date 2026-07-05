@@ -16,7 +16,7 @@ const SOUNDS = {
   zap: 'assets/sounds/zap.mp3',
   splash: 'assets/sounds/splash.mp3',
   growl: 'assets/sounds/growl.mp3',
-  tempo_release: 'assets/sounds/tempo_release.wav',
+  tempo_release: 'assets/sounds/tempo_release.mp3',
   power_surge: 'assets/sounds/power_surge.wav',
 };
 
