@@ -477,6 +477,185 @@ test("Drummer's Bangle fires once on first reaching 5 Tempo", () => {
   assert.equal(c.energy, energyBefore + 1, 'does not fire twice in one combat');
 });
 
+// ----------------------------------------------------------------- hit-counted debuffs & Blight spread
+console.log('Divergent statuses (hit-counted, Blight spread)');
+
+test('Exposed boosts and is consumed per hit, not per turn', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  enemy.block = 0; enemy.hp = enemy.maxHp = 999;
+  c.applyPower(enemy, 'vulnerable', 2, c.player);
+  assert.equal(c.deal(enemy, 10), 15, 'first hit +50%');
+  assert.equal(enemy.powers.vulnerable, 1, 'one stack consumed');
+  assert.equal(c.deal(enemy, 10), 15, 'second hit +50%');
+  assert.equal(enemy.powers.vulnerable, undefined, 'stacks exhausted');
+  assert.equal(c.deal(enemy, 10), 10, 'third hit unmodified');
+});
+
+test('a multi-hit attack drains Exposed one stack per hit', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  enemy.block = 0; enemy.hp = enemy.maxHp = 999;
+  c.applyPower(enemy, 'vulnerable', 1, c.player);
+  // 2 hits of 10: first is 15 (consumes the stack), second is plain 10.
+  assert.equal(c.deal(enemy, 10, 2), 25);
+});
+
+test('Sapped reduces and is consumed per attack hit made', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  enemy.block = 0; enemy.hp = enemy.maxHp = 999;
+  c.applyPower(c.player, 'weak', 1, c.player);
+  assert.equal(c.deal(enemy, 10), 7, 'sapped hit -25%');
+  assert.equal(c.player.powers.weak, undefined, 'stack consumed by the hit');
+  assert.equal(c.deal(enemy, 10), 10, 'next hit unmodified');
+});
+
+test('Brittle reduces and is consumed per Block gain', () => {
+  const c = freshCombat();
+  c.applyPower(c.player, 'frail', 2, c.player);
+  c.player.block = 0;
+  c.gainBlock(8);
+  assert.equal(c.player.block, 6, 'first gain -25%');
+  assert.equal(c.player.powers.frail, 1, 'one stack consumed');
+  c.gainBlock(8);
+  assert.equal(c.player.block, 12, 'second gain -25%');
+  c.gainBlock(8);
+  assert.equal(c.player.block, 20, 'third gain unmodified');
+});
+
+test('Exposed/Sapped/Brittle no longer tick down at turn end', () => {
+  const c = freshCombat();
+  c.applyPower(c.player, 'vulnerable', 2, c.player);
+  c.applyPower(c.player, 'weak', 2, c.player);
+  c.applyPower(c.player, 'frail', 2, c.player);
+  c.tickTurnDebuffs(c.player);
+  assert.equal(c.player.powers.vulnerable, 2);
+  assert.equal(c.player.powers.weak, 2);
+  assert.equal(c.player.powers.frail, 2);
+});
+
+test('a dead foe\'s remaining Blight leaps to a living enemy', () => {
+  const run = new RunState('kofi', 31);
+  const c = new Combat(run, ['husk_drone', 'husk_drone']);
+  c.start();
+  const [a, b] = c.enemies;
+  c.applyPower(a, 'poison', 5, c.player);
+  c.applyDamage(a, 999, { isAttack: false });
+  assert.equal(a.alive, false, 'host died');
+  assert.equal(b.powers.poison, 5, 'Blight jumped to the survivor');
+});
+
+test('Blight Bloom bursts instead of spreading', () => {
+  const run = new RunState('kofi', 32);
+  const c = new Combat(run, ['husk_drone', 'husk_drone']);
+  c.start();
+  c.bloodBloom = true;
+  const [a, b] = c.enemies;
+  b.block = 0;
+  const hpBefore = b.hp;
+  c.applyPower(a, 'poison', 4, c.player);
+  c.applyDamage(a, 999, { isAttack: false });
+  assert.equal(b.hp, hpBefore - 4, 'burst damage landed');
+  assert.equal(b.powers.poison, undefined, 'no Blight transferred');
+});
+
+// ----------------------------------------------------------------- reworked cards
+console.log('Reworked cards (divergence pass)');
+
+function playCrafted(c, id, target) {
+  const card = createCard(id);
+  c.hand.push(card);
+  c.energy = 5;
+  assert.equal(c.playCard(card, target), true, `${id} played`);
+  return card;
+}
+
+test('Obsidian Tide grants Block equal to HP damage dealt', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  enemy.hp = enemy.maxHp = 999;
+  enemy.block = 4;
+  c.player.block = 0;
+  playCrafted(c, 'ironwave', enemy); // 6 dmg: 4 blocked, 2 to HP
+  assert.equal(c.player.block, 2);
+});
+
+test('Hilt Crack draws 2 at the Tempo threshold, else 1', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  enemy.hp = enemy.maxHp = 999;
+  // playCrafted pushes then plays (net 0 on hand size), so the draw is the delta.
+  let before = c.hand.length;
+  playCrafted(c, 'pommel', enemy); // tempo 0 -> 1 in-play: below 4
+  assert.equal(c.hand.length, before + 1, 'below threshold: drew 1');
+  c.gainTempo(3); // 1 + 3 = 4; the strike itself makes it 5
+  before = c.hand.length;
+  playCrafted(c, 'pommel', enemy);
+  assert.equal(c.hand.length, before + 2, 'at threshold: drew 2');
+});
+
+test('Weather the Blow grants Block and Tempo', () => {
+  const c = freshCombat();
+  c.player.block = 0;
+  playCrafted(c, 'shrug', null);
+  assert.equal(c.player.block, 6);
+  assert.equal(c.tempo(), 1);
+});
+
+test('Cyclone Dance consumes ALL Tempo for AoE damage', () => {
+  const run = new RunState('amara', 33);
+  const c = new Combat(run, ['husk_drone', 'husk_drone']);
+  c.start();
+  for (const e of c.enemies) { e.hp = e.maxHp = 999; e.block = 0; }
+  c.gainTempo(3); // +1 from the strike itself = 4 consumed
+  const before = c.enemies.map((e) => e.hp);
+  playCrafted(c, 'whirlwind', null);
+  for (let i = 0; i < 2; i++) assert.equal(before[i] - c.enemies[i].hp, 4 + 2 * 4, 'each foe took 4 + 2×4');
+  assert.equal(c.tempo(), 0, 'Tempo pool emptied');
+});
+
+test('Fester pops Blight as immediate damage without reducing it', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  enemy.hp = enemy.maxHp = 999;
+  c.applyPower(enemy, 'poison', 6, c.player);
+  const hpBefore = enemy.hp;
+  playCrafted(c, 'catalyst', enemy);
+  assert.equal(hpBefore - enemy.hp, 6, 'suffered its Blight now');
+  assert.equal(enemy.powers.poison, 6, 'Blight not reduced');
+});
+
+test('Mirrorcast makes Spirits arrive twice', () => {
+  const run = new RunState('zara', 34);
+  const c = new Combat(run, ['husk_drone']);
+  c.start(); // star_lens channels 1 storm
+  const before = c.orbs.length;
+  playCrafted(c, 'echo_form', null);
+  c.channel('tide', 1);
+  assert.equal(c.orbs.length, Math.min(c.orbSlots, before + 2), 'one Channel produced two Spirits');
+});
+
+test('Last Resort trades Tempo for Block', () => {
+  const c = freshCombat();
+  c.gainTempo(4);
+  c.player.block = 0;
+  playCrafted(c, 'panic_button', null);
+  assert.equal(c.player.block, 12);
+  assert.equal(c.tempo(), 0, 'rhythm broke');
+});
+
+test('Transcendence upgrades the hand only, then draws', () => {
+  const c = freshCombat();
+  const heldUids = c.hand.map((h) => h.uid);
+  playCrafted(c, 'apotheosis', null);
+  for (const uid of heldUids) {
+    const held = c.hand.find((h) => h.uid === uid);
+    assert.ok(held && held.upgraded, 'card held during the play was upgraded');
+  }
+  assert.ok(c.drawPile.every((d) => !d.upgraded), 'draw pile untouched');
+});
+
 test('Sundered (noBlock) blocks Ward for one turn, then expires', () => {
   const c = freshCombat();
   c.player.block = 0;

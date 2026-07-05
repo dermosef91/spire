@@ -76,28 +76,28 @@ export const POWERS = {
   },
 
   // --- Debuffs ---
+  // Exposed / Sapped / Brittle are HIT-COUNTED, not turn-timed: each stack is
+  // consumed by the event it modifies (a hit taken, a hit made, a Block gain)
+  // and persists until then. No ticksDown — the clock never touches them.
   vulnerable: {
     name: 'Exposed',
     type: 'debuff',
-    ticksDown: true,
-    desc: 'Takes 50% more damage from attacks.',
+    desc: 'The next {n} hits against this unit deal 50% more damage. Each hit consumes one stack.',
   },
   weak: {
     name: 'Sapped',
     type: 'debuff',
-    ticksDown: true,
-    desc: 'Deals 25% less attack damage.',
+    desc: "This unit's next {n} attack hits deal 25% less damage. Each hit consumes one stack.",
   },
   frail: {
     name: 'Brittle',
     type: 'debuff',
-    ticksDown: true,
-    desc: 'Gains 25% less Block from cards.',
+    desc: 'The next {n} times this unit gains Block from cards, it gains 25% less.',
   },
   poison: {
     name: 'Blight',
     type: 'debuff',
-    desc: 'Lose {n} HP at the start of turn, then it decreases by 1.',
+    desc: 'Lose {n} HP at the start of turn, then it decreases by 1. When a Blighted foe dies, its remaining Blight leaps to a random living enemy.',
   },
   entangle: {
     name: 'Snared',

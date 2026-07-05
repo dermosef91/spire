@@ -2,7 +2,7 @@
 // state through methods, then the bound `onUpdate` callback re-renders. Enemy
 // turns are async so the view can animate between sub-steps.
 
-import { createCard, upgradeCard, canUpgrade } from '../data/cards.js';
+import { createCard, upgradeCard } from '../data/cards.js';
 import { ENEMIES } from '../data/enemies.js';
 import { POWERS } from '../data/keywords.js';
 import { RELICS } from '../data/relics.js';
@@ -74,7 +74,7 @@ export class Combat {
 
     // Misc combat-wide flags toggled by cards/relics
     this.firstAttackDouble = false;
-    this.echoForm = false;
+    this.mirrorChannel = false; // Mirrorcast: Spirits channel twice
     this.freePowerEachTurn = false;
     this.bloodBloom = false;
     this.fairyShield = false;
@@ -218,11 +218,22 @@ export class Combat {
   }
 
   // ---------------------------------------------------------------- damage & block math
+  // Sapped (weak) and Exposed (vulnerable) are HIT-COUNTED, not turn-timed:
+  // each attack hit consumes one stack (in applyDamage) and gets the modifier.
+  // This reads current stacks without consuming, so it doubles as the
+  // "what would the next hit do" preview math.
   calcAttackDamage(base, source, target) {
     let dmg = base + (source.powers.strength || 0);
     if (source.powers.weak) dmg = Math.floor(dmg * 0.75);
     if (target && target.powers.vulnerable) dmg = Math.floor(dmg * 1.5);
     return Math.max(0, dmg);
+  }
+  // Consume one stack of a hit-counted power (see keywords.js: no ticksDown on
+  // vulnerable/weak/frail — they expire by being used, not by the clock).
+  consumeStack(entity, key) {
+    if (!entity || !entity.powers[key]) return;
+    entity.powers[key] -= 1;
+    if (entity.powers[key] <= 0) delete entity.powers[key];
   }
 
   // Apply a chunk of damage to an entity through Block, returns HP actually lost.
@@ -252,6 +263,14 @@ export class Combat {
       if (target.isPlayer) this.fire('hpLost', { amount: remaining });
     }
     this.fx('damage', { target, dmg, hpLost, blocked, isAttack, source });
+    // Hit-counted debuffs: this hit used up one Exposed on the target and one
+    // Sapped on the attacker (blocked hits still consume — the window was
+    // spent on this swing either way). The multipliers were already applied
+    // by calcAttackDamage/orbDamage before the hit landed.
+    if (isAttack) {
+      this.consumeStack(target, 'vulnerable');
+      this.consumeStack(source, 'weak');
+    }
     // Backlash (thorns) when attacked (deactivated)
     // if (isAttack && source && target.powers.thorns) {
     //   this.applyDamage(source, target.powers.thorns, { isAttack: false });
@@ -313,10 +332,21 @@ export class Combat {
 
   onEnemyDeath(enemy) {
     this.log(`${enemy.name} is destroyed.`);
-    if (this.bloodBloom && enemy.powers.poison) {
-      const dmg = enemy.powers.poison;
-      for (const e of this.livingEnemies()) this.applyDamage(e, dmg, { isAttack: false });
-      this.log(`Blight Bloom bursts for ${dmg}!`);
+    // Blight outlives its host: baseline, a dead foe's remaining Blight leaps
+    // to a random living enemy. Blight Bloom (rare power) upgrades that into
+    // an instant burst on ALL others and replaces the spread.
+    if (enemy.powers.poison) {
+      const p = enemy.powers.poison;
+      if (this.bloodBloom) {
+        for (const e of this.livingEnemies()) this.applyDamage(e, p, { isAttack: false });
+        this.log(`Blight Bloom bursts for ${p}!`);
+      } else {
+        const host = this.randomEnemy();
+        if (host) {
+          this.applyPower(host, 'poison', p, this.player);
+          this.log(`The Blight leaps to ${host.name}!`);
+        }
+      }
     }
     if (this.livingEnemies().length === 0) this.win();
   }
@@ -405,7 +435,9 @@ export class Combat {
     // player block from cards: dexterity + frail + noBlock
     if (this.player.powers.noBlock) return;
     let b = amount + (this.player.powers.dexterity || 0);
-    if (this.player.powers.frail) b = Math.floor(b * 0.75);
+    // Brittle is hit-counted like the other debuffs: each card Block gain
+    // consumes one stack for its 25% reduction (no turn tick).
+    if (this.player.powers.frail) { b = Math.floor(b * 0.75); this.consumeStack(this.player, 'frail'); }
     b = Math.max(0, b);
     this.player.block += b;
     if (b > 0) this.fx('block', { entity: this.player, amount: b });
@@ -421,7 +453,10 @@ export class Combat {
   gainBlockTo(entity, amount, raw = false) {
     if (entity.isPlayer && entity.powers.noBlock) return;
     let b = amount;
-    if (!raw && entity.isPlayer) { b += (entity.powers.dexterity || 0); if (entity.powers.frail) b = Math.floor(b * 0.75); }
+    if (!raw && entity.isPlayer) {
+      b += (entity.powers.dexterity || 0);
+      if (entity.powers.frail) { b = Math.floor(b * 0.75); this.consumeStack(entity, 'frail'); }
+    }
     b = Math.max(0, b);
     entity.block += b;
     if (b > 0) this.fx('block', { entity, amount: b });
@@ -499,13 +534,10 @@ export class Combat {
 
   gainEnergy(n) { this.energy += n; this.notify(); }
 
-  upgradeAllInCombat() {
-    for (const c of [...this.hand, ...this.drawPile, ...this.discardPile]) if (canUpgrade(c)) upgradeCard(c);
-    this.notify();
-  }
-
   // ---------------------------------------------------------------- orbs (Zara)
   channel(type, n = 1) {
+    // Mirrorcast: every Channel arrives twice.
+    if (this.mirrorChannel) n *= 2;
     for (let i = 0; i < n; i++) {
       if (this.orbs.length >= this.orbSlots && this.orbs.length > 0) {
         const evoked = this.orbs.shift();
@@ -513,7 +545,7 @@ export class Combat {
       }
       this.orbs.push({ type, value: 0 });
     }
-    this.log(`Channel ${type[0].toUpperCase() + type.slice(1)}.`);
+    this.log(`Channel ${type[0].toUpperCase() + type.slice(1)}${n > 1 ? ` ×${n}` : ''}.`);
     this.notify();
   }
   evoke(times = 1) {
@@ -616,12 +648,6 @@ export class Combat {
     }
     const ctx = this.makeCtx(card, target);
     card._bp.onPlay(ctx);
-
-    // Echo Form: replay first card of the turn once more
-    const isFirst = this.cardsThisTurn === 1;
-    if (this.echoForm && isFirst && card.type !== 'power') {
-      card._bp.onPlay(this.makeCtx(card, target && target.alive ? target : this.randomEnemy()));
-    }
 
     this._cardDamageMult = 1;
     this._rhythmMult = 1;
