@@ -1875,6 +1875,7 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .tooltip { position: fixed; display: none; z-index: 200; background: #0a0503; border: 1px solid var(--orange); border-radius: 6px;
   padding: 10px 12px; font-size: 13px; line-height: 1.45; color: var(--ink); box-shadow: var(--shadow); pointer-events: none; }
 .tooltip b { color: var(--orange); }
+.tip-sep { border: none; border-top: 1px solid rgba(255,176,80,0.3); margin: 8px 0; }
 
 /* ============================================================
    FX LAYER
