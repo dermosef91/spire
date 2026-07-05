@@ -154,7 +154,14 @@ export function topBar(run, extra = {}) {
   const bar = el('div', { class: 'topbar' });
   const left = el('div', { class: 'tb-left' });
   left.appendChild(el('div', { class: 'tb-char', html: `<b>${run.character.name}</b>` }));
-  left.appendChild(el('div', { class: 'tb-hp', html: `<i class="tb-ic">${UI.heart}</i> <b>${run.hp}</b>/${run.maxHp}` }));
+  // In combat, run.hp only gets written back from the live combat.player.hp
+  // mirror when combat ends — use the caller's live hp/maxHp (extra.hp/
+  // extra.maxHp, e.g. combatView passing c.player.hp) when given, so the
+  // header doesn't show a stale value while a potion/card heal is only
+  // reflected on the in-combat health bar.
+  const tbHp = extra.hp ?? run.hp;
+  const tbMaxHp = extra.maxHp ?? run.maxHp;
+  left.appendChild(el('div', { class: 'tb-hp', html: `<i class="tb-ic">${UI.heart}</i> <b>${tbHp}</b>/${tbMaxHp}` }));
   left.appendChild(el('div', { class: 'tb-gold', html: `<i class="tb-ic">${UI.coin}</i> <b>${run.gold}</b>` }));
   left.appendChild(el('div', { class: 'tb-act', text: `Act ${run.act}` }));
 
