@@ -424,8 +424,8 @@ test('Spiral Finish consumes ALL Tempo for bonus damage', () => {
   c.hand.push(card);
   c.energy = 3;
   c.playCard(card, enemy);
-  // 4 Tempo + 1 from this strike = 5 consumed → 10 + 3×5 = 25 damage.
-  assert.equal(hpBefore - enemy.hp, 25, 'consumed Tempo converted to damage');
+  // 4 Tempo + 1 from this strike = 5 consumed → 3×5 = 15 damage (no base damage).
+  assert.equal(hpBefore - enemy.hp, 15, 'consumed Tempo converted to damage');
   assert.equal(c.tempo(), 0, 'Tempo pool emptied');
 });
 
