@@ -3,7 +3,7 @@
 // Mixed onto Game.prototype (see game.js).
 
 import { el } from '../core/util.js';
-import { renderCard, topBar, relicChip, potionChip, button } from '../ui/components.js';
+import { renderCard, topBar, relicChip, potionChip, button, highlightKeywords } from '../ui/components.js';
 import { CARDS, createCard } from '../data/cards.js';
 import { RELICS } from '../data/relics.js';
 import { POTIONS } from '../data/potions.js';
@@ -44,7 +44,7 @@ export const ShopScene = {
       holder.appendChild(relicChip(item.id, (o, n, on) => this.tooltip(o, n, on)));
       holder.appendChild(el('div', { class: 'mini-label', text: r.name }));
       holder.appendChild(el('div', { class: `price ${run.gold < item.price ? 'cant' : ''}`, html: `<i class="tb-ic">${UI.coin}</i> ${item.price}` }));
-      holder.addEventListener('click', () => this.buy(shop, 'relics', i));
+      holder.addEventListener('click', () => this.confirmBuy(shop, 'relics', i));
       otherSec.appendChild(holder);
     });
     // potions
@@ -55,7 +55,7 @@ export const ShopScene = {
       holder.appendChild(potionChip(item.id, null, null, (o, n, on) => this.tooltip(o, n, on)));
       holder.appendChild(el('div', { class: 'mini-label', text: p.name }));
       holder.appendChild(el('div', { class: `price ${run.gold < item.price ? 'cant' : ''}`, html: `<i class="tb-ic">${UI.coin}</i> ${item.price}` }));
-      holder.addEventListener('click', () => this.buy(shop, 'potions', i));
+      holder.addEventListener('click', () => this.confirmBuy(shop, 'potions', i));
       otherSec.appendChild(holder);
     });
     panel.appendChild(otherSec);
@@ -93,6 +93,39 @@ export const ShopScene = {
     const potions = potionPick.map((id) => ({ id, price: run.rng.int(50, 75), sold: false }));
 
     return { cards, relics, potions, removeUsed: false, removePrice: 75 };
+  },
+
+  // Explain what a relic/potion does and let the player back out before the
+  // gold leaves their pouch — cards skip this (their face already shows
+  // everything, and the shop's card row has no room for a second click).
+  confirmBuy(shop, kind, i) {
+    const run = this.run;
+    const item = shop[kind][i];
+    if (item.sold) return;
+    if (run.gold < item.price) { audio.play('error'); return; }
+    const data = kind === 'relics' ? RELICS[item.id] : POTIONS[item.id];
+
+    const overlay = el('div', { class: 'overlay' });
+    const box = el('div', { class: 'overlay-box confirm-box shop-confirm' });
+    box.appendChild(el('div', { class: 'shop-confirm-icon' }, [
+      kind === 'relics' ? relicChip(item.id, null) : potionChip(item.id, null, null, null),
+    ]));
+    box.appendChild(el('h3', { text: data.name }));
+    box.appendChild(el('p', { class: 'event-text', html: highlightKeywords(data.desc) }));
+    box.appendChild(el('div', { class: 'shop-confirm-price', html: `<i class="tb-ic">${UI.coin}</i> ${item.price} gold` }));
+    const row = el('div', { class: 'confirm-row' });
+    row.appendChild(button('Buy', () => {
+      this.tooltip(null, null, false);
+      document.body.removeChild(overlay);
+      this.buy(shop, kind, i);
+    }, 'primary'));
+    row.appendChild(button('Cancel', () => {
+      this.tooltip(null, null, false);
+      document.body.removeChild(overlay);
+    }));
+    box.appendChild(row);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
   },
 
   buy(shop, kind, i) {
