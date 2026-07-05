@@ -2612,6 +2612,15 @@ img.svg-ic { object-fit: contain; }
 .qte-layer.qte-clear { background: transparent; }
 .qte-layer.qte-clear .qte-stage,
 .qte-layer.qte-clear .qte-labels { opacity: 0; transition: opacity 200ms ease; }
+.qte-content {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+/* Nudge the whole ring+label stack toward whichever side of the battlefield
+   the prompt is "about" — attacks lean toward the enemy side (player strikes
+   outward), parries lean toward the player side (block happens at home) —
+   without moving the full-viewport dimming scrim itself. */
+.qte-attack .qte-content { transform: translateX(clamp(24px, 6vw, 90px)); }
+.qte-parry .qte-content { transform: translateX(clamp(-90px, -6vw, -24px)); }
 .qte-stage {
   position: relative; width: min(46vw, 34dvh, 300px); aspect-ratio: 1;
   display: flex; align-items: center; justify-content: center;
