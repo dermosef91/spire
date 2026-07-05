@@ -515,6 +515,38 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
 - **Hit-counted debuffs (divergence from StS, combat.js + keywords.js)**: Exposed (`vulnerable`), Sapped (`weak`) and Brittle (`frail`) are **consumed per event, not per turn** — one stack per attack hit taken / attack hit made / card Block gain (multiplier unchanged: +50% / −25% / −25%). They have **no `ticksDown`** flag, so `tickTurnDebuffs` never touches them; consumption lives in `applyDamage` (`consumeStack`, blocked hits still consume) and the two `gainBlock*` paths. `calcAttackDamage` still *reads* stacks without consuming — it doubles as the next-hit preview math, so don't move consumption in there. **Blight spreads on death**: `onEnemyDeath` moves a dead foe's remaining Blight to a random living enemy (via `applyPower`, so Charm can negate it); the Blight Bloom power replaces the spread with an instant burst on ALL others. Snared/Sundered stay turn-ticked (inherently turn-based). Tests in the "Divergent statuses" group of `tools/test.js`. When adding cards/enemies, treat debuff amounts as **hit counts**, not turn counts — 1–2 stacks is the normal band.
 - **Smooth Enemy Repositioning**: When an enemy is defeated, their `.dying` transition collapses their `min-width`, `max-width`, `width`, and `margin-left`/`margin-right` to `0` over `0.62s`. This allows the remaining flex children in `.enemy-side` to slide smoothly into their centered positions rather than hopping abruptly. The negative margins are sized to half of `--enemy-gap` to offset the flex container's gaps exactly.
 - **Event scene audio dependency**: `src/scenes/event.js` calls `audio.play()` while resolving choices that change gold/remove cards. Keep `import { audio } from '../audio.js';` in that scene and cover gold-changing event choices in `tools/test.js`; otherwise a choice can mutate run state, throw before `resultThenMap()`, and stay clickable for repeated rewards/costs.
+- **Block/parry QTE scales with attack size, and is color-coded blue** (rhythm.js
+  `runParryQTE({marks})` + `combatView.js` `parryMarksFor(e)`): a plain single
+  hit is still one any-direction tap, but bigger attacks get a short sequence
+  of timed **directional** swipes — one shot per blow (`marks = min(3, hits)`),
+  plus a floor of 2/3 marks for a single heavy nuke (`dmg>=20`/`dmg>=30`) even
+  at hits=1, so telegraphed boss swings still read as a harder parry. Any miss
+  in the sequence fails the whole parry (same halve-block penalty as before).
+  `buildQTE`'s `verb` becomes `'SWIPE'` (not `'TAP'`) for touch once a parry
+  goes directional, since a tap can't convey direction. **Color split**: the
+  parry/block QTE uses the `--blue`/`--blue-bright` accent (matches
+  `float-block`'s `#9fc2ff` / the skill-card-upgrade border `#bcd6ff`) via
+  `.qte-parry` overrides on target/note/label/beats/pop/result, vs. attack
+  QTEs' `--orange`/`--amber`. The `.qte-dir` swipe arrow and `.qte-rings`
+  backdrop are baked-color SVGs (not `currentColor`), so instead of forking a
+  second SVG constant just for this recolor, `.qte-parry .qte-dir` and
+  `.qte-parry .qte-rings` apply `filter: hue-rotate(190deg) saturate(1.15)` to
+  shift the baked ember tones to blue (verified empirically against a plain
+  swatch — hue-rotate is a matrix approximation, not a literal HSL rotation,
+  so don't assume an arbitrary angle without checking the actual rendered
+  color first). **Gotcha hit while verifying this in the browser preview**:
+  `preview_start` snapshots `styles.css` at page load — CSS edits made *after*
+  that are invisible in the running tab (getComputedStyle still returns the
+  old value) until an explicit `window.location.reload()`; screenshots taken
+  without reloading first silently show stale styling with no console error.
+  Separately, the QTE overlay is only alive for its own \~1-4s timeout window
+  and tears itself down with no visible trace — `preview_eval` +
+  `preview_screenshot` round-trips are often slower than that, so the overlay
+  is frequently gone by the time the screenshot lands ("gone" in a rect probe
+  isn't a bug). For a stable freeze-frame to inspect at leisure, call the QTE
+  with `isTutorial: true` outside of an actual tutorial context (no
+  `window.__ase.tutorial` registered) — it pauses the first mark \~500ms in
+  and waits forever for a callback that will never come.
 
 ## Asset Generation
 - **Model Rules**: Always use the `gpt-image-2` model for all image, sprite, and background art generations. Never use Gemini or any other image models.
