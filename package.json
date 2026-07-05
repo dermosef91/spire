@@ -13,7 +13,8 @@
     "sprite-variations": "node tools/gen-sprite-variations.js",
     "card-art": "node tools/gen-card-art.js",
     "backgrounds": "node tools/gen-backgrounds.js",
-    "event-art": "node tools/gen-event-art.js"
+    "event-art": "node tools/gen-event-art.js",
+    "balance": "node tools/balance-sim.mjs"
   },
   "license": "MIT"
 }
