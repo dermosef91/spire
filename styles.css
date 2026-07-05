@@ -1387,7 +1387,7 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   right: 24px;
 }
 
-.screen-pile.exhaust-pile {
+.screen-pile.consume-pile {
   right: 24px;
   bottom: 140px; /* 24px + 100px + 16px gap */
 }
@@ -2099,7 +2099,7 @@ html { -webkit-text-size-adjust: 100%; }
   }
   .screen-pile.draw-pile { left: 12px; }
   .screen-pile.discard-pile { right: 12px; }
-  .screen-pile.exhaust-pile { right: 12px; bottom: 94px; }
+  .screen-pile.consume-pile { right: 12px; bottom: 94px; }
   .screen-pile .pile-badge {
     width: 20px;
     height: 20px;
@@ -2183,7 +2183,7 @@ html { -webkit-text-size-adjust: 100%; }
   }
   .screen-pile.draw-pile { left: 6px; }
   .screen-pile.discard-pile { right: 6px; }
-  .screen-pile.exhaust-pile { right: 6px; bottom: 68px; }
+  .screen-pile.consume-pile { right: 6px; bottom: 68px; }
   .screen-pile .pile-badge {
     width: 20px;
     height: 20px;

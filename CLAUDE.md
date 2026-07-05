@@ -155,7 +155,7 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   read in full first. On a normal hand that already fits, the computed margin
   equals the original `gap` exactly, so this is a no-op visually. To make more
   room in the first place on mobile landscape (`@media (max-height: 560px)`),
-  the energy orb/End Turn/draw+discard+exhaust piles were also pulled closer
+  the energy orb/End Turn/draw+discard+consume piles were also pulled closer
   to the screen edges (smaller `--energy-shift`, tighter `combat-controls`
   padding, a ~13%-shrunk End Turn button just in this breakpoint, tighter
   pile insets) with `.hand`'s `margin-left`/`margin-right` recomputed to

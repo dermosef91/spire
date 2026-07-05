@@ -212,7 +212,7 @@ export class Game {
     if (kind === 'card-full') {
       // The fanned combat hand is small and rotated, so its printed text is
       // hard to read — this is the one spot that repeats it enlarged. Also
-      // append the glossary for any effect keywords it names (e.g. Exhaust),
+      // append the glossary for any effect keywords it names (e.g. Consume),
       // since hovering here can't reach the click-to-explain `.kw` popup —
       // the tooltip sits above the card and closes the instant the pointer
       // leaves it to get there.
