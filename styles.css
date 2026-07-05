@@ -1205,6 +1205,10 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   border: 1px solid var(--line-soft);
   transition: background-color 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 .pip:hover {
   background: rgba(255, 255, 255, 0.08);
