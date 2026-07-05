@@ -40,6 +40,11 @@ export const rhythmReduced = () =>
 // attacks' multi-step parries), not just a single any-direction tap/press.
 function buildQTE(kind, isTouch, directional = false) {
   const layer = el('div', { class: `qte-layer qte-${kind}` });
+  // Stage + labels live in a shared wrapper so the whole overlay (ring and
+  // its label stack together) can be nudged sideways per kind — attacks
+  // toward the enemy side, parries toward the player side — without
+  // shifting the full-viewport dimming scrim itself.
+  const content = el('div', { class: 'qte-content' });
   const stage = el('div', { class: 'qte-stage' });
   stage.appendChild(el('div', { class: 'qte-rings', html: UI.qteRings }));
   stage.appendChild(el('div', { class: 'qte-target' }));
@@ -49,14 +54,15 @@ function buildQTE(kind, isTouch, directional = false) {
   const beats = el('div', { class: 'qte-beats' });
   for (let i = 0; i < 3; i++) beats.appendChild(el('span', { class: 'qte-beat' }));
   stage.appendChild(beats);
-  layer.appendChild(stage);
+  content.appendChild(stage);
   // "SWIPE UP" / "TO STRIKE" label stack (direction word set per mark).
   const verb = kind === 'parry'
     ? (isTouch ? (directional ? 'SWIPE' : 'TAP') : 'PRESS')
     : (isTouch ? 'SWIPE' : 'PRESS');
   const labelMain = el('div', { class: 'qte-label-main' });
   const labelSub = el('div', { class: 'qte-label-sub', text: kind === 'parry' ? 'TO PARRY' : 'TO STRIKE' });
-  layer.appendChild(el('div', { class: 'qte-labels' }, [labelMain, labelSub]));
+  content.appendChild(el('div', { class: 'qte-labels' }, [labelMain, labelSub]));
+  layer.appendChild(content);
   document.body.appendChild(layer);
 
   let handler = null; // per-mark input sink: fn(dir) where dir ∈ DIRS | 'tap'
