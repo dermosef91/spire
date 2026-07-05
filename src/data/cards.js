@@ -203,10 +203,10 @@ def('dancers_poise', {
 });
 def('spiral_finish', {
   name: 'Spiral Finish', char: 'amara', type: 'attack', rarity: 'uncommon', cost: 2,
-  dmg: 10, magic: 3, target: 'enemy', qteMarks: 2,
-  desc: (c) => `Deal ${c.dmg} damage. Consume ALL your Tempo: +${c.magic} damage for each consumed.`,
-  upgrade: (c) => { c.dmg = 12; c.magic = 4; },
-  onPlay: (ctx) => { const t = ctx.spendAllTempo(); ctx.deal(ctx.enemy, ctx.c.dmg + ctx.c.magic * t); },
+  magic: 3, target: 'enemy', qteMarks: 2,
+  desc: (c) => `Consume ALL your Tempo: deal ${c.magic} damage for each consumed.`,
+  upgrade: (c) => { c.magic = 4; },
+  onPlay: (ctx) => { const t = ctx.spendAllTempo(); ctx.deal(ctx.enemy, ctx.c.magic * t); },
 });
 def('war_drum_cadence', {
   name: 'War-Drum Cadence', char: 'amara', type: 'power', rarity: 'uncommon', cost: 1,
