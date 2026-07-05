@@ -486,6 +486,14 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
 - **Setup**: the generators have dev-only deps not used by the game — run
   `cd tools && npm install` once (installs `openai`, `sharp`, `undici`). Live
   runs need `OPENAI_API_KEY`; `--dry-run` needs neither install nor key.
+- **Where the key lives**: `OPENAI_API_KEY` is stored in the gitignored `.env`
+  at the **primary checkout's** repo root (`~/spire/.env`). Worktrees don't get
+  it automatically — symlink it in (`ln -s <primary-checkout>/.env .env`;
+  `tools/worktree.sh` does not do this). The generator scripts read
+  `process.env.OPENAI_API_KEY` directly and do **not** auto-load `.env`, so
+  load it when running: `node --env-file=.env tools/gen-<x>.js` (Node ≥ 20.6)
+  or `set -a; source .env; set +a` for the shell session. Never commit the key
+  (`.env` is in `.gitignore` — keep it there).
 - **Sprites**: Run `node tools/gen-sprites.js` (reads `tools/sprites.manifest.json`, outputs to `assets/sprites/`).
 - **Sprite Variations**: Run `node tools/gen-sprite-variations.js` (reads `tools/sprites.manifest.json`, uses base champion sprites as inputs, outputs variations to `assets/sprites/`).
 - **Card Art**: Run `node tools/gen-card-art.js` (reads `tools/cards.manifest.json`, outputs to `assets/card-art/`).
