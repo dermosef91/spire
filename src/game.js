@@ -211,8 +211,14 @@ export class Game {
     let html = '';
     if (kind === 'card-full') {
       // The fanned combat hand is small and rotated, so its printed text is
-      // hard to read — this is the one spot that repeats it enlarged.
-      html = `<b>${obj.name}</b> · ${obj.cost === 'X' ? 'X' : obj.cost} Àṣẹ · ${obj.type}<br>${highlightKeywords(cardDesc(obj))}`;
+      // hard to read — this is the one spot that repeats it enlarged. Also
+      // append the glossary for any effect keywords it names (e.g. Exhaust),
+      // since hovering here can't reach the click-to-explain `.kw` popup —
+      // the tooltip sits above the card and closes the instant the pointer
+      // leaves it to get there.
+      const desc = cardDesc(obj);
+      html = `<b>${obj.name}</b> · ${obj.cost === 'X' ? 'X' : obj.cost} Àṣẹ · ${obj.type}<br>${highlightKeywords(desc)}`;
+      html += this.glossarySuffix(desc, obj.name);
     } else if (kind === 'card') {
       // Everywhere else a card is already shown at a readable size (shop,
       // rewards, deck views, previews), so repeating its full text would just
@@ -223,11 +229,28 @@ export class Game {
       html = entries.map((e) => `<b>${e.name}</b><br>${e.desc}`).join('<br><br>');
     } else if (obj.desc !== undefined && obj.rarity !== undefined && POTIONS[obj.id]) {
       html = `<b>${obj.name}</b><br>${highlightKeywords(obj.desc)}`;
+      html += this.glossarySuffix(obj.desc, obj.name);
     } else if (obj.desc !== undefined) {
+      // Relics (and the Block power's own mini-tooltip): same hover-can't-
+      // reach-the-click-popup problem, so append the glossary here too.
       html = `<b>${obj.name}</b><br>${highlightKeywords(obj.desc)}`;
+      html += this.glossarySuffix(obj.desc, obj.name);
     } else return;
     this.tip.innerHTML = html;
     this.positionBox(this.tip, node, 240);
+  }
+
+  // Glossary entries for the effect keywords named in `text`, as a suffix
+  // block to append after already-visible text — used so a hover-only
+  // tooltip doesn't need a follow-up click to explain what it names. Skips
+  // an entry matching `ownName` so a power's own mini-tooltip (e.g. Block)
+  // doesn't repeat its own name/desc back at itself.
+  glossarySuffix(text, ownName) {
+    const entries = keywordsIn(text)
+      .map((n) => keywordInfo(n))
+      .filter((e) => e && e.name.toLowerCase() !== (ownName || '').toLowerCase());
+    if (!entries.length) return '';
+    return '<hr class="tip-sep">' + entries.map((e) => `<b>${e.name}</b><br>${e.desc}`).join('<br><br>');
   }
 
   // ----------------------------------------------------------- shared overlays
