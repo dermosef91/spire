@@ -64,7 +64,7 @@ export class KeyboardController {
 
       const handCards = Array.from(document.querySelectorAll('.hand .card'))
         .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0);
-      const controlButtons = Array.from(document.querySelectorAll('.end-turn, .potion:not(.empty), .screen-pile, .tb-fs, .tb-mute'))
+      const controlButtons = Array.from(document.querySelectorAll('.end-turn, .potion:not(.empty), .screen-pile, .tb-fs, .tb-mute, .tb-abandon'))
         .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0);
       return [...handCards, ...controlButtons];
     }
@@ -83,6 +83,7 @@ export class KeyboardController {
       '.title-setting-btn',
       '.tb-fs',
       '.tb-mute',
+      '.tb-abandon',
       '.reward-content > .btn',
       '.end-scene .btn',
       '.title-buttons .btn',
@@ -99,7 +100,7 @@ export class KeyboardController {
       return true;
     });
 
-    const topBarEls = els.filter(el => el.closest('.topbar') || el.classList.contains('tb-fs') || el.classList.contains('tb-mute'));
+    const topBarEls = els.filter(el => el.closest('.topbar') || el.classList.contains('tb-fs') || el.classList.contains('tb-mute') || el.classList.contains('tb-abandon'));
     const mainEls = els.filter(el => !topBarEls.includes(el));
     return [...mainEls, ...topBarEls];
   }

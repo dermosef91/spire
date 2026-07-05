@@ -10,6 +10,7 @@ import { hasCardArt } from './card-art.js';
 import { hasRelicArt } from './relic-art.js';
 import { hasPotionArt } from './potion-art.js';
 import { audio } from '../audio.js';
+import { clearSave } from '../core/save.js';
 
 export function renderCard(card, opts = {}) {
   const typeClass = `type-${card.type}`;
@@ -213,6 +214,25 @@ export function topBar(run, extra = {}) {
     right.appendChild(el('button', {
       class: 'tb-fs', html: UI.fullscreen, attrs: { 'aria-label': 'Toggle fullscreen', title: 'Fullscreen' },
       on: { click: () => toggleFullscreen(document.documentElement) },
+    }));
+  }
+
+  // Abandon run: clears the save and returns to title. Reuses the same
+  // confirm overlay as potions/purchases since it's just as irreversible.
+  if (game) {
+    right.appendChild(el('button', {
+      class: 'tb-abandon', html: UI.skull, attrs: { 'aria-label': 'Abandon run and return to title', title: 'Abandon Run' },
+      on: {
+        click: () => {
+          audio.play('click');
+          game.confirm(
+            'Abandon this climb?',
+            'Your current run will be lost for good. This cannot be undone.',
+            () => { clearSave(); game.run = null; game.showTitle(); },
+            'Abandon Run'
+          );
+        }
+      },
     }));
   }
 

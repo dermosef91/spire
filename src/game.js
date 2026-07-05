@@ -143,14 +143,15 @@ export class Game {
     this.kwNode = node;
   }
 
-  // A small yes/no confirm overlay (used for irreversible touch actions like potions).
-  confirm(title, desc, onYes) {
+  // A small yes/no confirm overlay (used for irreversible actions like potions
+  // or abandoning a run).
+  confirm(title, desc, onYes, yesLabel = 'Use') {
     const overlay = el('div', { class: 'overlay' });
     const box = el('div', { class: 'overlay-box confirm-box' });
     box.appendChild(el('h3', { text: title }));
     if (desc) box.appendChild(el('p', { class: 'event-text', html: desc }));
     const row = el('div', { class: 'confirm-row' });
-    row.appendChild(button('Use', () => {
+    row.appendChild(button(yesLabel, () => {
       this.tooltip(null, null, false);
       document.body.removeChild(overlay);
       onYes();
