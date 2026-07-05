@@ -6,7 +6,7 @@
 //
 // onPlay(ctx) drives all effects. The combat engine builds `ctx` per play with
 // these helpers: deal, dealAll, gainBlock, applyEnemy, applyAll, applySelf,
-// draw, gainEnergy, loseHpSelf, heal, addCard, channel, evoke, exhaustThis, etc.
+// draw, gainEnergy, loseHpSelf, heal, addCard, channel, evoke, consumeThis, etc.
 
 import { uid } from '../core/util.js';
 
@@ -98,8 +98,8 @@ def('rising_strike', {
 });
 def('war_trance', {
   name: "Hunter's Calm", char: 'amara', type: 'skill', rarity: 'uncommon', cost: 0,
-  magic: 2, target: 'self', exhaust: true,
-  desc: (c) => `Gain ${c.magic} Resolve. Draw 2 cards. Exhaust.`,
+  magic: 2, target: 'self', consume: true,
+  desc: (c) => `Gain ${c.magic} Resolve. Draw 2 cards. Consume.`,
   upgrade: (c) => { c.magic = 3; },
   onPlay: (ctx) => { ctx.applySelf('strength', ctx.c.magic); ctx.draw(2); },
 });
@@ -119,22 +119,22 @@ def('bulwark', {
 });
 def('read_tell', {
   name: 'Read the Tell', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 1,
-  magic: 3, target: 'enemy', exhaust: true,
+  magic: 3, target: 'enemy', consume: true,
   desc: (c) => `If the enemy intends to attack, gain ${c.magic} Resolve.`,
-  upgrade: (c) => { c.magic = 4; c.exhaust = false; },
+  upgrade: (c) => { c.magic = 4; c.consume = false; },
   onPlay: (ctx) => { if (ctx.enemy && ctx.enemy.intent && ctx.enemy.intent.type === 'attack') ctx.applySelf('strength', ctx.c.magic); },
 });
 def('shockwave', {
   name: 'Seismic Fault', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 2,
-  magic: 3, target: 'all', exhaust: true,
-  desc: (c) => `Apply ${c.magic} Exposed to ALL enemies. Draw 1 card. Exhaust.`,
+  magic: 3, target: 'all', consume: true,
+  desc: (c) => `Apply ${c.magic} Exposed to ALL enemies. Draw 1 card. Consume.`,
   upgrade: (c) => { c.magic = 4; },
   onPlay: (ctx) => { ctx.applyAll('vulnerable', ctx.c.magic); ctx.draw(1); },
 });
 def('disarm', {
   name: 'Break the Spear', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 1,
-  magic: 2, target: 'enemy', exhaust: true,
-  desc: (c) => `Enemy loses ${c.magic} Resolve. Exhaust.`,
+  magic: 2, target: 'enemy', consume: true,
+  desc: (c) => `Enemy loses ${c.magic} Resolve. Consume.`,
   upgrade: (c) => { c.magic = 3; },
   onPlay: (ctx) => ctx.applyEnemy('strength', -ctx.c.magic),
 });
@@ -154,15 +154,15 @@ def('ancestral_fury', {
 });
 def('blood_offering', {
   name: 'Crimson Rite', char: 'amara', type: 'skill', rarity: 'rare', cost: 0,
-  magic: 5, target: 'self', exhaust: true,
-  desc: (c) => `Lose ${c.magic} HP. Gain 2 Àṣẹ. Draw ${c.upgraded ? 3 : 2} cards. Exhaust.`,
+  magic: 5, target: 'self', consume: true,
+  desc: (c) => `Lose ${c.magic} HP. Gain 2 Àṣẹ. Draw ${c.upgraded ? 3 : 2} cards. Consume.`,
   upgrade: (c) => { c.upgraded = true; },
   onPlay: (ctx) => { ctx.loseHpSelf(ctx.c.magic); ctx.gainEnergy(2); ctx.draw(ctx.c.upgraded ? 3 : 2); },
 });
 def('devour', {
   name: 'Sate', char: 'amara', type: 'attack', rarity: 'rare', cost: 1,
-  dmg: 10, magic: 3, target: 'enemy', exhaust: true,
-  desc: (c) => `Deal ${c.dmg} damage. If this kills, raise your Max HP by ${c.magic}. Exhaust.`,
+  dmg: 10, magic: 3, target: 'enemy', consume: true,
+  desc: (c) => `Deal ${c.dmg} damage. If this kills, raise your Max HP by ${c.magic}. Consume.`,
   upgrade: (c) => { c.dmg = 12; c.magic = 4; },
   onPlay: (ctx) => {
     const before = ctx.enemy && ctx.enemy.alive;
@@ -172,8 +172,8 @@ def('devour', {
 });
 def('harvest', {
   name: 'Reaping Arc', char: 'amara', type: 'attack', rarity: 'rare', cost: 2,
-  dmg: 6, magic: 3, target: 'all', exhaust: true,
-  desc: (c) => `Deal ${c.dmg} damage to ALL enemies. Heal ${c.magic} HP for each enemy struck. Exhaust.`,
+  dmg: 6, magic: 3, target: 'all', consume: true,
+  desc: (c) => `Deal ${c.dmg} damage to ALL enemies. Heal ${c.magic} HP for each enemy struck. Consume.`,
   upgrade: (c) => { c.dmg = 8; c.magic = 4; },
   onPlay: (ctx) => { const n = ctx.combat.livingEnemies().length; ctx.dealAll(ctx.c.dmg); ctx.heal(n * ctx.c.magic); },
 });
@@ -318,15 +318,15 @@ def('syncopation', {
 });
 def('accelerando', {
   name: 'Accelerando', char: 'kofi', type: 'skill', rarity: 'uncommon', cost: 0,
-  magic: 1, target: 'self', exhaust: true,
-  desc: (c) => `Gain 1 Àṣẹ. Draw ${c.magic} card. Exhaust.`,
+  magic: 1, target: 'self', consume: true,
+  desc: (c) => `Gain 1 Àṣẹ. Draw ${c.magic} card. Consume.`,
   upgrade: (c) => { c.magic = 2; },
   onPlay: (ctx) => { ctx.gainEnergy(1); ctx.draw(ctx.c.magic); },
 });
 def('catalyst', {
   name: 'Fester', char: 'kofi', type: 'skill', rarity: 'uncommon', cost: 1,
-  target: 'enemy', exhaust: true,
-  desc: (c) => `An enemy suffers its Blight as damage immediately. Its Blight is not reduced. Draw 1 card. Exhaust.`,
+  target: 'enemy', consume: true,
+  desc: (c) => `An enemy suffers its Blight as damage immediately. Its Blight is not reduced. Draw 1 card. Consume.`,
   upgrade: (c) => { c.cost = 0; },
   onPlay: (ctx) => {
     if (ctx.enemy && ctx.enemy.powers.poison) {
@@ -346,8 +346,8 @@ def('bouncing_verse', {
 });
 def('veil', {
   name: 'Nightveil', char: 'kofi', type: 'skill', rarity: 'uncommon', cost: 1,
-  magic: 1, target: 'self', exhaust: true,
-  desc: (c) => `Gain ${c.magic} Phase (reduce all damage to 1 next turn). Exhaust.`,
+  magic: 1, target: 'self', consume: true,
+  desc: (c) => `Gain ${c.magic} Phase (reduce all damage to 1 next turn). Consume.`,
   upgrade: (c) => { c.magic = 2; },
   onPlay: (ctx) => ctx.applySelf('intangible', ctx.c.magic),
 });
@@ -523,29 +523,29 @@ def('falling_star', {
 // ============================================================== COLORLESS (rewards & shops)
 def('shiv', {
   name: 'Shard', char: 'colorless', type: 'attack', rarity: 'special', cost: 0,
-  dmg: 4, target: 'enemy', exhaust: true,
-  desc: (c) => `Deal ${c.dmg} damage. Exhaust.`,
+  dmg: 4, target: 'enemy', consume: true,
+  desc: (c) => `Deal ${c.dmg} damage. Consume.`,
   upgrade: (c) => { c.dmg = 6; },
   onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.c.dmg),
 });
 def('flash', {
   name: 'Flash of Insight', char: 'colorless', type: 'skill', rarity: 'uncommon', cost: 0,
-  magic: 1, target: 'self', exhaust: true,
-  desc: (c) => `Draw ${c.upgraded ? 3 : 2} cards. Exhaust.`,
+  magic: 1, target: 'self', consume: true,
+  desc: (c) => `Draw ${c.upgraded ? 3 : 2} cards. Consume.`,
   upgrade: (c) => { c.upgraded = true; },
   onPlay: (ctx) => ctx.draw(ctx.c.upgraded ? 3 : 2),
 });
 def('panic_button', {
   name: 'Last Resort', char: 'colorless', type: 'skill', rarity: 'uncommon', cost: 0,
-  block: 12, target: 'self', exhaust: true,
-  desc: (c) => `Gain ${c.block} Block. Your rhythm breaks — Tempo drops to 0. Exhaust.`,
+  block: 12, target: 'self', consume: true,
+  desc: (c) => `Gain ${c.block} Block. Your rhythm breaks — Tempo drops to 0. Consume.`,
   upgrade: (c) => { c.block = 16; },
   onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.combat.breakTempo(); },
 });
 def('apotheosis', {
   name: 'Transcendence', char: 'colorless', type: 'skill', rarity: 'rare', cost: 1,
-  target: 'self', exhaust: true,
-  desc: (c) => `Upgrade all cards in your hand for the rest of combat. Draw 1 card. Exhaust.`,
+  target: 'self', consume: true,
+  desc: (c) => `Upgrade all cards in your hand for the rest of combat. Draw 1 card. Consume.`,
   upgrade: (c) => { c.cost = 0; },
   onPlay: (ctx) => {
     for (const h of ctx.combat.hand) if (canUpgrade(h)) upgradeCard(h);
@@ -600,7 +600,7 @@ export function createCard(id, opts = {}) {
     baseCost: bp.cost,
     target: bp.target || 'enemy',
     upgraded: false,
-    exhaust: !!bp.exhaust,
+    consume: !!bp.consume,
     ethereal: !!bp.ethereal,
     innate: !!bp.innate,
     retain: !!bp.retain,

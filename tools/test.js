@@ -488,7 +488,7 @@ test('Exposed boosts and is consumed per hit, not per turn', () => {
   assert.equal(c.deal(enemy, 10), 15, 'first hit +50%');
   assert.equal(enemy.powers.vulnerable, 1, 'one stack consumed');
   assert.equal(c.deal(enemy, 10), 15, 'second hit +50%');
-  assert.equal(enemy.powers.vulnerable, undefined, 'stacks exhausted');
+  assert.equal(enemy.powers.vulnerable, undefined, 'stacks consumed');
   assert.equal(c.deal(enemy, 10), 10, 'third hit unmodified');
 });
 

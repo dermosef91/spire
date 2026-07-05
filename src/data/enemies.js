@@ -277,7 +277,7 @@ def('ink_leech', {
 
 // Curse-flooder / warded — jams Dazed and Wounds into your deck, wraps itself in
 // Charm so your debuffs slide off. A deck-disruption puzzle: it wants a long
-// fight, so end it quickly or rely on Exhaust.
+// fight, so end it quickly or rely on Consume.
 def('null_scribe', {
   name: 'Null Scribe', act: 2, hpMin: 30, hpMax: 36,
   moves: {
@@ -453,7 +453,7 @@ def('ember_colossus', {
 });
 
 // Swarm / curse-flooder — flurries of tiny hits and Static curses that bleed you
-// while they clog your hand. Block blunts the flurry; Exhaust clears the curses.
+// while they clog your hand. Block blunts the flurry; Consume clears the curses.
 def('static_swarm', {
   name: 'Static Swarm', act: 3, hpMin: 40, hpMax: 46,
   moves: {

@@ -12,7 +12,7 @@ These serve as the visual target for all future asset creation and UI design wor
 Key visual elements captured in this reference:
 - **Color palette**: Deep blacks, warm ambers/oranges, bronze/gold metallics
 - **Card design**: Ornate circular icons, bronze borders, afrofuturist motifs
-- **UI chrome**: Top-bar HUD (HP, gold, deck/discard/exhaust counts, energy, block)
+- **UI chrome**: Top-bar HUD (HP, gold, deck/discard/consume counts, energy, block)
 - **Enemy panel**: Intent display, health bar, status effects
 - **Character rendering**: Detailed afrofuturist character art with cultural instruments
 - **Environment**: Concert-hall / temple aesthetic with sound-wave visual motifs

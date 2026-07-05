@@ -191,8 +191,8 @@ export class CombatView {
       this.game.viewCardsOverlay(this.combat.discardPile, `Discard Pile (${this.combat.discardPile.length})`);
     });
     scene.appendChild(this.discardPileEl);
-    this.exhaustPileEl = el('div', { class: 'screen-pile exhaust-pile', title: 'Exhaust Pile', style: { display: 'none' } });
-    scene.appendChild(this.exhaustPileEl);
+    this.consumePileEl = el('div', { class: 'screen-pile consume-pile', title: 'Consume Pile', style: { display: 'none' } });
+    scene.appendChild(this.consumePileEl);
 
     this.root.appendChild(scene);
     this.fxLayer = ensureFxLayer(scene);
@@ -471,14 +471,14 @@ export class CombatView {
       this.discardPileEl.appendChild(el('div', { class: 'pile-stack-art', html: UI.discardStack }));
       this.discardPileEl.appendChild(el('div', { class: 'pile-badge', text: String(c.discardPile.length) }));
     }
-    if (this.exhaustPileEl) {
-      clear(this.exhaustPileEl);
-      if (c.exhaustPile.length) {
-        this.exhaustPileEl.style.display = '';
-        this.exhaustPileEl.appendChild(el('div', { class: 'pile-stack-art', html: UI.exhaustStack }));
-        this.exhaustPileEl.appendChild(el('div', { class: 'pile-badge', text: String(c.exhaustPile.length) }));
+    if (this.consumePileEl) {
+      clear(this.consumePileEl);
+      if (c.consumePile.length) {
+        this.consumePileEl.style.display = '';
+        this.consumePileEl.appendChild(el('div', { class: 'pile-stack-art', html: UI.consumeStack }));
+        this.consumePileEl.appendChild(el('div', { class: 'pile-badge', text: String(c.consumePile.length) }));
       } else {
-        this.exhaustPileEl.style.display = 'none';
+        this.consumePileEl.style.display = 'none';
       }
     }
     const textStr = this.pendingCard ? 'Cancel' : 'End Turn';
@@ -536,8 +536,8 @@ export class CombatView {
       goneCards.forEach((card) => {
         const cardEl = this.handHolder.querySelector(`.card[data-uid="${card.uid}"]`);
         if (cardEl) {
-          const isExhausted = card.exhaust || card.type === 'power' || card._forceExhaust || (c.exhaustPile && c.exhaustPile.some(ec => ec.uid === card.uid));
-          const targetPileEl = (isExhausted && this.exhaustPileEl) ? this.exhaustPileEl : this.discardPileEl;
+          const isConsumed = card.consume || card.type === 'power' || card._forceConsume || (c.consumePile && c.consumePile.some(ec => ec.uid === card.uid));
+          const targetPileEl = (isConsumed && this.consumePileEl) ? this.consumePileEl : this.discardPileEl;
 
           if (targetPileEl) {
             const cardRect = cardEl.getBoundingClientRect();
@@ -564,7 +564,7 @@ export class CombatView {
 
             // Determine destination rect
             let destRect;
-            if (isExhausted && (!this.exhaustPileEl || !c.exhaustPile || c.exhaustPile.length === 0)) {
+            if (isConsumed && (!this.consumePileEl || !c.consumePile || c.consumePile.length === 0)) {
               const discRect = this.discardPileEl.getBoundingClientRect();
               destRect = {
                 left: discRect.left,

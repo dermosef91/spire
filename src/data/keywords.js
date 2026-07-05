@@ -121,8 +121,8 @@ export const POWERS = {
 
 // Card keywords (rules glossary)
 export const KEYWORDS = {
-  Exhaust: 'When played, this card leaves play for the rest of combat.',
-  Ethereal: 'If this card is in your hand at the end of your turn, it is Exhausted.',
+  Consume: 'When played, this card leaves play for the rest of combat.',
+  Ethereal: 'If this card is in your hand at the end of your turn, it is Consumed.',
   Innate: 'You start each combat with this card in your opening hand.',
   Retain: 'This card is not discarded at the end of your turn.',
   Verse: 'A song-card. Some effects grow stronger with each Verse played.',
