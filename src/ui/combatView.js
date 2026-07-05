@@ -1102,6 +1102,29 @@ export class CombatView {
       if (el2) floatText(layer, el2, 'RHYTHM BROKEN', 'debuff');
       return;
     }
+    if (type === 'temporelease') {
+      // A finisher (Spiral Finish, Whirlwind) consumes all Tempo at once —
+      // scale the release flourish with how much was banked.
+      const el2 = this.elFor(payload.entity);
+      if (!el2) return;
+      const big = payload.amount >= 5;
+      floatText(layer, el2, `${payload.amount} TEMPO`, 'buff');
+      ring(layer, el2, big ? 'rgba(255,224,140,0.95)' : 'rgba(255,209,102,0.9)');
+      burst(layer, el2, big ? '#ffe6a0' : '#ffd166', Math.min(10 + payload.amount * 2, 26));
+      audio.play('tempo_release');
+      return;
+    }
+    if (type === 'powersurge') {
+      // An enemy (or ally) gains Resolve from a dedicated buff move — a
+      // telegraph that it's about to hit harder, distinct from the plain
+      // '+N' power pip float.
+      const el2 = this.elFor(payload.target);
+      if (!el2) return;
+      ring(layer, el2, 'rgba(217,79,43,0.9)');
+      burst(layer, el2, '#d94f2b', 16);
+      audio.play('power_surge');
+      return;
+    }
     if (type === 'damage') {
       const el2 = this.elFor(payload.target);
       if (!el2) return;
