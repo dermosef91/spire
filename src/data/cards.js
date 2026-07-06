@@ -640,6 +640,57 @@ def('call_and_response', {
   },
 });
 
+// --- The Archive: Ethereal as an upside. Each Echo names a champion the
+// Spire renders into an enemy for the next climber (see the world's "the
+// Spire welcomes climbers home" lie) — remembered instead of erased. Their
+// onConsume fires whether they leave play by turn-end Ethereal or a card
+// that Consumes the hand outright.
+def('echo_of_the_cantor', {
+  name: 'Echo of the Cantor', char: 'colorless', type: 'skill', rarity: 'uncommon', cost: 1,
+  block: 5, magic: 1, target: 'self', ethereal: true,
+  desc: (c) => `Gain ${c.block} Block. Ethereal. When Consumed, apply ${c.magic} Sapped to ALL enemies.`,
+  upgrade: (c) => { c.block = 7; },
+  onPlay: (ctx) => ctx.gainBlock(ctx.c.block),
+  onConsume: (ctx) => ctx.applyAll('weak', ctx.c.magic),
+});
+def('echo_of_the_sentinel', {
+  name: 'Echo of the Sentinel', char: 'colorless', type: 'skill', rarity: 'uncommon', cost: 1,
+  block: 4, magic: 7, target: 'self', ethereal: true,
+  desc: (c) => `Gain ${c.block} Block. Ethereal. When Consumed, gain ${c.magic} Block.`,
+  upgrade: (c) => { c.block = 6; c.magic = 9; },
+  onPlay: (ctx) => ctx.gainBlock(ctx.c.block),
+  onConsume: (ctx) => ctx.gainBlock(ctx.c.magic),
+});
+def('echo_of_the_warden', {
+  name: 'Echo of the Warden', char: 'colorless', type: 'attack', rarity: 'uncommon', cost: 1,
+  dmg: 7, magic: 10, target: 'enemy', ethereal: true,
+  desc: (c) => `Deal ${c.dmg} damage. Ethereal. When Consumed, deal ${c.magic} damage to a random enemy.`,
+  upgrade: (c) => { c.dmg = 9; c.magic = 13; },
+  onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.c.dmg),
+  onConsume: (ctx) => { const e = ctx.combat.randomEnemy(); if (e) ctx.combat.applyDamage(e, ctx.c.magic, { isAttack: false }); },
+});
+def('remembered_name', {
+  name: 'Remembered Name', char: 'colorless', type: 'power', rarity: 'rare', cost: 1,
+  magic: 3, target: 'self',
+  desc: (c) => `Whenever one of your cards is Consumed, deal ${c.magic} damage to a random enemy.`,
+  upgrade: (c) => { c.magic = 4; },
+  onPlay: (ctx) => ctx.combat.addTrigger('cardConsumed', () => {
+    const e = ctx.combat.randomEnemy(); if (e) ctx.combat.applyDamage(e, ctx.c.magic, { isAttack: false });
+  }, 'Remembered Name'),
+});
+def('catalogue_opens', {
+  name: 'The Catalogue Opens', char: 'colorless', type: 'skill', rarity: 'rare', cost: 2, consume: true,
+  dmg: 4, target: 'all',
+  desc: (c) => `Consume your hand. Deal ${c.dmg} damage to ALL enemies for each card Consumed. Consume.`,
+  upgrade: (c) => { c.dmg = 5; },
+  onPlay: (ctx) => {
+    const rest = ctx.combat.hand;
+    ctx.combat.hand = [];
+    for (const card of rest) ctx.combat.consume(card);
+    if (rest.length) ctx.dealAll(ctx.c.dmg * rest.length);
+  },
+});
+
 // ============================================================== STATUS & CURSE
 def('wound', {
   name: 'Scar', char: 'status', type: 'status', rarity: 'special', cost: -1,

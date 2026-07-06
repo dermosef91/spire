@@ -538,6 +538,7 @@ export class Combat {
 
   consume(card) {
     this.consumePile.push(card);
+    if (card._bp.onConsume) card._bp.onConsume(this.makeCtx(card, null));
     this.fire('cardConsumed', { card });
   }
 

@@ -223,6 +223,9 @@ const CARD_MOTIF = {
   reckless_glory: 'blood', open_old_wounds: 'blood', half_beat: 'note', shattered_cadence: 'note',
   // new: Call & Response (PR2)
   step_turn_strike: 'blade', answer_song: 'shield', call_and_response: 'note',
+  // new: The Archive (PR3)
+  echo_of_the_cantor: 'crescent', echo_of_the_sentinel: 'crescent', echo_of_the_warden: 'crescent',
+  remembered_name: 'eye', catalogue_opens: 'burst',
 };
 export function cardArt(id) { return S(M[CARD_MOTIF[id]] || M.burst, { cls: 'card-art-svg' }); }
 
