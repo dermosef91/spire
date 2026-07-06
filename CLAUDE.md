@@ -299,6 +299,32 @@ its own worktree instead:
 - Gotcha: `.gitignore` must contain `node_modules` **without** a trailing
   slash — `node_modules/` only matches real directories, so the worktree's
   symlink would show up as untracked noise in `git status`.
+- **A sibling session can rename/refactor shared vocabulary out from under an
+  in-flight branch, and your own green `npm test`/`npm run smoke` run against
+  your branch tip won't catch it.** This happened for real: while one session
+  was mid-PR adding new cards that called `combat.exhaust(card)`, another
+  session merged a repo-wide rename of the Exhaust mechanic to Consume
+  (`card.exhaust`→`card.consume`, `exhaustPile`→`consumePile`, `exhaust()`→
+  `consume()`, `exhaustThis()`→`consumeThis()`, the `cardExhausted` trigger→
+  `cardConsumed`) into `main`. The first session's branch still built and
+  tested green locally (it was branched from the *old* main), but GitHub
+  Actions' `pull_request` trigger checks out `refs/pull/<n>/merge` — a
+  synthetic commit of the PR head merged into the **current** `main` — not the
+  branch tip. Since the rename touched different lines than the new cards, git
+  auto-merged with **no conflict markers**, silently producing a tree where
+  the new cards called methods that no longer existed. CI failed with a
+  runtime error (`Cannot read properties of undefined (reading 'length')`)
+  that was unreproducible by testing the branch alone, on any Node version, in
+  a fresh clone — because the bug only exists in the *merge*, never in the
+  branch. If CI fails on a PR in a way you cannot reproduce against your own
+  branch tip, **fetch and test the actual merge ref**:
+  `git fetch origin +refs/pull/<n>/merge:refs/remotes/pull/<n>/merge` (grab the
+  ref name from the checkout step's logs, e.g. via the Actions UI or the
+  `check-runs` API job log) — that reveals what CI really tested. Fix: merge
+  `origin/main` into your branch locally, re-grep for the old vocabulary in
+  *your own additions* (a clean git merge won't flag it), re-run
+  `npm test`/`npm run smoke`, then push and re-check the PR's `mergeable_state`
+  before merging.
 - **Secrets (`.env`, `OPENAI_API_KEY`) don't exist in a fresh worktree either**
   — same root cause as `node_modules`: the repo root `.env` is gitignored
   (untracked), and a worktree only gets tracked files unless something
