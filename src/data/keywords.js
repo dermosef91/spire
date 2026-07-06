@@ -74,6 +74,20 @@ export const POWERS = {
     type: 'buff',
     desc: 'The rhythm of the fight. Clean strikes build it (+1, +2 on a Perfect) and parries add 1; a missed beat breaks it to 0. Some cards grow stronger with Tempo or consume it. Caps at 10.',
   },
+  // riposte's value is a damage amount, spent in full on the next attack hit
+  // taken (not a hit-count like Exposed/Sapped/Brittle below). flow's value
+  // IS a hit-count (consumed one dodge at a time), same pattern as those.
+  // Neither ticks down with the turn clock.
+  riposte: {
+    name: 'Riposte',
+    type: 'buff',
+    desc: 'The next attack that hits you is answered for {n} damage, then Riposte is spent.',
+  },
+  flow: {
+    name: 'Flow',
+    type: 'buff',
+    desc: 'The next {n} enemy attacks against you miss entirely. Each dodge consumes one stack.',
+  },
 
   // --- Debuffs ---
   // Exposed / Sapped / Brittle are HIT-COUNTED, not turn-timed: each stack is

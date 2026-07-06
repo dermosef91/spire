@@ -933,6 +933,97 @@ test('The Catalogue Opens consumes the hand and deals AoE damage per card', () =
   assert.equal(e.hp, 999 - 4 * heldCards, 'dealt 4 damage per consumed card');
 });
 
+// ----------------------------------------------------------------- new cards: PR4
+console.log('New cards — Riposte & Flow (PR4)');
+
+test('Riposte deals damage back when the player is hit, then consumes a stack', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0]; enemy.block = 0; enemy.hp = enemy.maxHp = 999;
+  c.applyPower(c.player, 'riposte', 6, c.player);
+  c.enemyAttack(enemy, 5);
+  assert.equal(enemy.hp, 999 - 6, 'enemy took the Riposte damage back');
+  assert.equal(c.player.powers.riposte, undefined, 'stack consumed');
+  c.enemyAttack(enemy, 5);
+  assert.equal(enemy.hp, 999 - 6, 'no further Riposte damage once the stack is spent');
+});
+
+test('Flow makes the whole attack miss, then consumes a stack', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  const hpBefore = c.player.hp;
+  c.player.block = 3;
+  c.applyPower(c.player, 'flow', 1, c.player);
+  c.enemyAttack(enemy, 20);
+  assert.equal(c.player.hp, hpBefore, 'no HP lost');
+  assert.equal(c.player.block, 3, 'block untouched — the attack never landed');
+  assert.equal(c.player.powers.flow, undefined, 'stack consumed');
+
+  c.player.block = 0; // clear the untouched block so the next hit is observable
+  c.enemyAttack(enemy, 20);
+  assert.equal(c.player.hp, hpBefore - 20, 'second attack lands normally once Flow is spent');
+});
+
+test('Answering Steel grants Block and Riposte', () => {
+  const c = freshCombat();
+  c.player.block = 0;
+  playCrafted(c, 'answering_steel', null);
+  assert.equal(c.player.block, 5, 'granted Block');
+  assert.equal(c.player.powers.riposte, 6, 'granted Riposte');
+});
+
+test('Answer in Kind applies Sapped to the attacker on a successful parry, not a missed one', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  playCrafted(c, 'answer_in_kind', null);
+
+  c.player.block = 10;
+  c._qtePrompted = true;
+  c._parried = false;
+  c.enemyAttack(enemy, 3);
+  assert.equal(enemy.powers.weak, undefined, 'no proc on a missed parry');
+
+  c.player.block = 10;
+  c._qtePrompted = true;
+  c._parried = true;
+  c.enemyAttack(enemy, 3);
+  assert.equal(enemy.powers.weak, 1, 'Sapped applied on a clean parry, and persists past the attack that triggered it');
+});
+
+test("Blade Turn reflects the parried attack's full damage, then expires next turn", () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0]; enemy.block = 0; enemy.hp = enemy.maxHp = 999;
+  playCrafted(c, 'blade_turn', null);
+
+  c.player.block = 10;
+  c._qtePrompted = true;
+  c._parried = true;
+  c.enemyAttack(enemy, 7);
+  assert.equal(enemy.hp, 999 - 7, "the parried attack's damage reflected back");
+
+  c.fire('turnStart'); // the window closes at the start of the player's next turn
+  c.player.block = 10;
+  c._qtePrompted = true;
+  c._parried = true;
+  c.enemyAttack(enemy, 7);
+  assert.equal(enemy.hp, 999 - 7, 'no further reflect once the window has expired');
+});
+
+test('Read the Wind grants Flow', () => {
+  const c = freshCombat();
+  playCrafted(c, 'read_the_wind', null);
+  assert.equal(c.player.powers.flow, 1, 'granted 1 Flow');
+});
+
+test('Untouchable grants Flow at the start of every turn', () => {
+  const c = freshCombat();
+  playCrafted(c, 'untouchable', null);
+  assert.equal(c.player.powers.flow, undefined, 'no Flow yet — only grants on turnStart');
+  c.fire('turnStart');
+  assert.equal(c.player.powers.flow, 1, 'granted 1 Flow at turn start');
+  c.fire('turnStart');
+  assert.equal(c.player.powers.flow, 2, 'grants again on the following turn start');
+});
+
 // ----------------------------------------------------------------- summary
 console.log('');
 if (failures.length) {

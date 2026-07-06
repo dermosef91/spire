@@ -261,6 +261,50 @@ def('shattered_cadence', {
   onPlay: (ctx) => { ctx.deal(ctx.enemy, ctx.c.dmg); ctx.combat.breakTempo(); },
 });
 
+// --- Riposte & Flow: the Bladedancer answers the blow, or is simply
+// somewhere else when it lands. A finite, telegraphed alternative to the
+// removed Backlash mechanic, and a true dodge with no Slay-the-Spire analog.
+def('answering_steel', {
+  name: 'Answering Steel', char: 'amara', type: 'skill', rarity: 'common', cost: 1,
+  block: 5, magic: 6, target: 'self',
+  desc: (c) => `Gain ${c.block} Block. Gain ${c.magic} Riposte.`,
+  upgrade: (c) => { c.block = 7; c.magic = 9; },
+  onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.applySelf('riposte', ctx.c.magic); },
+});
+def('answer_in_kind', {
+  name: 'Answer in Kind', char: 'amara', type: 'power', rarity: 'uncommon', cost: 1,
+  magic: 1, target: 'self',
+  desc: (c) => `Whenever you successfully parry, apply ${c.magic} Sapped to the attacker.`,
+  upgrade: (c) => { c.magic = 2; },
+  onPlay: (ctx) => ctx.combat.addTrigger('parrySuccess', ({ enemy }) => {
+    if (enemy && enemy.alive) ctx.combat.applyPower(enemy, 'weak', ctx.c.magic, ctx.self);
+  }, 'Answer in Kind'),
+});
+def('blade_turn', {
+  name: 'Blade Turn', char: 'amara', type: 'skill', rarity: 'rare', cost: 1, consume: true,
+  target: 'self',
+  desc: () => `Until your next turn, successful parries reflect the parried attack's full damage back at the attacker. Consume.`,
+  upgrade: (c) => { c.cost = 0; },
+  onPlay: (ctx) => {
+    ctx.combat._parryReflect = true;
+    ctx.combat.addTrigger('turnStart', () => { ctx.combat._parryReflect = false; }, 'Blade Turn (expire)', true);
+  },
+});
+def('read_the_wind', {
+  name: 'Read the Wind', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 1, consume: true,
+  magic: 1, target: 'self',
+  desc: (c) => `Gain ${c.magic} Flow. Consume.`,
+  upgrade: (c) => { c.cost = 0; },
+  onPlay: (ctx) => ctx.applySelf('flow', ctx.c.magic),
+});
+def('untouchable', {
+  name: 'Untouchable', char: 'amara', type: 'power', rarity: 'rare', cost: 3,
+  magic: 1, target: 'self',
+  desc: (c) => `At the start of each turn, gain ${c.magic} Flow.`,
+  upgrade: (c) => { c.cost = 2; },
+  onPlay: (ctx) => ctx.combat.addTrigger('turnStart', () => ctx.applySelf('flow', ctx.c.magic), 'Untouchable'),
+});
+
 // ============================================================== KOFI — Griot of the Cosmos
 // Verses, Blight (poison), cheap cards and relentless tempo.
 

@@ -18,6 +18,7 @@ export const CHARACTERS = {
       'rising_strike', 'war_trance', 'ember_within', 'bulwark', 'read_tell', 'shockwave', 'disarm', 'whirlwind', 'spiral_finish', 'war_drum_cadence',
       'ancestral_fury', 'blood_offering', 'devour', 'harvest', 'skyfall', 'unbroken_dance',
       'reckless_glory', 'open_old_wounds', 'half_beat', 'shattered_cadence',
+      'answering_steel', 'answer_in_kind', 'blade_turn', 'read_the_wind', 'untouchable',
     ],
   },
   kofi: {
