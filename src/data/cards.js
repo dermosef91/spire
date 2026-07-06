@@ -782,6 +782,31 @@ def('reckoning', {
   onPlay: (ctx) => ctx.deal(ctx.enemy, Math.min(ctx.run.foesSlain, ctx.c.magic)),
 });
 
+// --- The Spire's Bargains: power now, a bill collected at the start of your
+// next turn (combat.debt, resolved in startPlayerTurn). Win the fight before
+// it comes due and the bill is never paid — that race is the whole point.
+def('borrowed_time', {
+  name: 'Borrowed Time', char: 'colorless', type: 'skill', rarity: 'uncommon', cost: 0, consume: true,
+  magic: 2, target: 'self',
+  desc: (c) => `Gain ${c.magic} Àṣẹ. Debt: start next turn with ${c.upgraded ? 1 : 2} less Àṣẹ. Consume.`,
+  upgrade: (c) => { c.upgraded = true; },
+  onPlay: (ctx) => { ctx.gainEnergy(ctx.c.magic); ctx.combat.debt.energy += ctx.c.upgraded ? 1 : 2; },
+});
+def('flesh_ledger', {
+  name: 'Flesh Ledger', char: 'colorless', type: 'skill', rarity: 'uncommon', cost: 0,
+  block: 11, magic: 5, target: 'self',
+  desc: (c) => `Gain ${c.block} Block. Debt: lose ${c.magic} HP at the start of your next turn.`,
+  upgrade: (c) => { c.block = 15; },
+  onPlay: (ctx) => { ctx.gainBlock(ctx.c.block); ctx.combat.debt.hp += ctx.c.magic; },
+});
+def('advance_on_the_prize', {
+  name: 'Advance on the Prize', char: 'colorless', type: 'skill', rarity: 'uncommon', cost: 0, consume: true,
+  magic: 3, target: 'self',
+  desc: (c) => `Draw ${c.magic} cards. Debt: draw 2 fewer next turn. Consume.`,
+  upgrade: (c) => { c.magic = 4; },
+  onPlay: (ctx) => { ctx.draw(ctx.c.magic); ctx.combat.debt.draw += 2; },
+});
+
 // ============================================================== STATUS & CURSE
 def('wound', {
   name: 'Scar', char: 'status', type: 'status', rarity: 'special', cost: -1,

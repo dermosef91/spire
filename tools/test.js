@@ -1151,6 +1151,51 @@ test('Reckoning is capped at 40', () => {
   assert.equal(enemy.hp, 999 - 40, 'capped at 40');
 });
 
+// ----------------------------------------------------------------- new cards: PR7
+console.log("New cards — The Spire's Bargains: Debt (PR7)");
+
+test('Borrowed Time grants Àṣẹ now; Debt collects less Àṣẹ at the next turn start', () => {
+  const c = freshCombat();
+  playCrafted(c, 'borrowed_time', null);
+  assert.equal(c.energy, 7, 'gained 2 Àṣẹ on top of the 5 set by playCrafted');
+  assert.equal(c.debt.energy, 2, 'incurred 2 Debt');
+
+  c.startPlayerTurn(false);
+  assert.equal(c.energy, c.maxEnergy - 2, 'next turn started 2 Àṣẹ short');
+  assert.equal(c.debt.energy, 0, 'the ledger cleared after collection');
+});
+
+test('Flesh Ledger grants Block now and stacks HP Debt if played again', () => {
+  const c = freshCombat();
+  c.player.block = 0;
+  playCrafted(c, 'flesh_ledger', null);
+  assert.equal(c.player.block, 11, 'granted Block');
+  assert.equal(c.debt.hp, 5, 'incurred 5 HP Debt');
+  assert.ok(c.discardPile.some((x) => x.id === 'flesh_ledger'), 'not Consumed — went to discard');
+
+  playCrafted(c, 'flesh_ledger', null);
+  assert.equal(c.debt.hp, 10, 'a second play stacks the Debt');
+
+  const hpBefore = c.player.hp;
+  c.startPlayerTurn(false);
+  assert.equal(c.player.hp, hpBefore - 10, 'lost the full stacked Debt at turn start');
+  assert.equal(c.debt.hp, 0, 'the ledger cleared after collection');
+});
+
+test('Advance on the Prize draws now; Debt reduces the next draw by 2', () => {
+  const c = freshCombat();
+  playCrafted(c, 'advance_on_the_prize', null);
+  assert.equal(c.debt.draw, 2, 'incurred a 2-card draw Debt');
+
+  // Discard (not drop) the hand so the deck's total card count is preserved —
+  // draw() can reshuffle discard back into the draw pile once it runs dry.
+  c.discardPile.push(...c.hand);
+  c.hand = [];
+  c.startPlayerTurn(false);
+  assert.equal(c.hand.length, 3, 'drew only 3 (5 - 2 Debt) instead of the usual 5');
+  assert.equal(c.debt.draw, 0, 'the ledger cleared after collection');
+});
+
 // ----------------------------------------------------------------- summary
 console.log('');
 if (failures.length) {
