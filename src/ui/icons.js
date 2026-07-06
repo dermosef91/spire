@@ -205,6 +205,8 @@ const CARD_MOTIF = {
   war_trance: 'cards', ember_within: 'fist', bulwark: 'shield', read_tell: 'eye', shockwave: 'burst',
   disarm: 'brokenBlade', whirlwind: 'burst', ancestral_fury: 'fist', blood_offering: 'blood', devour: 'blood',
   harvest: 'blood', skyfall: 'hammer',
+  // new: Riposte & Flow (PR4)
+  answering_steel: 'shield', answer_in_kind: 'reticle', blade_turn: 'brokenBlade', read_the_wind: 'crescent', untouchable: 'crescent',
   // Kofi
   jab: 'blade', refrain: 'shield', cutting_verse: 'note', blight_needle: 'poison', quickstep: 'cards',
   double_tap: 'twin', crescendo: 'note', deflect: 'shield', shard_burst: 'burst', backbeat: 'note',

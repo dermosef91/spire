@@ -284,6 +284,16 @@ export class Combat {
     // if (isAttack && source && target.powers.thorns) {
     //   this.applyDamage(source, target.powers.thorns, { isAttack: false });
     // }
+    // Riposte: a finite, telegraphed answer to being hit — the transparent
+    // replacement for the removed Backlash. Unlike Exposed/Sapped/Brittle
+    // above, its value is a damage AMOUNT, not a hit-count, so it is spent in
+    // full (not consumeStack's decrement-by-1) on the first attack hit taken,
+    // blocked or not.
+    if (isAttack && target.isPlayer && source && target.powers.riposte) {
+      const back = target.powers.riposte;
+      delete target.powers.riposte;
+      this.applyDamage(source, back, { isAttack: false });
+    }
     this.checkDeath(target);
     if (!target.isPlayer) this.checkPhase(target);
     return hpLost;
@@ -412,6 +422,16 @@ export class Combat {
   // Enemy attack on player
   enemyAttack(enemy, base, hits = 1) {
     this.fx('attackstart', { source: enemy, target: this.player });
+    // Flow: a true dodge — the whole attack action whiffs before block, the
+    // parry prompt, or any of it. Distinct from Block/Phase, which absorb or
+    // reduce damage that still "lands".
+    if (this.player.powers.flow) {
+      this.consumeStack(this.player, 'flow');
+      this.fx('dodge', { entity: this.player, source: enemy });
+      this.log(`${enemy.name}'s attack finds nothing but air.`);
+      this.notify();
+      return;
+    }
     const realBlock = this.player.block;
     const qtePrompted = this._qtePrompted;
     const parried = this._parried;
@@ -432,10 +452,28 @@ export class Combat {
       this.gainTempo(1);
     }
 
+    let totalDmg = 0;
     for (let i = 0; i < hits; i++) {
       if (!this.player.alive) break;
       const dmg = Math.round(this.calcAttackDamage(base, enemy, this.player) * this.run.enemyDamageMult());
+      totalDmg += dmg;
       this.applyDamage(this.player, dmg, { isAttack: true, source: enemy });
+    }
+
+    // Fired after the hit resolves, not before: a Sapped/etc. reaction to a
+    // successful parry must land on the *attacker's future* hits, not get
+    // silently applied-then-consumed by discounting the very attack it's
+    // answering. Reflect uses the damage actually dealt (totalDmg, captured
+    // above) rather than recomputing calcAttackDamage here, so it can't drift
+    // from what the hit loop already consumed hit-counted stacks to produce.
+    if (qtePrompted && !parried) {
+      this.fire('parryMissed', { enemy });
+    } else if (qtePrompted && parried) {
+      this.fire('parrySuccess', { enemy });
+      if (this._parryReflect && totalDmg > 0) {
+        this.applyDamage(enemy, totalDmg, { isAttack: false });
+        this.fx('reflect', { source: this.player, target: enemy });
+      }
     }
     this.notify();
   }
@@ -823,7 +861,10 @@ export class Combat {
         const isBlock = e.intent && e.intent.type && e.intent.type.includes('block');
         this.fx('skillstart', { source: e, pose: isBlock ? 'block' : 'skill' });
       }
-      if (this.parryPrompt && isAttack && this.player.block > 0 && this.player.alive) {
+      // Flow makes the whole attack whiff regardless of the parry outcome, so
+      // skip the prompt entirely rather than asking the player to parry a hit
+      // that was never going to land.
+      if (this.parryPrompt && isAttack && this.player.block > 0 && this.player.alive && !this.player.powers.flow) {
         let res = null;
         try { res = await this.parryPrompt(e); } catch (_) { res = null; }
         this._parried = !!(res && res.success);
