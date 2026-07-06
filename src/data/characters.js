@@ -66,6 +66,7 @@ export const COLORLESS_POOL = [
   'step_turn_strike', 'answer_song', 'call_and_response',
   'echo_of_the_cantor', 'echo_of_the_sentinel', 'echo_of_the_warden', 'remembered_name', 'catalogue_opens',
   'reckoning', 'borrowed_time', 'flesh_ledger', 'advance_on_the_prize',
+  'provoke_the_tell', 'stagger',
 ];
 
 export function characterById(id) { return CHARACTERS[id]; }

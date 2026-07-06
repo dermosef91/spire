@@ -876,6 +876,21 @@ export class Combat {
         this.fx('enrage', { target: e });
         this.applyPower(e, 'strength', en.strength, e);
       }
+      // Stagger: the action itself is skipped (no move runs, nothing to
+      // telegraph or parry), but everything else about the enemy's turn —
+      // block reset above, poison/enrage, its own turn/history bookkeeping —
+      // proceeds normally. Skipping pickEnemyMove is what makes the intent
+      // carry over unchanged into the following phase.
+      if (e._skipNext) {
+        e._skipNext = false;
+        this.log(`${e.name} is staggered and skips its turn.`);
+        this.fx('stagger', { target: e });
+        e.history.push(e.move);
+        e.last = e.move;
+        e.turn += 1;
+        this.tickTurnDebuffs(e);
+        continue;
+      }
       const move = e.bp.moves[e.move];
       this.log(`${e.name} uses ${move.name}.`);
       const isAttack = e.intent && e.intent.type && e.intent.type.startsWith('attack');
