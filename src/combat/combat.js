@@ -85,6 +85,11 @@ export class Combat {
     this.versesThisCombat = 0;
     this.cardsPlayedTotal = 0;
     this.noMoreDraw = false;
+    // Call & Response (alternation): the type of the last card played THIS
+    // TURN, and a snapshot of it taken at the top of playCard so a card's own
+    // onPlay can read "what came before me" via ctx.combat._prevPlayedType.
+    this.lastPlayedType = null;
+    this._prevPlayedType = null;
     this._extraOpenDraw = 0;
   }
 
@@ -650,13 +655,15 @@ export class Combat {
     if (card.type === 'skill') {
       this.fx('useSkill', { entity: this.player });
     }
+    this._prevPlayedType = this.lastPlayedType;
     const ctx = this.makeCtx(card, target);
     card._bp.onPlay(ctx);
 
     this._cardDamageMult = 1;
     this._rhythmMult = 1;
-    this.fire('cardPlayed', { card });
+    this.fire('cardPlayed', { card, prevType: this._prevPlayedType });
     if (card.verse) this.fire('versePlayed', { card });
+    this.lastPlayedType = card.type;
 
     // Resolve card's resting place
     if (card._forceConsume || card.consume || card.type === 'power') {
@@ -688,6 +695,7 @@ export class Combat {
     this._usedFAD = false;
     this.cardsThisTurn = 0;
     this.versesThisTurn = 0;
+    this.lastPlayedType = null;
     this.noMoreDraw = false;
 
     // reset per-turn damage caps (e.g. Heart of Static's Invincibility)
