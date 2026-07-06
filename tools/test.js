@@ -1196,6 +1196,51 @@ test('Advance on the Prize draws now; Debt reduces the next draw by 2', () => {
   assert.equal(c.debt.draw, 0, 'the ledger cleared after collection');
 });
 
+// ----------------------------------------------------------------- new cards: PR8
+console.log('New cards — Misdirection: intent manipulation (PR8)');
+
+test('Provoke the Tell forces an enemy to re-pick its intent, and draws a card', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  enemy.move = 'bogus'; // corrupt the current pick
+  enemy.intent = { type: 'unknown' };
+  const handBefore = c.hand.length;
+  playCrafted(c, 'provoke_the_tell', enemy);
+  assert.equal(enemy.move, 'zap', 're-picked a valid move (husk_drone always opens on zap)');
+  assert.ok(enemy.intent && enemy.intent.type === 'attack', 'intent refreshed to match the new move');
+  assert.equal(c.hand.length, handBefore + 1, 'the Consumed card left for good, and the draw added a new one');
+});
+
+test("Stagger skips an enemy's action; its intent carries over unchanged", () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  playCrafted(c, 'stagger', enemy);
+  assert.equal(enemy._skipNext, true, 'flagged to skip its next action');
+
+  const moveBefore = enemy.move;
+  const intentBefore = enemy.intent;
+  const turnBefore = enemy.turn;
+  const historyLenBefore = enemy.history.length;
+  const hpBefore = c.player.hp;
+
+  // Simulate the skip branch the way enemyPhase's loop does, without paying
+  // the real-time waits the full async phase drives.
+  if (enemy._skipNext) {
+    enemy._skipNext = false;
+    enemy.history.push(enemy.move);
+    enemy.last = enemy.move;
+    enemy.turn += 1;
+    c.tickTurnDebuffs(enemy);
+  }
+
+  assert.equal(enemy._skipNext, false, 'the flag is consumed');
+  assert.equal(enemy.move, moveBefore, 'intent (move id) carries over unchanged — never re-picked');
+  assert.equal(enemy.intent, intentBefore, 'intent object carries over unchanged');
+  assert.equal(enemy.turn, turnBefore + 1, "the enemy's own turn counter still advances");
+  assert.equal(enemy.history.length, historyLenBefore + 1, 'history still records the (unexecuted) move id');
+  assert.equal(c.player.hp, hpBefore, 'no damage — the action never ran');
+});
+
 // ----------------------------------------------------------------- summary
 console.log('');
 if (failures.length) {

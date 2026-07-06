@@ -807,6 +807,27 @@ def('advance_on_the_prize', {
   onPlay: (ctx) => { ctx.draw(ctx.c.magic); ctx.combat.debt.draw += 2; },
 });
 
+// --- Misdirection: read and rewrite intents. StS never lets you touch an
+// enemy's telegraphed move; the engine already re-picks intents for boss
+// phase transitions, so the verbs here are cheap to expose to cards.
+def('provoke_the_tell', {
+  name: 'Provoke the Tell', char: 'colorless', type: 'skill', rarity: 'uncommon', cost: 0, consume: true,
+  target: 'enemy',
+  desc: () => `An enemy re-picks its intent. Draw 1. Consume.`,
+  upgrade: (c) => { c.consume = false; },
+  onPlay: (ctx) => {
+    if (ctx.enemy && ctx.enemy.alive) ctx.combat.pickEnemyMove(ctx.enemy);
+    ctx.draw(1);
+  },
+});
+def('stagger', {
+  name: 'Stagger', char: 'colorless', type: 'skill', rarity: 'rare', cost: 2, consume: true,
+  target: 'enemy',
+  desc: () => `An enemy skips its next action; its intent carries over unchanged. Consume.`,
+  upgrade: (c) => { c.cost = 1; },
+  onPlay: (ctx) => { if (ctx.enemy && ctx.enemy.alive) ctx.enemy._skipNext = true; },
+});
+
 // ============================================================== STATUS & CURSE
 def('wound', {
   name: 'Scar', char: 'status', type: 'status', rarity: 'special', cost: -1,
