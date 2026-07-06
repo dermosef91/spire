@@ -573,6 +573,7 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 }
 .tb-act { color: var(--orange); letter-spacing: 0.16em; text-transform: uppercase; font-size: 14px !important; }
 .tb-relics, .tb-potions { display: flex; gap: 7px; flex-wrap: wrap; }
+.tb-relics { margin-left: 10px; }
 
 .relic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 17px;
   background: radial-gradient(circle at 50% 50%, #1c1109, #0a0604); border: 2px solid var(--line); cursor: help; transition: transform 0.12s;
@@ -1177,19 +1178,23 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
      1.5px  1.5px 0 #000,
      0px 0px 4px #000;
 }
+/* Status pips sit beside the combatant, stacked in a column, instead of
+   centered below the nameplate — centered there, they used to end up hidden
+   behind the fanned hand in combat. Player pips go to the left (away from
+   the board center), enemy pips to the right (also away from center), so
+   neither ever sits under the hand. */
 .powers {
   position: absolute;
-  bottom: calc(25% - 36px);
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 25%;
   display: flex;
+  flex-direction: column;
   gap: 5px;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 170px;
+  max-width: 140px;
   z-index: 5;
   pointer-events: auto;
 }
+.player .powers { right: calc(100% + 10px); align-items: flex-end; }
+.enemy .powers { left: calc(100% + 10px); align-items: flex-start; }
 .pip {
   font-family: var(--font-display);
   font-size: 12px;
@@ -1200,6 +1205,10 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   border: 1px solid var(--line-soft);
   transition: background-color 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 .pip:hover {
   background: rgba(255, 255, 255, 0.08);
@@ -1387,7 +1396,7 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   right: 24px;
 }
 
-.screen-pile.exhaust-pile {
+.screen-pile.consume-pile {
   right: 24px;
   bottom: 140px; /* 24px + 100px + 16px gap */
 }
@@ -1806,6 +1815,11 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .relic-reveal-hint { color: var(--muted); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
   margin-top: 18px; animation: relicHintPulse 1.8s ease-in-out infinite; }
 
+/* Claim / Leave it choice (treasure cache): the backdrop stops being a giant
+   button, so the overlay itself shouldn't look clickable anymore. */
+.relic-reveal-overlay:has(.relic-reveal-actions) { cursor: default; }
+.relic-reveal-actions { display: flex; gap: 12px; margin-top: 20px; }
+
 /* the icon clone that flies to the top-bar slot */
 .relic-fly {
   position: fixed; z-index: 200; pointer-events: none; display: grid; place-items: center;
@@ -2099,7 +2113,7 @@ html { -webkit-text-size-adjust: 100%; }
   }
   .screen-pile.draw-pile { left: 12px; }
   .screen-pile.discard-pile { right: 12px; }
-  .screen-pile.exhaust-pile { right: 12px; bottom: 94px; }
+  .screen-pile.consume-pile { right: 12px; bottom: 94px; }
   .screen-pile .pile-badge {
     width: 20px;
     height: 20px;
@@ -2128,6 +2142,9 @@ html { -webkit-text-size-adjust: 100%; }
   .hptext { font-size: 10px; }
   .combatant-badge { width: 14px; height: 14px; }
   .block-badge { min-width: 24px; height: 24px; font-size: 12px; bottom: 5px; left: -12px; }
+  /* The block badge already sticks out to the left of the nameplate here, so
+     push the player's power-pip column out past it or the two collide. */
+  .player .powers { right: calc(100% + 32px); }
   .intent { bottom: calc(var(--med) * 1.85 + 8px); font-size: 14px; } .orbs { bottom: calc(25% + 42px); } .orbs .orb { width: 26px; height: 26px; }
   .combat-log { min-height: 12px; font-size: 11px; margin: auto 0 1px; }
   /* Pulled in tighter than the base rule so the safe zone below (.hand's
@@ -2165,9 +2182,9 @@ html { -webkit-text-size-adjust: 100%; }
   }
   /* Characters are shorter in landscape and the (lowered) hand covers their
      feet, so lift the name/HP block onto the torso where it clears the card
-     tops, and raise the power pips to sit just under it. */
+     tops, and keep the power pips level with it. */
   .combatant-info { bottom: 44%; }
-  .powers { bottom: calc(44% - 34px); }
+  .powers { bottom: 44%; }
   /* The resting fan's downward dip (--shift, set inline by combatView and
      growing as |diff|^1.5 for wider hands) would reach ~48px on a full
      10-card hand and, with the hand now sitting lower, get cropped by
@@ -2183,7 +2200,7 @@ html { -webkit-text-size-adjust: 100%; }
   }
   .screen-pile.draw-pile { left: 6px; }
   .screen-pile.discard-pile { right: 6px; }
-  .screen-pile.exhaust-pile { right: 6px; bottom: 68px; }
+  .screen-pile.consume-pile { right: 6px; bottom: 68px; }
   .screen-pile .pile-badge {
     width: 20px;
     height: 20px;
@@ -2454,22 +2471,18 @@ img.svg-ic { object-fit: contain; }
 /* fullscreen toggle and mute buttons in the top bar (replaces the floating one
    to avoid card overlap). Circular with a subtle ornamental inner ring, echoing
    the reference's ringed sigil buttons — kept understated. */
-.tb-fs, .tb-mute, .tb-rhythm, .tb-abandon { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; padding: 0;
+.tb-fs, .tb-mute, .tb-abandon { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; padding: 0;
   background: rgba(255,170,80,0.06); border: 1px solid var(--line); color: var(--orange);
   box-shadow: inset 0 0 0 3px rgba(8,5,3,0.6), inset 0 0 0 4px rgba(255,170,80,0.14);
   transition: border-color 0.14s ease, box-shadow 0.14s ease; }
-.tb-fs:hover, .tb-mute:hover, .tb-rhythm:hover { border-color: var(--orange);
+.tb-fs:hover, .tb-mute:hover { border-color: var(--orange);
   box-shadow: inset 0 0 0 3px rgba(8,5,3,0.6), inset 0 0 0 4px rgba(255,170,80,0.22), var(--glow); }
-.tb-fs .svg-ic, .tb-mute .svg-ic, .tb-rhythm .svg-ic, .tb-abandon .svg-ic { width: 60%; height: 60%; }
+.tb-fs .svg-ic, .tb-mute .svg-ic, .tb-abandon .svg-ic { width: 60%; height: 60%; }
 /* Abandon-run: same ringed button, but hovers into an ember warning tint
    since it's a destructive action rather than a preference toggle. */
 .tb-abandon { color: var(--ember); }
 .tb-abandon:hover { border-color: var(--ember);
   box-shadow: inset 0 0 0 3px rgba(8,5,3,0.6), inset 0 0 0 4px rgba(232,67,26,0.28), 0 0 16px rgba(232,67,26,0.45); }
-/* Rhythm toggle off-state: dimmed ring with a strike-through, like a muted speaker. */
-.tb-rhythm.off { opacity: 0.55; }
-.tb-rhythm.off::after { content: ''; position: absolute; width: 62%; height: 2px; background: var(--orange); transform: rotate(-45deg); border-radius: 1px; }
-.tb-rhythm { position: relative; }
 
 /* ============================================================
    DRAG & DROP to play cards (mouse + touch)
@@ -2616,33 +2629,47 @@ img.svg-ic { object-fit: contain; }
 .qte-layer.qte-clear { background: transparent; }
 .qte-layer.qte-clear .qte-stage,
 .qte-layer.qte-clear .qte-labels { opacity: 0; transition: opacity 200ms ease; }
+.qte-content {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+/* Nudge the whole ring+label stack toward whichever side of the battlefield
+   the prompt is "about" — attacks lean toward the enemy side (player strikes
+   outward), parries lean toward the player side (block happens at home) —
+   without moving the full-viewport dimming scrim itself. */
+.qte-attack .qte-content { transform: translateX(clamp(24px, 6vw, 90px)); }
+.qte-parry .qte-content { transform: translateX(clamp(-90px, -6vw, -24px)); }
 .qte-stage {
   position: relative; width: min(46vw, 34dvh, 300px); aspect-ratio: 1;
   display: flex; align-items: center; justify-content: center;
 }
+/* The target ring is the one goal line the player must land the closing note
+   on — it needs to read as unmistakably "this one" against the ornament rings
+   and the note itself, so it gets the strongest, most saturated glow of the
+   three and stays that way for the whole approach (not just on-hit). */
 .qte-target {
   position: absolute; inset: 22%; border-radius: 50%;
-  border: 2px solid var(--line);
-  box-shadow: 0 0 14px rgba(255, 106, 26, 0.25), inset 0 0 14px rgba(255, 106, 26, 0.1);
+  border: 3px solid var(--orange-bright);
+  box-shadow: 0 0 26px rgba(255, 138, 58, 0.65), inset 0 0 18px rgba(255, 138, 58, 0.3);
   transition: border-color 100ms linear, box-shadow 100ms linear;
 }
-.qte-parry .qte-target { border-color: var(--blue); box-shadow: 0 0 22px rgba(159, 194, 255, 0.4), inset 0 0 16px rgba(159, 194, 255, 0.15); }
+.qte-parry .qte-target { border-color: var(--blue-bright); box-shadow: 0 0 26px rgba(159, 194, 255, 0.65), inset 0 0 18px rgba(159, 194, 255, 0.3); }
+/* The closing note is deliberately dimmer/thinner than the target so it
+   reads as "approaching marker", not a second candidate for the goal ring. */
 .qte-note {
   position: absolute; inset: 22%; border-radius: 50%;
-  border: 3px solid var(--orange-bright); box-shadow: var(--glow);
+  border: 2px solid var(--cream); opacity: 0.55;
   will-change: transform; pointer-events: none;
 }
-.qte-parry .qte-note { border-color: var(--blue-bright); box-shadow: 0 0 22px rgba(159, 194, 255, 0.45); }
-/* Faint concentric ornament rings behind the arrow (static, reduced-motion safe). */
+.qte-parry .qte-note { border-color: var(--cream); }
+/* Concentric ornament rings behind the arrow (static, reduced-motion safe) —
+   desaturated and faint so they read as backdrop texture, never competing
+   with the target ring for "which circle do I aim at". */
 .qte-rings {
   position: absolute; inset: -8%;
-  opacity: 0.75; pointer-events: none;
+  opacity: 0.3; pointer-events: none;
+  filter: grayscale(1) brightness(0.85);
 }
 .qte-rings .svg-ic { width: 100%; height: 100%; }
-/* The ornament rings are a baked-color SVG (not currentColor) — hue-shift the
-   ember tones toward the block-blue accent for the parry QTE rather than
-   forking a second SVG constant just for this faint backdrop. */
-.qte-parry .qte-rings { filter: hue-rotate(190deg) saturate(1.15); }
 /* Feathered chevron-stack swipe arrow; drawn pointing up, rotated per direction. */
 .qte-dir {
   position: absolute; inset: 0; z-index: 2;
@@ -2814,7 +2841,7 @@ img.svg-ic { object-fit: contain; }
   z-index: 10 !important;
 }
 
-.kb-focus.btn, .kb-focus.title-setting-btn, .kb-focus.tb-fs, .kb-focus.tb-mute, .kb-focus.tb-rhythm, .kb-focus.tb-abandon {
+.kb-focus.btn, .kb-focus.title-setting-btn, .kb-focus.tb-fs, .kb-focus.tb-mute, .kb-focus.tb-abandon {
   transform: scale(1.04) !important;
 }
 
@@ -2841,7 +2868,27 @@ img.svg-ic { object-fit: contain; }
 
 .kb-focus.map-node {
   transform: translate(-50%, -50%) scale(1.35) !important;
-  box-shadow: 0 0 12px var(--orange) !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 10px var(--orange)) !important;
+}
+
+/* Enemy targeting: glow the sprite's own alpha shape (drop-shadow), not a
+   box around its container — a plain box-shadow on .combatant reads as a
+   hard square behind sprites with transparent PNG cutouts. Mirrors the
+   mouse-hover targetable glow above. */
+.kb-focus.combatant {
+  box-shadow: none !important;
+  transform: none !important;
+}
+.kb-focus.combatant .stage {
+  transform: scale(1.15) !important;
+  filter: drop-shadow(0 0 28px rgba(255, 176, 80, 0.95)) !important;
+  transition: transform 0.15s ease, filter 0.15s ease !important;
+}
+
+.kb-focus.potion:has(.potion-art-img) {
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 10px var(--orange)) !important;
 }
 
 .kb-focus.char-card {
@@ -2866,6 +2913,10 @@ img.svg-ic { object-fit: contain; }
   }
   .kb-focus.map-node {
     transform: translate(-50%, -50%) !important;
+  }
+  .kb-focus.combatant .stage {
+    transform: none !important;
+    transition: none !important;
   }
   .pip:hover, .block-badge:hover {
     transform: none !important;

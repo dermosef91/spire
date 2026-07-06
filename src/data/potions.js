@@ -8,7 +8,14 @@ def('elixir', {
   name: 'Elixir of Ìyá', rarity: 'common', color: '#e0457b',
   desc: 'Heal 25% of your Max HP.',
   combatOnly: false,
-  use: (ctx) => ctx.run.heal(Math.floor(ctx.run.maxHp * 0.25)),
+  // In combat, `combat.player.hp` is the live mirror of run.hp (written back
+  // to run only when combat ends) — healing ctx.run directly here left the
+  // health bar (which reads combat.player.hp) stale until combat end, even
+  // though the topbar (which reads run.hp) updated immediately.
+  use: (ctx) => {
+    if (ctx.combat) ctx.combat.heal(Math.floor(ctx.run.maxHp * 0.25));
+    else ctx.run.heal(Math.floor(ctx.run.maxHp * 0.25));
+  },
 });
 def('rage_brew', {
   name: 'Rage Brew', rarity: 'common', color: '#d94f2b',

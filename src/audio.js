@@ -16,6 +16,8 @@ const SOUNDS = {
   zap: 'assets/sounds/zap.mp3',
   splash: 'assets/sounds/splash.mp3',
   growl: 'assets/sounds/growl.mp3',
+  tempo_release: 'assets/sounds/tempo_release.wav',
+  power_surge: 'assets/sounds/power_surge.wav',
 };
 
 // Tiny procedural sound + ambient pad using WebAudio — no asset files required.
@@ -141,6 +143,8 @@ class Audio {
     if (name === 'zap') gain = 0.45;
     if (name === 'splash') gain = 0.45;
     if (name === 'growl') gain = 0.45;
+    if (name === 'tempo_release') gain = 0.4;
+    if (name === 'power_surge') gain = 0.4;
     
     // Try to play from user WAV/MP3 asset files first
     const played = this.playBuffer(name, gain);
@@ -180,6 +184,8 @@ class Audio {
       case 'slime': this.tone(150, 0.15, 'triangle', 0.12); this.tone(100, 0.2, 'sine', 0.08, 0.05); break;
       case 'splash': this.tone(300, 0.2, 'triangle', 0.12); this.tone(450, 0.15, 'sine', 0.08, 0.04); break;
       case 'growl': this.tone(110, 0.28, 'sawtooth', 0.12); this.tone(70, 0.32, 'square', 0.09, 0.04); break;
+      case 'tempo_release': [523, 659, 784, 988].forEach((f, i) => this.tone(f, 0.22, 'triangle', 0.12, i * 0.05)); break;
+      case 'power_surge': this.tone(80, 0.3, 'sawtooth', 0.13); this.tone(300, 0.15, 'sawtooth', 0.08, 0.15); break;
       default: break;
     }
   }
