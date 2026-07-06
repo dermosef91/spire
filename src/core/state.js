@@ -26,6 +26,10 @@ export const ASCENSION_LEVELS = [
 ];
 export const MAX_ASCENSION = ASCENSION_LEVELS.length;
 
+// A10 Hoarded Reserves: one fewer potion slot. Shared by the constructor and
+// fromJSON so a reloaded ascension run can't regain the missing slot.
+function maxPotionsFor(ascension) { return ascension >= 10 ? 2 : 3; }
+
 export class RunState {
   constructor(charId, seed = randomSeed(), ascension = 0) {
     const ch = CHARACTERS[charId];
@@ -39,7 +43,7 @@ export class RunState {
     this.gold = ch.startGold;
     if (this.ascension >= 3) this.gold = Math.floor(this.gold * 0.75); // A3 Lean Purse
     this.act = 1;
-    this.maxPotions = (this.ascension >= 10) ? 2 : 3; // A10 Hoarded Reserves
+    this.maxPotions = maxPotionsFor(this.ascension);
     this.potions = [];
     this.relics = [];
     this.deck = ch.deck.map((id) => ({ id, upgraded: false }));
@@ -197,7 +201,7 @@ export class RunState {
     run.ascension = data.ascension || 0;
     run.maxHp = data.maxHp; run.hp = data.hp; run.gold = data.gold;
     run.act = data.act;
-    run.maxPotions = 3;
+    run.maxPotions = maxPotionsFor(run.ascension);
     run.potions = data.potions || [];
     run.relics = data.relics || [];
     run.deck = data.deck || [];
