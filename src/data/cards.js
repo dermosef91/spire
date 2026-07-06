@@ -227,6 +227,40 @@ def('unbroken_dance', {
   }, 'Unbroken Dance'),
 });
 
+// --- Scars & tempo edge: the Bladedancer wears her wounds and gambles her rhythm.
+def('reckless_glory', {
+  name: 'Reckless Glory', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
+  dmg: 12, target: 'enemy',
+  desc: (c) => `Deal ${c.dmg} damage. Add a Scar to your discard pile.`,
+  upgrade: (c) => { c.dmg = 15; },
+  onPlay: (ctx) => { ctx.deal(ctx.enemy, ctx.c.dmg); ctx.combat.addCardToPile(ctx.combat.makeCard('wound'), 'discard'); },
+});
+def('open_old_wounds', {
+  name: 'Open the Old Wounds', char: 'amara', type: 'attack', rarity: 'rare', cost: 1,
+  dmg: 9, target: 'all',
+  desc: (c) => `Exhaust all Status cards in your hand. Deal ${c.dmg} damage to ALL enemies for each one.`,
+  upgrade: (c) => { c.dmg = 12; },
+  onPlay: (ctx) => {
+    const statuses = ctx.combat.hand.filter((h) => h.type === 'status');
+    for (const s of statuses) { ctx.combat.hand.splice(ctx.combat.hand.indexOf(s), 1); ctx.combat.exhaust(s); }
+    if (statuses.length) ctx.dealAll(ctx.c.dmg * statuses.length);
+  },
+});
+def('half_beat', {
+  name: 'Half-Beat', char: 'amara', type: 'skill', rarity: 'common', cost: 0,
+  magic: 2, target: 'self', exhaust: true,
+  desc: (c) => `Gain ${c.magic} Tempo.${c.exhaust ? ' Exhaust.' : ''}`,
+  upgrade: (c) => { c.exhaust = false; },
+  onPlay: (ctx) => ctx.gainTempo(ctx.c.magic),
+});
+def('shattered_cadence', {
+  name: 'Shattered Cadence', char: 'amara', type: 'attack', rarity: 'uncommon', cost: 2,
+  dmg: 16, target: 'enemy',
+  desc: (c) => `Deal ${c.dmg} damage. Your rhythm breaks — Tempo drops to 0.`,
+  upgrade: (c) => { c.dmg = 20; },
+  onPlay: (ctx) => { ctx.deal(ctx.enemy, ctx.c.dmg); ctx.combat.breakTempo(); },
+});
+
 // ============================================================== KOFI — Griot of the Cosmos
 // Verses, Blight (poison), cheap cards and relentless tempo.
 
@@ -550,6 +584,27 @@ def('apotheosis', {
   onPlay: (ctx) => {
     for (const h of ctx.combat.hand) if (canUpgrade(h)) upgradeCard(h);
     ctx.draw(1);
+  },
+});
+def('read_the_field', {
+  name: 'Read the Field', char: 'colorless', type: 'skill', rarity: 'common', cost: 0,
+  block: 5, magic: 2, target: 'self',
+  desc: (c) => `If any enemy intends to attack, gain ${c.block} Block. Otherwise draw ${c.magic} cards.`,
+  upgrade: (c) => { c.block = 7; c.magic = 3; },
+  onPlay: (ctx) => {
+    const aggro = ctx.combat.livingEnemies().some((e) => e.intent && e.intent.type && e.intent.type.startsWith('attack'));
+    if (aggro) ctx.gainBlock(ctx.c.block); else ctx.draw(ctx.c.magic);
+  },
+});
+def('swallow_sorrow', {
+  name: 'Swallow Sorrow', char: 'colorless', type: 'skill', rarity: 'uncommon', cost: 1,
+  block: 9, magic: 4, target: 'self',
+  desc: (c) => `Exhaust a Status or Curse from your hand: gain ${c.block} Block and draw 1. If you have none, gain ${c.magic} Block.`,
+  upgrade: (c) => { c.block = 12; c.magic = 6; },
+  onPlay: (ctx) => {
+    const junk = ctx.combat.hand.find((h) => h.type === 'status' || h.type === 'curse');
+    if (junk) { ctx.combat.hand.splice(ctx.combat.hand.indexOf(junk), 1); ctx.combat.exhaust(junk); ctx.gainBlock(ctx.c.block); ctx.draw(1); }
+    else ctx.gainBlock(ctx.c.magic);
   },
 });
 

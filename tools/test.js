@@ -745,6 +745,75 @@ test('an enrage-flagged elite gains Resolve once on its enrage turn', () => {
   assert.equal((elite.powers.strength || 0), strBefore + en.strength, 'gained the enrage Resolve');
 });
 
+// ----------------------------------------------------------------- new cards: PR1
+console.log('New cards — scars, tempo edge, intent read (PR1)');
+
+test('Reckless Glory deals 12 and adds a Scar to the discard pile', () => {
+  const c = freshCombat();
+  const e = c.enemies[0]; e.block = 0; e.hp = e.maxHp = 999;
+  playCrafted(c, 'reckless_glory', e);
+  assert.equal(e.hp, 999 - 12, 'dealt 12');
+  assert.equal(c.discardPile.filter((x) => x.id === 'wound').length, 1, 'a Scar entered the discard');
+});
+
+test('Open the Old Wounds exhausts held Status cards and deals 9 per', () => {
+  const c = freshCombat();
+  const e = c.enemies[0]; e.block = 0; e.hp = e.maxHp = 999;
+  c.hand.push(c.makeCard('wound'), c.makeCard('wound'));
+  const exBefore = c.exhaustPile.length;
+  playCrafted(c, 'open_old_wounds', e);
+  assert.equal(c.exhaustPile.length - exBefore, 2, 'both Scars exhausted');
+  assert.equal(e.hp, 999 - 18, 'dealt 9 x2 = 18');
+  assert.equal(c.hand.filter((x) => x.id === 'wound').length, 0, 'no Scars left in hand');
+});
+
+test('Half-Beat grants 2 Tempo', () => {
+  const c = freshCombat();
+  assert.equal(c.tempo(), 0);
+  playCrafted(c, 'half_beat', null);
+  assert.equal(c.tempo(), 2, 'gained 2 Tempo');
+});
+
+test('Shattered Cadence deals 16 then breaks Tempo to 0', () => {
+  const c = freshCombat();
+  const e = c.enemies[0]; e.block = 0; e.hp = e.maxHp = 999;
+  c.gainTempo(5);
+  playCrafted(c, 'shattered_cadence', e);
+  assert.equal(e.hp, 999 - 16, 'dealt 16');
+  assert.equal(c.tempo(), 0, 'rhythm broke to 0');
+});
+
+test('Read the Field blocks vs an attacker, else draws', () => {
+  const c = freshCombat();
+  c.player.block = 0;
+  c.enemies[0].intent = { type: 'attack', dmg: 6 };
+  playCrafted(c, 'read_the_field', null);
+  assert.equal(c.player.block, 5, 'gained Block vs an attacker');
+
+  const c2 = freshCombat();
+  c2.player.block = 0;
+  for (const e of c2.enemies) e.intent = { type: 'block' };
+  const handBefore = c2.hand.length;
+  playCrafted(c2, 'read_the_field', null);
+  assert.equal(c2.player.block, 0, 'no Block when no attacker');
+  assert.equal(c2.hand.length, handBefore + 2, 'drew 2 (played card left hand)');
+});
+
+test('Swallow Sorrow eats a Curse for Block + draw, else small Block', () => {
+  const c = freshCombat();
+  c.player.block = 0;
+  c.hand.push(c.makeCard('regret'));
+  const exBefore = c.exhaustPile.length;
+  playCrafted(c, 'swallow_sorrow', null);
+  assert.equal(c.player.block, 9, 'ate the curse for 9 Block');
+  assert.equal(c.exhaustPile.length - exBefore, 1, 'curse exhausted');
+
+  const c2 = freshCombat();
+  c2.player.block = 0;
+  playCrafted(c2, 'swallow_sorrow', null);
+  assert.equal(c2.player.block, 4, 'fallback 4 Block with no junk');
+});
+
 // ----------------------------------------------------------------- summary
 console.log('');
 if (failures.length) {
