@@ -218,6 +218,9 @@ const CARD_MOTIF = {
   // colorless + status/curse
   shiv: 'blade', flash: 'cards', panic_button: 'shield', apotheosis: 'ascend',
   wound: 'glitch', dazed: 'glitch', static_curse: 'curse', regret: 'curse',
+  read_the_field: 'eye', swallow_sorrow: 'curse',
+  // new: scars & tempo edge (PR1)
+  reckless_glory: 'blood', open_old_wounds: 'blood', half_beat: 'note', shattered_cadence: 'note',
 };
 export function cardArt(id) { return S(M[CARD_MOTIF[id]] || M.burst, { cls: 'card-art-svg' }); }
 
