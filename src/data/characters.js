@@ -20,6 +20,7 @@ export const CHARACTERS = {
       'reckless_glory', 'open_old_wounds', 'half_beat', 'shattered_cadence',
       'answering_steel', 'answer_in_kind', 'blade_turn', 'read_the_wind', 'untouchable',
       'call_the_duel', 'take_their_name', 'overflow',
+      'oath_of_iron', 'oathbreakers_edge',
     ],
   },
   kofi: {

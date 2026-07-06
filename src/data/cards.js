@@ -238,6 +238,33 @@ def('overflow', {
   }, 'Overflow'),
 });
 
+// --- Oaths: a pledge made now, checked at the start of your next turn. Agojie
+// discipline as a mechanic — a self-imposed constraint with no Slay-the-Spire
+// equivalent, resolved once by combat.vows in startPlayerTurn.
+def('oath_of_iron', {
+  name: 'Oath of Iron', char: 'amara', type: 'skill', rarity: 'common', cost: 1, consume: true,
+  block: 6, magic: 2, target: 'self',
+  desc: (c) => `Gain ${c.block} Block. Vow: take no HP damage before your next turn, then gain ${c.magic} Resolve. Consume.`,
+  upgrade: (c) => { c.block = 9; c.magic = 3; },
+  onPlay: (ctx) => {
+    ctx.gainBlock(ctx.c.block);
+    let broken = false;
+    ctx.combat.addTrigger('hpLost', () => { broken = true; }, 'Oath of Iron (watch)');
+    ctx.combat.vows.push({
+      name: 'Oath of Iron',
+      check: () => !broken,
+      onKept: (combat) => combat.applyPower(combat.player, 'strength', ctx.c.magic, combat.player),
+    });
+  },
+});
+def('oathbreakers_edge', {
+  name: "Oathbreaker's Edge", char: 'amara', type: 'attack', rarity: 'uncommon', cost: 2,
+  dmg: 12, magic: 20, target: 'enemy',
+  desc: (c) => `Deal ${c.dmg} damage — ${c.magic} instead if you've broken a Vow this combat.`,
+  upgrade: (c) => { c.dmg = 15; c.magic = 25; },
+  onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.combat.brokeVowThisCombat ? ctx.c.magic : ctx.c.dmg),
+});
+
 // --- Scars & tempo edge: the Bladedancer wears her wounds and gambles her rhythm.
 def('reckless_glory', {
   name: 'Reckless Glory', char: 'amara', type: 'attack', rarity: 'common', cost: 1,

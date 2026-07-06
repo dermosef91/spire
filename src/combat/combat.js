@@ -95,6 +95,12 @@ export class Combat {
     // Collected once in startPlayerTurn, then zeroed — these never persist
     // past the turn they come due.
     this.debt = { energy: 0, hp: 0, draw: 0 };
+    // Vows: a pledge made now, checked at the start of the player's next
+    // turn. Each entry is { name, check(combat), onKept(combat), onBroken }.
+    // Evaluated and cleared in startPlayerTurn — a vow never outlives the
+    // turn boundary it was made against.
+    this.vows = [];
+    this.brokeVowThisCombat = false;
   }
 
   // ---------------------------------------------------------------- setup
@@ -775,6 +781,23 @@ export class Combat {
     this.debt.draw = 0;
 
     this.fire('turnStart');
+
+    // Vows come due: whatever was pledged since the last turn start is
+    // resolved and cleared here, never carrying past this boundary.
+    if (this.vows.length) {
+      const pending = this.vows;
+      this.vows = [];
+      for (const v of pending) {
+        if (v.check(this)) {
+          if (v.onKept) v.onKept(this);
+          this.fire('vowKept', { name: v.name });
+        } else {
+          this.brokeVowThisCombat = true;
+          if (v.onBroken) v.onBroken(this);
+          this.fire('vowBroken', { name: v.name });
+        }
+      }
+    }
 
     // Announce the handoff back to the player. The first turn is covered by the
     // Battle Start popup, so skip the banner there.
