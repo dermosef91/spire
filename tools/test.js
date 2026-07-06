@@ -124,6 +124,14 @@ test('toJSON / fromJSON round-trips run state', () => {
   assert.equal(clone.rng.next(), run.rng.next());
 });
 
+test('ascension modifiers survive a save/reload', () => {
+  const run = new RunState('amara', 42, 10);
+  assert.equal(run.maxPotions, 2, 'A10 Hoarded Reserves: 2 potion slots');
+  const clone = RunState.fromJSON(JSON.parse(JSON.stringify(run.toJSON())));
+  assert.equal(clone.ascension, 10, 'ascension level persisted');
+  assert.equal(clone.maxPotions, 2, 'A10 potion-slot cap persisted (was reset to 3 on reload)');
+});
+
 // ----------------------------------------------------------------- mapgen
 console.log('Map generation (map/mapgen.js)');
 
