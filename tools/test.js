@@ -814,6 +814,70 @@ test('Swallow Sorrow eats a Curse for Block + draw, else small Block', () => {
   assert.equal(c2.player.block, 4, 'fallback 4 Block with no junk');
 });
 
+// ----------------------------------------------------------------- new cards: PR2
+console.log('New cards — Call & Response alternation (PR2)');
+
+test('Step, Turn, Strike deals more right after a Skill', () => {
+  const c = freshCombat();
+  const e = c.enemies[0]; e.block = 0; e.hp = e.maxHp = 999;
+  playCrafted(c, 'step_turn_strike', e);
+  assert.equal(e.hp, 999 - 6, 'base damage with no prior card this turn');
+
+  const c2 = freshCombat();
+  const e2 = c2.enemies[0]; e2.block = 0; e2.hp = e2.maxHp = 999;
+  playCrafted(c2, 'brace', null); // a Skill
+  playCrafted(c2, 'step_turn_strike', e2);
+  assert.equal(e2.hp, 999 - 10, 'boosted damage right after a Skill');
+});
+
+test('Answer-Song blocks more right after an Attack', () => {
+  const c = freshCombat();
+  c.player.block = 0;
+  playCrafted(c, 'answer_song', null);
+  assert.equal(c.player.block, 4, 'base Block with no prior card this turn');
+
+  const c2 = freshCombat();
+  const e2 = c2.enemies[0];
+  c2.player.block = 0;
+  playCrafted(c2, 'slash', e2); // an Attack
+  playCrafted(c2, 'answer_song', null);
+  assert.equal(c2.player.block, 7, 'boosted Block right after an Attack');
+});
+
+test('Call and Response draws on alternation, capped at 3 per turn, reset next turn', () => {
+  const c = freshCombat();
+  const e = c.enemies[0]; e.block = 0; e.hp = e.maxHp = 999;
+  playCrafted(c, 'call_and_response', null); // power itself never alternates (type 'power')
+
+  let before = c.hand.length;
+  playCrafted(c, 'slash', e); // attack after a power: no alternation
+  assert.equal(c.hand.length, before, 'no draw: came after a power, not a Skill');
+
+  before = c.hand.length;
+  playCrafted(c, 'brace', null); // skill after an attack: alternation #1
+  assert.equal(c.hand.length, before + 1, 'alternation drew a card');
+
+  before = c.hand.length;
+  playCrafted(c, 'slash', e); // attack after a skill: alternation #2
+  assert.equal(c.hand.length, before + 1, 'second alternation drew a card');
+
+  before = c.hand.length;
+  playCrafted(c, 'brace', null); // skill after an attack: alternation #3 (hits the cap)
+  assert.equal(c.hand.length, before + 1, 'third alternation drew a card');
+
+  before = c.hand.length;
+  playCrafted(c, 'slash', e); // would alternate, but the per-turn cap is already spent
+  assert.equal(c.hand.length, before, 'capped: fourth alternation this turn does not draw');
+
+  // turnStart resets the per-turn cap (lastPlayedType is still 'attack' from
+  // the capped slash above — fire() alone doesn't reset it, only the full
+  // startPlayerTurn does — so this play still counts as a skill-after-attack).
+  c.fire('turnStart');
+  before = c.hand.length;
+  playCrafted(c, 'brace', null);
+  assert.equal(c.hand.length, before + 1, 'cap reset: alternation drew a card again next turn');
+});
+
 // ----------------------------------------------------------------- summary
 console.log('');
 if (failures.length) {

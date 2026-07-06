@@ -608,6 +608,38 @@ def('swallow_sorrow', {
   },
 });
 
+// --- Call & Response: Attack/Skill alternation, read via ctx.combat._prevPlayedType
+// (the type of the last card played this turn, snapshotted before onPlay runs).
+def('step_turn_strike', {
+  name: 'Step, Turn, Strike', char: 'colorless', type: 'attack', rarity: 'common', cost: 1,
+  dmg: 6, magic: 10, target: 'enemy',
+  desc: (c) => `Deal ${c.dmg} damage — ${c.magic} instead if the previous card you played this turn was a Skill.`,
+  upgrade: (c) => { c.dmg = 8; c.magic = 13; },
+  onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.combat._prevPlayedType === 'skill' ? ctx.c.magic : ctx.c.dmg),
+});
+def('answer_song', {
+  name: 'Answer-Song', char: 'colorless', type: 'skill', rarity: 'common', cost: 1,
+  block: 4, magic: 7, target: 'self',
+  desc: (c) => `Gain ${c.block} Block — ${c.magic} instead if the previous card you played this turn was an Attack.`,
+  upgrade: (c) => { c.block = 5; c.magic = 9; },
+  onPlay: (ctx) => ctx.gainBlock(ctx.combat._prevPlayedType === 'attack' ? ctx.c.magic : ctx.c.block),
+});
+def('call_and_response', {
+  name: 'Call and Response', char: 'colorless', type: 'power', rarity: 'uncommon', cost: 1,
+  magic: 3, target: 'self',
+  desc: (c) => `Whenever you play an Attack directly after a Skill, or a Skill directly after an Attack, draw 1 card (up to ${c.magic}× per turn).`,
+  upgrade: (c) => { c.magic = 4; },
+  onPlay: (ctx) => {
+    ctx.combat._callResponseCount = 0;
+    ctx.combat.addTrigger('turnStart', () => { ctx.combat._callResponseCount = 0; }, 'Call and Response (reset)');
+    ctx.combat.addTrigger('cardPlayed', ({ card, prevType }) => {
+      if (ctx.combat._callResponseCount >= ctx.c.magic) return;
+      const alternated = (card.type === 'attack' && prevType === 'skill') || (card.type === 'skill' && prevType === 'attack');
+      if (alternated) { ctx.combat._callResponseCount += 1; ctx.draw(1); }
+    }, 'Call and Response');
+  },
+});
+
 // ============================================================== STATUS & CURSE
 def('wound', {
   name: 'Scar', char: 'status', type: 'status', rarity: 'special', cost: -1,

@@ -59,6 +59,9 @@ export const CHARACTERS = {
   },
 };
 
-export const COLORLESS_POOL = ['shiv', 'flash', 'panic_button', 'apotheosis', 'read_the_field', 'swallow_sorrow'];
+export const COLORLESS_POOL = [
+  'shiv', 'flash', 'panic_button', 'apotheosis', 'read_the_field', 'swallow_sorrow',
+  'step_turn_strike', 'answer_song', 'call_and_response',
+];
 
 export function characterById(id) { return CHARACTERS[id]; }

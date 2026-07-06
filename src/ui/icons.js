@@ -221,6 +221,8 @@ const CARD_MOTIF = {
   read_the_field: 'eye', swallow_sorrow: 'curse',
   // new: scars & tempo edge (PR1)
   reckless_glory: 'blood', open_old_wounds: 'blood', half_beat: 'note', shattered_cadence: 'note',
+  // new: Call & Response (PR2)
+  step_turn_strike: 'blade', answer_song: 'shield', call_and_response: 'note',
 };
 export function cardArt(id) { return S(M[CARD_MOTIF[id]] || M.burst, { cls: 'card-art-svg' }); }
 
