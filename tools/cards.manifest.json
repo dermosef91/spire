@@ -448,5 +448,185 @@
     "char": "amara",
     "name": "Unbroken Dance",
     "prompt": "An endless looping ribbon of blade-light forming a continuous dance path around a warrior silhouette, no beginning and no end, glowing shield sparks along the ribbon. Radiant orange rim lighting. Geometric African patterns in the background."
+  },
+  {
+    "id": "reckless_glory",
+    "char": "amara",
+    "name": "Reckless Glory",
+    "prompt": "A warrior mid-swing with an old jagged scar tearing loose from her side like a falling leaf, reckless motion blur. Radiant orange rim lighting. Geometric African patterns in the background."
+  },
+  {
+    "id": "open_old_wounds",
+    "char": "amara",
+    "name": "Open the Old Wounds",
+    "prompt": "Torn bandages unraveling into a burst of jagged wound-shaped cracks of light radiating outward in all directions."
+  },
+  {
+    "id": "half_beat",
+    "char": "amara",
+    "name": "Half-Beat",
+    "prompt": "A single drumbeat shockwave frozen mid-pulse, a quick tight half-circle ripple of light."
+  },
+  {
+    "id": "shattered_cadence",
+    "char": "amara",
+    "name": "Shattered Cadence",
+    "prompt": "A rhythmic drum shattering mid-strike, its steady ring pattern breaking apart into scattering shards of sound and light."
+  },
+  {
+    "id": "answering_steel",
+    "char": "amara",
+    "name": "Answering Steel",
+    "prompt": "Two blades locking together in a defensive parry, a bright spark of counter-energy leaping back along the blocking edge. Radiant orange rim lighting. Geometric African patterns in the background."
+  },
+  {
+    "id": "answer_in_kind",
+    "char": "amara",
+    "name": "Answer in Kind",
+    "prompt": "A mirrored blade catching an incoming strike and bending it back on itself, two glowing edges reflecting each other."
+  },
+  {
+    "id": "blade_turn",
+    "char": "amara",
+    "name": "Blade Turn",
+    "prompt": "A single blade rotating to deflect a strike, the deflected line of energy arcing back toward its source in a glowing loop. Radiant orange rim lighting."
+  },
+  {
+    "id": "read_the_wind",
+    "char": "amara",
+    "name": "Read the Wind",
+    "prompt": "A warrior's silhouette dissolving into wind-streaked afterimages, evading an unseen strike that passes through empty air."
+  },
+  {
+    "id": "untouchable",
+    "char": "amara",
+    "name": "Untouchable",
+    "prompt": "A warrior silhouette wrapped in a faint shimmering veil of moving air, incoming attack lines curving harmlessly around her. Radiant orange rim lighting. Geometric African patterns in the background."
+  },
+  {
+    "id": "call_the_duel",
+    "char": "amara",
+    "name": "Call the Duel",
+    "prompt": "A warrior pointing an accusing blade forward, a glowing geometric reticle locking onto a single distant marked target."
+  },
+  {
+    "id": "take_their_name",
+    "char": "amara",
+    "name": "Take Their Name",
+    "prompt": "A finishing blade strike against a crowned silhouette, its crown shattering into scattering motes of light. Radiant orange rim lighting. Geometric African patterns in the background."
+  },
+  {
+    "id": "overflow",
+    "char": "amara",
+    "name": "Overflow",
+    "prompt": "A talking drum overloaded with light, its rhythmic rings bursting outward past their normal bounds in a radiant overflow."
+  },
+  {
+    "id": "oath_of_iron",
+    "char": "amara",
+    "name": "Oath of Iron",
+    "prompt": "Two clasped hands bound by a glowing iron oath-chain, unbreakable geometric linkwork wrapped tight around the wrists."
+  },
+  {
+    "id": "oathbreakers_edge",
+    "char": "amara",
+    "name": "Oathbreaker's Edge",
+    "prompt": "A broken oath-chain link transforming mid-air into a jagged blade edge, hairline cracks of light running along the break. Radiant orange rim lighting."
+  },
+  {
+    "id": "read_the_field",
+    "char": "colorless",
+    "name": "Read the Field",
+    "prompt": "A single glowing eye scanning a battlefield of converging geometric intent-lines and targeting arcs."
+  },
+  {
+    "id": "swallow_sorrow",
+    "char": "colorless",
+    "name": "Swallow Sorrow",
+    "prompt": "A dark wilted curse-flower being drawn inward and consumed into a swirling protective ring of light."
+  },
+  {
+    "id": "step_turn_strike",
+    "char": "colorless",
+    "name": "Step, Turn, Strike",
+    "prompt": "A dancer's footstep diagram transitioning smoothly into a striking blade arc, motion-trail lines connecting the two."
+  },
+  {
+    "id": "answer_song",
+    "char": "colorless",
+    "name": "Answer-Song",
+    "prompt": "A shield rising in rhythm with an echoing call, concentric soundwave rings forming a protective barrier."
+  },
+  {
+    "id": "call_and_response",
+    "char": "colorless",
+    "name": "Call and Response",
+    "prompt": "Two mirrored motifs — a blade arc and a shield ring — interlocking like a call-and-response duet, orbiting a shared center."
+  },
+  {
+    "id": "echo_of_the_cantor",
+    "char": "colorless",
+    "name": "Echo of the Cantor",
+    "prompt": "A ghostly griot silhouette mid-song, its voice fading into wisps of light, an old kora shape dissolving beside it."
+  },
+  {
+    "id": "echo_of_the_sentinel",
+    "char": "colorless",
+    "name": "Echo of the Sentinel",
+    "prompt": "A ghostly armored guardian silhouette fading into protective rings of light, star-iron and cowrie details dissolving away."
+  },
+  {
+    "id": "echo_of_the_warden",
+    "char": "colorless",
+    "name": "Echo of the Warden",
+    "prompt": "A ghostly warden's silhouette hurling one last spectral strike as its own form dissolves into scattering light."
+  },
+  {
+    "id": "remembered_name",
+    "char": "colorless",
+    "name": "Remembered Name",
+    "prompt": "A single glowing name carved into fading obsidian stone, light leaking outward from the edges of each letter."
+  },
+  {
+    "id": "catalogue_opens",
+    "char": "colorless",
+    "name": "The Catalogue Opens",
+    "prompt": "An ancient archive book bursting open, its pages transforming mid-air into a starburst of light and scattering fragments."
+  },
+  {
+    "id": "reckoning",
+    "char": "colorless",
+    "name": "Reckoning",
+    "prompt": "A tally of jagged notches etched into a blade's edge, each mark glowing brighter than the last toward the tip."
+  },
+  {
+    "id": "borrowed_time",
+    "char": "colorless",
+    "name": "Borrowed Time",
+    "prompt": "An hourglass with glowing sand flowing backward, energy visibly borrowed from its lower chamber into the upper one."
+  },
+  {
+    "id": "flesh_ledger",
+    "char": "colorless",
+    "name": "Flesh Ledger",
+    "prompt": "An old ledger book sealed with a bleeding thumbprint, the ink of its entries slowly turning to drifting embers."
+  },
+  {
+    "id": "advance_on_the_prize",
+    "char": "colorless",
+    "name": "Advance on the Prize",
+    "prompt": "An outstretched hand grasping toward a glowing prize just out of reach, a sharp motion trail streaking behind it."
+  },
+  {
+    "id": "provoke_the_tell",
+    "char": "colorless",
+    "name": "Provoke the Tell",
+    "prompt": "A single narrowed eye catching a flicker of hidden intent as a cracked mask shatters away from it."
+  },
+  {
+    "id": "stagger",
+    "char": "colorless",
+    "name": "Stagger",
+    "prompt": "A marionette figure with its strings gone suddenly slack, frozen mid-stumble, faint halted motion-lines around it."
   }
 ]
