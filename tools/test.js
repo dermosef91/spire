@@ -1024,6 +1024,70 @@ test('Untouchable grants Flow at the start of every turn', () => {
   assert.equal(c.player.powers.flow, 2, 'grants again on the following turn start');
 });
 
+// ----------------------------------------------------------------- new cards: PR5
+console.log('New cards — The Duel: Challenged mark (PR5)');
+
+test("Challenged adds a flat, unconsumed damage bonus to the player's attacks", () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0]; enemy.block = 0; enemy.hp = enemy.maxHp = 999;
+  assert.equal(c.deal(enemy, 10), 10, 'no bonus without the mark');
+  c.applyPower(enemy, 'challenged', 3, c.player);
+  assert.equal(c.deal(enemy, 10), 13, 'Challenged adds +3');
+  assert.equal(enemy.powers.challenged, 3, 'the mark persists after the hit — not hit-counted');
+});
+
+test('Call the Duel marks only one enemy at a time; killing it draws 3 cards', () => {
+  const run = new RunState('amara', 55);
+  const c = new Combat(run, ['husk_drone', 'husk_drone']);
+  c.start();
+  const [a, b] = c.enemies;
+  a.block = 0; a.hp = a.maxHp = 999;
+  b.block = 0; b.hp = b.maxHp = 999;
+
+  playCrafted(c, 'call_the_duel', a);
+  assert.equal(a.powers.challenged, 3, 'a is Challenged');
+  assert.equal(b.powers.challenged, undefined, 'b is not');
+
+  playCrafted(c, 'call_the_duel', b);
+  assert.equal(b.powers.challenged, 3, 'b is now Challenged');
+  assert.equal(a.powers.challenged, undefined, 'a lost the mark — only one at a time');
+
+  const handBefore = c.hand.length;
+  b.hp = 1;
+  c.deal(b, 5);
+  assert.equal(b.alive, false, 'the Challenged enemy died');
+  assert.equal(c.hand.length, handBefore + 3, 'drew 3 on the Challenged kill');
+});
+
+test('Take Their Name only plays with a Challenged enemy, and deals bonus damage', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0]; enemy.block = 0; enemy.hp = enemy.maxHp = 999;
+  const card = createCard('take_their_name');
+  c.hand.push(card);
+  c.energy = 5;
+  assert.equal(c.canPlay(card), false, 'unplayable with no Challenged enemy');
+
+  c.applyPower(enemy, 'challenged', 3, c.player);
+  assert.equal(c.canPlay(card), true, 'playable once an enemy is Challenged');
+
+  assert.equal(c.playCard(card, null), true, 'plays without manual targeting');
+  assert.equal(enemy.hp, 999 - 26 - 3, 'dealt 26 plus the Challenged +3 bonus');
+  assert.equal(c.player.powers.strength || 0, 0, 'no reward — the enemy survived');
+});
+
+test('Take Their Name grants Resolve and healing on a Challenged kill', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0]; enemy.block = 0;
+  enemy.hp = 20; // dies to the hit
+  c.applyPower(enemy, 'challenged', 3, c.player);
+  c.player.hp = Math.max(1, c.player.maxHp - 10);
+  const hpBefore = c.player.hp;
+  playCrafted(c, 'take_their_name', null);
+  assert.equal(enemy.alive, false, 'the Challenged enemy died');
+  assert.equal(c.player.powers.strength, 3, 'gained Resolve on the kill');
+  assert.equal(c.player.hp, Math.min(c.player.maxHp, hpBefore + 6), 'healed 6 on the kill');
+});
+
 // ----------------------------------------------------------------- summary
 console.log('');
 if (failures.length) {

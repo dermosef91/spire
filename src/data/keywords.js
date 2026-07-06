@@ -93,6 +93,11 @@ export const POWERS = {
   // Exposed / Sapped / Brittle are HIT-COUNTED, not turn-timed: each stack is
   // consumed by the event it modifies (a hit taken, a hit made, a Block gain)
   // and persists until then. No ticksDown — the clock never touches them.
+  challenged: {
+    name: 'Challenged',
+    type: 'debuff',
+    desc: 'Your attacks deal +{n} damage to this unit. A persistent mark, not consumed by hits — it lasts until removed or the unit dies.',
+  },
   vulnerable: {
     name: 'Exposed',
     type: 'debuff',

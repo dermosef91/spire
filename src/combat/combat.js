@@ -235,6 +235,10 @@ export class Combat {
     let dmg = base + (source.powers.strength || 0);
     if (source.powers.weak) dmg = Math.floor(dmg * 0.75);
     if (target && target.powers.vulnerable) dmg = Math.floor(dmg * 1.5);
+    // Challenged (the Duel mark): a flat, unmultiplied bonus — added last, on
+    // top of any Exposed multiplier, not inside it — only when the PLAYER is
+    // the attacker (the mark only ever sits on enemies).
+    if (source.isPlayer && target && target.powers.challenged) dmg += target.powers.challenged;
     return Math.max(0, dmg);
   }
   // Consume one stack of a hit-counted power (see keywords.js: no ticksDown on
@@ -351,6 +355,12 @@ export class Combat {
 
   onEnemyDeath(enemy) {
     this.log(`${enemy.name} is destroyed.`);
+    this.fire('enemyDeath', { enemy });
+    // The Duel: killing your Challenged foe claims what the Spire would have
+    // taken — a windfall of momentum. Baked in here (not a registered
+    // trigger), same as Blight's spread below, so replaying Call the Duel on
+    // a fresh target this combat can never double-fire the payoff.
+    if (enemy.powers.challenged) this.draw(3);
     // Blight outlives its host: baseline, a dead foe's remaining Blight leaps
     // to a random living enemy. Blight Bloom (rare power) upgrades that into
     // an instant burst on ALL others and replaces the spread.

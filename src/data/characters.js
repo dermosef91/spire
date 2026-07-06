@@ -19,6 +19,7 @@ export const CHARACTERS = {
       'ancestral_fury', 'blood_offering', 'devour', 'harvest', 'skyfall', 'unbroken_dance',
       'reckless_glory', 'open_old_wounds', 'half_beat', 'shattered_cadence',
       'answering_steel', 'answer_in_kind', 'blade_turn', 'read_the_wind', 'untouchable',
+      'call_the_duel', 'take_their_name',
     ],
   },
   kofi: {
