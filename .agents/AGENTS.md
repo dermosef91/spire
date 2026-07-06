@@ -115,6 +115,17 @@ its own worktree instead:
 - Gotcha: `.gitignore` must contain `node_modules` **without** a trailing
   slash — `node_modules/` only matches real directories, so the worktree's
   symlink would show up as untracked noise in `git status`.
+- **A sibling session can rename shared vocabulary out from under your
+  in-flight branch, invisibly** — this really happened (a repo-wide
+  Exhaust→Consume rename landed on `main` mid-PR from another session). Your
+  branch still tests green locally (it predates the rename), because GitHub
+  Actions' `pull_request` trigger checks out `refs/pull/<n>/merge` (a
+  synthetic merge of your head into *current* `main`), not your branch tip —
+  and a clean, conflict-free git auto-merge won't flag that your added code
+  now calls methods that no longer exist. If CI fails in a way you can't
+  reproduce against your branch alone, fetch and test the actual merge ref:
+  `git fetch origin +refs/pull/<n>/merge:refs/remotes/pull/<n>/merge`. See
+  CLAUDE.md's "Parallel Claude sessions" section for the full incident + fix.
 - **A fresh worktree has no `.env` either** (same reason as `node_modules`:
   it's gitignored/untracked, so only the primary checkout has it unless
   something symlinks it in). `tools/worktree.sh new` symlinks the primary's
