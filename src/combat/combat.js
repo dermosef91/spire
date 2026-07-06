@@ -55,7 +55,7 @@ export class Combat {
     this.hand = [];
     this.drawPile = [];
     this.discardPile = [];
-    this.exhaustPile = [];
+    this.consumePile = [];
 
     // Resources / per-turn flags
     this.energy = 0;
@@ -209,7 +209,11 @@ export class Combat {
   // Deliberate spend (finisher cards): no falter fx, returns the amount spent.
   spendAllTempo() {
     const t = this.tempo();
-    if (t > 0) { delete this.player.powers.tempo; this.notify(); }
+    if (t > 0) {
+      delete this.player.powers.tempo;
+      this.fx('temporelease', { entity: this.player, amount: t });
+      this.notify();
+    }
     return t;
   }
   registerStrikeGrade(grade) {
@@ -527,9 +531,9 @@ export class Combat {
     this.notify();
   }
 
-  exhaust(card) {
-    this.exhaustPile.push(card);
-    this.fire('cardExhausted', { card });
+  consume(card) {
+    this.consumePile.push(card);
+    this.fire('cardConsumed', { card });
   }
 
   gainEnergy(n) { this.energy += n; this.notify(); }
@@ -609,7 +613,7 @@ export class Combat {
       tempo: () => self.tempo(),
       gainTempo: (n) => self.gainTempo(n),
       spendAllTempo: () => self.spendAllTempo(),
-      exhaustThis: () => { card._forceExhaust = true; },
+      consumeThis: () => { card._forceConsume = true; },
     };
   }
 
@@ -655,16 +659,16 @@ export class Combat {
     if (card.verse) this.fire('versePlayed', { card });
 
     // Resolve card's resting place
-    if (card._forceExhaust || card.exhaust || card.type === 'power') {
-      if (card.type === 'power' && !card.exhaust && !card._forceExhaust) {
-        // powers vanish into the ether (not exhaust pile, but removed from play)
+    if (card._forceConsume || card.consume || card.type === 'power') {
+      if (card.type === 'power' && !card.consume && !card._forceConsume) {
+        // powers vanish into the ether (not consume pile, but removed from play)
       } else {
-        this.exhaust(card);
+        this.consume(card);
       }
     } else {
       this.discardPile.push(card);
     }
-    card._forceExhaust = false;
+    card._forceConsume = false;
 
     this.notify();
     return true;
@@ -738,12 +742,12 @@ export class Combat {
     if (this.over || this.animating) return;
     this.animating = true;
 
-    // In-hand end-of-turn effects (curses), ethereal exhaust, discard
+    // In-hand end-of-turn effects (curses), ethereal consume, discard
     for (const card of this.hand.slice()) {
       if (card._bp.inHandTurnEnd) card._bp.inHandTurnEnd(this.makeCtx(card, null));
     }
     for (const card of this.hand.slice()) {
-      if (card.ethereal) { this.hand.splice(this.hand.indexOf(card), 1); this.exhaust(card); }
+      if (card.ethereal) { this.hand.splice(this.hand.indexOf(card), 1); this.consume(card); }
     }
     // discard remaining (respect retain)
     const retained = [];
@@ -834,7 +838,10 @@ export class Combat {
   pickEnemyMove(e) {
     const id = e.bp.pick(e, this, this.rng);
     e.move = id;
-    e.intent = e.bp.moves[id].intent;
+    // Merge the move's name in so the intent icon's native hover title (see
+    // renderIntent in combatView.js) reads the move's flavor name instead of
+    // being blank.
+    e.intent = { ...e.bp.moves[id].intent, name: e.bp.moves[id].name };
   }
 
   // ---------------------------------------------------------------- end states

@@ -17,6 +17,7 @@ export const CHARACTERS = {
       'twin_fangs', 'ironwave', 'pommel', 'cleave', 'crosscut', 'shrug', 'thunderclap', 'flowing_edge', 'dancers_poise',
       'rising_strike', 'war_trance', 'ember_within', 'bulwark', 'read_tell', 'shockwave', 'disarm', 'whirlwind', 'spiral_finish', 'war_drum_cadence',
       'ancestral_fury', 'blood_offering', 'devour', 'harvest', 'skyfall', 'unbroken_dance',
+      'reckless_glory', 'open_old_wounds', 'half_beat', 'shattered_cadence',
     ],
   },
   kofi: {
@@ -58,6 +59,6 @@ export const CHARACTERS = {
   },
 };
 
-export const COLORLESS_POOL = ['shiv', 'flash', 'panic_button', 'apotheosis'];
+export const COLORLESS_POOL = ['shiv', 'flash', 'panic_button', 'apotheosis', 'read_the_field', 'swallow_sorrow'];
 
 export function characterById(id) { return CHARACTERS[id]; }

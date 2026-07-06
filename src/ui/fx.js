@@ -212,65 +212,124 @@ export function shine(layer, targetEl, n = 24) {
 }
 
 // Spawns and plays a spritesheet animation (6 columns, 4 rows, 24 frames).
+// opts.frameStep samples every Nth frame instead of every frame (e.g. 2 skips
+// every other frame); when frameStep > 1, opts.crossfade (default true) fades
+// between the sampled key frames over the skipped duration via two stacked
+// layers, rather than hard-cutting straight to the next sampled frame — this
+// reads smoother than the raw sub-sampled cut despite showing fewer frames.
 export function spriteAnim(layer, targetEl, name, opts = {}) {
   if (!layer || !targetEl || reduce()) return Promise.resolve();
-  
+
   const frameWidth = 256;
   const frameHeight = 256;
   const cols = 6;
   const rows = 4;
   const totalFrames = opts.frames || 24;
   const fps = opts.fps || 35;
-  
+  const step = opts.frameStep || 1;
+  const crossfade = step > 1 && opts.crossfade !== false;
+
   const lr = layer.getBoundingClientRect();
   const tr = targetEl.getBoundingClientRect();
-  
-  const el = document.createElement('div');
-  el.className = `sprite-vfx sprite-vfx-${name}`;
-  
+
   const cx = tr.left - lr.left + tr.width / 2;
   const cy = tr.top - lr.top + tr.height / 2;
-  
-  el.style.position = 'absolute';
-  el.style.pointerEvents = 'none';
-  el.style.width = frameWidth + 'px';
-  el.style.height = frameHeight + 'px';
-  el.style.left = cx + 'px';
-  el.style.top = cy + 'px';
-  el.style.transform = 'translate(-50%, -50%)';
-  el.style.backgroundImage = `url('assets/animation sprites/${name}.png')`;
-  el.style.backgroundSize = `${frameWidth * cols}px ${frameHeight * rows}px`;
-  el.style.mixBlendMode = opts.blend || 'screen';
-  
-  layer.appendChild(el);
-  
+
+  const makeEl = () => {
+    const el = document.createElement('div');
+    el.className = `sprite-vfx sprite-vfx-${name}`;
+    el.style.position = 'absolute';
+    el.style.pointerEvents = 'none';
+    el.style.width = frameWidth + 'px';
+    el.style.height = frameHeight + 'px';
+    el.style.left = cx + 'px';
+    el.style.top = cy + 'px';
+    el.style.transform = 'translate(-50%, -50%)';
+    el.style.backgroundImage = `url('assets/animation sprites/${name}.png')`;
+    el.style.backgroundSize = `${frameWidth * cols}px ${frameHeight * rows}px`;
+    el.style.mixBlendMode = opts.blend || 'screen';
+    return el;
+  };
+
+  const setFrame = (el, frame) => {
+    const col = frame % cols;
+    const row = Math.floor(frame / cols);
+    el.style.backgroundPosition = `-${col * frameWidth}px -${row * frameHeight}px`;
+  };
+
+  if (!crossfade) {
+    const el = makeEl();
+    layer.appendChild(el);
+
+    return new Promise((resolve) => {
+      let frame = 0;
+      const interval = (1000 / fps) * step;
+      let lastTime = performance.now();
+
+      function tick(now) {
+        if (frame >= totalFrames) {
+          el.remove();
+          resolve();
+          return;
+        }
+
+        const elapsed = now - lastTime;
+        if (elapsed >= interval) {
+          lastTime = now - (elapsed % interval);
+          setFrame(el, frame);
+          frame += step;
+        }
+        requestAnimationFrame(tick);
+      }
+
+      setFrame(el, 0);
+      requestAnimationFrame(tick);
+    });
+  }
+
+  // Crossfade mode: two stacked layers dissolve from each sampled key frame
+  // into the next, so skipping frames doesn't read as a stutter.
+  const elA = makeEl();
+  const elB = makeEl();
+  elB.style.opacity = '0';
+  layer.appendChild(elA);
+  layer.appendChild(elB);
+
+  const segmentDuration = (1000 / fps) * step;
+
   return new Promise((resolve) => {
     let frame = 0;
-    const interval = 1000 / fps;
-    let lastTime = performance.now();
-    
+    let segmentStart = performance.now();
+
+    setFrame(elA, 0);
+    setFrame(elB, Math.min(step, totalFrames - 1));
+
     function tick(now) {
-      if (frame >= totalFrames) {
-        el.remove();
+      const nextFrame = frame + step;
+      if (nextFrame >= totalFrames) {
+        elA.remove();
+        elB.remove();
         resolve();
         return;
       }
-      
-      const elapsed = now - lastTime;
-      if (elapsed >= interval) {
-        lastTime = now - (elapsed % interval);
-        
-        const col = frame % cols;
-        const row = Math.floor(frame / cols);
-        
-        el.style.backgroundPosition = `-${col * frameWidth}px -${row * frameHeight}px`;
-        
-        frame++;
+
+      const t = Math.min(1, (now - segmentStart) / segmentDuration);
+      elA.style.opacity = String(1 - t);
+      elB.style.opacity = String(t);
+
+      if (t >= 1) {
+        frame = nextFrame;
+        setFrame(elA, frame);
+        elA.style.opacity = '1';
+        const upcoming = frame + step;
+        if (upcoming < totalFrames) setFrame(elB, upcoming);
+        elB.style.opacity = '0';
+        segmentStart = now;
       }
+
       requestAnimationFrame(tick);
     }
-    
-    el.style.backgroundPosition = '0px 0px';
+
     requestAnimationFrame(tick);
   });
 }
@@ -358,7 +417,7 @@ export async function faultLineVFX(layer, targetEl) {
   
   // Phase 1: Ground Crack & initial shake
   screenShake(sceneEl, false);
-  await spriteAnim(layer, targetEl, 'fault-line', { fps: 32 });
+  await spriteAnim(layer, targetEl, 'fault-line', { fps: 32, frameStep: 2 });
   
   // Phase 2: Magma Eruption
   screenShake(sceneEl, true);

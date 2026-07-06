@@ -51,8 +51,23 @@ export class CombatView {
   // bound once, so it must be rebound here.
   bindParryPrompt() {
     this.combat.parryPrompt = this.game.rhythmOn()
-      ? () => runParryQTE({ isTouch: this.game.isTouch(), isTutorial: !this.game.meta.tutorialDone })
+      ? (e) => runParryQTE({ isTouch: this.game.isTouch(), isTutorial: !this.game.meta.tutorialDone, marks: this.parryMarksFor(e) })
       : null;
+  }
+
+  // Bigger incoming attacks demand more than a single timed press: one
+  // directional swipe per blow (multi-hit flurries), capped at 3, plus a
+  // bump for a single heavy nuke even at hits=1 so telegraphed boss swings
+  // still read as a harder parry.
+  parryMarksFor(e) {
+    const move = e && e.bp && e.bp.moves[e.move];
+    const intent = move && move.intent;
+    const dmg = (intent && intent.dmg) || 0;
+    const hits = (intent && intent.hits) || 1;
+    let marks = Math.min(3, hits);
+    if (dmg >= 20) marks = Math.max(marks, 2);
+    if (dmg >= 30) marks = Math.max(marks, 3);
+    return marks;
   }
 
   mount(root) {
@@ -176,8 +191,8 @@ export class CombatView {
       this.game.viewCardsOverlay(this.combat.discardPile, `Discard Pile (${this.combat.discardPile.length})`);
     });
     scene.appendChild(this.discardPileEl);
-    this.exhaustPileEl = el('div', { class: 'screen-pile exhaust-pile', title: 'Exhaust Pile', style: { display: 'none' } });
-    scene.appendChild(this.exhaustPileEl);
+    this.consumePileEl = el('div', { class: 'screen-pile consume-pile', title: 'Consume Pile', style: { display: 'none' } });
+    scene.appendChild(this.consumePileEl);
 
     this.root.appendChild(scene);
     this.fxLayer = ensureFxLayer(scene);
@@ -259,6 +274,7 @@ export class CombatView {
       onHover: (o, n, on) => this.game.tooltip(o, n, on),
     }));
     this.applyRelicPulses();
+    this.applyGoldFx();
 
     this.updateCombatant(c.player);
     for (const e of c.enemies) {
@@ -275,9 +291,17 @@ export class CombatView {
         this.updateCombatant(e);
       }
       else if (this.els[id] && !this.els[id]._removing) {
-        const node = this.els[id]; node._removing = true; node.classList.add('dying');
-        setTimeout(() => { node.remove(); }, 620);
+        const node = this.els[id]; node._removing = true;
         delete this.els[id];
+        // Give the killing hit a 0.5s beat to land before the enemy visibly
+        // collapses, on top of the existing same-tick-player-attack delay
+        // (matches the 'death' fx timing below) — otherwise the collapse
+        // animation could start before the hit's damage number/flash even show.
+        const hitDelay = (this._playerAttackHit && !e.isPlayer) ? 300 : 0;
+        setTimeout(() => {
+          node.classList.add('dying');
+          setTimeout(() => { node.remove(); }, 620);
+        }, hitDelay + 500);
       }
     }
 
@@ -324,7 +348,11 @@ export class CombatView {
       }
       c.parryPrompt = null;
       this.scene.classList.add(c.victory ? 'won' : 'lost');
-      setTimeout(() => this.onEnd && this.onEnd(c), 850);
+      // Victory now waits a bit longer than a loss: the killing enemy's death
+      // collapse is deliberately delayed ~0.5s+ (see the 'death' fx / dying
+      // branch above), so the reward hand-off needs the extra room or it cuts
+      // that animation short.
+      setTimeout(() => this.onEnd && this.onEnd(c), c.victory ? 1350 : 850);
     }
   }
 
@@ -386,12 +414,16 @@ export class CombatView {
     const it = enemy.intent;
     if (!it) { wrap.appendChild(el('span', { text: '…' })); return; }
     const c = this.combat;
-    if (it.type === 'attack' || it.type === 'attackdebuff') {
+    if (it.type === 'attack' || it.type === 'attackdebuff' || it.type === 'attacksteal') {
       const dmg = c.calcAttackDamage(it.dmg, enemy, c.player);
       const hits = it.hits || 1;
       wrap.appendChild(el('span', { class: 'intent-atk', attrs: { 'data-intent-type': 'attack' }, html: `<i class="intent-ic">${INTENT.attack}</i>${dmg}${hits > 1 ? `×${hits}` : ''}` }));
     }
     if (it.type === 'attackdebuff' || it.type === 'debuff' || it.type === 'debuffblock') wrap.appendChild(el('span', { class: 'intent-deb', attrs: { 'data-intent-type': 'debuff' }, html: `<i class="intent-ic">${INTENT.debuff}</i>` }));
+    if (it.type === 'attacksteal') {
+      const goldAmt = it.gold || 0;
+      wrap.appendChild(el('span', { class: 'intent-steal', attrs: { 'data-intent-type': 'steal' }, html: `<i class="intent-ic">${INTENT.steal}</i>${goldAmt > 0 ? goldAmt : ''}` }));
+    }
     if (it.type === 'block' || it.type === 'buffblock' || it.type === 'debuffblock') {
       const blockAmt = it.block || 0;
       wrap.appendChild(el('span', { class: 'intent-def', attrs: { 'data-intent-type': 'block' }, html: `<i class="intent-ic">${INTENT.block}</i>${blockAmt > 0 ? blockAmt : ''}` }));
@@ -439,14 +471,14 @@ export class CombatView {
       this.discardPileEl.appendChild(el('div', { class: 'pile-stack-art', html: UI.discardStack }));
       this.discardPileEl.appendChild(el('div', { class: 'pile-badge', text: String(c.discardPile.length) }));
     }
-    if (this.exhaustPileEl) {
-      clear(this.exhaustPileEl);
-      if (c.exhaustPile.length) {
-        this.exhaustPileEl.style.display = '';
-        this.exhaustPileEl.appendChild(el('div', { class: 'pile-stack-art', html: UI.exhaustStack }));
-        this.exhaustPileEl.appendChild(el('div', { class: 'pile-badge', text: String(c.exhaustPile.length) }));
+    if (this.consumePileEl) {
+      clear(this.consumePileEl);
+      if (c.consumePile.length) {
+        this.consumePileEl.style.display = '';
+        this.consumePileEl.appendChild(el('div', { class: 'pile-stack-art', html: UI.consumeStack }));
+        this.consumePileEl.appendChild(el('div', { class: 'pile-badge', text: String(c.consumePile.length) }));
       } else {
-        this.exhaustPileEl.style.display = 'none';
+        this.consumePileEl.style.display = 'none';
       }
     }
     const textStr = this.pendingCard ? 'Cancel' : 'End Turn';
@@ -504,8 +536,8 @@ export class CombatView {
       goneCards.forEach((card) => {
         const cardEl = this.handHolder.querySelector(`.card[data-uid="${card.uid}"]`);
         if (cardEl) {
-          const isExhausted = card.exhaust || card.type === 'power' || card._forceExhaust || (c.exhaustPile && c.exhaustPile.some(ec => ec.uid === card.uid));
-          const targetPileEl = (isExhausted && this.exhaustPileEl) ? this.exhaustPileEl : this.discardPileEl;
+          const isConsumed = card.consume || card.type === 'power' || card._forceConsume || (c.consumePile && c.consumePile.some(ec => ec.uid === card.uid));
+          const targetPileEl = (isConsumed && this.consumePileEl) ? this.consumePileEl : this.discardPileEl;
 
           if (targetPileEl) {
             const cardRect = cardEl.getBoundingClientRect();
@@ -532,7 +564,7 @@ export class CombatView {
 
             // Determine destination rect
             let destRect;
-            if (isExhausted && (!this.exhaustPileEl || !c.exhaustPile || c.exhaustPile.length === 0)) {
+            if (isConsumed && (!this.consumePileEl || !c.consumePile || c.consumePile.length === 0)) {
               const discRect = this.discardPileEl.getBoundingClientRect();
               destRect = {
                 left: discRect.left,
@@ -1084,6 +1116,29 @@ export class CombatView {
       if (el2) floatText(layer, el2, 'RHYTHM BROKEN', 'debuff');
       return;
     }
+    if (type === 'temporelease') {
+      // A finisher (Spiral Finish, Whirlwind) consumes all Tempo at once —
+      // scale the release flourish with how much was banked.
+      const el2 = this.elFor(payload.entity);
+      if (!el2) return;
+      const big = payload.amount >= 5;
+      floatText(layer, el2, `${payload.amount} TEMPO`, 'buff');
+      ring(layer, el2, big ? 'rgba(255,224,140,0.95)' : 'rgba(255,209,102,0.9)');
+      burst(layer, el2, big ? '#ffe6a0' : '#ffd166', Math.min(10 + payload.amount * 2, 26));
+      audio.play('tempo_release');
+      return;
+    }
+    if (type === 'powersurge') {
+      // An enemy (or ally) gains Resolve from a dedicated buff move — a
+      // telegraph that it's about to hit harder, distinct from the plain
+      // '+N' power pip float.
+      const el2 = this.elFor(payload.target);
+      if (!el2) return;
+      ring(layer, el2, 'rgba(217,79,43,0.9)');
+      burst(layer, el2, '#d94f2b', 16);
+      audio.play('power_surge');
+      return;
+    }
     if (type === 'damage') {
       const el2 = this.elFor(payload.target);
       if (!el2) return;
@@ -1209,12 +1264,11 @@ export class CombatView {
         el2.classList.add('dying');
         const bg = background(); if (bg) bg.pulse('gold', 1.2);
       };
-      // Keep the death burst in step with the (possibly delayed) killing hit.
-      if (this._playerAttackHit && !payload.target.isPlayer) {
-        setTimeout(applyDeathFx, 300);
-      } else {
-        applyDeathFx();
-      }
+      // Give the killing hit a 0.5s beat to land before the death burst/collapse
+      // fires, on top of the existing hit-landing delay for a same-tick player
+      // attack, so the enemy doesn't die in the same instant it's struck.
+      const hitDelay = (this._playerAttackHit && !payload.target.isPlayer) ? 300 : 0;
+      setTimeout(applyDeathFx, hitDelay + 500);
       return;
     }
     if (type === 'useSkill') {
@@ -1233,6 +1287,15 @@ export class CombatView {
     }
     if (type === 'cardtopile') {
       this.injectCardAnim(payload.card);
+      return;
+    }
+    if (type === 'gold') {
+      // Topbar (and its .tb-gold node) is rebuilt fresh on the notify() that
+      // follows this fx call, so queue it the same way relic pulses are —
+      // update() drains the queue right after rebuilding the topbar.
+      this._pendingGoldFx = this._pendingGoldFx || [];
+      this._pendingGoldFx.push(payload.amount);
+      audio.play('coin');
       return;
     }
   }
@@ -1301,6 +1364,20 @@ export class CombatView {
       node.classList.remove('relic-pulse');
       void node.offsetWidth;
       node.classList.add('relic-pulse');
+    }
+  }
+
+  applyGoldFx() {
+    if (!this._pendingGoldFx || !this._pendingGoldFx.length) return;
+    const amounts = this._pendingGoldFx;
+    this._pendingGoldFx = [];
+    const node = this.topbarHolder.querySelector('.tb-gold');
+    if (!node) return;
+    for (const amount of amounts) {
+      floatHTML(this.fxLayer, node, `<i class="pip-ic">${UI.coin}</i>${amount > 0 ? '+' : ''}${amount}`, 'debuff');
+      node.classList.remove('gold-flash');
+      void node.offsetWidth;
+      node.classList.add('gold-flash');
     }
   }
 

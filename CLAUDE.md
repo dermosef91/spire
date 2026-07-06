@@ -155,7 +155,7 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   read in full first. On a normal hand that already fits, the computed margin
   equals the original `gap` exactly, so this is a no-op visually. To make more
   room in the first place on mobile landscape (`@media (max-height: 560px)`),
-  the energy orb/End Turn/draw+discard+exhaust piles were also pulled closer
+  the energy orb/End Turn/draw+discard+consume piles were also pulled closer
   to the screen edges (smaller `--energy-shift`, tighter `combat-controls`
   padding, a ~13%-shrunk End Turn button just in this breakpoint, tighter
   pile insets) with `.hand`'s `margin-left`/`margin-right` recomputed to
@@ -299,6 +299,17 @@ its own worktree instead:
 - Gotcha: `.gitignore` must contain `node_modules` **without** a trailing
   slash — `node_modules/` only matches real directories, so the worktree's
   symlink would show up as untracked noise in `git status`.
+- **Secrets (`.env`, `OPENAI_API_KEY`) don't exist in a fresh worktree either**
+  — same root cause as `node_modules`: the repo root `.env` is gitignored
+  (untracked), and a worktree only gets tracked files unless something
+  explicitly symlinks the rest in. `tools/worktree.sh new` now symlinks the
+  primary checkout's `.env` and `tools/node_modules` (openai/sharp) alongside
+  the existing `node_modules` symlink; `done` cleans up all three. If you're
+  in an **IDE-managed** worktree (`.claude/worktrees/...`) instead — those
+  aren't created by `tools/worktree.sh`, so nothing symlinks anything — and a
+  live asset-gen run needs a key, check the primary checkout's `.env`
+  (`/Users/moritzgrassy/spire/.env`) directly rather than assuming it's
+  missing from the machine entirely.
 
 ## Story framing & endings (the Spire's lie)
 The world runs on one reveal: **the Spire "welcomes climbers home" by rendering
@@ -347,6 +358,30 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
 - Mechanic names stay readable; afrofuturist flavor lives in card/enemy/relic
   text and the world, not in renaming core mechanics.
 - Mobile + reduced-motion must keep working; test both orientations after UI work.
+- **Gold-stealing enemy moves must telegraph and confirm the theft** (established
+  fixing Market Thief's silent `swipe`): give the move's `intent` a distinct
+  `type` (e.g. `attacksteal`, handled in `renderIntent`/`combatView.js` as an
+  extra icon span alongside `attack`'s sword+dmg — add the new type to the
+  `attack`-icon `if` too so damage still shows) plus any numeric fields the
+  icon needs (`gold`), and register the type in both `INTENT`/`INTENT_INFO`
+  (`icons.js`) and the `.intent-*` selector lists in `game.js` (pointerdown
+  stopPropagation + the click-popup `closest()`) so the icon's info-popup
+  works like every other intent. Fire a dedicated `fx` type from the move's
+  `run()` (e.g. `c.fx('gold', { amount: -stolen })`, using the *actual*
+  amount deducted, not the nominal one, since `run.gold` clamps at 0) for the
+  "after" feedback. Because `CombatView.update()` fully rebuilds the top bar
+  (`clear(this.topbarHolder).appendChild(topBar(...))`) every tick, a
+  same-tick `onFx` handler can't touch `.tb-gold` — it doesn't exist yet at
+  fire time. Queue the amount instead and drain it in a small
+  `applyGoldFx()` called right after the topbar rebuild in `update()`,
+  exactly like the pre-existing `_pendingRelicPulses`/`applyRelicPulses()`
+  pattern for relic chips — reach for that pattern whenever an `fx` needs to
+  flash/float over a topbar element. Separately: `Combat.pickEnemyMove` only
+  ever copied the move's bare `intent` object onto `e.intent`, never merging
+  in the move's `name` — so `renderIntent`'s `wrap.title = it.name` (meant to
+  be the icon's native hover title) was **dead code, always blank**, for
+  every enemy in the game, not just this one. Fixed generally by having
+  `pickEnemyMove` spread `{ ...move.intent, name: move.name }`.
 - **No emoji, anywhere in-game**: all iconography (enemy/character art, status
   effects, intents, UI chrome) is custom line-art SVG from `src/ui/icons.js`
   (`UI`, `INTENT`, `NODE`, `POWER_SVG`/`powerIcon()`, `RELIC_SVG`/`relicIcon()`,
@@ -475,18 +510,58 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
 - **Port conflicts (`EADDRINUSE`) during QA audit**: If the static server fails to bind to port 8091 because of lingering/zombie processes, run the audit specifying a different port prefix, e.g., `QA_PORT=8095 npm run qa`.
 - **Text contrast on title/scenic backgrounds**: Any overlay text or toggle buttons rendered over scenic background art (such as the bright lines on the title screen) must have a dark semi-transparent backing card/pill background (like `rgba(8, 5, 3, 0.85)`) to block out light lines and ensure contrast.
 - **QA map-scroll flake**: the desktop Act-map QA shot can occasionally catch `.map-scroller` before its initial `scrollTop` lands (the reachable bottom-row nodes then read as "extends past viewport" control-offscreen issues). If the map is the only screen flagged and only with `control-offscreen` on `.map-node.reachable`, re-run `npm run qa` before suspecting a real regression.
-- **Rhythm QTE rules (src/ui/rhythm.js + combat.js)**: attack QTEs grade perfect/good/miss (×1.25/×1.0/×0.5 damage). The enemy-attack parry is only prompted when the player has block; a **missed parry halves the player's block** (`Math.floor(realBlock/2)`, then the hit consumes it normally — it must NOT void/restore block, that made Block cards worthless on a miss; regression tests in tools/test.js). The view floats `BLOCK HALVED` via the `parrymiss` fx. Desktop mice can now also answer directional marks by **clicking on the chevron's side of the QTE ring** (stationary click ≥26px off ring-center in `onPUp`; near-center clicks stay 'tap'). The rhythm toggle lives on the title screen **and** as a `.tb-rhythm` button in the run top bar (components.js, reads the Game via `window.__ase`, calls `Game.setRhythm`); attack QTEs read `rhythmOn()` per card play, but the parry prompt is bound once per combat, so `setRhythm` must call `combatView.bindParryPrompt()` to apply mid-fight. Husk Drone `startBlock` is 6 (was 12 — the tutorial's coached first attack did no visible HP damage). **QTE-result banner must not delay the strike's SFX/VFX**: `runAttackQTE` used to `await showResult(...)` (a 700ms banner hold) before resolving, so the actual attack's sound/particles — fired by `combat.playCard` right after `combatView.playCard` awaits the QTE — landed ~700ms after the player's timed input. Fixed by resolving `runAttackQTE` as soon as the grade is computed (adding a `qte-clear` class that instantly fades the dimming scrim + stage via CSS transition) and letting the result banner + `ui.destroy()` play out in the background via a detached `.then(...)` instead of being awaited.
+- **Rhythm QTE rules (src/ui/rhythm.js + combat.js)**: attack QTEs grade perfect/good/miss (×1.25/×1.0/×0.5 damage). The enemy-attack parry is only prompted when the player has block; a **missed parry halves the player's block** (`Math.floor(realBlock/2)`, then the hit consumes it normally — it must NOT void/restore block, that made Block cards worthless on a miss; regression tests in tools/test.js). The view floats `BLOCK HALVED` via the `parrymiss` fx. Desktop mice can now also answer directional marks by **clicking on the chevron's side of the QTE ring** (stationary click ≥26px off ring-center in `onPUp`; near-center clicks stay 'tap'). The rhythm toggle lives on the title screen (`Game.setRhythm`); attack QTEs read `rhythmOn()` per card play, but the parry prompt is bound once per combat, so `setRhythm` must call `combatView.bindParryPrompt()` to apply mid-fight. Husk Drone `startBlock` is 6 (was 12 — the tutorial's coached first attack did no visible HP damage). **QTE-result banner must not delay the strike's SFX/VFX**: `runAttackQTE` used to `await showResult(...)` (a 700ms banner hold) before resolving, so the actual attack's sound/particles — fired by `combat.playCard` right after `combatView.playCard` awaits the QTE — landed ~700ms after the player's timed input. Fixed by resolving `runAttackQTE` as soon as the grade is computed (adding a `qte-clear` class that instantly fades the dimming scrim + stage via CSS transition) and letting the result banner + `ui.destroy()` play out in the background via a detached `.then(...)` instead of being awaited.
 - **Tempo (rhythm layer → card game, combat.js)**: a player-only counter stored as the `tempo` **power** (so pips/tooltips/`fx('power')` floats come free — no bespoke UI). Clean strikes build it (+1, +2 on Perfect), a successful parry adds +1, any missed beat (strike QTE or parry) **breaks it to 0** (`breakTempo()`, `RHYTHM BROKEN` float via the `tempobreak` fx); capped at 10 (`TEMPO_CAP`). The view sets `combat._rhythmGrade` next to `_rhythmMult` after the attack QTE; `Combat.playCard` consumes it for attacks via `registerStrikeGrade()` — **a null grade counts as 'good'**, so headless/Rhythm-off play still builds 1 Tempo per attack and Tempo cards never go dead. Registration happens **before** `onPlay`, so a Tempo-scaling card counts its own strike and a missed finisher fizzles (breaks first, then deals ×0.5) — deliberate risk/reward, don't "fix" it. Cards use `ctx.tempo()` / `ctx.gainTempo(n)` / `ctx.spendAllTempo()`; relics listen on the `tempoGained` trigger (`{ amount, total }`). Amara is the specialist (flowing_edge, dancers_poise, spiral_finish, war_drum_cadence, unbroken_dance in her pool) but the system is game-wide (pulse_stone / drummers_bangle relics work for any champion). Logic tests live in the "Tempo" group of `tools/test.js`.
 - **Hit-counted debuffs (divergence from StS, combat.js + keywords.js)**: Exposed (`vulnerable`), Sapped (`weak`) and Brittle (`frail`) are **consumed per event, not per turn** — one stack per attack hit taken / attack hit made / card Block gain (multiplier unchanged: +50% / −25% / −25%). They have **no `ticksDown`** flag, so `tickTurnDebuffs` never touches them; consumption lives in `applyDamage` (`consumeStack`, blocked hits still consume) and the two `gainBlock*` paths. `calcAttackDamage` still *reads* stacks without consuming — it doubles as the next-hit preview math, so don't move consumption in there. **Blight spreads on death**: `onEnemyDeath` moves a dead foe's remaining Blight to a random living enemy (via `applyPower`, so Charm can negate it); the Blight Bloom power replaces the spread with an instant burst on ALL others. Snared/Sundered stay turn-ticked (inherently turn-based). Tests in the "Divergent statuses" group of `tools/test.js`. When adding cards/enemies, treat debuff amounts as **hit counts**, not turn counts — 1–2 stacks is the normal band.
 - **Smooth Enemy Repositioning**: When an enemy is defeated, their `.dying` transition collapses their `min-width`, `max-width`, `width`, and `margin-left`/`margin-right` to `0` over `0.62s`. This allows the remaining flex children in `.enemy-side` to slide smoothly into their centered positions rather than hopping abruptly. The negative margins are sized to half of `--enemy-gap` to offset the flex container's gaps exactly.
 - **Event scene audio dependency**: `src/scenes/event.js` calls `audio.play()` while resolving choices that change gold/remove cards. Keep `import { audio } from '../audio.js';` in that scene and cover gold-changing event choices in `tools/test.js`; otherwise a choice can mutate run state, throw before `resultThenMap()`, and stay clickable for repeated rewards/costs.
 - **Griot narrator (the Spire's voice, `src/ui/narrator.js` + `src/data/narrator-lines.js`)**: a strictly-cosmetic `Narrator` (one instance, `game.narrator`) surfaces a single styled caption at run beats — first map, act intros, first shop/rest/event/treasure, boss approach, first Perfect strike, first kill, first Tempo break, low HP, and both endings. `say(id, opts)` gates by the line's `gate`: `'meta'` (once ever, a persisted `narrSeen*` flag in `defaultMeta()`) for the marquee first-play beats, `'run'` (once per run, an in-memory `Set` cleared by `resetRun()` from `startRun()`) for repeatable-per-run beats, `'always'` for the one-render endpoint screens. A FIFO queue (capped at 3, drop-oldest) guarantees exactly one caption on screen at a time. **Placement is scene-dependent, not a single fixed spot**: the default `.narrator-host` is bottom-center (clear on every non-combat scene), but `body.scene-combat .narrator-host` overrides to a **top-anchored, wider** slot instead — combat's hand fills almost the entire bottom of the viewport (cards run to within a few px of the bottom edge, confirmed via `getBoundingClientRect()` in preview), so the bottom anchor put the caption across the middle of the fanned hand. The top slot sits in the genuinely open band between the top bar and the enemy intent pill; it's widened there (760px vs 560px) specifically so long lines stay on one ~45px-tall line instead of wrapping to two — a wrapped two-line caption at the narrower width is tall enough to reach into the intent pill. **Tutorial collision**: combat narrator beats (`'rhythm'`/`'hpLost'` triggers in `beginCombat`, the `tempobreak`/`death` `onFx` one-liners in combatView.js) are all guarded with `if (!game.tutorial) ...` — the first-play tutorial banner (`CombatTutorial`/`MultiEnemyTutorial`) is also pinned near the top of the combat scene, so without the guard the two would visually overlap during a first-timer's very first fight (confirmed by measuring both elements' rects in preview: they overlapped by ~34px before the guard). **Preview-tool gotcha discovered while verifying this**: right after `window.location.reload()` or `preview_resize`, the *next* `preview_eval` call can report `window.innerHeight`/`innerWidth` as `0` even though the page has actually rendered fine (confirmed via `preview_screenshot` showing a normal page) — it's a stale-read in the eval bridge, not real app state. A second, fresh `preview_eval` call immediately after reads the correct values; don't chase "0×0 viewport" as a real bug without cross-checking a screenshot first. Also, because `@keyframes` animations don't reliably progress on these automation-driven tabs (same rAF/paint throttling as the documented char-select gotcha above), reading `getComputedStyle(el).opacity` shortly after appending an animated element can read a stale in-progress frame (e.g. `opacity: 0` well past when the fade-in should have finished) — force the settle (`el.style.animation='none'; el.style.opacity='1'`) before trusting a measurement, same fix as the existing scene-transition gotcha.
+- **Block/parry QTE scales with attack size, and is color-coded blue** (rhythm.js
+  `runParryQTE({marks})` + `combatView.js` `parryMarksFor(e)`): a plain single
+  hit is still one any-direction tap, but bigger attacks get a short sequence
+  of timed **directional** swipes — one shot per blow (`marks = min(3, hits)`),
+  plus a floor of 2/3 marks for a single heavy nuke (`dmg>=20`/`dmg>=30`) even
+  at hits=1, so telegraphed boss swings still read as a harder parry. Any miss
+  in the sequence fails the whole parry (same halve-block penalty as before).
+  `buildQTE`'s `verb` becomes `'SWIPE'` (not `'TAP'`) for touch once a parry
+  goes directional, since a tap can't convey direction. **Color split**: the
+  parry/block QTE uses the `--blue`/`--blue-bright` accent (matches
+  `float-block`'s `#9fc2ff` / the skill-card-upgrade border `#bcd6ff`) via
+  `.qte-parry` overrides on target/note/label/beats/pop/result, vs. attack
+  QTEs' `--orange`/`--amber`. The `.qte-dir` swipe arrow and `.qte-rings`
+  backdrop are baked-color SVGs (not `currentColor`), so instead of forking a
+  second SVG constant just for this recolor, `.qte-parry .qte-dir` and
+  `.qte-parry .qte-rings` apply `filter: hue-rotate(190deg) saturate(1.15)` to
+  shift the baked ember tones to blue (verified empirically against a plain
+  swatch — hue-rotate is a matrix approximation, not a literal HSL rotation,
+  so don't assume an arbitrary angle without checking the actual rendered
+  color first). **Gotcha hit while verifying this in the browser preview**:
+  `preview_start` snapshots `styles.css` at page load — CSS edits made *after*
+  that are invisible in the running tab (getComputedStyle still returns the
+  old value) until an explicit `window.location.reload()`; screenshots taken
+  without reloading first silently show stale styling with no console error.
+  Separately, the QTE overlay is only alive for its own \~1-4s timeout window
+  and tears itself down with no visible trace — `preview_eval` +
+  `preview_screenshot` round-trips are often slower than that, so the overlay
+  is frequently gone by the time the screenshot lands ("gone" in a rect probe
+  isn't a bug). For a stable freeze-frame to inspect at leisure, call the QTE
+  with `isTutorial: true` outside of an actual tutorial context (no
+  `window.__ase.tutorial` registered) — it pauses the first mark \~500ms in
+  and waits forever for a callback that will never come.
 
 ## Asset Generation
 - **Model Rules**: Always use the `gpt-image-2` model for all image, sprite, and background art generations. Never use Gemini or any other image models.
 - **Setup**: the generators have dev-only deps not used by the game — run
   `cd tools && npm install` once (installs `openai`, `sharp`, `undici`). Live
   runs need `OPENAI_API_KEY`; `--dry-run` needs neither install nor key.
+- **Where the key lives**: `OPENAI_API_KEY` is stored in the gitignored `.env`
+  at the **primary checkout's** repo root (`~/spire/.env`). Worktrees don't get
+  it automatically — symlink it in (`ln -s <primary-checkout>/.env .env`;
+  `tools/worktree.sh` does not do this). The generator scripts read
+  `process.env.OPENAI_API_KEY` directly and do **not** auto-load `.env`, so
+  load it when running: `node --env-file=.env tools/gen-<x>.js` (Node ≥ 20.6)
+  or `set -a; source .env; set +a` for the shell session. Never commit the key
+  (`.env` is in `.gitignore` — keep it there).
 - **Sprites**: Run `node tools/gen-sprites.js` (reads `tools/sprites.manifest.json`, outputs to `assets/sprites/`).
 - **Sprite Variations**: Run `node tools/gen-sprite-variations.js` (reads `tools/sprites.manifest.json`, uses base champion sprites as inputs, outputs variations to `assets/sprites/`).
 - **Card Art**: Run `node tools/gen-card-art.js` (reads `tools/cards.manifest.json`, outputs to `assets/card-art/`).

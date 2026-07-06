@@ -67,7 +67,7 @@ def('husk_drone', {
   name: 'Husk Drone', act: 1, hpMin: 24, hpMax: 32, startBlock: 6,
   moves: {
     zap: atk('Zap', 6),
-    buzz: { name: 'Overcharge', intent: { type: 'buffblock', block: 4 }, run: (c, s) => { c.applyPower(s, 'strength', 2, s); c.gainBlockTo(s, 4); } },
+    buzz: { name: 'Overcharge', intent: { type: 'buffblock', block: 4 }, run: (c, s) => { c.applyPower(s, 'strength', 2, s); c.gainBlockTo(s, 4); c.fx('powersurge', { target: s }); } },
   },
   pick: (s, c, rng) => (s.history.filter((m) => m === 'buzz').length === 0 && s.turn === 1 ? 'zap' : (s.turn % 3 === 0 ? 'buzz' : 'zap')),
 });
@@ -103,7 +103,16 @@ def('brass_sentinel', {
 def('market_thief', {
   name: 'Market Thief', act: 1, hpMin: 26, hpMax: 32,
   moves: {
-    swipe: { name: 'Swipe', intent: { type: 'attack', dmg: 7 }, run: (c, s) => { c.enemyAttack(s, 7); if (!s.fled) c.run.gold = Math.max(0, c.run.gold - 8); } },
+    swipe: {
+      name: 'Purse Snatch', intent: { type: 'attacksteal', dmg: 7, gold: 8 },
+      run: (c, s) => {
+        c.enemyAttack(s, 7);
+        if (s.fled) return;
+        const stolen = Math.min(8, c.run.gold);
+        c.run.gold -= stolen;
+        if (stolen > 0) c.fx('gold', { amount: -stolen });
+      },
+    },
     flee: { name: 'Flee', intent: { type: 'unknown' }, run: (c, s) => c.enemyFlee(s) },
   },
   pick: (s, c, rng) => (s.turn >= 4 ? 'flee' : 'swipe'),
@@ -130,7 +139,7 @@ def('tide_priest', {
   name: 'Tide Priest', act: 1, hpMin: 25, hpMax: 31,
   moves: {
     mend: { name: 'Tidal Mending', intent: { type: 'buff' }, run: (c, s) => { eHeal(c, weakestAlly(c) || s, 10); } },
-    anoint: { name: 'Anoint', intent: { type: 'buff' }, run: (c, s) => c.applyPower(otherAlly(c, s), 'strength', 2, s) },
+    anoint: { name: 'Anoint', intent: { type: 'buff' }, run: (c, s) => { const t = otherAlly(c, s); c.applyPower(t, 'strength', 2, s); c.fx('powersurge', { target: t }); } },
     splash: atk('Splash', 5),
   },
   pick: (s, c, rng) => {
@@ -145,7 +154,7 @@ def('tide_priest', {
 def('spark_imp', {
   name: 'Spark Imp', act: 1, hpMin: 13, hpMax: 17,
   moves: {
-    kindle: { name: 'Kindle', intent: { type: 'buff' }, run: (c, s) => c.applyPower(s, 'strength', 3, s) },
+    kindle: { name: 'Kindle', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
     jolt: atk('Jolt', 6),
   },
   pick: (s, c, rng) => (s.turn === 1 || s.turn % 4 === 0 ? 'kindle' : 'jolt'),
@@ -157,8 +166,8 @@ def('gilded_warden', {
   moves: {
     cleave: atk('Wide Cleave', 14),
     barrage: atk('Brass Barrage', 5, 3),
-    fortify: { name: 'Fortify', intent: { type: 'buffblock', block: 12 }, run: (c, s) => { c.gainBlockTo(s, 12); c.applyPower(s, 'strength', 2, s); } },
-    wrath: { name: 'Gild Wrath', intent: { type: 'buff' }, run: (c, s) => c.applyPower(s, 'strength', 4, s) },
+    fortify: { name: 'Fortify', intent: { type: 'buffblock', block: 12 }, run: (c, s) => { c.gainBlockTo(s, 12); c.applyPower(s, 'strength', 2, s); c.fx('powersurge', { target: s }); } },
+    wrath: { name: 'Gild Wrath', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
   },
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'cleave';
@@ -175,7 +184,7 @@ def('rust_maw', {
   name: 'Rust Maw', act: 1, elite: true, hpMin: 62, hpMax: 68,
   moves: {
     gnash: atk('Gnash', 8, 2),
-    coil: { name: 'Coil', intent: { type: 'buffblock', block: 10 }, run: (c, s) => { c.gainBlockTo(s, 10); c.applyPower(s, 'strength', 3, s); } },
+    coil: { name: 'Coil', intent: { type: 'buffblock', block: 10 }, run: (c, s) => { c.gainBlockTo(s, 10); c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
     crush: { name: 'Rusted Crush', intent: { type: 'attack', dmg: 24 }, run: (c, s) => c.enemyAttack(s, 24) },
   },
   pick: (s, c, rng) => {
@@ -268,7 +277,7 @@ def('ink_leech', {
 
 // Curse-flooder / warded — jams Dazed and Wounds into your deck, wraps itself in
 // Charm so your debuffs slide off. A deck-disruption puzzle: it wants a long
-// fight, so end it quickly or rely on Exhaust.
+// fight, so end it quickly or rely on Consume.
 def('null_scribe', {
   name: 'Null Scribe', act: 2, hpMin: 30, hpMax: 36,
   moves: {
@@ -289,7 +298,7 @@ def('glyph_sentry', {
   name: 'Glyph Sentry', act: 2, hpMin: 34, hpMax: 40, startBlock: 8,
   moves: {
     spark: atk('Rune Spark', 7),
-    charge: { name: 'Charge Glyph', intent: { type: 'buffblock', block: 12 }, run: (c, s) => { c.gainBlockTo(s, 12); c.applyPower(s, 'strength', 4, s); } },
+    charge: { name: 'Charge Glyph', intent: { type: 'buffblock', block: 12 }, run: (c, s) => { c.gainBlockTo(s, 12); c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
     lance: { name: 'Prism Lance', intent: { type: 'attack', dmg: 22 }, run: (c, s) => c.enemyAttack(s, 22) },
   },
   pick: (s, c, rng) => {
@@ -308,7 +317,7 @@ def('brass_colossus', {
     quake: atk('Quake', 22),
     twin: atk('Piston Punch', 9, 2),
     plate: { name: 'Replate', intent: { type: 'block', block: 20 }, run: (c, s) => { c.gainBlockTo(s, 20); } },
-    overload: { name: 'Overload', intent: { type: 'buff' }, run: (c, s) => c.applyPower(s, 'strength', 4, s) },
+    overload: { name: 'Overload', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
   },
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'plate';
@@ -324,7 +333,7 @@ def('obsidian_maw', {
   moves: {
     rend: atk('Obsidian Rend', 13),
     devour: { name: 'Devour', intent: { type: 'attack', dmg: 10, hits: 2 }, run: (c, s) => c.enemyAttack(s, 10, 2) },
-    hunger: { name: 'Growing Hunger', intent: { type: 'buff' }, run: (c, s) => c.applyPower(s, 'strength', 3, s) },
+    hunger: { name: 'Growing Hunger', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
   },
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'hunger';
@@ -383,7 +392,7 @@ def('static_seraph', {
   name: 'Static Seraph', act: 3, hpMin: 50, hpMax: 58,
   moves: {
     beam: atk('Beam', 10, 2),
-    bless: { name: 'False Blessing', intent: { type: 'buffblock', block: 16 }, run: (c, s) => { c.gainBlockTo(s, 16); c.applyPower(s, 'strength', 3, s); } },
+    bless: { name: 'False Blessing', intent: { type: 'buffblock', block: 16 }, run: (c, s) => { c.gainBlockTo(s, 16); c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
     smite: atk('Smite', 25),
   },
   // Telegraphs Smite every third turn; otherwise builds Resolve before it swings.
@@ -416,7 +425,7 @@ def('echo_wraith', {
 def('hollow_cantor', {
   name: 'Hollow Cantor', act: 3, hpMin: 46, hpMax: 52,
   moves: {
-    dirge: { name: 'Dirge', intent: { type: 'buff' }, run: (c, s) => { eHeal(c, weakestAlly(c) || s, 12); c.applyPower(otherAlly(c, s), 'strength', 2, s); } },
+    dirge: { name: 'Dirge', intent: { type: 'buff' }, run: (c, s) => { eHeal(c, weakestAlly(c) || s, 12); const t = otherAlly(c, s); c.applyPower(t, 'strength', 2, s); c.fx('powersurge', { target: t }); } },
     hymn: { name: 'Warding Hymn', intent: { type: 'buffblock', block: 12 }, run: (c, s) => { c.gainBlockTo(otherAlly(c, s), 10); c.applyPower(s, 'artifact', 1, s); } },
     lash: atk('Candle Lash', 11),
   },
@@ -434,7 +443,7 @@ def('ember_colossus', {
   moves: {
     stomp: atk('Magma Stomp', 16),
     sunder: { name: 'Sunder', intent: { type: 'attackdebuff', dmg: 12 }, run: (c, s) => { c.enemyAttack(s, 12); c.applyPower(c.player, 'frail', 2, s); } },
-    seethe: { name: 'Seethe', intent: { type: 'buff' }, run: (c, s) => c.applyPower(s, 'strength', 4, s) },
+    seethe: { name: 'Seethe', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
   },
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'seethe';
@@ -444,7 +453,7 @@ def('ember_colossus', {
 });
 
 // Swarm / curse-flooder — flurries of tiny hits and Static curses that bleed you
-// while they clog your hand. Block blunts the flurry; Exhaust clears the curses.
+// while they clog your hand. Block blunts the flurry; Consume clears the curses.
 def('static_swarm', {
   name: 'Static Swarm', act: 3, hpMin: 40, hpMax: 46,
   moves: {
@@ -465,7 +474,7 @@ def('choir_master', {
   name: 'Choir Master', act: 3, hpMin: 54, hpMax: 62,
   moves: {
     conduct: { name: 'Conduct', intent: { type: 'unknown' }, run: (c, s) => { c.summonEnemy('echo_mote'); c.summonEnemy('echo_mote'); } },
-    crescendo: { name: 'Crescendo', intent: { type: 'buff' }, run: (c, s) => { for (const e of c.enemies) if (e.alive && e !== s) c.applyPower(e, 'strength', 2, s); } },
+    crescendo: { name: 'Crescendo', intent: { type: 'buff' }, run: (c, s) => { for (const e of c.enemies) if (e.alive && e !== s) { c.applyPower(e, 'strength', 2, s); c.fx('powersurge', { target: e }); } } },
     lash: atk('Baton Lash', 12),
   },
   pick: (s, c, rng) => {
@@ -495,7 +504,7 @@ def('chrome_archon', {
   moves: {
     annihilate: atk('Annihilate', 30),
     swarm: atk('Nanoswarm', 6, 4),
-    reweave: { name: 'Reweave', intent: { type: 'buffblock', block: 24 }, run: (c, s) => { c.gainBlockTo(s, 24); c.applyPower(s, 'strength', 3, s); } },
+    reweave: { name: 'Reweave', intent: { type: 'buffblock', block: 24 }, run: (c, s) => { c.gainBlockTo(s, 24); c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
   },
   // Reweaves its wall when wounded, drops Annihilate on an undefended hero (but
   // never twice running), and chips with Nanoswarm otherwise.
@@ -514,7 +523,7 @@ def('heart_of_static', {
     blast: atk('Reality Blast', 42),
     multibeam: atk('Cascade', 5, 6),
     static_field: { name: 'Static Field', intent: { type: 'debuffblock', block: 20 }, run: (c, s) => { for (let i = 0; i < 3; i++) c.addCardToPile(c.makeCard('dazed'), 'draw'); c.applyPower(c.player, 'weak', 1, s); c.gainBlockTo(s, 20); } },
-    rebuild: { name: 'Rebuild', intent: { type: 'buffblock', block: 30 }, run: (c, s) => { c.gainBlockTo(s, 30); c.applyPower(s, 'strength', 4, s); } },
+    rebuild: { name: 'Rebuild', intent: { type: 'buffblock', block: 30 }, run: (c, s) => { c.gainBlockTo(s, 30); c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
   },
   buff: { name: 'Invincibility', desc: 'Caps the damage taken in a single turn.' },
   // At half health the Heart tears open (The Static Screams): it walls up, gains

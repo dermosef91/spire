@@ -96,7 +96,7 @@ export class Game {
     // 'click' event does. Stop it at the source so tapping a keyword inside a
     // card's text doesn't also play the card.
     document.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.kw, .intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk')) e.stopPropagation();
+      if (e.target.closest('.kw, .intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk, .intent-steal')) e.stopPropagation();
     }, true);
 
     // Click (mouse or touch): toggles the popup for a keyword span or an
@@ -113,7 +113,7 @@ export class Game {
         this.infoPopup(`<b>${info.name}</b><br>${info.desc}`, kwSpan);
         return;
       }
-      const intentIcon = e.target.closest('.intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk');
+      const intentIcon = e.target.closest('.intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk, .intent-steal');
       if (intentIcon) {
         e.stopPropagation();
         const info = INTENT_INFO[intentIcon.dataset.intentType];
@@ -145,14 +145,15 @@ export class Game {
     this.kwNode = node;
   }
 
-  // A small yes/no confirm overlay (used for irreversible touch actions like potions).
-  confirm(title, desc, onYes) {
+  // A small yes/no confirm overlay (used for irreversible actions like potions
+  // or abandoning a run).
+  confirm(title, desc, onYes, yesLabel = 'Use') {
     const overlay = el('div', { class: 'overlay' });
     const box = el('div', { class: 'overlay-box confirm-box' });
     box.appendChild(el('h3', { text: title }));
     if (desc) box.appendChild(el('p', { class: 'event-text', html: desc }));
     const row = el('div', { class: 'confirm-row' });
-    row.appendChild(button('Use', () => {
+    row.appendChild(button(yesLabel, () => {
       this.tooltip(null, null, false);
       document.body.removeChild(overlay);
       onYes();
@@ -212,8 +213,14 @@ export class Game {
     let html = '';
     if (kind === 'card-full') {
       // The fanned combat hand is small and rotated, so its printed text is
-      // hard to read — this is the one spot that repeats it enlarged.
-      html = `<b>${obj.name}</b> · ${obj.cost === 'X' ? 'X' : obj.cost} Àṣẹ · ${obj.type}<br>${highlightKeywords(cardDesc(obj))}`;
+      // hard to read — this is the one spot that repeats it enlarged. Also
+      // append the glossary for any effect keywords it names (e.g. Consume),
+      // since hovering here can't reach the click-to-explain `.kw` popup —
+      // the tooltip sits above the card and closes the instant the pointer
+      // leaves it to get there.
+      const desc = cardDesc(obj);
+      html = `<b>${obj.name}</b> · ${obj.cost === 'X' ? 'X' : obj.cost} Àṣẹ · ${obj.type}<br>${highlightKeywords(desc)}`;
+      html += this.glossarySuffix(desc, obj.name);
     } else if (kind === 'card') {
       // Everywhere else a card is already shown at a readable size (shop,
       // rewards, deck views, previews), so repeating its full text would just
@@ -224,11 +231,28 @@ export class Game {
       html = entries.map((e) => `<b>${e.name}</b><br>${e.desc}`).join('<br><br>');
     } else if (obj.desc !== undefined && obj.rarity !== undefined && POTIONS[obj.id]) {
       html = `<b>${obj.name}</b><br>${highlightKeywords(obj.desc)}`;
+      html += this.glossarySuffix(obj.desc, obj.name);
     } else if (obj.desc !== undefined) {
+      // Relics (and the Block power's own mini-tooltip): same hover-can't-
+      // reach-the-click-popup problem, so append the glossary here too.
       html = `<b>${obj.name}</b><br>${highlightKeywords(obj.desc)}`;
+      html += this.glossarySuffix(obj.desc, obj.name);
     } else return;
     this.tip.innerHTML = html;
     this.positionBox(this.tip, node, 240);
+  }
+
+  // Glossary entries for the effect keywords named in `text`, as a suffix
+  // block to append after already-visible text — used so a hover-only
+  // tooltip doesn't need a follow-up click to explain what it names. Skips
+  // an entry matching `ownName` so a power's own mini-tooltip (e.g. Block)
+  // doesn't repeat its own name/desc back at itself.
+  glossarySuffix(text, ownName) {
+    const entries = keywordsIn(text)
+      .map((n) => keywordInfo(n))
+      .filter((e) => e && e.name.toLowerCase() !== (ownName || '').toLowerCase());
+    if (!entries.length) return '';
+    return '<hr class="tip-sep">' + entries.map((e) => `<b>${e.name}</b><br>${e.desc}`).join('<br><br>');
   }
 
   // ----------------------------------------------------------- shared overlays
@@ -348,7 +372,15 @@ export class Game {
   // with a fanfare, then the relic flies to its slot in the top bar. `onClaim`
   // is the caller's follow-up (rebuild the scene so the new relic chip exists);
   // it runs the instant the reveal is dismissed, before the flight begins.
-  relicAcquired(relicId, onClaim) {
+  //
+  // Pass `opts.deferred: true` for relics the run doesn't own yet (the relic
+  // is NOT added to `run.relics` before this call) to offer an explicit
+  // Claim / Leave it choice instead of "click anywhere to claim" — used by
+  // the treasure cache, where the relic is found rather than deliberately
+  // picked. `opts.onLeave` runs if the player walks away; the relic is never
+  // granted in that case.
+  relicAcquired(relicId, onClaim, opts = {}) {
+    const { deferred = false, onLeave } = opts;
     const r = RELICS[relicId];
     if (!r) { onClaim(); return; }
     audio.play('relic');
@@ -365,10 +397,6 @@ export class Game {
     box.appendChild(el('div', { class: 'relic-reveal-rarity', text: (r.rarity || '').toUpperCase() }));
     box.appendChild(el('div', { class: 'relic-reveal-name', text: r.name }));
     box.appendChild(el('div', { class: 'relic-reveal-desc', html: r.desc }));
-    box.appendChild(el('div', { class: 'relic-reveal-hint', text: this.isTouch() ? 'Tap to claim' : 'Click to claim' }));
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => overlay.classList.add('show'));
 
     let claimed = false;
     const claim = () => {
@@ -377,10 +405,29 @@ export class Game {
       const icon = disc.querySelector('.relic-reveal-icon');
       const fromRect = icon.getBoundingClientRect();
       overlay.remove();
+      if (deferred) this.run.addRelic(relicId);
       onClaim();
       this.flyRelicToSlot(relicId, fromRect);
     };
-    overlay.addEventListener('click', claim);
+
+    if (deferred) {
+      const actions = el('div', { class: 'relic-reveal-actions' });
+      actions.appendChild(button('Claim', claim, 'primary'));
+      actions.appendChild(button('Leave it', () => {
+        if (claimed) return;
+        claimed = true;
+        overlay.remove();
+        if (onLeave) onLeave();
+      }));
+      box.appendChild(actions);
+    } else {
+      box.appendChild(el('div', { class: 'relic-reveal-hint', text: this.isTouch() ? 'Tap to claim' : 'Click to claim' }));
+      overlay.addEventListener('click', claim);
+    }
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('show'));
   }
 
   // Animate a clone of the relic icon from `fromRect` to its freshly-rendered

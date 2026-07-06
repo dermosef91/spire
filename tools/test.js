@@ -409,8 +409,8 @@ test('Flowing Edge scales with Tempo (counting its own strike)', () => {
   c.hand.push(card);
   c.energy = 3;
   c.playCard(card, enemy);
-  // 3 Tempo + 1 from this strike = 4 → 5 + 2×4 = 13 damage.
-  assert.equal(hpBefore - enemy.hp, 13, 'damage read the post-strike Tempo');
+  // 3 Tempo + 1 from this strike = 4 → 2×4 = 8 damage (no base damage).
+  assert.equal(hpBefore - enemy.hp, 8, 'damage read the post-strike Tempo');
 });
 
 test('Spiral Finish consumes ALL Tempo for bonus damage', () => {
@@ -424,8 +424,8 @@ test('Spiral Finish consumes ALL Tempo for bonus damage', () => {
   c.hand.push(card);
   c.energy = 3;
   c.playCard(card, enemy);
-  // 4 Tempo + 1 from this strike = 5 consumed → 10 + 3×5 = 25 damage.
-  assert.equal(hpBefore - enemy.hp, 25, 'consumed Tempo converted to damage');
+  // 4 Tempo + 1 from this strike = 5 consumed → 3×5 = 15 damage (no base damage).
+  assert.equal(hpBefore - enemy.hp, 15, 'consumed Tempo converted to damage');
   assert.equal(c.tempo(), 0, 'Tempo pool emptied');
 });
 
@@ -488,7 +488,7 @@ test('Exposed boosts and is consumed per hit, not per turn', () => {
   assert.equal(c.deal(enemy, 10), 15, 'first hit +50%');
   assert.equal(enemy.powers.vulnerable, 1, 'one stack consumed');
   assert.equal(c.deal(enemy, 10), 15, 'second hit +50%');
-  assert.equal(enemy.powers.vulnerable, undefined, 'stacks exhausted');
+  assert.equal(enemy.powers.vulnerable, undefined, 'stacks consumed');
   assert.equal(c.deal(enemy, 10), 10, 'third hit unmodified');
 });
 
@@ -611,7 +611,7 @@ test('Cyclone Dance consumes ALL Tempo for AoE damage', () => {
   c.gainTempo(3); // +1 from the strike itself = 4 consumed
   const before = c.enemies.map((e) => e.hp);
   playCrafted(c, 'whirlwind', null);
-  for (let i = 0; i < 2; i++) assert.equal(before[i] - c.enemies[i].hp, 4 + 2 * 4, 'each foe took 4 + 2×4');
+  for (let i = 0; i < 2; i++) assert.equal(before[i] - c.enemies[i].hp, 2 + 2 * 4, 'each foe took 2 + 2×4');
   assert.equal(c.tempo(), 0, 'Tempo pool emptied');
 });
 
@@ -658,7 +658,7 @@ test('Transcendence upgrades the hand only, then draws', () => {
 
 test('Sundered (noBlock) blocks Ward for one turn, then expires', () => {
   const c = freshCombat();
-  c.player.block = 0;
+  c.player.block = 0; // clear the starter relic's opening Ward so we isolate Sundered
   c.applyPower(c.player, 'noBlock', 1, c.player);
   c.gainBlock(6);
   assert.equal(c.player.block, 0, 'no Ward gained while Sundered');
@@ -743,6 +743,75 @@ test('an enrage-flagged elite gains Resolve once on its enrage turn', () => {
   }
   assert.equal(elite._enraged, true, 'enraged at its turn');
   assert.equal((elite.powers.strength || 0), strBefore + en.strength, 'gained the enrage Resolve');
+});
+
+// ----------------------------------------------------------------- new cards: PR1
+console.log('New cards — scars, tempo edge, intent read (PR1)');
+
+test('Reckless Glory deals 12 and adds a Scar to the discard pile', () => {
+  const c = freshCombat();
+  const e = c.enemies[0]; e.block = 0; e.hp = e.maxHp = 999;
+  playCrafted(c, 'reckless_glory', e);
+  assert.equal(e.hp, 999 - 12, 'dealt 12');
+  assert.equal(c.discardPile.filter((x) => x.id === 'wound').length, 1, 'a Scar entered the discard');
+});
+
+test('Open the Old Wounds consumes held Status cards and deals 9 per', () => {
+  const c = freshCombat();
+  const e = c.enemies[0]; e.block = 0; e.hp = e.maxHp = 999;
+  c.hand.push(c.makeCard('wound'), c.makeCard('wound'));
+  const exBefore = c.consumePile.length;
+  playCrafted(c, 'open_old_wounds', e);
+  assert.equal(c.consumePile.length - exBefore, 2, 'both Scars consumed');
+  assert.equal(e.hp, 999 - 18, 'dealt 9 x2 = 18');
+  assert.equal(c.hand.filter((x) => x.id === 'wound').length, 0, 'no Scars left in hand');
+});
+
+test('Half-Beat grants 2 Tempo', () => {
+  const c = freshCombat();
+  assert.equal(c.tempo(), 0);
+  playCrafted(c, 'half_beat', null);
+  assert.equal(c.tempo(), 2, 'gained 2 Tempo');
+});
+
+test('Shattered Cadence deals 16 then breaks Tempo to 0', () => {
+  const c = freshCombat();
+  const e = c.enemies[0]; e.block = 0; e.hp = e.maxHp = 999;
+  c.gainTempo(5);
+  playCrafted(c, 'shattered_cadence', e);
+  assert.equal(e.hp, 999 - 16, 'dealt 16');
+  assert.equal(c.tempo(), 0, 'rhythm broke to 0');
+});
+
+test('Read the Field blocks vs an attacker, else draws', () => {
+  const c = freshCombat();
+  c.player.block = 0;
+  c.enemies[0].intent = { type: 'attack', dmg: 6 };
+  playCrafted(c, 'read_the_field', null);
+  assert.equal(c.player.block, 5, 'gained Block vs an attacker');
+
+  const c2 = freshCombat();
+  c2.player.block = 0;
+  for (const e of c2.enemies) e.intent = { type: 'block' };
+  const handBefore = c2.hand.length;
+  playCrafted(c2, 'read_the_field', null);
+  assert.equal(c2.player.block, 0, 'no Block when no attacker');
+  assert.equal(c2.hand.length, handBefore + 2, 'drew 2 (played card left hand)');
+});
+
+test('Swallow Sorrow eats a Curse for Block + draw, else small Block', () => {
+  const c = freshCombat();
+  c.player.block = 0;
+  c.hand.push(c.makeCard('regret'));
+  const exBefore = c.consumePile.length;
+  playCrafted(c, 'swallow_sorrow', null);
+  assert.equal(c.player.block, 9, 'ate the curse for 9 Block');
+  assert.equal(c.consumePile.length - exBefore, 1, 'curse consumed');
+
+  const c2 = freshCombat();
+  c2.player.block = 0;
+  playCrafted(c2, 'swallow_sorrow', null);
+  assert.equal(c2.player.block, 4, 'fallback 4 Block with no junk');
 });
 
 // ----------------------------------------------------------------- summary

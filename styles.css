@@ -13,6 +13,8 @@
   --orange-bright: #ff8a3a;
   --amber: #ffab47;
   --ember: #e8431a;        /* deep attack red-orange */
+  --blue: #9fc2ff;         /* block/parry accent — matches float-block & skill-card borders */
+  --blue-bright: #bcd6ff;
   --cream: #f3e8d8;
   --line: rgba(255, 122, 26, 0.38);
   --line-soft: rgba(255, 170, 80, 0.16);
@@ -563,8 +565,15 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .tb-char { color: var(--orange); } .tb-char b { color: var(--cream); }
 .tb-hp { color: var(--amber); } .tb-hp b { color: #ffd9a0; }
 .tb-gold b { color: var(--orange); }
+.tb-gold.gold-flash { animation: goldFlash 0.7s ease-out; }
+@keyframes goldFlash {
+  0% { filter: brightness(1); }
+  35% { filter: brightness(2) saturate(1.6) hue-rotate(-20deg); }
+  100% { filter: brightness(1); }
+}
 .tb-act { color: var(--orange); letter-spacing: 0.16em; text-transform: uppercase; font-size: 14px !important; }
 .tb-relics, .tb-potions { display: flex; gap: 7px; flex-wrap: wrap; }
+.tb-relics { margin-left: 10px; }
 
 .relic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 17px;
   background: radial-gradient(circle at 50% 50%, #1c1109, #0a0604); border: 2px solid var(--line); cursor: help; transition: transform 0.12s;
@@ -897,13 +906,13 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   animation: costRingSpin 40s linear infinite;
 }
 @keyframes costRingSpin { to { transform: rotate(360deg); } }
-.card-name { font-family: var(--font-display); font-size: clamp(10px, calc(var(--card-h) * 0.072), 24px); text-align: center; color: var(--cream); letter-spacing: 0.04em;
+.card-name { font-family: var(--font-display); font-size: clamp(9px, calc(var(--card-h) * 0.06), 20px); text-align: center; color: var(--cream); letter-spacing: 0.04em;
   text-transform: uppercase; line-height: 1.05; min-height: 1.1em; margin: 1px 0 3px; padding: 0 14px; text-shadow: 0 1px 3px #000; }
 .card.upgraded .card-name { color: var(--amber); }
 .card.type-skill.upgraded .card-name { color: #bcd6ff; }
 .card.type-skill.upgraded .card-cost { box-shadow: 0 0 12px rgba(120,180,255,0.6), inset 0 0 6px rgba(160,200,255,0.45); }
 .card.type-skill.upgraded .card-art { border-color: rgba(140,190,255,0.22); }
-.card-art { position: relative; height: clamp(38px, calc(var(--card-h) * 0.36), 116px); border-radius: 4px; margin: 0 1px 2px; overflow: hidden;
+.card-art { position: relative; height: clamp(38px, calc(var(--card-h) * 0.36), 116px); border-radius: 4px; margin: 0 1px; overflow: hidden;
   background: radial-gradient(circle at 50% 48%, #241307 0%, #0a0604 78%);
   border: 1px solid rgba(255,170,80,0.18); display: grid; place-items: center; }
 .art-motif { position: absolute; inset: 0; opacity: 0.8;
@@ -913,14 +922,14 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   -webkit-mask: radial-gradient(circle at 50% 50%, #000 18%, transparent 72%); mask: radial-gradient(circle at 50% 50%, #000 18%, transparent 72%); }
 .art-glyph { position: relative; font-size: 40px; filter: var(--duotone) drop-shadow(0 2px 8px rgba(0,0,0,0.7)); }
 .card-art-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; border-radius: 3px; }
-.card-type { text-align: center; margin: 1px 0 3px; }
-.card-type span { display: inline-block; font-family: var(--font-display); font-size: clamp(7px, calc(var(--card-h) * 0.046), 15px); letter-spacing: 0.2em; color: #190a02;
-  background: var(--orange); padding: 2px clamp(6px, calc(var(--card-h) * 0.05), 16px); border-radius: 2px; font-weight: 600; }
+.card-type { position: relative; text-align: center; margin: -6px 0 2px; z-index: 3; line-height: 0; }
+.card-type span { display: inline-block; font-family: var(--font-display); font-size: clamp(6px, calc(var(--card-h) * 0.036), 12px); line-height: 1.3; letter-spacing: 0.16em; color: #190a02;
+  background: var(--orange); padding: 1px clamp(5px, calc(var(--card-h) * 0.038), 13px); border-radius: 2px; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
 .card.type-attack .card-type span { background: var(--c-attack); }
 .card.type-skill .card-type span { background: #c4d2e2; }
 .card.type-power .card-type span { background: var(--c-power); }
 .card.type-status .card-type span, .card.type-curse .card-type span { background: #6a625a; color: #1a1714; }
-.card-desc { font-size: clamp(9px, calc(var(--card-h) * 0.062), 20px); text-align: center; color: var(--ink); line-height: 1.3; padding: 2px; flex: 1;
+.card-desc { font-size: clamp(9px, calc(var(--card-h) * 0.062), 20px); text-align: center; color: var(--ink); line-height: 1.22; padding: 2px; flex: 1;
   display: flex; align-items: center; justify-content: center; font-family: var(--font-body); overflow: hidden; min-width: 0; }
 .card-desc-in { display: block; width: 100%; overflow-wrap: anywhere; }
 .kw { color: var(--orange); font-weight: 600; cursor: pointer; text-decoration: underline dotted rgba(255,176,80,0.6); text-underline-offset: 2px; }
@@ -1169,19 +1178,23 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
      1.5px  1.5px 0 #000,
      0px 0px 4px #000;
 }
+/* Status pips sit beside the combatant, stacked in a column, instead of
+   centered below the nameplate — centered there, they used to end up hidden
+   behind the fanned hand in combat. Player pips go to the left (away from
+   the board center), enemy pips to the right (also away from center), so
+   neither ever sits under the hand. */
 .powers {
   position: absolute;
-  bottom: calc(25% - 36px);
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 25%;
   display: flex;
+  flex-direction: column;
   gap: 5px;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 170px;
+  max-width: 140px;
   z-index: 5;
   pointer-events: auto;
 }
+.player .powers { right: calc(100% + 10px); align-items: flex-end; }
+.enemy .powers { left: calc(100% + 10px); align-items: flex-start; }
 .pip {
   font-family: var(--font-display);
   font-size: 12px;
@@ -1192,6 +1205,10 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   border: 1px solid var(--line-soft);
   transition: background-color 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 .pip:hover {
   background: rgba(255, 255, 255, 0.08);
@@ -1233,8 +1250,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .intent::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%) rotate(45deg); width: 9px; height: 9px;
   background: rgba(8,4,2,0.95); border-right: 1px solid var(--orange); border-bottom: 1px solid var(--orange); }
 .intent-atk { color: var(--ember); } .intent-def { color: #9fc2ff; } .intent-buf { color: var(--amber); }
-.intent-deb { color: var(--orange); } .intent-unk { color: var(--muted); }
-.intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk { cursor: pointer; display: inline-flex; align-items: center; }
+.intent-deb { color: var(--orange); } .intent-unk { color: var(--muted); } .intent-steal { color: var(--amber); }
+.intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk, .intent-steal { cursor: pointer; display: inline-flex; align-items: center; }
 
 .combat-scene.targeting .enemy.targetable { cursor: pointer; }
 .combat-scene.targeting .enemy.targetable .med-core { animation: targetPulse 1s ease-in-out infinite; }
@@ -1379,7 +1396,7 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   right: 24px;
 }
 
-.screen-pile.exhaust-pile {
+.screen-pile.consume-pile {
   right: 24px;
   bottom: 140px; /* 24px + 100px + 16px gap */
 }
@@ -1629,7 +1646,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   flex-wrap: nowrap; overflow-x: auto; overflow-y: visible; min-height: 0; padding: clamp(46px, 6.5vh, 66px) 10px 30px;
   scroll-snap-type: x proximity; scrollbar-width: none; position: relative; z-index: 10; }
 .hand::-webkit-scrollbar { display: none; }
-.hand .card { scroll-snap-align: center; }
+.hand .card { scroll-snap-align: center; height: auto; min-height: var(--card-h); }
+.hand .card-desc { overflow: visible; }
 .combat-log { flex: 0 0 auto; margin-top: auto; position: relative; z-index: 10; }
 /* .combat-controls positioning is handled absolutely above */
 
@@ -1732,6 +1750,11 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .overlay-box h3 { color: var(--orange); font-size: 24px; margin-bottom: 16px; letter-spacing: 0.08em; }
 .deck-grid { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; max-width: 1000px; margin-bottom: 16px; }
 .confirm-box { min-width: 280px; } .confirm-row { display: flex; gap: 12px; justify-content: center; margin-top: 12px; }
+.shop-confirm { max-width: 340px; }
+.shop-confirm-icon { display: flex; justify-content: center; margin-bottom: 10px; }
+.shop-confirm-icon .relic, .shop-confirm-icon .potion { width: 64px; height: 64px; cursor: default; }
+.shop-confirm-icon .relic:hover, .shop-confirm-icon .potion:hover { transform: none; }
+.shop-confirm-price { font-family: var(--font-display); font-weight: 700; color: var(--orange); font-size: 15px; letter-spacing: 0.06em; margin-top: 4px; }
 
 /* ----------------------- relic acquisition reveal ----------------------- */
 .relic-reveal-overlay { cursor: pointer; z-index: 140; opacity: 0; transition: opacity 0.3s ease; }
@@ -1791,6 +1814,11 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .relic-reveal-desc { color: var(--ink); font-size: 16px; line-height: 1.5; max-width: 340px; opacity: 0.94; }
 .relic-reveal-hint { color: var(--muted); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
   margin-top: 18px; animation: relicHintPulse 1.8s ease-in-out infinite; }
+
+/* Claim / Leave it choice (treasure cache): the backdrop stops being a giant
+   button, so the overlay itself shouldn't look clickable anymore. */
+.relic-reveal-overlay:has(.relic-reveal-actions) { cursor: default; }
+.relic-reveal-actions { display: flex; gap: 12px; margin-top: 20px; }
 
 /* the icon clone that flies to the top-bar slot */
 .relic-fly {
@@ -1904,6 +1932,7 @@ body.scene-combat .narrator-host { top: 82px; bottom: auto; width: min(760px, 90
 .tooltip { position: fixed; display: none; z-index: 200; background: #0a0503; border: 1px solid var(--orange); border-radius: 6px;
   padding: 10px 12px; font-size: 13px; line-height: 1.45; color: var(--ink); box-shadow: var(--shadow); pointer-events: none; }
 .tooltip b { color: var(--orange); }
+.tip-sep { border: none; border-top: 1px solid rgba(255,176,80,0.3); margin: 8px 0; }
 
 /* ============================================================
    FX LAYER
@@ -2119,7 +2148,7 @@ html { -webkit-text-size-adjust: 100%; }
   }
   .screen-pile.draw-pile { left: 12px; }
   .screen-pile.discard-pile { right: 12px; }
-  .screen-pile.exhaust-pile { right: 12px; bottom: 94px; }
+  .screen-pile.consume-pile { right: 12px; bottom: 94px; }
   .screen-pile .pile-badge {
     width: 20px;
     height: 20px;
@@ -2148,6 +2177,9 @@ html { -webkit-text-size-adjust: 100%; }
   .hptext { font-size: 10px; }
   .combatant-badge { width: 14px; height: 14px; }
   .block-badge { min-width: 24px; height: 24px; font-size: 12px; bottom: 5px; left: -12px; }
+  /* The block badge already sticks out to the left of the nameplate here, so
+     push the player's power-pip column out past it or the two collide. */
+  .player .powers { right: calc(100% + 32px); }
   .intent { bottom: calc(var(--med) * 1.85 + 8px); font-size: 14px; } .orbs { bottom: calc(25% + 42px); } .orbs .orb { width: 26px; height: 26px; }
   .combat-log { min-height: 12px; font-size: 11px; margin: auto 0 1px; }
   /* Pulled in tighter than the base rule so the safe zone below (.hand's
@@ -2185,9 +2217,9 @@ html { -webkit-text-size-adjust: 100%; }
   }
   /* Characters are shorter in landscape and the (lowered) hand covers their
      feet, so lift the name/HP block onto the torso where it clears the card
-     tops, and raise the power pips to sit just under it. */
+     tops, and keep the power pips level with it. */
   .combatant-info { bottom: 44%; }
-  .powers { bottom: calc(44% - 34px); }
+  .powers { bottom: 44%; }
   /* The resting fan's downward dip (--shift, set inline by combatView and
      growing as |diff|^1.5 for wider hands) would reach ~48px on a full
      10-card hand and, with the hand now sitting lower, get cropped by
@@ -2203,7 +2235,7 @@ html { -webkit-text-size-adjust: 100%; }
   }
   .screen-pile.draw-pile { left: 6px; }
   .screen-pile.discard-pile { right: 6px; }
-  .screen-pile.exhaust-pile { right: 6px; bottom: 68px; }
+  .screen-pile.consume-pile { right: 6px; bottom: 68px; }
   .screen-pile .pile-badge {
     width: 20px;
     height: 20px;
@@ -2214,7 +2246,7 @@ html { -webkit-text-size-adjust: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .game-title, .glyph, .ground-shadow, .intent, .med-ring, .medallion::after, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene, .rest-fire, .targeting-prompt, .relic-pulse { animation: none !important; }
+  .game-title, .glyph, .ground-shadow, .intent, .med-ring, .medallion::after, .energy-orb, .map-node.reachable, .node-boss, .edge, .char-card, .scene, .rest-fire, .targeting-prompt, .relic-pulse, .gold-flash { animation: none !important; }
   .map-node.reachable::after, .node-boss::after { animation: none !important; }
   .card::after, .btn::after, .end-turn::after { animation: none !important; }
   .card:hover, .card.in-hand:hover { transform: none !important; }
@@ -2474,17 +2506,18 @@ img.svg-ic { object-fit: contain; }
 /* fullscreen toggle and mute buttons in the top bar (replaces the floating one
    to avoid card overlap). Circular with a subtle ornamental inner ring, echoing
    the reference's ringed sigil buttons — kept understated. */
-.tb-fs, .tb-mute, .tb-rhythm { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; padding: 0;
+.tb-fs, .tb-mute, .tb-abandon { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; padding: 0;
   background: rgba(255,170,80,0.06); border: 1px solid var(--line); color: var(--orange);
   box-shadow: inset 0 0 0 3px rgba(8,5,3,0.6), inset 0 0 0 4px rgba(255,170,80,0.14);
   transition: border-color 0.14s ease, box-shadow 0.14s ease; }
-.tb-fs:hover, .tb-mute:hover, .tb-rhythm:hover { border-color: var(--orange);
+.tb-fs:hover, .tb-mute:hover { border-color: var(--orange);
   box-shadow: inset 0 0 0 3px rgba(8,5,3,0.6), inset 0 0 0 4px rgba(255,170,80,0.22), var(--glow); }
-.tb-fs .svg-ic, .tb-mute .svg-ic, .tb-rhythm .svg-ic { width: 60%; height: 60%; }
-/* Rhythm toggle off-state: dimmed ring with a strike-through, like a muted speaker. */
-.tb-rhythm.off { opacity: 0.55; }
-.tb-rhythm.off::after { content: ''; position: absolute; width: 62%; height: 2px; background: var(--orange); transform: rotate(-45deg); border-radius: 1px; }
-.tb-rhythm { position: relative; }
+.tb-fs .svg-ic, .tb-mute .svg-ic, .tb-abandon .svg-ic { width: 60%; height: 60%; }
+/* Abandon-run: same ringed button, but hovers into an ember warning tint
+   since it's a destructive action rather than a preference toggle. */
+.tb-abandon { color: var(--ember); }
+.tb-abandon:hover { border-color: var(--ember);
+  box-shadow: inset 0 0 0 3px rgba(8,5,3,0.6), inset 0 0 0 4px rgba(232,67,26,0.28), 0 0 16px rgba(232,67,26,0.45); }
 
 /* ============================================================
    DRAG & DROP to play cards (mouse + touch)
@@ -2499,12 +2532,16 @@ img.svg-ic { object-fit: contain; }
 .combatant.enemy.drag-over { outline: 2px dashed var(--amber); outline-offset: 8px; border-radius: 16px; }
 .combatant.enemy.drag-over .med-core { box-shadow: inset 0 0 22px rgba(0,0,0,0.7), 0 0 44px rgba(255,176,80,1); }
 
-/* Card-choice / deck overlays and the shop scroll independently of the combat
-   viewport, so their cards stay readable and GROW to fit text (never clip). */
-.overlay, .shop-scene { --card-h: clamp(190px, 30vh, 216px); }
-.overlay .card, .shop-scene .card { height: auto; min-height: var(--card-h); }
-.overlay .card-desc, .shop-scene .card-desc { overflow: visible; padding-bottom: 4px; }
+/* Card-choice / deck overlays scroll independently of the combat viewport,
+   so their cards stay readable and GROW to fit text (never clip). */
+.overlay { --card-h: clamp(190px, 30vh, 216px); }
+.overlay .card { height: auto; min-height: var(--card-h); }
+.overlay .card-desc { overflow: visible; padding-bottom: 4px; }
 .overlay .card-row, .overlay .deck-grid { max-height: 76vh; overflow-y: auto; align-items: stretch; }
+
+/* Shop cards keep the same fixed w:h aspect ratio as every other card screen
+   (reward picker, hand, deck view) rather than auto-growing to fit text. */
+.shop-scene { --card-h: clamp(190px, 30vh, 216px); --card-w: calc(var(--card-h) * 0.7); }
 
 /* Card-choice ("pick a card") popup: bigger box that uses spare screen room,
    and cards at their normal fixed w:h aspect ratio (not the auto-grow used by
@@ -2627,27 +2664,45 @@ img.svg-ic { object-fit: contain; }
 .qte-layer.qte-clear { background: transparent; }
 .qte-layer.qte-clear .qte-stage,
 .qte-layer.qte-clear .qte-labels { opacity: 0; transition: opacity 200ms ease; }
+.qte-content {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+/* Nudge the whole ring+label stack toward whichever side of the battlefield
+   the prompt is "about" — attacks lean toward the enemy side (player strikes
+   outward), parries lean toward the player side (block happens at home) —
+   without moving the full-viewport dimming scrim itself. */
+.qte-attack .qte-content { transform: translateX(clamp(24px, 6vw, 90px)); }
+.qte-parry .qte-content { transform: translateX(clamp(-90px, -6vw, -24px)); }
 .qte-stage {
   position: relative; width: min(46vw, 34dvh, 300px); aspect-ratio: 1;
   display: flex; align-items: center; justify-content: center;
 }
+/* The target ring is the one goal line the player must land the closing note
+   on — it needs to read as unmistakably "this one" against the ornament rings
+   and the note itself, so it gets the strongest, most saturated glow of the
+   three and stays that way for the whole approach (not just on-hit). */
 .qte-target {
   position: absolute; inset: 22%; border-radius: 50%;
-  border: 2px solid var(--line);
-  box-shadow: 0 0 14px rgba(255, 106, 26, 0.25), inset 0 0 14px rgba(255, 106, 26, 0.1);
+  border: 3px solid var(--orange-bright);
+  box-shadow: 0 0 26px rgba(255, 138, 58, 0.65), inset 0 0 18px rgba(255, 138, 58, 0.3);
   transition: border-color 100ms linear, box-shadow 100ms linear;
 }
-.qte-parry .qte-target { border-color: var(--amber); box-shadow: 0 0 22px rgba(255, 171, 71, 0.4), inset 0 0 16px rgba(255, 171, 71, 0.15); }
+.qte-parry .qte-target { border-color: var(--blue-bright); box-shadow: 0 0 26px rgba(159, 194, 255, 0.65), inset 0 0 18px rgba(159, 194, 255, 0.3); }
+/* The closing note is deliberately dimmer/thinner than the target so it
+   reads as "approaching marker", not a second candidate for the goal ring. */
 .qte-note {
   position: absolute; inset: 22%; border-radius: 50%;
-  border: 3px solid var(--orange-bright); box-shadow: var(--glow);
+  border: 2px solid var(--cream); opacity: 0.55;
   will-change: transform; pointer-events: none;
 }
-.qte-parry .qte-note { border-color: var(--amber); }
-/* Faint concentric ornament rings behind the arrow (static, reduced-motion safe). */
+.qte-parry .qte-note { border-color: var(--cream); }
+/* Concentric ornament rings behind the arrow (static, reduced-motion safe) —
+   desaturated and faint so they read as backdrop texture, never competing
+   with the target ring for "which circle do I aim at". */
 .qte-rings {
   position: absolute; inset: -8%;
-  opacity: 0.75; pointer-events: none;
+  opacity: 0.3; pointer-events: none;
+  filter: grayscale(1) brightness(0.85);
 }
 .qte-rings .svg-ic { width: 100%; height: 100%; }
 /* Feathered chevron-stack swipe arrow; drawn pointing up, rotated per direction. */
@@ -2658,6 +2713,7 @@ img.svg-ic { object-fit: contain; }
   filter: drop-shadow(0 0 14px rgba(255, 138, 58, 0.65));
   pointer-events: none;
 }
+.qte-parry .qte-dir { filter: drop-shadow(0 0 14px rgba(159, 194, 255, 0.65)) hue-rotate(190deg) saturate(1.15); }
 .qte-dir[data-dir='right'] { --dir-rot: 90deg; }
 .qte-dir[data-dir='down'] { --dir-rot: 180deg; }
 .qte-dir[data-dir='left'] { --dir-rot: -90deg; }
@@ -2689,6 +2745,28 @@ img.svg-ic { object-fit: contain; }
     filter: drop-shadow(0 0 28px var(--orange-bright)) brightness(1.25);
   }
 }
+/* Block/parry directional swipes reuse the same motion in the blue accent. */
+@keyframes qteArrowFadeInBlue {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-22%) scale(1);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(-22%) scale(1);
+    filter: drop-shadow(0 0 14px rgba(159, 194, 255, 0.65));
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-33%) scale(1.12);
+    filter: drop-shadow(0 0 28px var(--blue-bright)) brightness(1.25);
+  }
+}
+.qte-parry .qte-dir.show .svg-ic { animation-name: qteArrowFadeInBlue; }
 /* "SWIPE UP / TO STRIKE" label stack under the stage. */
 .qte-labels { margin-top: 3.4dvh; text-align: center; }
 .qte-label-main {
@@ -2697,6 +2775,7 @@ img.svg-ic { object-fit: contain; }
   text-shadow: 0 0 22px rgba(255, 106, 26, 0.75), 0 1px 6px rgba(0, 0, 0, 0.9);
   min-height: 1.2em;
 }
+.qte-parry .qte-label-main { color: var(--blue-bright); text-shadow: 0 0 22px rgba(159, 194, 255, 0.75), 0 1px 6px rgba(0, 0, 0, 0.9); }
 .qte-label-sub {
   margin-top: 0.5dvh;
   font-family: var(--font-display); color: var(--cream); opacity: 0.85;
@@ -2709,7 +2788,9 @@ img.svg-ic { object-fit: contain; }
   border: 2px solid var(--line); opacity: 0.25; transition: opacity 80ms linear;
 }
 .qte-beat.lit { opacity: 1; background: var(--orange); box-shadow: var(--glow); }
+.qte-parry .qte-beat.lit { background: var(--blue); box-shadow: 0 0 22px rgba(159, 194, 255, 0.45); }
 .qte-stage.hit-perfect .qte-target { border-color: var(--amber); box-shadow: 0 0 38px rgba(255, 171, 71, 0.9), inset 0 0 22px rgba(255, 171, 71, 0.35); }
+.qte-parry .qte-stage.hit-perfect .qte-target { border-color: var(--blue-bright); box-shadow: 0 0 38px rgba(188, 214, 255, 0.9), inset 0 0 22px rgba(188, 214, 255, 0.35); }
 .qte-stage.hit-good .qte-target { border-color: var(--cream); box-shadow: 0 0 26px rgba(243, 232, 216, 0.55); }
 .qte-stage.hit-miss .qte-target { border-color: var(--ember); box-shadow: 0 0 26px rgba(232, 67, 26, 0.6); }
 .qte-pop {
@@ -2719,6 +2800,7 @@ img.svg-ic { object-fit: contain; }
   animation: qtePopRise 620ms ease-out forwards;
 }
 .qte-pop-perfect { color: var(--amber); text-shadow: 0 0 18px rgba(255, 171, 71, 0.9); }
+.qte-parry .qte-pop-perfect { color: var(--blue-bright); text-shadow: 0 0 18px rgba(188, 214, 255, 0.9); }
 .qte-pop-good { color: var(--cream); }
 .qte-pop-miss { color: var(--ember); }
 @keyframes qtePopRise { from { opacity: 1; translate: 0 8px; } to { opacity: 0; translate: 0 -16px; } }
@@ -2729,6 +2811,7 @@ img.svg-ic { object-fit: contain; }
   animation: qteResultIn 170ms ease-out;
 }
 .qte-result-perfect { color: var(--amber); text-shadow: 0 0 26px rgba(255, 171, 71, 0.95); }
+.qte-parry .qte-result-perfect { color: var(--blue-bright); text-shadow: 0 0 26px rgba(188, 214, 255, 0.95); }
 .qte-result-good { color: var(--cream); text-shadow: 0 0 18px rgba(243, 232, 216, 0.5); }
 .qte-result-miss { color: var(--ember); text-shadow: 0 0 22px rgba(232, 67, 26, 0.8); }
 @keyframes qteResultIn { from { opacity: 0; scale: 1.5; } to { opacity: 1; scale: 1; } }
@@ -2793,7 +2876,7 @@ img.svg-ic { object-fit: contain; }
   z-index: 10 !important;
 }
 
-.kb-focus.btn, .kb-focus.title-setting-btn, .kb-focus.tb-fs, .kb-focus.tb-mute, .kb-focus.tb-rhythm {
+.kb-focus.btn, .kb-focus.title-setting-btn, .kb-focus.tb-fs, .kb-focus.tb-mute, .kb-focus.tb-abandon {
   transform: scale(1.04) !important;
 }
 
@@ -2820,7 +2903,27 @@ img.svg-ic { object-fit: contain; }
 
 .kb-focus.map-node {
   transform: translate(-50%, -50%) scale(1.35) !important;
-  box-shadow: 0 0 12px var(--orange) !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 10px var(--orange)) !important;
+}
+
+/* Enemy targeting: glow the sprite's own alpha shape (drop-shadow), not a
+   box around its container — a plain box-shadow on .combatant reads as a
+   hard square behind sprites with transparent PNG cutouts. Mirrors the
+   mouse-hover targetable glow above. */
+.kb-focus.combatant {
+  box-shadow: none !important;
+  transform: none !important;
+}
+.kb-focus.combatant .stage {
+  transform: scale(1.15) !important;
+  filter: drop-shadow(0 0 28px rgba(255, 176, 80, 0.95)) !important;
+  transition: transform 0.15s ease, filter 0.15s ease !important;
+}
+
+.kb-focus.potion:has(.potion-art-img) {
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 10px var(--orange)) !important;
 }
 
 .kb-focus.char-card {
@@ -2845,6 +2948,10 @@ img.svg-ic { object-fit: contain; }
   }
   .kb-focus.map-node {
     transform: translate(-50%, -50%) !important;
+  }
+  .kb-focus.combatant .stage {
+    transform: none !important;
+    transition: none !important;
   }
   .pip:hover, .block-badge:hover {
     transform: none !important;

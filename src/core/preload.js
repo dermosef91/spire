@@ -1,21 +1,41 @@
 // Asset preloader — warms the browser cache for every static asset the game
-// uses (sprites, card art, event art, scene backgrounds, sound effects,
-// music) so nothing pops in or stalls mid-run.
+// uses (sprites, card art, relic art, potion art, event art, scene
+// backgrounds, map icons, sound effects, music) so nothing pops in or stalls
+// mid-run.
 // Image folders are manifest-driven: each ships a manifest.json listing its
-// ids. Sound/music files are a fixed set, listed here.
+// ids. Sound/music files and the (manifest-less) map icons are a fixed set,
+// listed here.
 // Everything is best-effort: a missing file or manifest never blocks the game.
 
 const MANIFEST_SOURCES = [
   { manifest: 'assets/sprites/manifest.json', dir: 'assets/sprites' },
   { manifest: 'assets/card-art/manifest.json', dir: 'assets/card-art' },
+  { manifest: 'assets/relic-art/manifest.json', dir: 'assets/relic-art' },
+  { manifest: 'assets/potion-art/manifest.json', dir: 'assets/potion-art' },
   { manifest: 'assets/event-art/manifest.json', dir: 'assets/event-art' },
   { manifest: 'assets/title screen and backgrounds/manifest.json', dir: 'assets/title screen and backgrounds' },
 ];
 
-// Fixed, non-manifest assets (see src/audio.js SOUNDS + ensure*Music, and
-// the combat scene icon).
+// Fixed, non-manifest assets (see src/audio.js SOUNDS + ensure*Music, the
+// map-node/combat icons in assets/icons, and the fx spritesheets in
+// "assets/animation sprites" — src/ui/fx.js spriteAnim() callers — none of
+// which ship a manifest.json). spritesheet-template.png in that folder is an
+// unused dev template, deliberately not listed.
 const STATIC_ASSETS = [
   'assets/icons/combat.png',
+  'assets/icons/coin.png',
+  'assets/icons/bazaar.png',
+  'assets/icons/boss.png',
+  'assets/icons/elite.png',
+  'assets/icons/event.png',
+  'assets/icons/rest.png',
+  'assets/icons/treasure.png',
+  'assets/animation sprites/slash.png',
+  'assets/animation sprites/zap.png',
+  'assets/animation sprites/spit.png',
+  'assets/animation sprites/splash.png',
+  'assets/animation sprites/fault-line.png',
+  'assets/animation sprites/skyfall-hammer.png',
   'assets/sounds/click.wav',
   'assets/sounds/reward.wav',
   'assets/sounds/attack.wav',
