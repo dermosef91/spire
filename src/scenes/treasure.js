@@ -10,6 +10,7 @@ import { audio } from '../audio.js';
 export const TreasureScene = {
   showTreasure() {
     const run = this.run;
+    this.narrator.say('first_treasure');
     const panel = el('div', { class: 'event-scene' });
     panel.appendChild(topBar(run, { onHover: (o, n, on) => this.tooltip(o, n, on) }));
     panel.appendChild(el('div', { class: 'event-art', html: NODE.treasure }));

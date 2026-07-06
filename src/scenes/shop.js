@@ -14,6 +14,7 @@ import { audio } from '../audio.js';
 export const ShopScene = {
   showShop() {
     const run = this.run;
+    this.narrator.say('first_shop');
     if (!run._shop) run._shop = this.generateShop();
     const shop = run._shop;
     const panel = el('div', { class: 'shop-scene' });

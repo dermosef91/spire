@@ -24,6 +24,7 @@ export const MapScene = {
   showMap() {
     audio.setMusicMode('title');
     saveRun(this.run);
+    this.narrator.say('first_map');
     const run = this.run;
     const map = run.map;
     const COLS = map.cols, ROWS = map.rows;

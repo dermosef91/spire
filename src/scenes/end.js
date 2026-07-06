@@ -16,6 +16,7 @@ export const EndScene = {
     const run = this.run;
     clearSave();
     audio.play(victory ? 'victory' : 'defeat');
+    if (!victory) this.narrator.say('defeat', { gate: 'always' });
     const panel = el('div', { class: 'end-scene' });
     panel.appendChild(el('h1', { class: victory ? 'end-win' : 'end-lose', text: victory ? 'THE SPIRE IS CLEANSED' : 'YOU HAVE FALLEN' }));
     panel.appendChild(el('p', {
@@ -101,6 +102,7 @@ export const EndScene = {
     audio.play('victory');
     const unwrite = mode === 'unwrite';
     if (unwrite && !this.meta.spireUnwritten) { this.meta.spireUnwritten = true; saveMeta(this.meta); }
+    this.narrator.say(unwrite ? 'victory_unwrite' : 'victory_ascend', { gate: 'always' });
     const panel = el('div', { class: 'end-scene' });
     panel.appendChild(el('h1', { class: 'end-win', text: unwrite ? 'THE SPIRE FALLS SILENT' : 'YOU ASCEND THE SPIRE' }));
     panel.appendChild(el('p', {

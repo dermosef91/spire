@@ -209,11 +209,13 @@ export const TitleScene = {
     this.run = new RunState(charId, undefined, this.selectedAscension);
     this.meta.runs += 1; saveMeta(this.meta);
     saveRun(this.run);
+    this.narrator.resetRun();
     this.showActIntro();
   },
 
   showActIntro() {
     const run = this.run;
+    this.narrator.say(`act_intro_${run.act}`);
     const panel = el('div', { class: 'act-intro' });
 
     // ---------- orange floating particles ----------
