@@ -203,6 +203,10 @@ export class Combat {
     if (add <= 0) return;
     this.applyPower(this.player, 'tempo', add, this.player);
     this.fire('tempoGained', { amount: add, total: this.tempo() });
+    // Fires once per crossing into the cap: a gain while already at 10
+    // computes add <= 0 above and returns before reaching here, so this
+    // can't refire until Tempo dips below the cap and climbs back to it.
+    if (this.tempo() >= TEMPO_CAP) this.fire('tempoCapped');
   }
   breakTempo() {
     if (this.tempo() <= 0) return;
@@ -355,6 +359,7 @@ export class Combat {
 
   onEnemyDeath(enemy) {
     this.log(`${enemy.name} is destroyed.`);
+    this.run.foesSlain += 1;
     this.fire('enemyDeath', { enemy });
     // The Duel: killing your Challenged foe claims what the Spire would have
     // taken — a windfall of momentum. Baked in here (not a registered

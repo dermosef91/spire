@@ -48,6 +48,7 @@ export class RunState {
     this.encountersCleared = 0;
     this.eliteCleared = 0;
     this.bossesDefeated = 0;
+    this.foesSlain = 0;
     this.usedEvents = [];
 
     // starter relic
@@ -180,7 +181,7 @@ export class RunState {
       potions: this.potions, relics: this.relics, deck: this.deck,
       encountersCleared: this.encountersCleared, eliteCleared: this.eliteCleared,
       actMonster: this._actMonster || 0,
-      bossesDefeated: this.bossesDefeated, usedEvents: this.usedEvents,
+      bossesDefeated: this.bossesDefeated, foesSlain: this.foesSlain, usedEvents: this.usedEvents,
       map: this.map, position: this.position,
       elapsedTime: this.elapsedTime,
     };
@@ -204,6 +205,7 @@ export class RunState {
     run._actMonster = data.actMonster || 0;
     run.eliteCleared = data.eliteCleared || 0;
     run.bossesDefeated = data.bossesDefeated || 0;
+    run.foesSlain = data.foesSlain || 0;
     run.usedEvents = data.usedEvents || [];
     run.map = data.map;
     run.position = data.position;

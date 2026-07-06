@@ -226,6 +226,17 @@ def('unbroken_dance', {
     ctx.combat.gainBlockTo(ctx.combat.player, amount * ctx.c.magic, true);
   }, 'Unbroken Dance'),
 });
+def('overflow', {
+  name: 'Overflow', char: 'amara', type: 'power', rarity: 'uncommon', cost: 1,
+  magic: 8, target: 'self',
+  desc: (c) => `When your Tempo hits its cap, deal ${c.magic} damage to ALL enemies, then Tempo resets to 5.`,
+  upgrade: (c) => { c.magic = 12; },
+  onPlay: (ctx) => ctx.combat.addTrigger('tempoCapped', () => {
+    ctx.dealAll(ctx.c.magic);
+    const t = ctx.combat.tempo();
+    if (t > 5) ctx.applySelf('tempo', 5 - t);
+  }, 'Overflow'),
+});
 
 // --- Scars & tempo edge: the Bladedancer wears her wounds and gambles her rhythm.
 def('reckless_glory', {
@@ -762,6 +773,13 @@ def('catalogue_opens', {
     for (const card of rest) ctx.combat.consume(card);
     if (rest.length) ctx.dealAll(ctx.c.dmg * rest.length);
   },
+});
+def('reckoning', {
+  name: 'Reckoning', char: 'colorless', type: 'attack', rarity: 'rare', cost: 1,
+  magic: 40, target: 'enemy',
+  desc: (c) => `Deal damage equal to the number of foes you've slain this run (max ${c.magic}).`,
+  upgrade: (c) => { c.magic = 50; },
+  onPlay: (ctx) => ctx.deal(ctx.enemy, Math.min(ctx.run.foesSlain, ctx.c.magic)),
 });
 
 // ============================================================== STATUS & CURSE
