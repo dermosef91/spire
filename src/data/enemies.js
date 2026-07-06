@@ -28,10 +28,15 @@
 export const ENEMIES = {};
 function def(id, bp) { ENEMIES[id] = { id, ...bp }; }
 
-// Helper: a move that just attacks.
-const atk = (name, dmg, hits = 1) => ({
+// Helper: a move that just attacks. `extra` merges additional move fields —
+// most commonly presentation hints the combat view reads instead of matching
+// move ids: `sfx` (sound at attack/skill start) and `vfx` (impact animation,
+// see VFX_PLAYBOOK in ui/combatView.js). Both default to the generic
+// attack sound / slash animation when omitted.
+const atk = (name, dmg, hits = 1, extra = {}) => ({
   name, intent: { type: 'attack', dmg, hits },
   run: (c, s) => c.enemyAttack(s, dmg, hits),
+  ...extra,
 });
 
 // Helper: heal an enemy and flash the heal FX.
@@ -66,7 +71,7 @@ const selfLowHp = (s, frac = 0.4) => s.hp <= s.maxHp * frac;
 def('husk_drone', {
   name: 'Husk Drone', act: 1, hpMin: 24, hpMax: 32, startBlock: 6,
   moves: {
-    zap: atk('Zap', 6),
+    zap: atk('Zap', 6, 1, { sfx: 'zap', vfx: 'zap' }),
     buzz: { name: 'Overcharge', intent: { type: 'buffblock', block: 4 }, run: (c, s) => { c.applyPower(s, 'strength', 2, s); c.gainBlockTo(s, 4); c.fx('powersurge', { target: s }); } },
   },
   pick: (s, c, rng) => (s.history.filter((m) => m === 'buzz').length === 0 && s.turn === 1 ? 'zap' : (s.turn % 3 === 0 ? 'buzz' : 'zap')),
@@ -77,7 +82,7 @@ def('static_jackal', {
   name: 'Static Jackal', act: 1, hpMin: 20, hpMax: 26,
   moves: {
     bite: atk('Snap', 8),
-    howl: { name: 'Howl', intent: { type: 'debuffblock', block: 5 }, run: (c, s) => { c.applyPower(c.player, 'weak', 1, s); c.gainBlockTo(s, 5); } },
+    howl: { name: 'Howl', sfx: 'growl', intent: { type: 'debuffblock', block: 5 }, run: (c, s) => { c.applyPower(c.player, 'weak', 1, s); c.gainBlockTo(s, 5); } },
     lunge: atk('Lunge', 5, 2),
   },
   pick: (s, c, rng) => rng.pick(['bite', 'lunge', 'howl']),
@@ -123,7 +128,7 @@ def('market_thief', {
 def('reef_spitter', {
   name: 'Reef Spitter', act: 1, hpMin: 22, hpMax: 27,
   moves: {
-    spit: { name: 'Brine Spit', intent: { type: 'attackdebuff', dmg: 4 }, run: (c, s) => { c.enemyAttack(s, 4); c.applyPower(c.player, 'poison', 3, s); } },
+    spit: { name: 'Brine Spit', sfx: 'slime', vfx: 'spit', intent: { type: 'attackdebuff', dmg: 4 }, run: (c, s) => { c.enemyAttack(s, 4); c.applyPower(c.player, 'poison', 3, s); } },
     cloud: { name: 'Blight Cloud', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'poison', 4, s) },
     snap: atk('Shell Snap', 7),
   },
@@ -140,7 +145,7 @@ def('tide_priest', {
   moves: {
     mend: { name: 'Tidal Mending', intent: { type: 'buff' }, run: (c, s) => { eHeal(c, weakestAlly(c) || s, 10); } },
     anoint: { name: 'Anoint', intent: { type: 'buff' }, run: (c, s) => { const t = otherAlly(c, s); c.applyPower(t, 'strength', 2, s); c.fx('powersurge', { target: t }); } },
-    splash: atk('Splash', 5),
+    splash: atk('Splash', 5, 1, { sfx: 'splash', vfx: 'splash' }),
   },
   pick: (s, c, rng) => {
     const hurt = c.enemies.some((e) => e.alive && e !== s && e.hp < e.maxHp * 0.6);
@@ -155,7 +160,7 @@ def('spark_imp', {
   name: 'Spark Imp', act: 1, hpMin: 13, hpMax: 17,
   moves: {
     kindle: { name: 'Kindle', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
-    jolt: atk('Jolt', 6),
+    jolt: atk('Jolt', 6, 1, { sfx: 'zap', vfx: 'zap' }),
   },
   pick: (s, c, rng) => (s.turn === 1 || s.turn % 4 === 0 ? 'kindle' : 'jolt'),
 });
@@ -200,7 +205,7 @@ def('the_gatekeeper', {
   name: 'The Gatekeeper', act: 1, boss: true, hpMin: 250, hpMax: 250,
   moves: {
     judge: atk('Judgement', 16),
-    barrage: atk('Sevenfold Strike', 4, 4),
+    barrage: atk('Sevenfold Strike', 4, 4, { sfx: 'thunder' }),
     seal: { name: 'Seal the Gate', intent: { type: 'debuffblock', block: 18 }, run: (c, s) => { c.gainBlockTo(s, 18); c.applyPower(c.player, 'frail', 2, s); } },
     decree: { name: 'Decree', intent: { type: 'debuff' }, run: (c, s) => { c.applyPower(c.player, 'weak', 2, s); c.applyPower(c.player, 'vulnerable', 2, s); } },
   },
@@ -255,7 +260,7 @@ def('chrome_serpent', {
   moves: {
     constrict: { name: 'Constrict', intent: { type: 'debuffblock', block: 8 }, run: (c, s) => { c.applyPower(c.player, 'weak', 2, s); c.gainBlockTo(s, 8); } },
     crush: atk('Crush', 16),
-    venom: { name: 'Venom Spit', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.applyPower(c.player, 'poison', 5, s); } },
+    venom: { name: 'Venom Spit', sfx: 'slime', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.applyPower(c.player, 'poison', 5, s); } },
   },
   pick: (s, c, rng) => (s.turn === 1 ? 'constrict' : rng.pick(['crush', 'venom'])),
 });
@@ -265,8 +270,8 @@ def('chrome_serpent', {
 def('ink_leech', {
   name: 'Ink Leech', act: 2, hpMin: 26, hpMax: 32,
   moves: {
-    latch: { name: 'Latch', intent: { type: 'attack', dmg: 9 }, run: (c, s) => { c.enemyAttack(s, 9); eHeal(c, s, 6); } },
-    siphon: { name: 'Siphon', intent: { type: 'attackdebuff', dmg: 5 }, run: (c, s) => { c.enemyAttack(s, 5); c.applyPower(c.player, 'weak', 1, s); eHeal(c, s, 4); } },
+    latch: { name: 'Latch', sfx: 'slime', intent: { type: 'attack', dmg: 9 }, run: (c, s) => { c.enemyAttack(s, 9); eHeal(c, s, 6); } },
+    siphon: { name: 'Siphon', sfx: 'slime', intent: { type: 'attackdebuff', dmg: 5 }, run: (c, s) => { c.enemyAttack(s, 5); c.applyPower(c.player, 'weak', 1, s); eHeal(c, s, 4); } },
     gorge: { name: 'Gorge', intent: { type: 'buff' }, run: (c, s) => eHeal(c, s, 10) },
   },
   pick: (s, c, rng) => {
@@ -297,7 +302,7 @@ def('null_scribe', {
 def('glyph_sentry', {
   name: 'Glyph Sentry', act: 2, hpMin: 34, hpMax: 40, startBlock: 8,
   moves: {
-    spark: atk('Rune Spark', 7),
+    spark: atk('Rune Spark', 7, 1, { sfx: 'zap' }),
     charge: { name: 'Charge Glyph', intent: { type: 'buffblock', block: 12 }, run: (c, s) => { c.gainBlockTo(s, 12); c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
     lance: { name: 'Prism Lance', intent: { type: 'attack', dmg: 22 }, run: (c, s) => c.enemyAttack(s, 22) },
   },
@@ -457,8 +462,8 @@ def('ember_colossus', {
 def('static_swarm', {
   name: 'Static Swarm', act: 3, hpMin: 40, hpMax: 46,
   moves: {
-    scatter: atk('Scatterstatic', 3, 5),
-    surge: atk('Surge', 12),
+    scatter: atk('Scatterstatic', 3, 5, { sfx: 'zap' }),
+    surge: atk('Surge', 12, 1, { sfx: 'zap' }),
     corrupt: { name: 'Corrupt', intent: { type: 'debuff' }, run: (c, s) => { c.addCardToPile(c.makeCard('static_curse'), 'discard'); c.applyPower(c.player, 'weak', 1, s); } },
   },
   pick: (s, c, rng) => {
@@ -521,7 +526,7 @@ def('heart_of_static', {
   dmgCapPerTurn: 100, // Invincibility: absorbs at most 100 damage per player turn.
   moves: {
     blast: atk('Reality Blast', 42),
-    multibeam: atk('Cascade', 5, 6),
+    multibeam: atk('Cascade', 5, 6, { sfx: 'zap' }),
     static_field: { name: 'Static Field', intent: { type: 'debuffblock', block: 20 }, run: (c, s) => { for (let i = 0; i < 3; i++) c.addCardToPile(c.makeCard('dazed'), 'draw'); c.applyPower(c.player, 'weak', 1, s); c.gainBlockTo(s, 20); } },
     rebuild: { name: 'Rebuild', intent: { type: 'buffblock', block: 30 }, run: (c, s) => { c.gainBlockTo(s, 30); c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
   },
