@@ -238,19 +238,19 @@ def('reckless_glory', {
 def('open_old_wounds', {
   name: 'Open the Old Wounds', char: 'amara', type: 'attack', rarity: 'rare', cost: 1,
   dmg: 9, target: 'all',
-  desc: (c) => `Exhaust all Status cards in your hand. Deal ${c.dmg} damage to ALL enemies for each one.`,
+  desc: (c) => `Consume all Status cards in your hand. Deal ${c.dmg} damage to ALL enemies for each one.`,
   upgrade: (c) => { c.dmg = 12; },
   onPlay: (ctx) => {
     const statuses = ctx.combat.hand.filter((h) => h.type === 'status');
-    for (const s of statuses) { ctx.combat.hand.splice(ctx.combat.hand.indexOf(s), 1); ctx.combat.exhaust(s); }
+    for (const s of statuses) { ctx.combat.hand.splice(ctx.combat.hand.indexOf(s), 1); ctx.combat.consume(s); }
     if (statuses.length) ctx.dealAll(ctx.c.dmg * statuses.length);
   },
 });
 def('half_beat', {
   name: 'Half-Beat', char: 'amara', type: 'skill', rarity: 'common', cost: 0,
-  magic: 2, target: 'self', exhaust: true,
-  desc: (c) => `Gain ${c.magic} Tempo.${c.exhaust ? ' Exhaust.' : ''}`,
-  upgrade: (c) => { c.exhaust = false; },
+  magic: 2, target: 'self', consume: true,
+  desc: (c) => `Gain ${c.magic} Tempo.${c.consume ? ' Consume.' : ''}`,
+  upgrade: (c) => { c.consume = false; },
   onPlay: (ctx) => ctx.gainTempo(ctx.c.magic),
 });
 def('shattered_cadence', {
@@ -599,11 +599,11 @@ def('read_the_field', {
 def('swallow_sorrow', {
   name: 'Swallow Sorrow', char: 'colorless', type: 'skill', rarity: 'uncommon', cost: 1,
   block: 9, magic: 4, target: 'self',
-  desc: (c) => `Exhaust a Status or Curse from your hand: gain ${c.block} Block and draw 1. If you have none, gain ${c.magic} Block.`,
+  desc: (c) => `Consume a Status or Curse from your hand: gain ${c.block} Block and draw 1. If you have none, gain ${c.magic} Block.`,
   upgrade: (c) => { c.block = 12; c.magic = 6; },
   onPlay: (ctx) => {
     const junk = ctx.combat.hand.find((h) => h.type === 'status' || h.type === 'curse');
-    if (junk) { ctx.combat.hand.splice(ctx.combat.hand.indexOf(junk), 1); ctx.combat.exhaust(junk); ctx.gainBlock(ctx.c.block); ctx.draw(1); }
+    if (junk) { ctx.combat.hand.splice(ctx.combat.hand.indexOf(junk), 1); ctx.combat.consume(junk); ctx.gainBlock(ctx.c.block); ctx.draw(1); }
     else ctx.gainBlock(ctx.c.magic);
   },
 });

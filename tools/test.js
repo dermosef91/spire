@@ -756,13 +756,13 @@ test('Reckless Glory deals 12 and adds a Scar to the discard pile', () => {
   assert.equal(c.discardPile.filter((x) => x.id === 'wound').length, 1, 'a Scar entered the discard');
 });
 
-test('Open the Old Wounds exhausts held Status cards and deals 9 per', () => {
+test('Open the Old Wounds consumes held Status cards and deals 9 per', () => {
   const c = freshCombat();
   const e = c.enemies[0]; e.block = 0; e.hp = e.maxHp = 999;
   c.hand.push(c.makeCard('wound'), c.makeCard('wound'));
-  const exBefore = c.exhaustPile.length;
+  const exBefore = c.consumePile.length;
   playCrafted(c, 'open_old_wounds', e);
-  assert.equal(c.exhaustPile.length - exBefore, 2, 'both Scars exhausted');
+  assert.equal(c.consumePile.length - exBefore, 2, 'both Scars consumed');
   assert.equal(e.hp, 999 - 18, 'dealt 9 x2 = 18');
   assert.equal(c.hand.filter((x) => x.id === 'wound').length, 0, 'no Scars left in hand');
 });
@@ -803,10 +803,10 @@ test('Swallow Sorrow eats a Curse for Block + draw, else small Block', () => {
   const c = freshCombat();
   c.player.block = 0;
   c.hand.push(c.makeCard('regret'));
-  const exBefore = c.exhaustPile.length;
+  const exBefore = c.consumePile.length;
   playCrafted(c, 'swallow_sorrow', null);
   assert.equal(c.player.block, 9, 'ate the curse for 9 Block');
-  assert.equal(c.exhaustPile.length - exBefore, 1, 'curse exhausted');
+  assert.equal(c.consumePile.length - exBefore, 1, 'curse consumed');
 
   const c2 = freshCombat();
   c2.player.block = 0;
