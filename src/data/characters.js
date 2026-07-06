@@ -19,7 +19,7 @@ export const CHARACTERS = {
       'ancestral_fury', 'blood_offering', 'devour', 'harvest', 'skyfall', 'unbroken_dance',
       'reckless_glory', 'open_old_wounds', 'half_beat', 'shattered_cadence',
       'answering_steel', 'answer_in_kind', 'blade_turn', 'read_the_wind', 'untouchable',
-      'call_the_duel', 'take_their_name',
+      'call_the_duel', 'take_their_name', 'overflow',
     ],
   },
   kofi: {
@@ -65,6 +65,7 @@ export const COLORLESS_POOL = [
   'shiv', 'flash', 'panic_button', 'apotheosis', 'read_the_field', 'swallow_sorrow',
   'step_turn_strike', 'answer_song', 'call_and_response',
   'echo_of_the_cantor', 'echo_of_the_sentinel', 'echo_of_the_warden', 'remembered_name', 'catalogue_opens',
+  'reckoning',
 ];
 
 export function characterById(id) { return CHARACTERS[id]; }

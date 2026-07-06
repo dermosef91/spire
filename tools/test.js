@@ -108,8 +108,10 @@ test('toJSON / fromJSON round-trips run state', () => {
   // the per-act fight counter drives the weak/normal/hard encounter tiers and
   // must survive a save/reload mid-act
   run._actMonster = 4;
+  run.foesSlain = 7;
   const clone = RunState.fromJSON(JSON.parse(JSON.stringify(run.toJSON())));
   assert.equal(clone._actMonster, 4, 'per-act fight counter persisted');
+  assert.equal(clone.foesSlain, 7, 'foes-slain counter persisted');
 
   assert.equal(clone.characterId, run.characterId);
   assert.equal(clone.hp, run.hp);
@@ -1086,6 +1088,67 @@ test('Take Their Name grants Resolve and healing on a Challenged kill', () => {
   assert.equal(enemy.alive, false, 'the Challenged enemy died');
   assert.equal(c.player.powers.strength, 3, 'gained Resolve on the kill');
   assert.equal(c.player.hp, Math.min(c.player.maxHp, hpBefore + 6), 'healed 6 on the kill');
+});
+
+// ----------------------------------------------------------------- new cards: PR6
+console.log('New cards — Tempo cap & Reckoning (PR6)');
+
+test('gainTempo fires tempoCapped once per crossing into the cap', () => {
+  const c = freshCombat();
+  let fires = 0;
+  c.addTrigger('tempoCapped', () => { fires++; });
+  c.gainTempo(5);
+  assert.equal(fires, 0, 'below cap: no fire');
+  c.gainTempo(5); // now at 10
+  assert.equal(fires, 1, 'reaching the cap fires once');
+  c.gainTempo(5); // already at cap, add computes to 0
+  assert.equal(fires, 1, 'staying at the cap does not refire');
+});
+
+test('Overflow triggers AoE damage and resets Tempo to 5 when the cap is hit', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0]; enemy.block = 0; enemy.hp = enemy.maxHp = 999;
+  playCrafted(c, 'overflow', null);
+  c.gainTempo(9);
+  assert.equal(enemy.hp, 999, 'no proc below the cap');
+  c.gainTempo(1); // hits 10
+  assert.equal(enemy.hp, 999 - 8, 'Overflow dealt 8 AoE damage at the cap');
+  assert.equal(c.tempo(), 5, 'Tempo reset to 5');
+
+  c.gainTempo(5); // rebuild to the cap
+  assert.equal(enemy.hp, 999 - 8 - 8, 'Overflow fires again after rebuilding to the cap');
+  assert.equal(c.tempo(), 5, 'reset to 5 again');
+});
+
+test('onEnemyDeath increments run.foesSlain', () => {
+  const run = new RunState('amara', 79);
+  const c = new Combat(run, ['husk_drone', 'husk_drone']);
+  c.start();
+  assert.equal(run.foesSlain, 0);
+  c.applyDamage(c.enemies[0], 999, { isAttack: false });
+  assert.equal(run.foesSlain, 1, 'incremented on the first kill');
+  c.applyDamage(c.enemies[1], 999, { isAttack: false });
+  assert.equal(run.foesSlain, 2, 'incremented on the second kill');
+});
+
+test('Reckoning deals damage equal to foes slain this run, capped', () => {
+  const run = new RunState('amara', 77);
+  const c = new Combat(run, ['husk_drone']);
+  c.start();
+  const enemy = c.enemies[0]; enemy.block = 0; enemy.hp = enemy.maxHp = 999;
+  run.foesSlain = 5;
+  playCrafted(c, 'reckoning', enemy);
+  assert.equal(enemy.hp, 999 - 5, 'dealt damage equal to foes slain');
+});
+
+test('Reckoning is capped at 40', () => {
+  const run = new RunState('amara', 78);
+  const c = new Combat(run, ['husk_drone']);
+  c.start();
+  const enemy = c.enemies[0]; enemy.block = 0; enemy.hp = enemy.maxHp = 999;
+  run.foesSlain = 999;
+  playCrafted(c, 'reckoning', enemy);
+  assert.equal(enemy.hp, 999 - 40, 'capped at 40');
 });
 
 // ----------------------------------------------------------------- summary

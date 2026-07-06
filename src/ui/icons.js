@@ -209,6 +209,8 @@ const CARD_MOTIF = {
   answering_steel: 'shield', answer_in_kind: 'reticle', blade_turn: 'brokenBlade', read_the_wind: 'crescent', untouchable: 'crescent',
   // new: The Duel (PR5)
   call_the_duel: 'reticle', take_their_name: 'blood',
+  // new: Tempo cap (PR6)
+  overflow: 'note',
   // Kofi
   jab: 'blade', refrain: 'shield', cutting_verse: 'note', blight_needle: 'poison', quickstep: 'cards',
   double_tap: 'twin', crescendo: 'note', deflect: 'shield', shard_burst: 'burst', backbeat: 'note',
@@ -230,6 +232,8 @@ const CARD_MOTIF = {
   // new: The Archive (PR3)
   echo_of_the_cantor: 'crescent', echo_of_the_sentinel: 'crescent', echo_of_the_warden: 'crescent',
   remembered_name: 'eye', catalogue_opens: 'burst',
+  // new: Reckoning (PR6)
+  reckoning: 'blood',
 };
 export function cardArt(id) { return S(M[CARD_MOTIF[id]] || M.burst, { cls: 'card-art-svg' }); }
 
