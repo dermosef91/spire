@@ -207,6 +207,8 @@ const CARD_MOTIF = {
   harvest: 'blood', skyfall: 'hammer',
   // new: Riposte & Flow (PR4)
   answering_steel: 'shield', answer_in_kind: 'reticle', blade_turn: 'brokenBlade', read_the_wind: 'crescent', untouchable: 'crescent',
+  // new: The Duel (PR5)
+  call_the_duel: 'reticle', take_their_name: 'blood',
   // Kofi
   jab: 'blade', refrain: 'shield', cutting_verse: 'note', blight_needle: 'poison', quickstep: 'cards',
   double_tap: 'twin', crescendo: 'note', deflect: 'shield', shard_burst: 'burst', backbeat: 'note',

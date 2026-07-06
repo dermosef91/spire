@@ -305,6 +305,35 @@ def('untouchable', {
   onPlay: (ctx) => ctx.combat.addTrigger('turnStart', () => ctx.applySelf('flow', ctx.c.magic), 'Untouchable'),
 });
 
+// --- The Duel: a single-target mark. Honor demands you finish what you
+// started — a commitment archetype with no Slay-the-Spire equivalent.
+def('call_the_duel', {
+  name: 'Call the Duel', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 0, consume: true,
+  magic: 3, target: 'enemy',
+  desc: (c) => `Challenge an enemy: your attacks deal +${c.magic} damage to it. When it dies, draw 3 cards. Consume.`,
+  upgrade: (c) => { c.magic = 4; },
+  onPlay: (ctx) => {
+    if (!ctx.enemy || !ctx.enemy.alive) return;
+    // Only one enemy is ever Challenged at a time.
+    for (const e of ctx.combat.livingEnemies()) if (e !== ctx.enemy) delete e.powers.challenged;
+    ctx.applyEnemy('challenged', ctx.c.magic);
+  },
+});
+def('take_their_name', {
+  name: 'Take Their Name', char: 'amara', type: 'attack', rarity: 'rare', cost: 3, consume: true,
+  dmg: 26, magic: 3, target: 'none',
+  desc: (c) => `Deal ${c.dmg} damage to the Challenged enemy. If this kills it, gain ${c.magic} Resolve and heal ${c.upgraded ? 8 : 6}. Consume.`,
+  upgrade: (c) => { c.dmg = 34; c.magic = 4; },
+  playable: (ctx) => ctx.combat.livingEnemies().some((e) => e.powers.challenged),
+  onPlay: (ctx) => {
+    const target = ctx.combat.livingEnemies().find((e) => e.powers.challenged);
+    if (!target) return;
+    const wasAlive = target.alive;
+    ctx.deal(target, ctx.c.dmg);
+    if (wasAlive && !target.alive) { ctx.applySelf('strength', ctx.c.magic); ctx.heal(ctx.c.upgraded ? 8 : 6); }
+  },
+});
+
 // ============================================================== KOFI — Griot of the Cosmos
 // Verses, Blight (poison), cheap cards and relentless tempo.
 
