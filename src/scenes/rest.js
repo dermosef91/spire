@@ -13,6 +13,7 @@ import { audio } from '../audio.js';
 export const RestScene = {
   showRest() {
     const run = this.run;
+    this.narrator.say('first_rest');
     const panel = el('div', { class: 'rest-scene' });
     panel.appendChild(topBar(run, { onHover: (o, n, on) => this.tooltip(o, n, on) }));
     panel.appendChild(el('div', { class: 'rest-fire', html: NODE.rest }));

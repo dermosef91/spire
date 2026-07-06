@@ -1077,7 +1077,9 @@ export class CombatView {
       return;
     }
     if (type === 'tempobreak') {
-      // A missed beat zeroes the Tempo counter — name the loss.
+      // A missed beat zeroes the Tempo counter — name the loss. Suppressed
+      // during the first-play tutorial (see beginCombat in scenes/combat.js).
+      if (!this.game.tutorial) this.game.narrator.say('first_tempo_break');
       const el2 = this.elFor(payload.entity);
       if (el2) floatText(layer, el2, 'RHYTHM BROKEN', 'debuff');
       return;
@@ -1199,6 +1201,8 @@ export class CombatView {
       return;
     }
     if (type === 'death') {
+      // Suppressed during the first-play tutorial (see beginCombat, scenes/combat.js).
+      if (!payload.target.isPlayer && !this.game.tutorial) this.game.narrator.say('first_kill');
       const el2 = this.elFor(payload.target); if (!el2) return;
       const applyDeathFx = () => {
         burst(layer, el2, '#ffce5c', 18);

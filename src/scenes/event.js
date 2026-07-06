@@ -27,6 +27,7 @@ function eventArt(ev) {
 export const EventScene = {
   showEvent() {
     const run = this.run;
+    this.narrator.say('first_event');
     const pool = eventsForAct(run.act).filter((e) => !run.usedEvents.includes(e.id));
     const ev = (pool.length ? run.rng.pick(pool) : run.rng.pick(eventsForAct(run.act)));
     run.usedEvents.push(ev.id);

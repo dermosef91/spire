@@ -30,7 +30,10 @@ export const CombatScene = {
     this.beginCombat(encounter, 'monster');
   },
   startElite() { this.beginCombat(this.pickEncounter('elite'), 'elite'); },
-  startBoss() { this.beginCombat(this.pickEncounter('boss'), 'boss'); },
+  startBoss() {
+    this.narrator.say('boss_approach');
+    this.beginCombat(this.pickEncounter('boss'), 'boss');
+  },
 
   beginCombat(enemyIds, kind) {
     audio.setCombat(true, kind === 'boss');
@@ -43,6 +46,19 @@ export const CombatScene = {
     const holder = el('div', { class: 'combat-holder' });
     this.setScene(holder, 'combat');
     view.mount(holder);
+    // Griot narrator: purely cosmetic listeners (never mutate combat state) for
+    // two combat beats the engine has no dedicated event for. Suppressed while
+    // the first-play tutorial banner is up (this.tutorial) — both are pinned
+    // near the top of the combat scene and would visually collide, and a
+    // first-timer doesn't need two competing voices in their first fight.
+    const game = this;
+    const narrator = this.narrator;
+    combat.addTrigger('rhythm', ({ grade }) => {
+      if (!game.tutorial && grade === 'perfect') narrator.say('first_perfect');
+    }, 'narrator:perfect');
+    combat.addTrigger('hpLost', () => {
+      if (!game.tutorial && combat.player.hp > 0 && combat.player.hp < combat.player.maxHp * 0.35) narrator.say('first_low_hp');
+    }, 'narrator:lowhp');
     // First-ever combat: run the interactive tutorial once the opening draw
     // settles.
     if (!this.meta.tutorialDone && kind === 'monster') {

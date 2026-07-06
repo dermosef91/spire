@@ -22,6 +22,7 @@ import { background } from './fx/background.js';
 import { audio } from './audio.js';
 import { isTouchDevice } from './core/fullscreen.js';
 import { KeyboardController } from './core/keyboard.js';
+import { Narrator } from './ui/narrator.js';
 
 import { TitleScene } from './scenes/title.js';
 import { MapScene } from './scenes/map.js';
@@ -45,6 +46,7 @@ export class Game {
     this.kwNode = null;
     this.meta = loadMeta();
     this.selectedAscension = Math.min(this.meta.ascension || 0, this.meta.maxAscension || 0);
+    this.narrator = new Narrator(this); // the Spire's voice (cosmetic)
     this.setupMobile();
     this.setupGlossaryPopups();
     this.keyboard = new KeyboardController(this);
