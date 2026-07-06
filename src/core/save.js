@@ -39,11 +39,5 @@ function defaultMeta() {
     runs: 0, wins: 0, bestFloor: 0, ascensions: 0, maxAscension: 0, ascension: 0,
     tutorialDone: false, multiEnemyTutorialDone: false, ascendedOnce: false, timesAscended: 0, spireUnwritten: false,
     rhythm: true, bestTime: 0,
-    // Griot narrator: once-ever flags so each marquee first-play line fires a
-    // single time across all runs (see src/data/narrator-lines.js).
-    narrSeenFirstMap: false,
-    narrSeenActIntro1: false, narrSeenActIntro2: false, narrSeenActIntro3: false,
-    narrSeenShop: false, narrSeenRest: false, narrSeenEvent: false, narrSeenTreasure: false,
-    narrSeenPerfect: false, narrSeenKill: false, narrSeenTempoBreak: false,
   };
 }
