@@ -1241,6 +1241,41 @@ test("Stagger skips an enemy's action; its intent carries over unchanged", () =>
   assert.equal(c.player.hp, hpBefore, 'no damage — the action never ran');
 });
 
+// ----------------------------------------------------------------- new cards: PR9
+console.log('New cards — Oaths: Vow system (PR9)');
+
+test('Oath of Iron grants Resolve next turn if kept (no HP damage taken)', () => {
+  const c = freshCombat();
+  playCrafted(c, 'oath_of_iron', null);
+  assert.equal(c.player.powers.strength || 0, 0, "no Resolve yet — the vow hasn't resolved");
+  c.startPlayerTurn(false);
+  assert.equal(c.player.powers.strength, 2, 'kept the vow: gained Resolve');
+  assert.equal(c.brokeVowThisCombat, false, 'no vow broken');
+  assert.equal(c.vows.length, 0, 'the ledger cleared');
+});
+
+test('Oath of Iron grants nothing and marks a broken vow if HP damage is taken', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  playCrafted(c, 'oath_of_iron', null);
+  c.player.block = 0;
+  c.enemyAttack(enemy, 5); // breaks the vow
+  c.startPlayerTurn(false);
+  assert.equal(c.player.powers.strength || 0, 0, 'the vow was broken — no Resolve');
+  assert.equal(c.brokeVowThisCombat, true, 'a vow was broken this combat');
+});
+
+test("Oathbreaker's Edge deals more once a Vow has been broken this combat", () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0]; enemy.block = 0; enemy.hp = enemy.maxHp = 999;
+  playCrafted(c, 'oathbreakers_edge', enemy);
+  assert.equal(enemy.hp, 999 - 12, 'base damage — no Vow broken yet');
+
+  c.brokeVowThisCombat = true;
+  playCrafted(c, 'oathbreakers_edge', enemy);
+  assert.equal(enemy.hp, 999 - 12 - 20, 'boosted damage once a Vow has broken');
+});
+
 // ----------------------------------------------------------------- summary
 console.log('');
 if (failures.length) {

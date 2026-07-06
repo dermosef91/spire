@@ -211,6 +211,8 @@ const CARD_MOTIF = {
   call_the_duel: 'reticle', take_their_name: 'blood',
   // new: Tempo cap (PR6)
   overflow: 'note',
+  // new: Oaths (PR9)
+  oath_of_iron: 'shield', oathbreakers_edge: 'brokenBlade',
   // Kofi
   jab: 'blade', refrain: 'shield', cutting_verse: 'note', blight_needle: 'poison', quickstep: 'cards',
   double_tap: 'twin', crescendo: 'note', deflect: 'shield', shard_burst: 'burst', backbeat: 'note',
