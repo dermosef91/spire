@@ -365,8 +365,7 @@ test('playing an attack builds 1 Tempo by default (headless / rhythm off)', () =
 
 test('a Perfect strike adds 2 Tempo, a miss breaks it to 0', () => {
   const c = freshCombat();
-  c._rhythmGrade = 'perfect';
-  c.registerStrikeGrade(c._rhythmGrade);
+  c.registerStrikeGrade('perfect');
   assert.equal(c.tempo(), 2, 'perfect adds 2');
   c.registerStrikeGrade('good');
   assert.equal(c.tempo(), 3, 'good adds 1');
@@ -374,15 +373,32 @@ test('a Perfect strike adds 2 Tempo, a miss breaks it to 0', () => {
   assert.equal(c.tempo(), 0, 'miss breaks Tempo to 0');
 });
 
-test('Tempo caps at 10 and playCard consumes the pending grade', () => {
+test('Tempo caps at 10; a graded play stays capped and clears its context', () => {
   const c = freshCombat();
   for (let i = 0; i < 9; i++) c.gainTempo(2);
   assert.equal(c.tempo(), 10, 'capped at 10');
   const attack = c.hand.find((card) => card.type === 'attack');
-  c._rhythmGrade = 'perfect';
-  c.playCard(attack, c.enemies[0]);
-  assert.equal(c._rhythmGrade, null, 'grade consumed by the play');
+  c.playCard(attack, c.enemies[0], { rhythmGrade: 'perfect' });
+  assert.equal(c._play, null, 'active-play context cleared after the play');
   assert.equal(c.tempo(), 10, 'still capped');
+});
+
+test('playCard opts: rhythmMult scales damage; fx payloads echo card/charge/swing', () => {
+  const c = freshCombat();
+  const attack = c.hand.find((card) => card.type === 'attack');
+  const enemy = c.enemies[0];
+  const payloads = [];
+  c.fx = (type, payload) => { if (type === 'damage' || type === 'attackstart') payloads.push({ type, payload }); };
+  const hpBefore = enemy.hp + enemy.block;
+  c.playCard(attack, enemy, { rhythmMult: 2, rhythmGrade: 'perfect', charge: 4 });
+  const dealt = hpBefore - (enemy.hp + enemy.block);
+  assert.equal(dealt, attack.dmg * 2 * (attack.hits || 1), 'rhythm multiplier applied to the swing');
+  const start = payloads.find((p) => p.type === 'attackstart');
+  assert.equal(start.payload.charge, 4, 'attackstart echoes the charge level');
+  const hit = payloads.find((p) => p.type === 'damage');
+  assert.equal(hit.payload.swing, true, 'damage marks the player swing');
+  assert.equal(hit.payload.card, attack, 'damage echoes the played card');
+  assert.equal(hit.payload.charge, 4, 'damage echoes the charge level');
 });
 
 test('spendAllTempo returns the pool and zeroes it', () => {

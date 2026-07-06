@@ -35,7 +35,7 @@ def('brace', {
 });
 def('sunder', {
   name: 'Fault Line', char: 'amara', type: 'attack', rarity: 'basic', cost: 2,
-  dmg: 8, magic: 2, target: 'enemy',
+  dmg: 8, magic: 2, target: 'enemy', vfx: 'fault-line',
   desc: (c) => `Deal ${c.dmg} damage. Apply ${c.magic} Exposed.`,
   upgrade: (c) => { c.dmg = 10; c.magic = 3; },
   onPlay: (ctx) => { ctx.deal(ctx.enemy, ctx.c.dmg); ctx.applyEnemy('vulnerable', ctx.c.magic); },
@@ -179,7 +179,7 @@ def('harvest', {
 });
 def('skyfall', {
   name: 'Skyfall Hammer', char: 'amara', type: 'attack', rarity: 'rare', cost: 3,
-  dmg: 32, target: 'enemy',
+  dmg: 32, target: 'enemy', vfx: 'skyfall-hammer',
   desc: (c) => `Deal ${c.dmg} damage.`,
   upgrade: (c) => { c.dmg = 42; },
   onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.c.dmg),

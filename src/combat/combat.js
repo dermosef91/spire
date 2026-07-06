@@ -26,17 +26,21 @@ export class Combat {
     this.animating = false;
     this._notifyScheduled = false; // coalesces same-tick notify() calls, see notify()
 
-    // Rhythm QTE seams. The view sets `_rhythmMult` and `_rhythmGrade` (from
-    // the attack QTE) before playCard, and injects `parryPrompt` — an async fn
-    // resolving { success } — awaited during the enemy phase. All default to
-    // inert so the engine runs unchanged without a view or with Rhythm Mode
-    // off: a null grade counts as a clean ('good') strike, so Tempo still
-    // builds for non-rhythm players.
-    this._rhythmMult = 1;
-    this._rhythmGrade = null;
+    // Rhythm QTE seams. The view passes the attack QTE's result into
+    // playCard(card, target, { rhythmMult, rhythmGrade, charge }) and injects
+    // `parryPrompt` — an async fn resolving { success } — awaited during the
+    // enemy phase. All default to inert so the engine runs unchanged without
+    // a view or with Rhythm Mode off: a null grade counts as a clean ('good')
+    // strike, so Tempo still builds for non-rhythm players.
     this.parryPrompt = null;
     this._parried = false;
     this._qtePrompted = false;
+    // The card play currently resolving: { card, rhythmMult, charge }. Set for
+    // the synchronous extent of playCard so deal()/applyDamage can echo the
+    // card and its QTE charge into fx payloads — the view keys impact visuals
+    // and sequencing off those payload fields instead of engine internals.
+    this._play = null;
+    this._swing = false; // inside a player attack's hit loop (deal/dealAll)
 
     // Player entity mirrors run state; HP is written back to run on combat end.
     this.player = {
@@ -263,6 +267,14 @@ export class Combat {
     if (entity.powers[key] <= 0) delete entity.powers[key];
   }
 
+  // fx-payload echo of the resolving card play (see _play/_swing): identifies
+  // a player attack swing and its card/charge so the view can pick impact
+  // visuals and sequencing from the payload alone.
+  _swingInfo() {
+    const active = this._swing && this._play;
+    return { swing: this._swing, card: active ? this._play.card : null, charge: active ? this._play.charge : 0 };
+  }
+
   // Apply a chunk of damage to an entity through Block, returns HP actually lost.
   applyDamage(target, amount, { isAttack = false, source = null } = {}) {
     if (!target.alive) return 0;
@@ -289,7 +301,7 @@ export class Combat {
       hpLost = remaining;
       if (target.isPlayer) this.fire('hpLost', { amount: remaining });
     }
-    this.fx('damage', { target, dmg, hpLost, blocked, isAttack, source });
+    this.fx('damage', { target, dmg, hpLost, blocked, isAttack, source, ...this._swingInfo() });
     // Hit-counted debuffs: this hit used up one Exposed on the target and one
     // Sapped on the attacker (blocked hits still consume — the window was
     // spent on this swing either way). The multipliers were already applied
@@ -361,7 +373,7 @@ export class Combat {
         entity.hp = 0; entity.alive = false; this.lose();
       } else {
         entity.hp = 0; entity.alive = false;
-        this.fx('death', { target: entity });
+        this.fx('death', { target: entity, swing: this._swing });
         this.onEnemyDeath(entity);
       }
     }
@@ -411,26 +423,30 @@ export class Combat {
   deal(target, base, hits = 1) {
     if (!target || !target.alive) { target = this.randomEnemy(); if (!target) return 0; }
     let total = 0;
-    const mult = (this._cardDamageMult || 1) * (this._rhythmMult || 1);
-    this.fx('attackstart', { source: this.player, target });
+    const mult = (this._cardDamageMult || 1) * (this._play ? this._play.rhythmMult : 1);
+    this.fx('attackstart', { source: this.player, target, charge: this._play ? this._play.charge : 0 });
+    this._swing = true;
     for (let i = 0; i < hits; i++) {
       if (!target.alive) break;
       const dmg = Math.floor(this.calcAttackDamage(base, this.player, target) * mult);
       total += this.applyDamage(target, dmg, { isAttack: true, source: this.player });
     }
+    this._swing = false;
     this.notify();
     return total;
   }
   dealAll(base, hits = 1) {
     let total = 0;
-    this.fx('attackstart', { source: this.player });
-    const mult = (this._cardDamageMult || 1) * (this._rhythmMult || 1);
+    this.fx('attackstart', { source: this.player, charge: this._play ? this._play.charge : 0 });
+    const mult = (this._cardDamageMult || 1) * (this._play ? this._play.rhythmMult : 1);
+    this._swing = true;
     for (let i = 0; i < hits; i++) {
       for (const e of this.livingEnemies()) {
         const dmg = Math.floor(this.calcAttackDamage(base, this.player, e) * mult);
         total += this.applyDamage(e, dmg, { isAttack: true, source: this.player });
       }
     }
+    this._swing = false;
     this.notify();
     return total;
   }
@@ -686,8 +702,14 @@ export class Combat {
     };
   }
 
-  playCard(card, target) {
+  // `opts` carries the view's rhythm-QTE result for this play:
+  //   rhythmMult  — damage multiplier from the strike grade (default 1)
+  //   rhythmGrade — 'perfect' | 'good' | 'miss' | null (null = no QTE ran;
+  //                 counts as a clean strike for Tempo)
+  //   charge      — charged-strike level (0, or 3-5), echoed into fx payloads
+  playCard(card, target, opts = {}) {
     if (!this.canPlay(card)) return false;
+    const { rhythmMult = 1, rhythmGrade = null, charge = 0 } = opts;
     const cost = this.cardCost(card);
     const spent = card.cost === 'X' ? this.energy : cost;
     this.energy -= spent;
@@ -705,14 +727,18 @@ export class Combat {
     this.cardsPlayedTotal += 1;
     if (card.verse) { this.versesThisTurn += 1; this.versesThisCombat += 1; }
 
+    // The active play context: deal()/applyDamage read the rhythm multiplier
+    // from it and echo card/charge into fx payloads for the view.
+    this._play = { card, rhythmMult, charge };
+
     // Tempo registers BEFORE onPlay: the QTE already resolved, so this strike
     // is part of the flow it creates — a Tempo-scaling card counts its own
     // clean strike, and a missed finisher fizzles (breaks Tempo, then deals
     // its now-bonusless damage at the miss multiplier). Deliberate design:
     // misses hurt twice, that tension is the point of the rhythm layer.
     if (card.type === 'attack') {
-      this.registerStrikeGrade(this._rhythmGrade || 'good');
-      this._rhythmGrade = null;
+      if (rhythmGrade) this.fire('rhythm', { grade: rhythmGrade, card });
+      this.registerStrikeGrade(rhythmGrade || 'good');
     }
 
     this.log(`You play ${card.name}.`);
@@ -724,7 +750,7 @@ export class Combat {
     card._bp.onPlay(ctx);
 
     this._cardDamageMult = 1;
-    this._rhythmMult = 1;
+    this._play = null;
     this.fire('cardPlayed', { card, prevType: this._prevPlayedType });
     if (card.verse) this.fire('versePlayed', { card });
     this.lastPlayedType = card.type;

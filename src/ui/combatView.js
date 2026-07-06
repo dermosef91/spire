@@ -6,7 +6,7 @@ import { el, clear } from '../core/util.js';
 import { renderCard, topBar } from './components.js';
 import { POWERS } from '../data/keywords.js';
 import { audio } from '../audio.js';
-import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine, chargeUp, spriteAnim, singleFrameAnim, faultLineVFX } from './fx.js';
+import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine, chargeUp, singleFrameAnim, faultLineVFX } from './fx.js';
 import { runAttackQTE, runParryQTE } from './rhythm.js';
 import { combatModel, INTENT, UI, powerIcon } from './icons.js';
 import { spriteOrSvg, hasSprite } from './sprites.js';
@@ -294,14 +294,15 @@ export class CombatView {
         const node = this.els[id]; node._removing = true;
         delete this.els[id];
         // Give the killing hit a 0.5s beat to land before the enemy visibly
-        // collapses, on top of the existing same-tick-player-attack delay
-        // (matches the 'death' fx timing below) — otherwise the collapse
-        // animation could start before the hit's damage number/flash even show.
-        const hitDelay = (this._playerAttackHit && !e.isPlayer) ? 300 : 0;
+        // collapses (plus the player-swing beat) — otherwise the collapse
+        // animation could start before the hit's damage number/flash even
+        // show. The 'death' fx handler computed the delay from its payload
+        // and stashed it on the node; it fires synchronously during the hit,
+        // before this microtask-deferred update runs.
         setTimeout(() => {
           node.classList.add('dying');
           setTimeout(() => { node.remove(); }, 620);
-        }, hitDelay + 500);
+        }, node._deathFxDelay || 500);
       }
     }
 
@@ -895,7 +896,12 @@ export class CombatView {
     this.previewCard = null;
     const c = this.combat;
     const marks = this.marksFor(card);
-    let chargeLevel = 0;
+    // The QTE result travels into the engine as explicit playCard opts; the
+    // engine echoes card/charge back out through the fx payloads its handlers
+    // read (see FX_HANDLERS below), so no state is smuggled between the two.
+    let rhythmGrade = null;
+    let rhythmMult = 1;
+    let charge = 0;
     if (this.game.rhythmOn() && !this.rhythmSuppressed && card.type === 'attack' && !c.over) {
       c.animating = true; // blocks End Turn and further card input during the QTE
       this.update();
@@ -905,22 +911,15 @@ export class CombatView {
         isTutorial: !this.game.meta.tutorialDone
       });
       c.animating = false;
-      c._rhythmMult = mult;
-      c._rhythmGrade = grade; // consumed by combat.playCard for Tempo
-      c.fire('rhythm', { grade, card });
+      rhythmGrade = grade;
+      rhythmMult = mult;
       // Strong attack — 3+ QTE marks — charges up for a more epic strike,
       // burning brighter the cleaner the timing.
-      if (marks >= 3) chargeLevel = grade === 'perfect' ? 5 : grade === 'miss' ? 3 : 4;
+      if (marks >= 3) charge = grade === 'perfect' ? 5 : grade === 'miss' ? 3 : 4;
     } else if (card.type === 'attack' && marks >= 3 && !c.over) {
       // Rhythm off: heavy attacks still land a charged strike.
-      chargeLevel = 4;
+      charge = 4;
     }
-    // Read synchronously by the onFx attack/damage handlers dispatched during
-    // combat.playCard below; cleared on the next tick.
-    this._chargedStrike = chargeLevel;
-    this._lastPlayedCardId = card.id;
-    if (chargeLevel) setTimeout(() => { this._chargedStrike = 0; }, 0);
-    setTimeout(() => { this._lastPlayedCardId = null; }, 0);
     audio.play('playcard');
     if (card.type !== 'attack') {
       audio.play('skill');
@@ -943,7 +942,7 @@ export class CombatView {
       }, 855);
     }
 
-    this.combat.playCard(card, target);
+    this.combat.playCard(card, target, { rhythmMult, rhythmGrade, charge });
   }
 
   // 1-3 rhythm marks: blueprint override, else scaled by cost.
@@ -985,315 +984,9 @@ export class CombatView {
   elFor(ent) { return ent ? this.els[eidOf(ent)] : null; }
 
   onFx(type, payload) {
-    const layer = this.fxLayer;
-    if (!layer) return;
-    if (type === 'announce') {
-      this.announce(payload.text, { kind: payload.kind });
-      return;
-    }
-    if (type === 'enemyMove') {
-      const el2 = this.elFor(payload.source);
-      if (el2 && payload.name) floatText(layer, el2, payload.name, 'name');
-      return;
-    }
-    if (type === 'phase') {
-      // A boss crosses its HP threshold and transforms — the marquee moment.
-      this.announce(payload.name || 'Phase', { kind: 'phase', duration: 1500 });
-      screenShake(this.scene, true);
-      const el2 = this.elFor(payload.target);
-      if (el2) {
-        el2.classList.add('phased');
-        hitFlash(el2, 'damage');
-        ring(layer, el2, 'rgba(224,69,123,0.95)');
-        burst(layer, el2, '#e0457b', 24);
-      }
-      const bg = background(); if (bg) bg.pulse('heavy', 2);
-      audio.play('reward');
-      return;
-    }
-    if (type === 'enrage') {
-      this.announce('ENRAGED', { kind: 'enrage', duration: 1050 });
-      const el2 = this.elFor(payload.target);
-      if (el2) {
-        el2.classList.add('enraged');
-        floatText(layer, el2, 'ENRAGED', 'debuff');
-        hitFlash(el2, 'damage');
-        ring(layer, el2, 'rgba(217,79,43,0.95)');
-      }
-      screenShake(this.scene, false);
-      return;
-    }
-    if (type === 'summon') {
-      // The combatant node is built on the next tick by update(); flash it once
-      // it exists so the burst lands on the newly-appeared foe.
-      const t = payload.target;
-      setTimeout(() => {
-        const el2 = this.elFor(t);
-        if (el2) { ring(layer, el2, 'rgba(200,182,255,0.9)'); burst(layer, el2, '#c8b6ff', 14); }
-      }, 30);
-      return;
-    }
-    if (type === 'attackstart') {
-      const src = this.elFor(payload.source);
-      const charged = !!(payload.source && payload.source.isPlayer) && this._chargedStrike >= 3;
-      lunge(src, payload.source && payload.source.isPlayer ? 'right' : 'left', charged);
-      if (charged) chargeUp(layer, src, this._chargedStrike);
-
-      // Give the player's swing a beat to land before the enemy-side impact
-      // fx/sfx fire, so the hit reads as a consequence of the animation
-      // rather than landing in the same frame it starts. Cleared on the next
-      // tick so it only covers the damage fx fired synchronously by this
-      // same attack (including multi-hit loops), not unrelated later damage.
-      this._playerAttackHit = !!(payload.source && payload.source.isPlayer);
-      if (this._playerAttackHit) {
-        setTimeout(() => { this._playerAttackHit = false; }, 0);
-      }
-
-      if (payload.source) {
-        const eid = eidOf(payload.source);
-        this.tempPoses[eid] = true;
-        this.setSpritePose(payload.source, 'attack');
-        
-        if (!payload.source.isPlayer) {
-          let sound = 'attack';
-          const moveId = payload.source.move;
-          const enemyId = payload.source.id;
-          if (moveId === 'zap' || moveId === 'jolt' || moveId === 'spark' || moveId === 'scatter' || moveId === 'surge' || moveId === 'multibeam') {
-            sound = 'zap';
-          } else if (moveId === 'barrage' && enemyId === 'the_gatekeeper') {
-            sound = 'thunder';
-          } else if (moveId === 'spit' || moveId === 'venom' || moveId === 'latch' || moveId === 'siphon') {
-            sound = 'slime';
-          } else if (moveId === 'splash') {
-            sound = 'splash';
-          }
-          audio.play(sound);
-        }
-        
-        setTimeout(() => {
-          delete this.tempPoses[eid];
-          if (payload.source.alive) {
-            this.setSpritePose(payload.source, payload.source.block > 0 ? 'block' : 'idle');
-          }
-        }, 855);
-      }
-      return;
-    }
-    if (type === 'skillstart') {
-      if (payload.source) {
-        const eid = eidOf(payload.source);
-        this.tempPoses[eid] = true;
-        this.setSpritePose(payload.source, payload.pose || 'skill');
-
-        const srcEl = this.elFor(payload.source);
-        if (srcEl) {
-          shine(layer, srcEl);
-        }
-        if (!payload.source.isPlayer && payload.source.move === 'howl') {
-          audio.play('growl');
-        }
-
-        setTimeout(() => {
-          delete this.tempPoses[eid];
-          if (payload.source.alive) {
-            this.setSpritePose(payload.source, payload.source.block > 0 ? 'block' : 'idle');
-          }
-        }, 855);
-      }
-      return;
-    }
-    if (type === 'parrymiss') {
-      // Missed parry: tell the player why the hit is about to bite through.
-      const el2 = this.elFor(payload.entity);
-      if (el2) { floatText(layer, el2, 'BLOCK HALVED', 'debuff'); hitFlash(el2, 'damage'); }
-      return;
-    }
-    if (type === 'tempobreak') {
-      // A missed beat zeroes the Tempo counter — name the loss.
-      const el2 = this.elFor(payload.entity);
-      if (el2) floatText(layer, el2, 'RHYTHM BROKEN', 'debuff');
-      return;
-    }
-    if (type === 'temporelease') {
-      // A finisher (Spiral Finish, Whirlwind) consumes all Tempo at once —
-      // scale the release flourish with how much was banked.
-      const el2 = this.elFor(payload.entity);
-      if (!el2) return;
-      const big = payload.amount >= 5;
-      floatText(layer, el2, `${payload.amount} TEMPO`, 'buff');
-      ring(layer, el2, big ? 'rgba(255,224,140,0.95)' : 'rgba(255,209,102,0.9)');
-      burst(layer, el2, big ? '#ffe6a0' : '#ffd166', Math.min(10 + payload.amount * 2, 26));
-      audio.play('tempo_release');
-      return;
-    }
-    if (type === 'powersurge') {
-      // An enemy (or ally) gains Resolve from a dedicated buff move — a
-      // telegraph that it's about to hit harder, distinct from the plain
-      // '+N' power pip float.
-      const el2 = this.elFor(payload.target);
-      if (!el2) return;
-      ring(layer, el2, 'rgba(217,79,43,0.9)');
-      burst(layer, el2, '#d94f2b', 16);
-      audio.play('power_surge');
-      return;
-    }
-    if (type === 'damage') {
-      const el2 = this.elFor(payload.target);
-      if (!el2) return;
-      const isDelayedPlayerHit = this._playerAttackHit && !payload.target.isPlayer;
-      // Capture the charge level now — it is cleared before the delayed render.
-      const chLevel = (this._chargedStrike >= 3 && payload.isAttack && !payload.target.isPlayer)
-        ? this._chargedStrike : 0;
-      
-      let anim = 'slash';
-      let isSpritesheet = false;
-      if (payload.isAttack) {
-        if (payload.source) {
-          if (payload.source.isPlayer) {
-            if (this._lastPlayedCardId === 'skyfall') {
-              anim = 'skyfall-hammer';
-            } else if (this._lastPlayedCardId === 'sunder') {
-              anim = 'fault-line';
-              isSpritesheet = true;
-            }
-          } else {
-            const moveId = payload.source.move;
-            if (moveId === 'zap' || moveId === 'jolt') {
-              anim = 'zap';
-            } else if (moveId === 'spit') {
-              anim = 'spit';
-            } else if (moveId === 'splash') {
-              anim = 'splash';
-            }
-          }
-        }
-      }
-
-      const applyDamageFx = () => {
-        if (payload.hpLost > 0) {
-          const size = Math.round(Math.min(60, 26 + payload.hpLost * 1.4));
-          floatText(layer, el2, String(payload.hpLost), 'damage', { size });
-          hitFlash(el2, 'damage');
-          const big = payload.hpLost >= 14 || chLevel > 0;
-          shake(el2, big);
-          if (payload.isAttack) {
-            if (anim === 'slash') {
-              slash(layer, el2);
-            } else if (isSpritesheet) {
-              if (anim === 'fault-line') {
-                faultLineVFX(layer, el2);
-              } else {
-                spriteAnim(layer, el2, anim);
-              }
-            } else {
-              singleFrameAnim(layer, el2, anim);
-            }
-            if (payload.source && payload.source.isPlayer) {
-              let attackSound = 'attack';
-              if (anim === 'skyfall-hammer') attackSound = 'thunder';
-              else if (anim === 'zap') attackSound = 'zap';
-              else if (anim === 'spit') attackSound = 'slime';
-              else if (anim === 'splash') attackSound = 'splash';
-              audio.play(attackSound);
-            }
-          }
-          if (payload.target.isPlayer || big) screenShake(this.scene, big);
-          if (chLevel > 0) {
-            // Charged release: a heavier burst + ring on the strike.
-            const gold = chLevel >= 5;
-            ring(layer, el2, gold ? 'rgba(255,224,140,0.95)' : 'rgba(255,176,80,0.9)');
-            burst(layer, el2, gold ? '#ffe6a0' : '#ffb050', gold ? 22 : 14);
-          }
-          // Reactive backdrop pulse: red when the player is hurt, amber on big hits.
-          const bg = background();
-          if (bg) {
-            if (payload.target.isPlayer) bg.pulse('damage', Math.min(2, payload.hpLost / 12));
-            else if (big) bg.pulse('heavy', Math.min(2, payload.hpLost / 18));
-          }
-            if (payload.target.isPlayer) audio.play('hit');
-        } else if (payload.blocked > 0) {
-          floatText(layer, el2, 'BLOCK', 'blocked');
-          hitFlash(el2, 'block');
-          audio.play('attack-blocked');
-        }
-      };
-      // Delay the impact fx/sfx on the enemy so it lands a beat after the
-      // player's attack sprite animation rather than in the same frame.
-      if (isDelayedPlayerHit) {
-        setTimeout(applyDamageFx, 300);
-      } else {
-        applyDamageFx();
-      }
-      return;
-    }
-    if (type === 'block') {
-      const el2 = this.elFor(payload.entity); if (!el2) return;
-      floatText(layer, el2, `+${payload.amount}`, 'block');
-      ring(layer, el2, 'rgba(94,169,230,0.9)');
-      audio.play('block');
-      return;
-    }
-    if (type === 'warded') {
-      // Per-turn damage cap reached (e.g. Heart of Static's Invincibility).
-      const el2 = this.elFor(payload.target); if (!el2) return;
-      floatText(layer, el2, 'WARDED', 'blocked');
-      hitFlash(el2, 'block');
-      ring(layer, el2, 'rgba(230,180,90,0.9)');
-      return;
-    }
-    if (type === 'heal') {
-      const el2 = this.elFor(payload.entity); if (!el2) return;
-      floatText(layer, el2, `+${payload.amount}`, 'heal');
-      hitFlash(el2, 'heal');
-      return;
-    }
-    if (type === 'power') {
-      const el2 = this.elFor(payload.target); if (!el2) return;
-      const def = POWERS[payload.key]; if (!def) return;
-      floatHTML(layer, el2, `<i class="pip-ic">${powerIcon(payload.key)}</i>${payload.amount > 0 ? '+' : ''}${payload.amount}`, def.type === 'buff' ? 'buff' : 'debuff');
-      return;
-    }
-    if (type === 'death') {
-      const el2 = this.elFor(payload.target); if (!el2) return;
-      const applyDeathFx = () => {
-        burst(layer, el2, '#ffce5c', 18);
-        el2.classList.add('dying');
-        const bg = background(); if (bg) bg.pulse('gold', 1.2);
-      };
-      // Give the killing hit a 0.5s beat to land before the death burst/collapse
-      // fires, on top of the existing hit-landing delay for a same-tick player
-      // attack, so the enemy doesn't die in the same instant it's struck.
-      const hitDelay = (this._playerAttackHit && !payload.target.isPlayer) ? 300 : 0;
-      setTimeout(applyDeathFx, hitDelay + 500);
-      return;
-    }
-    if (type === 'useSkill') {
-      const el2 = this.elFor(payload.entity); if (!el2) return;
-      shine(layer, el2);
-      return;
-    }
-    if (type === 'relic') {
-      // Queued rather than applied immediately: the topbar (and its relic
-      // chips) is rebuilt fresh on the notify() that follows this fx call,
-      // so the node to pulse doesn't exist yet — update() drains the queue
-      // right after rebuilding it.
-      this._pendingRelicPulses = this._pendingRelicPulses || [];
-      this._pendingRelicPulses.push(payload.id);
-      return;
-    }
-    if (type === 'cardtopile') {
-      this.injectCardAnim(payload.card);
-      return;
-    }
-    if (type === 'gold') {
-      // Topbar (and its .tb-gold node) is rebuilt fresh on the notify() that
-      // follows this fx call, so queue it the same way relic pulses are —
-      // update() drains the queue right after rebuilding the topbar.
-      this._pendingGoldFx = this._pendingGoldFx || [];
-      this._pendingGoldFx.push(payload.amount);
-      audio.play('coin');
-      return;
-    }
+    if (!this.fxLayer) return;
+    const handler = FX_HANDLERS[type];
+    if (handler) handler.call(this, payload, this.fxLayer);
   }
 
   // Reveal a card an enemy shuffled into the deck (e.g. Dazed from Rivet): show
@@ -1438,6 +1131,286 @@ export class CombatView {
 
 }
 
+// How each named impact visual renders, and the sound a player-sourced hit
+// makes with it. Cards and enemy moves pick one by declaring `vfx: '<name>'`
+// on their blueprint (see data/cards.js and the `atk` helper in
+// data/enemies.js); no declaration means the default slash. To add a visual:
+// add an entry here and reference its name from the data.
+const VFX_PLAYBOOK = {
+  slash: { play: (layer, el) => slash(layer, el), sound: 'attack' },
+  'skyfall-hammer': { play: (layer, el) => singleFrameAnim(layer, el, 'skyfall-hammer'), sound: 'thunder' },
+  'fault-line': { play: (layer, el) => faultLineVFX(layer, el), sound: 'attack' },
+  zap: { play: (layer, el) => singleFrameAnim(layer, el, 'zap'), sound: 'zap' },
+  spit: { play: (layer, el) => singleFrameAnim(layer, el, 'spit'), sound: 'slime' },
+  splash: { play: (layer, el) => singleFrameAnim(layer, el, 'splash'), sound: 'splash' },
+};
+
+// The blueprint move an enemy is currently resolving (sfx/vfx live on it).
+const currentMove = (enemy) => (enemy && enemy.bp && enemy.bp.moves[enemy.move]) || null;
+
+// One handler per fx type, dispatched by CombatView.onFx with the view as
+// `this` and the fx layer as the second argument. Everything content-specific
+// (played card, QTE charge, whether the hit is a player swing, the enemy's
+// move) arrives in the payload — handlers never reach into engine internals.
+const FX_HANDLERS = {
+  announce(payload) {
+    this.announce(payload.text, { kind: payload.kind });
+  },
+
+  enemyMove(payload, layer) {
+    const el2 = this.elFor(payload.source);
+    if (el2 && payload.name) floatText(layer, el2, payload.name, 'name');
+  },
+
+  phase(payload, layer) {
+    // A boss crosses its HP threshold and transforms — the marquee moment.
+    this.announce(payload.name || 'Phase', { kind: 'phase', duration: 1500 });
+    screenShake(this.scene, true);
+    const el2 = this.elFor(payload.target);
+    if (el2) {
+      el2.classList.add('phased');
+      hitFlash(el2, 'damage');
+      ring(layer, el2, 'rgba(224,69,123,0.95)');
+      burst(layer, el2, '#e0457b', 24);
+    }
+    const bg = background(); if (bg) bg.pulse('heavy', 2);
+    audio.play('reward');
+  },
+
+  enrage(payload, layer) {
+    this.announce('ENRAGED', { kind: 'enrage', duration: 1050 });
+    const el2 = this.elFor(payload.target);
+    if (el2) {
+      el2.classList.add('enraged');
+      floatText(layer, el2, 'ENRAGED', 'debuff');
+      hitFlash(el2, 'damage');
+      ring(layer, el2, 'rgba(217,79,43,0.95)');
+    }
+    screenShake(this.scene, false);
+  },
+
+  summon(payload, layer) {
+    // The combatant node is built on the next tick by update(); flash it once
+    // it exists so the burst lands on the newly-appeared foe.
+    const t = payload.target;
+    setTimeout(() => {
+      const el2 = this.elFor(t);
+      if (el2) { ring(layer, el2, 'rgba(200,182,255,0.9)'); burst(layer, el2, '#c8b6ff', 14); }
+    }, 30);
+  },
+
+  attackstart(payload, layer) {
+    const src = this.elFor(payload.source);
+    const isPlayer = !!(payload.source && payload.source.isPlayer);
+    const charged = isPlayer && payload.charge >= 3;
+    lunge(src, isPlayer ? 'right' : 'left', charged);
+    if (charged) chargeUp(layer, src, payload.charge);
+
+    if (payload.source) {
+      const eid = eidOf(payload.source);
+      this.tempPoses[eid] = true;
+      this.setSpritePose(payload.source, 'attack');
+
+      if (!isPlayer) {
+        const move = currentMove(payload.source);
+        audio.play((move && move.sfx) || 'attack');
+      }
+
+      setTimeout(() => {
+        delete this.tempPoses[eid];
+        if (payload.source.alive) {
+          this.setSpritePose(payload.source, payload.source.block > 0 ? 'block' : 'idle');
+        }
+      }, 855);
+    }
+  },
+
+  skillstart(payload, layer) {
+    if (!payload.source) return;
+    const eid = eidOf(payload.source);
+    this.tempPoses[eid] = true;
+    this.setSpritePose(payload.source, payload.pose || 'skill');
+
+    const srcEl = this.elFor(payload.source);
+    if (srcEl) shine(layer, srcEl);
+    if (!payload.source.isPlayer) {
+      const move = currentMove(payload.source);
+      if (move && move.sfx) audio.play(move.sfx);
+    }
+
+    setTimeout(() => {
+      delete this.tempPoses[eid];
+      if (payload.source.alive) {
+        this.setSpritePose(payload.source, payload.source.block > 0 ? 'block' : 'idle');
+      }
+    }, 855);
+  },
+
+  parrymiss(payload, layer) {
+    // Missed parry: tell the player why the hit is about to bite through.
+    const el2 = this.elFor(payload.entity);
+    if (el2) { floatText(layer, el2, 'BLOCK HALVED', 'debuff'); hitFlash(el2, 'damage'); }
+  },
+
+  tempobreak(payload, layer) {
+    // A missed beat zeroes the Tempo counter — name the loss.
+    const el2 = this.elFor(payload.entity);
+    if (el2) floatText(layer, el2, 'RHYTHM BROKEN', 'debuff');
+  },
+
+  temporelease(payload, layer) {
+    // A finisher (Spiral Finish, Whirlwind) consumes all Tempo at once —
+    // scale the release flourish with how much was banked.
+    const el2 = this.elFor(payload.entity);
+    if (!el2) return;
+    const big = payload.amount >= 5;
+    floatText(layer, el2, `${payload.amount} TEMPO`, 'buff');
+    ring(layer, el2, big ? 'rgba(255,224,140,0.95)' : 'rgba(255,209,102,0.9)');
+    burst(layer, el2, big ? '#ffe6a0' : '#ffd166', Math.min(10 + payload.amount * 2, 26));
+    audio.play('tempo_release');
+  },
+
+  powersurge(payload, layer) {
+    // An enemy (or ally) gains Resolve from a dedicated buff move — a
+    // telegraph that it's about to hit harder, distinct from the plain
+    // '+N' power pip float.
+    const el2 = this.elFor(payload.target);
+    if (!el2) return;
+    ring(layer, el2, 'rgba(217,79,43,0.9)');
+    burst(layer, el2, '#d94f2b', 16);
+    audio.play('power_surge');
+  },
+
+  damage(payload, layer) {
+    const el2 = this.elFor(payload.target);
+    if (!el2) return;
+    // A player card swing gets a beat between the attack animation and the
+    // impact landing (below); swing/charge/card are echoed by the engine.
+    const isDelayedPlayerHit = payload.swing && !payload.target.isPlayer;
+    const chLevel = (payload.charge >= 3 && payload.isAttack && !payload.target.isPlayer)
+      ? payload.charge : 0;
+
+    // Impact visual: the played card's declared vfx (player swings) or the
+    // resolving move's (enemy hits); default slash.
+    let vfxName = 'slash';
+    if (payload.isAttack && payload.source) {
+      if (payload.source.isPlayer) {
+        vfxName = (payload.card && payload.card._bp.vfx) || 'slash';
+      } else {
+        const move = currentMove(payload.source);
+        vfxName = (move && move.vfx) || 'slash';
+      }
+    }
+    const vfx = VFX_PLAYBOOK[vfxName] || VFX_PLAYBOOK.slash;
+
+    const applyDamageFx = () => {
+      if (payload.hpLost > 0) {
+        const size = Math.round(Math.min(60, 26 + payload.hpLost * 1.4));
+        floatText(layer, el2, String(payload.hpLost), 'damage', { size });
+        hitFlash(el2, 'damage');
+        const big = payload.hpLost >= 14 || chLevel > 0;
+        shake(el2, big);
+        if (payload.isAttack) {
+          vfx.play(layer, el2);
+          if (payload.source && payload.source.isPlayer) audio.play(vfx.sound);
+        }
+        if (payload.target.isPlayer || big) screenShake(this.scene, big);
+        if (chLevel > 0) {
+          // Charged release: a heavier burst + ring on the strike.
+          const gold = chLevel >= 5;
+          ring(layer, el2, gold ? 'rgba(255,224,140,0.95)' : 'rgba(255,176,80,0.9)');
+          burst(layer, el2, gold ? '#ffe6a0' : '#ffb050', gold ? 22 : 14);
+        }
+        // Reactive backdrop pulse: red when the player is hurt, amber on big hits.
+        const bg = background();
+        if (bg) {
+          if (payload.target.isPlayer) bg.pulse('damage', Math.min(2, payload.hpLost / 12));
+          else if (big) bg.pulse('heavy', Math.min(2, payload.hpLost / 18));
+        }
+        if (payload.target.isPlayer) audio.play('hit');
+      } else if (payload.blocked > 0) {
+        floatText(layer, el2, 'BLOCK', 'blocked');
+        hitFlash(el2, 'block');
+        audio.play('attack-blocked');
+      }
+    };
+    // Delay the impact fx/sfx on the enemy so it lands a beat after the
+    // player's attack sprite animation rather than in the same frame.
+    if (isDelayedPlayerHit) setTimeout(applyDamageFx, 300);
+    else applyDamageFx();
+  },
+
+  block(payload, layer) {
+    const el2 = this.elFor(payload.entity); if (!el2) return;
+    floatText(layer, el2, `+${payload.amount}`, 'block');
+    ring(layer, el2, 'rgba(94,169,230,0.9)');
+    audio.play('block');
+  },
+
+  warded(payload, layer) {
+    // Per-turn damage cap reached (e.g. Heart of Static's Invincibility).
+    const el2 = this.elFor(payload.target); if (!el2) return;
+    floatText(layer, el2, 'WARDED', 'blocked');
+    hitFlash(el2, 'block');
+    ring(layer, el2, 'rgba(230,180,90,0.9)');
+  },
+
+  heal(payload, layer) {
+    const el2 = this.elFor(payload.entity); if (!el2) return;
+    floatText(layer, el2, `+${payload.amount}`, 'heal');
+    hitFlash(el2, 'heal');
+  },
+
+  power(payload, layer) {
+    const el2 = this.elFor(payload.target); if (!el2) return;
+    const def = POWERS[payload.key]; if (!def) return;
+    floatHTML(layer, el2, `<i class="pip-ic">${powerIcon(payload.key)}</i>${payload.amount > 0 ? '+' : ''}${payload.amount}`, def.type === 'buff' ? 'buff' : 'debuff');
+  },
+
+  death(payload, layer) {
+    const el2 = this.elFor(payload.target); if (!el2) return;
+    // Give the killing hit a 0.5s beat to land before the death burst and
+    // collapse fire (plus the player-swing impact delay above), so the enemy
+    // doesn't die in the same instant it's struck. The delay is stashed on
+    // the node for update()'s removal path, which runs on a later microtask
+    // and must match this timing.
+    const delay = (payload.swing && !payload.target.isPlayer ? 300 : 0) + 500;
+    el2._deathFxDelay = delay;
+    setTimeout(() => {
+      burst(layer, el2, '#ffce5c', 18);
+      el2.classList.add('dying');
+      const bg = background(); if (bg) bg.pulse('gold', 1.2);
+    }, delay);
+  },
+
+  useSkill(payload, layer) {
+    const el2 = this.elFor(payload.entity); if (!el2) return;
+    shine(layer, el2);
+  },
+
+  relic(payload) {
+    // Queued rather than applied immediately: the topbar (and its relic
+    // chips) is rebuilt fresh on the notify() that follows this fx call,
+    // so the node to pulse doesn't exist yet — update() drains the queue
+    // right after rebuilding it.
+    this._pendingRelicPulses = this._pendingRelicPulses || [];
+    this._pendingRelicPulses.push(payload.id);
+  },
+
+  cardtopile(payload) {
+    this.injectCardAnim(payload.card);
+  },
+
+  gold(payload) {
+    // Topbar (and its .tb-gold node) is rebuilt fresh on the notify() that
+    // follows this fx call, so queue it the same way relic pulses are —
+    // update() drains the queue right after rebuilding the topbar.
+    this._pendingGoldFx = this._pendingGoldFx || [];
+    this._pendingGoldFx.push(payload.amount);
+    audio.play('coin');
+  },
+};
+
 function orbTitle(orb, c) {
   const f = c.focus();
   const map = {
@@ -1455,21 +1428,3 @@ const BADGE_SVG = `<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" 
   <path d="M 18,30 A 28,28 0 0,0 18,70" stroke-width="8" stroke-linecap="round"/>
   <path d="M 82,30 A 28,28 0 0,1 82,70" stroke-width="8" stroke-linecap="round"/>
 </svg>`;
-
-const ENEMY_SUBTITLES = {
-  husk_drone: 'The Rusted Automaton',
-  static_jackal: 'The Sparking Predator',
-  brass_sentinel: 'The Stony Dreadnought',
-  market_thief: 'The Shadowy Purloiner',
-  gilded_warden: 'The Golden Vanguard',
-  the_gatekeeper: 'The Gatekeeper of the Spire',
-  sand_wraith: 'The Drifting Apparition',
-  mirror_shade: 'The Twisted Reflection',
-  chrome_serpent: 'The Metallic Wyrm',
-  brass_colossus: 'The Gigantic Guardian',
-  the_archivist: 'The Chronicler of Static',
-  void_chanter: 'The Void Hymnal',
-  static_seraph: 'The Celestial Dissonance',
-  chrome_archon: 'The Obsidian Architect',
-  heart_of_static: 'The Apex of the Spire',
-};
