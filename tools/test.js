@@ -878,6 +878,61 @@ test('Call and Response draws on alternation, capped at 3 per turn, reset next t
   assert.equal(c.hand.length, before + 1, 'cap reset: alternation drew a card again next turn');
 });
 
+// ----------------------------------------------------------------- new cards: PR3
+console.log('New cards — The Archive: Ethereal onConsume (PR3)');
+
+test('Echo of the Cantor: onPlay grants Block; onConsume applies Sapped to ALL enemies', () => {
+  const c = freshCombat();
+  c.player.block = 0;
+  playCrafted(c, 'echo_of_the_cantor', null);
+  assert.equal(c.player.block, 5, 'granted Block on play');
+  assert.equal(c.enemies[0].powers.weak, undefined, 'no Sapped proc from a normal play');
+  // exercise the onConsume hook directly (this is what Ethereal / a
+  // consume-the-hand effect triggers) without redoing the full turn cycle
+  c.consume(c.makeCard('echo_of_the_cantor'));
+  assert.equal(c.enemies[0].powers.weak, 1, 'onConsume applied 1 Sapped to the enemy');
+});
+
+test('Echo of the Sentinel: onConsume grants more Block than playing it does', () => {
+  const c = freshCombat();
+  c.player.block = 0;
+  playCrafted(c, 'echo_of_the_sentinel', null);
+  assert.equal(c.player.block, 4, 'granted the smaller on-play Block');
+  c.consume(c.makeCard('echo_of_the_sentinel'));
+  assert.equal(c.player.block, 4 + 7, 'onConsume granted the larger Block on top');
+});
+
+test('Echo of the Warden: onConsume deals bonus damage to a random enemy', () => {
+  const c = freshCombat();
+  const e = c.enemies[0]; e.block = 0; e.hp = e.maxHp = 999;
+  playCrafted(c, 'echo_of_the_warden', e);
+  assert.equal(e.hp, 999 - 7, 'dealt the on-play damage');
+  c.consume(c.makeCard('echo_of_the_warden'));
+  assert.equal(e.hp, 999 - 7 - 10, 'onConsume dealt bonus damage on top');
+});
+
+test('Remembered Name deals damage whenever a card is Consumed', () => {
+  const c = freshCombat();
+  const e = c.enemies[0]; e.block = 0; e.hp = e.maxHp = 999;
+  playCrafted(c, 'remembered_name', null); // a power vanishes on play; it is not itself Consumed
+  assert.equal(e.hp, 999, 'no proc yet — playing a power does not Consume it');
+  c.consume(c.makeCard('wound'));
+  assert.equal(e.hp, 999 - 3, 'a Consume event procs Remembered Name');
+  c.consume(c.makeCard('wound'));
+  assert.equal(e.hp, 999 - 6, 'procs again on a second Consume');
+});
+
+test('The Catalogue Opens consumes the hand and deals AoE damage per card', () => {
+  const c = freshCombat();
+  const e = c.enemies[0]; e.block = 0; e.hp = e.maxHp = 999;
+  const heldCards = c.hand.length; // the opening hand (5 cards)
+  const exBefore = c.consumePile.length;
+  playCrafted(c, 'catalogue_opens', null); // removed from hand before onPlay runs
+  assert.equal(c.hand.length, 0, 'hand fully consumed');
+  assert.equal(c.consumePile.length - exBefore, heldCards + 1, 'the held cards plus the card itself');
+  assert.equal(e.hp, 999 - 4 * heldCards, 'dealt 4 damage per consumed card');
+});
+
 // ----------------------------------------------------------------- summary
 console.log('');
 if (failures.length) {
