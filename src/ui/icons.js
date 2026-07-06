@@ -234,6 +234,8 @@ const CARD_MOTIF = {
   remembered_name: 'eye', catalogue_opens: 'burst',
   // new: Reckoning (PR6)
   reckoning: 'blood',
+  // new: The Spire's Bargains (PR7)
+  borrowed_time: 'curse', flesh_ledger: 'curse', advance_on_the_prize: 'curse',
 };
 export function cardArt(id) { return S(M[CARD_MOTIF[id]] || M.burst, { cls: 'card-art-svg' }); }
 

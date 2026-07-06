@@ -65,7 +65,7 @@ export const COLORLESS_POOL = [
   'shiv', 'flash', 'panic_button', 'apotheosis', 'read_the_field', 'swallow_sorrow',
   'step_turn_strike', 'answer_song', 'call_and_response',
   'echo_of_the_cantor', 'echo_of_the_sentinel', 'echo_of_the_warden', 'remembered_name', 'catalogue_opens',
-  'reckoning',
+  'reckoning', 'borrowed_time', 'flesh_ledger', 'advance_on_the_prize',
 ];
 
 export function characterById(id) { return CHARACTERS[id]; }

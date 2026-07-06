@@ -91,6 +91,10 @@ export class Combat {
     this.lastPlayedType = null;
     this._prevPlayedType = null;
     this._extraOpenDraw = 0;
+    // The Spire's bargains: a card borrows against next turn's energy/HP/draw.
+    // Collected once in startPlayerTurn, then zeroed — these never persist
+    // past the turn they come due.
+    this.debt = { energy: 0, hp: 0, draw: 0 };
   }
 
   // ---------------------------------------------------------------- setup
@@ -762,6 +766,14 @@ export class Combat {
     this.energy = this.maxEnergy + this.energyNextTurn + (first ? this.bonusEnergyTurn1 : 0);
     this.energyNextTurn = 0;
 
+    // The Spire's bargains come due: a card that borrowed against next turn
+    // collects here. Winning the fight before this ever runs voids the bill
+    // entirely — racing the ledger is the whole point of the archetype.
+    if (this.debt.energy > 0) { this.energy = Math.max(0, this.energy - this.debt.energy); this.debt.energy = 0; }
+    if (this.debt.hp > 0) { this.loseHp(this.player, this.debt.hp); this.debt.hp = 0; }
+    const debtDraw = this.debt.draw;
+    this.debt.draw = 0;
+
     this.fire('turnStart');
 
     // Announce the handoff back to the player. The first turn is covered by the
@@ -769,7 +781,7 @@ export class Combat {
     if (!first) this.fx('announce', { text: 'Your Turn', kind: 'player' });
 
     // draw
-    const drawCount = 5 + (first ? this._extraOpenDraw : 0);
+    const drawCount = Math.max(0, 5 + (first ? this._extraOpenDraw : 0) - debtDraw);
     this.draw(drawCount);
 
     if (!this.over) this.log(`— Your turn ${this.turn} —`);
