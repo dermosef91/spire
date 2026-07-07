@@ -91,7 +91,7 @@ export const EventScene = {
     if (run.gold !== oldGold) {
       audio.play('coin');
     }
-    if (run.isDead()) { this.gameOver(false); return; }
+    if (run.isDead()) { this.gameOver(false, { event: ev.name }); return; }
     if (run.relics.length > relicsBefore) {
       const rid = run.relics[run.relics.length - 1];
       this.relicAcquired(rid, () => this.resultThenMap(text));
