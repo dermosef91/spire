@@ -124,6 +124,28 @@ test('toJSON / fromJSON round-trips run state', () => {
   assert.equal(clone.rng.next(), run.rng.next());
 });
 
+test('pathTaken round-trips and defaults empty on legacy saves', () => {
+  const run = new RunState('amara', 42);
+  run.pathTaken.push({ row: 0, col: 2 }, { row: 1, col: 3 }, 'boss');
+  const clone = RunState.fromJSON(JSON.parse(JSON.stringify(run.toJSON())));
+  assert.deepEqual(clone.pathTaken, [{ row: 0, col: 2 }, { row: 1, col: 3 }, 'boss'],
+    'visited-path memory persisted');
+  // a legacy save (no pathTaken key) must still load, with an empty path
+  const legacy = JSON.parse(JSON.stringify(run.toJSON()));
+  delete legacy.pathTaken;
+  assert.deepEqual(RunState.fromJSON(legacy).pathTaken, [], 'legacy save defaults to []');
+});
+
+test('full potion belt: swap sequence (remove then add) works', () => {
+  const run = new RunState('amara', 42);
+  while (run.potions.length < run.maxPotions) run.addPotion('elixir');
+  assert.equal(run.addPotion('rage_brew'), false, 'belt full: add refused');
+  run.removePotionAt(0);
+  assert.equal(run.addPotion('rage_brew'), true, 'after pouring one out, the new potion fits');
+  assert.equal(run.potions.length, run.maxPotions);
+  assert.ok(run.potions.includes('rage_brew'));
+});
+
 test('ascension modifiers survive a save/reload', () => {
   const run = new RunState('amara', 42, 10);
   assert.equal(run.maxPotions, 2, 'A10 Hoarded Reserves: 2 potion slots');

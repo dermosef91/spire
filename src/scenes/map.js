@@ -71,6 +71,16 @@ export const MapScene = {
     svg.setAttribute('width', width); svg.setAttribute('height', height);
     const reachable = nextNodes(map, run.position);
     const reachKey = new Set(reachable.map((n) => n.boss ? 'boss' : `${n.row}-${n.col}`));
+    // Path memory: nodes already entered this act, and the edges walked
+    // between consecutive entries (keys match the edge loop's from>to shape).
+    const pathTaken = run.pathTaken || [];
+    const visitedKey = new Set(pathTaken.map((p) => (p === 'boss' ? 'boss' : `${p.row}-${p.col}`)));
+    const traveledEdge = new Set();
+    for (let i = 1; i < pathTaken.length; i++) {
+      const a = pathTaken[i - 1], b = pathTaken[i];
+      if (a === 'boss') continue;
+      traveledEdge.add(`${a.row}-${a.col}>${b === 'boss' ? 'boss' : `${b.row}-${b.col}`}`);
+    }
 
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
@@ -83,7 +93,8 @@ export const MapScene = {
           const line = document.createElementNS(NS, 'line');
           line.setAttribute('x1', from.x); line.setAttribute('y1', from.y);
           line.setAttribute('x2', to.x); line.setAttribute('y2', to.y);
-          line.setAttribute('class', 'edge');
+          const walked = traveledEdge.has(`${r}-${c}>${t.boss ? 'boss' : `${t.row}-${t.col}`}`);
+          line.setAttribute('class', walked ? 'edge edge-traveled' : 'edge');
           svg.appendChild(line);
           // Subtle connector ornaments: a small diamond waypoint near the
           // middle and a directional chevron pointing up the spire (toward
@@ -111,8 +122,9 @@ export const MapScene = {
     const placeNode = (type, x, y, key, posObj) => {
       const isReach = reachKey.has(key);
       const isCurrent = run.position && !posObj.boss && run.position.row === posObj.row && run.position.col === posObj.col;
+      const isVisited = visitedKey.has(key) && !isCurrent;
       const n = el('div', {
-        class: `map-node node-${type} ${isReach ? 'reachable' : ''} ${isCurrent ? 'current' : ''}`,
+        class: `map-node node-${type} ${isReach ? 'reachable' : ''} ${isCurrent ? 'current' : ''} ${isVisited ? 'visited' : ''}`,
         style: { left: x + 'px', top: y + 'px' },
         html: NODE_ICON[type] || '',
         title: NODE_LABEL[type] || type,
@@ -222,6 +234,10 @@ export const MapScene = {
   enterNode(pos) {
     audio.play('click_heavy');
     this.run.position = pos;
+    // Path memory: remember every node entered this act (guard covers runs
+    // loaded from legacy saves that predate pathTaken).
+    this.run.pathTaken = this.run.pathTaken || [];
+    this.run.pathTaken.push(pos.boss ? 'boss' : { row: pos.row, col: pos.col });
     const node = nodeAt(this.run.map, pos);
     const type = pos.boss ? 'boss' : node.type;
     saveRun(this.run);
@@ -269,6 +285,7 @@ export const MapScene = {
     run._actMonster = 0;
     run.map = generateMap(run.rng, run.act);
     run.position = null;
+    run.pathTaken = [];
     saveRun(run);
     this.showActIntro();
   },

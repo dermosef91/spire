@@ -15,7 +15,7 @@ import { POTIONS } from './data/potions.js';
 import { RELICS } from './data/relics.js';
 import { relicIcon, INTENT_INFO } from './ui/icons.js';
 import { hasRelicArt } from './ui/relic-art.js';
-import { renderCard, topBar, button, highlightKeywords, keywordsIn } from './ui/components.js';
+import { renderCard, topBar, button, potionChip, highlightKeywords, keywordsIn } from './ui/components.js';
 import { keywordInfo } from './data/keywords.js';
 import { updateBackground } from './ui/backgrounds.js';
 import { background } from './fx/background.js';
@@ -310,6 +310,54 @@ export class Game {
       this.tooltip(null, null, false);
       document.body.removeChild(overlay);
     }));
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  }
+
+  // Full potion belt: offer to pour out a carried potion for the incoming one,
+  // or — when it works outside combat — drink the new one on the spot.
+  // Resolves onResolved(true) when the potion was taken or drunk, false when
+  // left behind. Used by the reward screen and the shop instead of a silent
+  // failure when run.addPotion() returns false.
+  offerPotionSwap(newId, onResolved) {
+    const run = this.run;
+    const p = POTIONS[newId];
+    if (!p) { onResolved(false); return; }
+    const overlay = el('div', { class: 'overlay' });
+    const box = el('div', { class: 'overlay-box potion-swap' });
+    const done = (took) => {
+      this.tooltip(null, null, false);
+      document.body.removeChild(overlay);
+      onResolved(took);
+    };
+    box.appendChild(el('h3', { text: 'Your potion belt is full' }));
+    box.appendChild(el('p', { class: 'event-text', html: `Offered: <b>${p.name}</b> — ${p.desc}` }));
+    box.appendChild(el('p', { class: 'event-text swap-hint', text: 'Pour out a carried potion to make room:' }));
+    const row = el('div', { class: 'swap-row' });
+    run.potions.forEach((pid, i) => {
+      const owned = POTIONS[pid];
+      if (!owned) return;
+      const holder = el('div', { class: 'swap-item' });
+      holder.appendChild(potionChip(pid, i, () => {
+        run.removePotionAt(i);
+        run.addPotion(newId);
+        audio.play('click');
+        done(true);
+      }, (o, n, on) => this.tooltip(o, n, on)));
+      holder.appendChild(el('div', { class: 'mini-label', text: owned.name }));
+      row.appendChild(holder);
+    });
+    box.appendChild(row);
+    const btns = el('div', { class: 'confirm-row' });
+    if (!p.combatOnly) {
+      btns.appendChild(button('Drink it now', () => {
+        p.use({ run, combat: null, target: null });
+        audio.play('reward');
+        done(true);
+      }, 'primary'));
+    }
+    btns.appendChild(button('Leave it', () => done(false)));
+    box.appendChild(btns);
     overlay.appendChild(box);
     document.body.appendChild(overlay);
   }

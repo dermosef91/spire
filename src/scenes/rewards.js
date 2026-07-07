@@ -88,6 +88,8 @@ export const RewardScene = {
           content.appendChild(el('div', { class: 'reward-label', html: `<b>${p.name}</b> — ${p.desc}` }));
           row.addEventListener('click', () => {
             if (run.addPotion(rw.id)) { rw.taken = true; audio.play('click'); rebuild(); }
+            // Full belt: offer to swap or drink instead of silently refusing.
+            else this.offerPotionSwap(rw.id, (took) => { if (took) { rw.taken = true; rebuild(); } });
           });
         } else if (rw.type === 'relic') {
           content.appendChild(el('div', { class: 'reward-icon', html: relicIcon('default') }));

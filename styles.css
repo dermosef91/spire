@@ -571,6 +571,12 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   35% { filter: brightness(2) saturate(1.6) hue-rotate(-20deg); }
   100% { filter: brightness(1); }
 }
+/* Vitals count-up/down flash (topBar's animateVital adds these while the
+   number ticks toward its new value). */
+.tb-hp.tb-delta-up, .tb-gold.tb-delta-up { animation: tbDeltaUp 0.65s ease-out; }
+.tb-hp.tb-delta-down, .tb-gold.tb-delta-down { animation: tbDeltaDown 0.65s ease-out; }
+@keyframes tbDeltaUp { 30% { filter: brightness(1.7); text-shadow: 0 0 10px rgba(150, 255, 170, 0.75); } }
+@keyframes tbDeltaDown { 30% { filter: brightness(1.5); text-shadow: 0 0 10px rgba(255, 110, 80, 0.85); } }
 .tb-act { color: var(--orange); letter-spacing: 0.16em; text-transform: uppercase; font-size: 14px !important; }
 .tb-relics, .tb-potions { display: flex; gap: 7px; flex-wrap: wrap; }
 .tb-relics { margin-left: 10px; }
@@ -710,6 +716,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .map-edges { position: absolute; left: 0; top: 0; pointer-events: none; }
 .edge { stroke: rgba(255, 122, 26, 0.28); stroke-width: 2; stroke-dasharray: 4 7; animation: dashFlow 16s linear infinite; }
 @keyframes dashFlow { to { stroke-dashoffset: -220; } }
+/* Path memory: the walked route reads as a solid, brighter trail. */
+.edge.edge-traveled { stroke: rgba(255, 176, 70, 0.75); stroke-width: 2.5; stroke-dasharray: none; animation: none; }
 /* Connector ornaments — deliberately faint so the paths read first. */
 .edge-dot { fill: rgba(255, 176, 70, 0.32); }
 .edge-arrow { fill: none; stroke: rgba(255, 176, 70, 0.42); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
@@ -752,6 +760,9 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 /* The player's current position reads as the largest glyph on the board. */
 .map-node.current { width: 72px; height: 72px; color: var(--cream); z-index: 2;
   filter: drop-shadow(0 3px 6px rgba(0,0,0,0.8)) drop-shadow(0 0 16px rgba(255,210,160,0.85)); }
+/* Already-cleared nodes: dimmed + desaturated so the trail reads as history
+   (an accent, not a badge — keep .current/.reachable visually dominant). */
+.map-node.visited { opacity: 0.55; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) saturate(0.35); }
 /* Node colors are shared by the board glyphs AND the legend icons, so they
    stay unscoped. Size / rings / sparkle / pulse are board-only — scoped to
    `.map-node` so they don't leak onto the legend's `.leg-ic.node-*` icons
@@ -1750,6 +1761,11 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .overlay-box h3 { color: var(--orange); font-size: 24px; margin-bottom: 16px; letter-spacing: 0.08em; }
 .deck-grid { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; max-width: 1000px; margin-bottom: 16px; }
 .confirm-box { min-width: 280px; } .confirm-row { display: flex; gap: 12px; justify-content: center; margin-top: 12px; }
+/* Potion-swap overlay (full belt): carried potions in a row, tap to pour out. */
+.potion-swap { max-width: 460px; }
+.potion-swap .swap-row { display: flex; gap: 18px; justify-content: center; margin: 14px 0 6px; flex-wrap: wrap; }
+.potion-swap .swap-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+.potion-swap .swap-hint { opacity: 0.8; font-size: 14px; }
 .shop-confirm { max-width: 340px; }
 .shop-confirm-icon { display: flex; justify-content: center; margin-bottom: 10px; }
 .shop-confirm-icon .relic, .shop-confirm-icon .potion { width: 64px; height: 64px; cursor: default; }
@@ -2058,6 +2074,7 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   transition: width 0.55s ease 0.28s;
 }
 .hpfill { position: relative; z-index: 1; }
+.hptext { z-index: 2; } /* above ghost + fill — .hpfill's z-index:1 would otherwise cover it */
 /* Ward badge: pop on each absorbed chunk (shatter burst is spawned in JS). */
 .block-badge.block-hit { animation: blockHit 0.28s cubic-bezier(0.3, 1.4, 0.5, 1); }
 @keyframes blockHit { 0% { transform: scale(1); } 35% { transform: scale(1.45); filter: brightness(1.7); } 100% { transform: scale(1); } }
