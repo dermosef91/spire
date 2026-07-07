@@ -150,6 +150,35 @@ export function potionChip(potionId, idx, onClick, onHover) {
   return node;
 }
 
+// Previous top-bar vitals, kept across rebuilds so gold/HP changes count
+// up/down instead of snapping. The top bar is re-rendered from scratch on
+// every scene change and every combat update, so comparing against this
+// module-level cache (rather than diffing DOM) sidesteps the rebuild race
+// documented for applyGoldFx. Keyed per run so continuing a different run
+// doesn't animate a bogus delta.
+let _vitals = { key: null, hp: null, gold: null };
+
+// Count the <b> from `from` to `to` over ~450ms and flash its chip. The new
+// bar is already built with the final value, so a torn-down node just stops.
+function animateVital(chip, from, to, dirClass) {
+  if (from == null || from === to) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const boldEl = chip.querySelector('b');
+  if (!boldEl) return;
+  chip.classList.add(dirClass);
+  setTimeout(() => chip.classList.remove(dirClass), 700);
+  const dur = 450;
+  const start = performance.now();
+  const step = (now) => {
+    if (!boldEl.isConnected) return;
+    const t = Math.min(1, (now - start) / dur);
+    const eased = 1 - Math.pow(1 - t, 3);
+    boldEl.textContent = String(Math.round(from + (to - from) * eased));
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
 export function topBar(run, extra = {}) {
   const bar = el('div', { class: 'topbar' });
   const left = el('div', { class: 'tb-left' });
@@ -161,9 +190,17 @@ export function topBar(run, extra = {}) {
   // reflected on the in-combat health bar.
   const tbHp = extra.hp ?? run.hp;
   const tbMaxHp = extra.maxHp ?? run.maxHp;
-  left.appendChild(el('div', { class: 'tb-hp', html: `<i class="tb-ic">${UI.heart}</i> <b>${tbHp}</b>/${tbMaxHp}` }));
-  left.appendChild(el('div', { class: 'tb-gold', html: `<i class="tb-ic">${UI.coin}</i> <b>${run.gold}</b>` }));
+  const hpChip = el('div', { class: 'tb-hp', html: `<i class="tb-ic">${UI.heart}</i> <b>${tbHp}</b>/${tbMaxHp}` });
+  const goldChip = el('div', { class: 'tb-gold', html: `<i class="tb-ic">${UI.coin}</i> <b>${run.gold}</b>` });
+  left.appendChild(hpChip);
+  left.appendChild(goldChip);
   left.appendChild(el('div', { class: 'tb-act', text: `Act ${run.act}` }));
+  const runKey = `${run.seed}:${run.characterId}`;
+  if (_vitals.key !== runKey) _vitals = { key: runKey, hp: null, gold: null };
+  animateVital(hpChip, _vitals.hp, tbHp, tbHp > _vitals.hp ? 'tb-delta-up' : 'tb-delta-down');
+  animateVital(goldChip, _vitals.gold, run.gold, run.gold > _vitals.gold ? 'tb-delta-up' : 'tb-delta-down');
+  _vitals.hp = tbHp;
+  _vitals.gold = run.gold;
 
   const right = el('div', { class: 'tb-right' });
   const potionWrap = el('div', { class: 'tb-potions' });

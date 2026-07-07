@@ -142,7 +142,18 @@ export const ShopScene = {
       return;
     }
     if (kind === 'cards') { run.addCardById(item.card.id, item.card.upgraded); }
-    else if (kind === 'potions') { if (!run.addPotion(item.id)) { audio.play('error'); return; } }
+    else if (kind === 'potions') {
+      if (!run.addPotion(item.id)) {
+        // Full belt: swap-or-drink overlay; gold is only charged on resolve.
+        this.offerPotionSwap(item.id, (took) => {
+          if (!took) return;
+          run.gold -= item.price; item.sold = true;
+          audio.play('coin');
+          this.showShop();
+        });
+        return;
+      }
+    }
     run.gold -= item.price; item.sold = true;
     this.tooltip(null, null, false);
     audio.play('coin');
