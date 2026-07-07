@@ -264,7 +264,10 @@ export class Combat {
   consumeStack(entity, key) {
     if (!entity || !entity.powers[key]) return;
     entity.powers[key] -= 1;
-    if (entity.powers[key] <= 0) delete entity.powers[key];
+    if (entity.powers[key] <= 0) {
+      delete entity.powers[key];
+      this.fx('powerfade', { target: entity, key });
+    }
   }
 
   // fx-payload echo of the resolving card play (see _play/_swing): identifies
@@ -606,6 +609,7 @@ export class Combat {
       if (this.noMoreDraw) break;
       if (this.drawPile.length === 0) {
         if (this.discardPile.length === 0) break;
+        this.fx('reshuffle', { count: this.discardPile.length });
         this.drawPile = this.rng.shuffle(this.discardPile);
         this.discardPile = [];
       }
@@ -842,7 +846,10 @@ export class Combat {
       const p = entity.powers.poison;
       this.loseHp(entity, p);
       entity.powers.poison = p - 1;
-      if (entity.powers.poison <= 0) delete entity.powers.poison;
+      if (entity.powers.poison <= 0) {
+        delete entity.powers.poison;
+        this.fx('powerfade', { target: entity, key: 'poison' });
+      }
     }
   }
 
@@ -851,7 +858,10 @@ export class Combat {
     for (const key of Object.keys(entity.powers)) {
       if (POWERS[key]?.ticksDown) {
         entity.powers[key] -= 1;
-        if (entity.powers[key] <= 0) delete entity.powers[key];
+        if (entity.powers[key] <= 0) {
+          delete entity.powers[key];
+          this.fx('powerfade', { target: entity, key });
+        }
       }
     }
     // Resolve Down: at end of turn, sap Strength/Resolve by the stacked amount, then clear.

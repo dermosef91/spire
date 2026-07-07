@@ -31,6 +31,9 @@ export class CombatView {
     this.parts = {};      // eid -> { intent, glyph, hpfill, hptext, block, powers, medallion }
     this._lastHandCards = [];
     this._lastEnergy = null; // for the energy-spent pulse
+    this._lastHp = {};       // eid -> hp, for the hp-bar ghost trail
+    this._lastPowers = {};   // eid -> {key: val}, for pip gain pops
+    this._lastIntent = {};   // eid -> signature, for new-intent pops
     this.tempPoses = {};  // locks pose updates during dynamic animations
     this._suggestEndTurn = false; // true once no card in hand is playable
     this._focusEndTurnPending = false;
@@ -228,8 +231,12 @@ export class CombatView {
     nameRow.appendChild(badgeEl);
 
     const hpwrap = el('div', { class: 'hpbar' });
+    // Ghost trail: a pale fill behind the real one that lingers at the old
+    // width after a hit, then drains down (delayed transition in styles.css).
+    parts.hpghost = el('div', { class: 'hpghost' });
     parts.hpfill = el('div', { class: 'hpfill' });
     parts.hptext = el('div', { class: 'hptext' });
+    hpwrap.appendChild(parts.hpghost);
     hpwrap.appendChild(parts.hpfill);
     hpwrap.appendChild(parts.hptext);
 
@@ -376,14 +383,41 @@ export class CombatView {
     p.hpfill.style.width = pct + '%';
     p.hpfill.classList.toggle('low', pct < 35);
     p.hptext.textContent = `${Math.max(0, ent.hp)}/${ent.maxHp}`;
+    // Ghost trail: on damage, freeze the ghost where it currently sits (so a
+    // second hit mid-drain doesn't jump it back up) and let the delayed CSS
+    // transition drain it down to the new fill. Heals/first render just snap it.
+    const eid = eidOf(ent);
+    if (p.hpghost && this._lastHp[eid] !== ent.hp) {
+      const g = p.hpghost;
+      const prev = this._lastHp[eid];
+      if (prev == null || ent.hp >= prev) {
+        g.style.transition = 'none';
+        g.style.width = pct + '%';
+        void g.offsetWidth;
+        g.style.transition = '';
+      } else {
+        const barW = g.parentElement ? g.parentElement.clientWidth : 0;
+        const curPct = barW > 0 ? (g.getBoundingClientRect().width / barW) * 100 : pct;
+        g.style.transition = 'none';
+        g.style.width = Math.max(curPct, pct) + '%';
+        void g.offsetWidth;
+        g.style.transition = '';
+        requestAnimationFrame(() => { g.style.width = pct + '%'; });
+      }
+      this._lastHp[eid] = ent.hp;
+    }
     if (ent.block > 0) { p.block.style.display = ''; p.block.textContent = ent.block; }
     else p.block.style.display = 'none';
     // powers (block shown separately)
     clear(p.powers);
+    const prevPowers = this._lastPowers[eid] || {};
     for (const [key, val] of Object.entries(ent.powers)) {
       if (!val) continue;
       const def = POWERS[key]; if (!def) continue;
-      const cls = def.type === 'buff' ? 'pip-buff' : 'pip-debuff';
+      // Pop a pip that just appeared or grew — class applied at build time so
+      // there's no rAF race with the in-place re-render.
+      const pop = !(key in prevPowers) || val > prevPowers[key] ? ' pip-pop' : '';
+      const cls = (def.type === 'buff' ? 'pip-buff' : 'pip-debuff') + pop;
       let desc = def.desc;
       if (desc.includes('{n}')) {
         desc = desc.replace(/{n}/g, val);
@@ -406,6 +440,7 @@ export class CombatView {
       });
       p.powers.appendChild(pip);
     }
+    this._lastPowers[eid] = { ...ent.powers };
     // intent
     if (p.intent) this.renderIntent(ent, p.intent);
   }
@@ -432,6 +467,18 @@ export class CombatView {
     if (it.type === 'buff' || it.type === 'buffblock') wrap.appendChild(el('span', { class: 'intent-buf', attrs: { 'data-intent-type': 'buff' }, html: `<i class="intent-ic">${INTENT.buff}</i>` }));
     if (it.type === 'unknown') wrap.appendChild(el('span', { class: 'intent-unk', attrs: { 'data-intent-type': 'unknown' }, html: `<i class="intent-ic">${INTENT.unknown}</i>` }));
     wrap.title = it.name || '';
+    // Pop the pill when the telegraphed move actually changed (move name, type
+    // or the displayed damage — Strength/Exposed shifts count too). Skipped on
+    // the first render so the battle-start entrance isn't doubled.
+    const eid = eidOf(enemy);
+    const sig = `${it.name || ''}|${wrap.textContent}`;
+    if (this._lastIntent[eid] !== undefined && this._lastIntent[eid] !== sig) {
+      wrap.classList.remove('intent-new');
+      void wrap.offsetWidth;
+      wrap.classList.add('intent-new');
+      setTimeout(() => wrap.classList.remove('intent-new'), 450);
+    }
+    this._lastIntent[eid] = sig;
   }
 
   updateOrbs() {
@@ -1160,6 +1207,16 @@ const FX_HANDLERS = {
   enemyMove(payload, layer) {
     const el2 = this.elFor(payload.source);
     if (el2 && payload.name) floatText(layer, el2, payload.name, 'name');
+    // Flare the acting enemy's intent pill during the move-name beat, so the
+    // player connects "that icon = this action". The class lives on the
+    // persistent wrapper (renderIntent only swaps its children).
+    const parts = this.parts[eidOf(payload.source)];
+    if (parts && parts.intent) {
+      parts.intent.classList.remove('intent-telegraph');
+      void parts.intent.offsetWidth;
+      parts.intent.classList.add('intent-telegraph');
+      setTimeout(() => parts.intent.classList.remove('intent-telegraph'), 700);
+    }
   },
 
   phase(payload, layer) {
@@ -1304,32 +1361,61 @@ const FX_HANDLERS = {
     const vfx = VFX_PLAYBOOK[vfxName] || VFX_PLAYBOOK.slash;
 
     const applyDamageFx = () => {
+      // Ward feedback: pop the badge for any absorbed chunk. If this hit broke
+      // the last of it, shatter — the burst fires at the badge now, because the
+      // microtask-deferred update() will hide the badge right after this.
+      if (payload.blocked > 0) {
+        const tparts = this.parts[eidOf(payload.target)];
+        const badge = tparts && tparts.block;
+        if (badge) {
+          badge.classList.remove('block-hit');
+          void badge.offsetWidth;
+          badge.classList.add('block-hit');
+          if (payload.target.block === 0) burst(layer, badge, '#9fc2ff', 10);
+        }
+      }
       if (payload.hpLost > 0) {
         const size = Math.round(Math.min(60, 26 + payload.hpLost * 1.4));
         floatText(layer, el2, String(payload.hpLost), 'damage', { size });
         hitFlash(el2, 'damage');
         const big = payload.hpLost >= 14 || chLevel > 0;
-        shake(el2, big);
         if (payload.isAttack) {
           vfx.play(layer, el2);
           if (payload.source && payload.source.isPlayer) audio.play(vfx.sound);
         }
-        if (payload.target.isPlayer || big) screenShake(this.scene, big);
-        if (chLevel > 0) {
-          // Charged release: a heavier burst + ring on the strike.
-          const gold = chLevel >= 5;
-          ring(layer, el2, gold ? 'rgba(255,224,140,0.95)' : 'rgba(255,176,80,0.9)');
-          burst(layer, el2, gold ? '#ffe6a0' : '#ffb050', gold ? 22 : 14);
-        }
-        // Reactive backdrop pulse: red when the player is hurt, amber on big hits.
-        const bg = background();
-        if (bg) {
-          if (payload.target.isPlayer) bg.pulse('damage', Math.min(2, payload.hpLost / 12));
-          else if (big) bg.pulse('heavy', Math.min(2, payload.hpLost / 18));
-        }
         if (payload.target.isPlayer) audio.play('hit');
+        const bg = background();
+        // Hit-stop: on big hits the number/flash land instantly but the target
+        // freezes for a beat before the shake and follow-through, so the impact
+        // reads heavy. Purely a view-side delay — never await in the engine.
+        const followThrough = () => {
+          shake(el2, big);
+          if (payload.target.isPlayer || big) screenShake(this.scene, big);
+          if (chLevel > 0) {
+            // Charged release: a heavier burst + ring on the strike.
+            const gold = chLevel >= 5;
+            ring(layer, el2, gold ? 'rgba(255,224,140,0.95)' : 'rgba(255,176,80,0.9)');
+            burst(layer, el2, gold ? '#ffe6a0' : '#ffb050', gold ? 22 : 14);
+          }
+          // Reactive backdrop pulse: red when the player is hurt, amber on big hits.
+          if (bg) {
+            if (payload.target.isPlayer) bg.pulse('damage', Math.min(2, payload.hpLost / 12));
+            else if (big) bg.pulse('heavy', Math.min(2, payload.hpLost / 18));
+          }
+        };
+        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (big && !reduceMotion) {
+          const stage = el2.querySelector('.stage');
+          if (stage) {
+            stage.classList.add('hitstop');
+            setTimeout(() => stage.classList.remove('hitstop'), 85);
+          }
+          setTimeout(followThrough, 85);
+        } else {
+          followThrough();
+        }
       } else if (payload.blocked > 0) {
-        floatText(layer, el2, 'BLOCK', 'blocked');
+        floatText(layer, el2, payload.target.block === 0 ? 'GUARD BROKEN' : 'BLOCK', 'blocked');
         hitFlash(el2, 'block');
         audio.play('attack-blocked');
       }
@@ -1367,6 +1453,52 @@ const FX_HANDLERS = {
     floatHTML(layer, el2, `<i class="pip-ic">${powerIcon(payload.key)}</i>${payload.amount > 0 ? '+' : ''}${payload.amount}`, def.type === 'buff' ? 'buff' : 'debuff');
   },
 
+  powerfade(payload, layer) {
+    // A power silently ran out (turn tick / last hit-counted stack consumed) —
+    // name the expiry so statuses don't just vanish. Tempo has its own break fx.
+    if (payload.key === 'tempo') return;
+    const el2 = this.elFor(payload.target); if (!el2) return;
+    const def = POWERS[payload.key]; if (!def) return;
+    floatHTML(layer, el2, `<i class="pip-ic">${powerIcon(payload.key)}</i> ${def.name} fades`, def.type === 'buff' ? 'buff' : 'debuff');
+  },
+
+  reshuffle(payload) {
+    // Discard pile shuffles back into the draw pile: fly a few card backs
+    // across so the counts don't just silently swap. Pile nodes are persistent
+    // scene children, so their rects are safe to read at emit time.
+    if (!this.scene || !this.drawPileEl || !this.discardPileEl) return;
+    audio.play('cardflip');
+    const badges = [this.drawPileEl, this.discardPileEl].map((p) => p.querySelector('.pile-badge'));
+    for (const b of badges) {
+      if (!b) continue;
+      b.classList.remove('pile-flip');
+      void b.offsetWidth;
+      b.classList.add('pile-flip');
+    }
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) return;
+    const sceneRect = this.scene.getBoundingClientRect();
+    const from = this.discardPileEl.getBoundingClientRect();
+    const to = this.drawPileEl.getBoundingClientRect();
+    const n = Math.min(5, Math.max(2, Math.ceil((payload.count || 1) / 4)));
+    for (let i = 0; i < n; i++) {
+      const fly = el('div', { class: 'mini-card-fly' });
+      const sx = from.left - sceneRect.left + from.width / 2;
+      const sy = from.top - sceneRect.top + from.height / 2;
+      const tx = to.left - sceneRect.left + to.width / 2;
+      const ty = to.top - sceneRect.top + to.height / 2;
+      fly.style.left = sx + 'px';
+      fly.style.top = sy + 'px';
+      this.scene.appendChild(fly);
+      const anim = fly.animate([
+        { transform: 'translate(-50%, -50%) rotate(0deg)', opacity: 0.95 },
+        { transform: `translate(calc(-50% + ${tx - sx}px), calc(-50% + ${(sy + ty) / 2 - sy - 46}px)) rotate(180deg)`, opacity: 1, offset: 0.55 },
+        { transform: `translate(calc(-50% + ${tx - sx}px), calc(-50% + ${ty - sy}px)) rotate(360deg)`, opacity: 0.4 },
+      ], { duration: 360, delay: i * 45, easing: 'cubic-bezier(0.3, 0.7, 0.4, 1)', fill: 'backwards' });
+      anim.onfinish = () => fly.remove();
+    }
+  },
+
   death(payload, layer) {
     const el2 = this.elFor(payload.target); if (!el2) return;
     // Give the killing hit a 0.5s beat to land before the death burst and
@@ -1376,8 +1508,13 @@ const FX_HANDLERS = {
     // and must match this timing.
     const delay = (payload.swing && !payload.target.isPlayer ? 300 : 0) + 500;
     el2._deathFxDelay = delay;
+    const glyph = this.parts[eidOf(payload.target)] && this.parts[eidOf(payload.target)].glyph;
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     setTimeout(() => {
       burst(layer, el2, '#ffce5c', 18);
+      // "Unwritten by the Static": glitch-slice the sprite while the wrapper
+      // does its existing collapse — skipped under reduced motion.
+      if (glyph && !reduceMotion) glyph.classList.add('death-glitch');
       el2.classList.add('dying');
       const bg = background(); if (bg) bg.pulse('gold', 1.2);
     }, delay);
