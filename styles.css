@@ -2044,6 +2044,73 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .combat-scene.won .enemy-side { animation: winFade 0.6s ease forwards; }
 @keyframes winFade { to { opacity: 0.2; filter: grayscale(0.6); } }
 
+/* --- Combat feedback pass: ghost HP trail, Ward pop/shatter, hit-stop,
+       intent telegraphs, pip pops, death glitch, reshuffle fly --- */
+/* HP ghost trail: a pale fill under .hpfill that lingers at the pre-hit width,
+   then drains down after a beat (updateCombatant freezes/retargets its width). */
+.hpghost {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 100%;
+  z-index: 0;
+  background: rgba(255, 158, 110, 0.55);
+  border-radius: 999px;
+  transition: width 0.55s ease 0.28s;
+}
+.hpfill { position: relative; z-index: 1; }
+/* Ward badge: pop on each absorbed chunk (shatter burst is spawned in JS). */
+.block-badge.block-hit { animation: blockHit 0.28s cubic-bezier(0.3, 1.4, 0.5, 1); }
+@keyframes blockHit { 0% { transform: scale(1); } 35% { transform: scale(1.45); filter: brightness(1.7); } 100% { transform: scale(1); } }
+/* Hit-stop: the struck combatant freezes bright for ~85ms before the shake. */
+.stage.hitstop { animation: none !important; transition: none; transform: scale(1.05); filter: brightness(1.55) saturate(1.3); }
+/* Intent pill: flare while the move it telegraphs resolves; pop when the
+   telegraphed move changes. Both temporarily replace intentBob (same property). */
+.intent.intent-telegraph { animation: intentTelegraph 0.65s ease; }
+@keyframes intentTelegraph {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  40% { transform: translateX(-50%) scale(1.26); box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 30px rgba(255,140,60,0.95); }
+}
+.intent.intent-new { animation: intentNewPop 0.4s cubic-bezier(0.3, 1.4, 0.5, 1); }
+@keyframes intentNewPop {
+  0% { transform: translateX(-50%) scale(0.7); }
+  60% { transform: translateX(-50%) scale(1.16); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+/* Status pip that just appeared or grew. */
+.pip.pip-pop { animation: pipPop 0.34s cubic-bezier(0.3, 1.5, 0.5, 1); }
+@keyframes pipPop { 0% { transform: scale(0.5); } 55% { transform: scale(1.22); } 100% { transform: scale(1); } }
+/* Death: the sprite is "unwritten" — glitch slices + desaturation flicker,
+   running alongside the wrapper's existing .dying collapse. */
+.glyph.death-glitch { animation: deathGlitch 0.55s steps(2, end) forwards; }
+@keyframes deathGlitch {
+  0% { clip-path: inset(0 0 0 0); transform: translateX(0); }
+  20% { clip-path: inset(12% 0 55% 0); transform: translateX(-7px); filter: saturate(0) contrast(1.8) brightness(1.6); }
+  40% { clip-path: inset(45% 0 18% 0); transform: translateX(8px); filter: saturate(0) contrast(2) brightness(0.8); }
+  60% { clip-path: inset(70% 0 5% 0); transform: translateX(-9px); filter: invert(0.15) saturate(0.2); }
+  80% { clip-path: inset(25% 0 35% 0); transform: translateX(6px); filter: saturate(0) brightness(1.9); }
+  100% { clip-path: inset(0 0 100% 0); transform: translateX(0); filter: saturate(0) brightness(0.3); }
+}
+/* Reshuffle: pile badges pulse and a few card backs arc discard → draw. */
+.pile-badge.pile-flip { animation: pileFlip 0.4s ease; }
+@keyframes pileFlip { 0% { transform: scale(1); } 45% { transform: scale(1.35); filter: brightness(1.6); } 100% { transform: scale(1); } }
+.mini-card-fly {
+  position: absolute;
+  z-index: 60;
+  width: 26px;
+  height: 36px;
+  border-radius: 4px;
+  background: linear-gradient(160deg, #3a1c0c, #1c0d05);
+  border: 1px solid var(--orange);
+  box-shadow: 0 0 10px rgba(255, 106, 26, 0.5);
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hpghost { transition: none; }
+  .block-badge.block-hit, .pip.pip-pop, .intent.intent-telegraph, .intent.intent-new,
+  .glyph.death-glitch, .pile-badge.pile-flip { animation: none !important; }
+  .stage.hitstop { transform: none; filter: none; }
+}
+
 /* ============================================================
    MOBILE / TOUCH / FULLSCREEN
    ============================================================ */

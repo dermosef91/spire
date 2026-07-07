@@ -466,6 +466,25 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
   is missing from that list entirely, walk backward through the preceding
   comments for a stray `*/`.
 - **Holographic / Iridescent Sheen**: Cards and customized clipped buttons (`.btn` and `.end-turn`) feature a dynamic iridescent sweep on hover. This is implemented via an absolute `::after` overlay utilizing a screen blending radial-gradient (bent sphere reflection) and a smooth position tracking transition linked to the mouse cursor position. For custom button shapes with non-rectangular bounds (polygons), the `::after` overlay must match the exact parent `clip-path` polygon. Disable these hover animations in the `@media (prefers-reduced-motion: reduce)` block.
+- **Combat-feedback fx conventions (2026-07 feedback pass)**: `combat.js` emits two
+  additional purely-cosmetic fx types: `powerfade` (`{target, key}`, fired wherever
+  a power is *silently deleted* — `consumeStack`, `tickTurnDebuffs`, `tickPoison` —
+  so expiries float "«Name» fades"; `applyPower` deletions stay silent because its
+  `power` float already shows the −N) and `reshuffle` (`{count}`, fired in `draw()`
+  just *before* discard→draw so the handler can read both pile rects). View-side
+  diff state on `CombatView` (`_lastHp`/`_lastPowers`/`_lastIntent`) drives the HP
+  ghost trail (`.hpghost`), `.pip-pop` and `.intent-new` — the pop classes are
+  applied at node-build time inside `updateCombatant`/`renderIntent`, so there is
+  no rAF race with the in-place re-render. Big hits get an ~85ms `.hitstop` freeze
+  + deferred shake in the view's damage handler (`setTimeout`, never an engine
+  `await`). Two CSS gotchas hit while building this: (1) `.hpfill` is a **static**
+  child, so the absolutely-positioned `.hpghost` behind it painted *on top* until
+  `.hpfill` got `position: relative; z-index: 1`; (2) `.intent` is centered by
+  `transform: translateX(-50%)` **and** runs a transform animation (`intentBob`),
+  so any new intent animation must carry `translateX(-50%)` in every keyframe and
+  will temporarily replace the bob while it runs (expected). The HP ghost freezes
+  at its *current rendered* width before re-targeting, so multi-hit attacks can't
+  jump it back up mid-drain.
 - **Auto-Update Learnings**: On every action/task, if you discover a project-specific gotcha, solve a debugging issue, or establish a new convention/pattern, you must immediately update `CLAUDE.md` and `.agents/AGENTS.md` to persist this learning.
 - **Keyboard Navigation**: Global keyboard navigation is managed by `KeyboardController` in `src/core/keyboard.js`, instantiated in the `Game` constructor as `this.keyboard`. Interactive elements are queried dynamically, supporting Tab/Shift+Tab, Arrow keys, WASD to navigate, Enter/Space to click, Escape to cancel/go back, and numbers `1`-`9` as direct shortcuts. Visual highlight class is `.kb-focus` in `styles.css`. Keyboard focus is automatically cleared when the mouse moves or clicks. Hover/tooltip synchronization is handled by dispatching synthetic `mouseenter` and `mouseleave` events to the active element. For combat integration, `beginCombat()` stores the `CombatView` instance as `this.combatView` on the `Game` instance to coordinate hand selection and enemy targeting. If a QTE is active (`.qte-layer` exists), the global controller completely bypasses interception so WASD/Arrow controls reach the rhythm game.
 - **Landscape-phone breakpoint (`@media (max-height: 560px)`)**: this is the
