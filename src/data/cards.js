@@ -802,7 +802,7 @@ def('catalogue_opens', {
   },
 });
 def('reckoning', {
-  name: 'Reckoning', char: 'colorless', type: 'attack', rarity: 'rare', cost: 1,
+  name: 'Reckoning', char: 'colorless', type: 'attack', rarity: 'rare', cost: 1, locked: true,
   magic: 40, target: 'enemy',
   desc: (c) => `Deal damage equal to the number of foes you've slain this run (max ${c.magic}).`,
   upgrade: (c) => { c.magic = 50; },
