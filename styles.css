@@ -523,12 +523,12 @@ body.scene-reward #bg-image.show {
   background: linear-gradient(180deg, rgba(243,232,216,0.45) 0%, rgba(243,232,216,0.15) 40%, rgba(243,232,216,0.08) 100%);
 }
 .char-card.char-locked:hover { transform: none; filter: saturate(0.15) brightness(0.6); }
+.char-card.char-locked .char-name { color: var(--muted); }
+.char-glyph-locked { opacity: 0.7; }
 .char-lock-overlay {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 10px; flex: 1; padding: 12px 0;
 }
-.char-lock-ic { display: block; width: 48px; height: 48px; opacity: 0.7; }
-.char-lock-ic .svg-ic { width: 100%; height: 100%; }
 .char-lock-req {
   font-size: 14px; color: var(--muted); letter-spacing: 0.08em;
   text-align: center; font-weight: 600;
@@ -2485,7 +2485,6 @@ img.svg-ic { object-fit: contain; }
   .charselect:has(.asc-select) .char-blurb { font-size: 10px; line-height: 1.25; -webkit-line-clamp: 2; }
   .charselect:has(.asc-select) .char-relic { font-size: 9.5px; padding: 4px 6px; }
   .charselect:has(.asc-select) .char-card .btn { min-height: 26px; padding: 4px 12px; font-size: 11px; margin-top: 2px; }
-  .charselect:has(.asc-select) .char-lock-ic { width: 36px; height: 36px; }
 
   /* Compact Ascension Selector for mobile landscape. Capped + independently
      scrollable: at high Ascension the modifier list (.asc-desc) is cumulative

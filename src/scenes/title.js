@@ -126,12 +126,12 @@ export const TitleScene = {
     for (const id of Object.keys(CHARACTERS)) {
       const ch = CHARACTERS[id];
       const unlocked = isCharUnlocked(id, this.meta);
-      const card = el('div', { class: `char-card${unlocked ? '' : ' char-locked'}`, style: { '--cc': ch.color, '--ca': ch.accent } });
-      const charGlyph = el('div', { class: 'char-glyph imodel' }, [spriteOrSvg(id, characterModel(id))]);
-      card.appendChild(charGlyph);
-      card.appendChild(el('div', { class: 'char-name', text: ch.name }));
-      card.appendChild(el('div', { class: 'char-title', text: ch.title }));
+      const card = el('div', { class: `char-card${unlocked ? '' : ' char-locked'}`, style: unlocked ? { '--cc': ch.color, '--ca': ch.accent } : {} });
       if (unlocked) {
+        const charGlyph = el('div', { class: 'char-glyph imodel' }, [spriteOrSvg(id, characterModel(id))]);
+        card.appendChild(charGlyph);
+        card.appendChild(el('div', { class: 'char-name', text: ch.name }));
+        card.appendChild(el('div', { class: 'char-title', text: ch.title }));
         card.appendChild(el('div', { class: 'char-hp', html: `<i class="tb-ic">${UI.heart}</i> ${ch.maxHp} HP` }));
         card.appendChild(el('div', { class: 'char-blurb', text: ch.blurb }));
         const starter = RELICS[ch.relic];
@@ -141,8 +141,10 @@ export const TitleScene = {
         ]));
         card.appendChild(button('Begin', () => { audio.play('click_heavy'); this.startRun(id); }, 'primary'));
       } else {
+        card.appendChild(el('div', { class: 'char-glyph imodel char-glyph-locked', html: UI.lock }));
+        card.appendChild(el('div', { class: 'char-name', text: '???' }));
+        card.appendChild(el('div', { class: 'char-title', text: 'Unwritten Champion' }));
         const lockOverlay = el('div', { class: 'char-lock-overlay' });
-        lockOverlay.appendChild(el('i', { class: 'char-lock-ic', html: UI.lock }));
         lockOverlay.appendChild(el('div', { class: 'char-lock-req', text: charUnlockReq(id) }));
         card.appendChild(lockOverlay);
       }
@@ -206,6 +208,7 @@ export const TitleScene = {
   },
 
   startRun(charId) {
+    if (!isCharUnlocked(charId, this.meta)) return;
     this.run = new RunState(charId, undefined, this.selectedAscension);
     this.meta.runs += 1; saveMeta(this.meta);
     saveRun(this.run);
