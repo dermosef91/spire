@@ -940,7 +940,7 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .card.type-skill .card-type span { background: #c4d2e2; }
 .card.type-power .card-type span { background: var(--c-power); }
 .card.type-status .card-type span, .card.type-curse .card-type span { background: #6a625a; color: #1a1714; }
-.card-desc { font-size: clamp(9px, calc(var(--card-h) * 0.062), 20px); text-align: center; color: var(--ink); line-height: 1.22; padding: 2px; flex: 1;
+.card-desc { font-size: calc(clamp(9px, calc(var(--card-h) * 0.062), 20px) * var(--desc-scale, 1)); text-align: center; color: var(--ink); line-height: 1.22; padding: 2px; flex: 1;
   display: flex; align-items: center; justify-content: center; font-family: var(--font-body); overflow: hidden; min-width: 0; }
 .card-desc-in { display: block; width: 100%; overflow-wrap: anywhere; }
 .kw { color: var(--orange); font-weight: 600; cursor: pointer; text-decoration: underline dotted rgba(255,176,80,0.6); text-underline-offset: 2px; }
@@ -1657,8 +1657,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   flex-wrap: nowrap; overflow-x: auto; overflow-y: visible; min-height: 0; padding: clamp(46px, 6.5vh, 66px) 10px 30px;
   scroll-snap-type: x proximity; scrollbar-width: none; position: relative; z-index: 10; }
 .hand::-webkit-scrollbar { display: none; }
-.hand .card { scroll-snap-align: center; height: auto; min-height: var(--card-h); }
-.hand .card-desc { overflow: visible; }
+.hand .card { scroll-snap-align: center; height: var(--card-h); }
+.hand .card-desc { overflow: hidden; }
 .combat-log { flex: 0 0 auto; margin-top: auto; position: relative; z-index: 10; }
 /* .combat-controls positioning is handled absolutely above */
 
@@ -2600,11 +2600,12 @@ img.svg-ic { object-fit: contain; }
 .combatant.enemy.drag-over { outline: 2px dashed var(--amber); outline-offset: 8px; border-radius: 16px; }
 .combatant.enemy.drag-over .med-core { box-shadow: inset 0 0 22px rgba(0,0,0,0.7), 0 0 44px rgba(255,176,80,1); }
 
-/* Card-choice / deck overlays scroll independently of the combat viewport,
-   so their cards stay readable and GROW to fit text (never clip). */
+/* Card-choice / deck overlays scroll independently of the combat viewport.
+   Cards keep a uniform fixed size; long descriptions auto-fit (see fitCardDesc
+   in ui/components.js) by scaling the text down rather than growing the card. */
 .overlay { --card-h: clamp(190px, 30vh, 216px); --card-w: calc(var(--card-h) * 0.7); }
-.overlay .card { height: auto; min-height: var(--card-h); }
-.overlay .card-desc { overflow: visible; padding-bottom: 4px; }
+.overlay .card { height: var(--card-h); }
+.overlay .card-desc { overflow: hidden; padding-bottom: 4px; }
 .overlay .card-row, .overlay .deck-grid { max-height: 76vh; overflow-y: auto; align-items: stretch; }
 
 /* Shop cards keep the same fixed w:h aspect ratio as every other card screen

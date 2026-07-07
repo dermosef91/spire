@@ -162,7 +162,7 @@ def('blood_offering', {
 def('devour', {
   name: 'Sate', char: 'amara', type: 'attack', rarity: 'rare', cost: 1,
   dmg: 10, magic: 3, target: 'enemy', consume: true,
-  desc: (c) => `Deal ${c.dmg} damage. If this kills, raise your Max HP by ${c.magic}. Consume.`,
+  desc: (c) => `Deal ${c.dmg} damage. If this kills, gain ${c.magic} Max HP. Consume.`,
   upgrade: (c) => { c.dmg = 12; c.magic = 4; },
   onPlay: (ctx) => {
     const before = ctx.enemy && ctx.enemy.alive;
@@ -173,7 +173,7 @@ def('devour', {
 def('harvest', {
   name: 'Reaping Arc', char: 'amara', type: 'attack', rarity: 'rare', cost: 2,
   dmg: 6, magic: 3, target: 'all', consume: true,
-  desc: (c) => `Deal ${c.dmg} damage to ALL enemies. Heal ${c.magic} HP for each enemy struck. Consume.`,
+  desc: (c) => `Deal ${c.dmg} damage to ALL enemies. Heal ${c.magic} HP per enemy struck. Consume.`,
   upgrade: (c) => { c.dmg = 8; c.magic = 4; },
   onPlay: (ctx) => { const n = ctx.combat.livingEnemies().length; ctx.dealAll(ctx.c.dmg); ctx.heal(n * ctx.c.magic); },
 });
@@ -321,7 +321,7 @@ def('answer_in_kind', {
 def('blade_turn', {
   name: 'Blade Turn', char: 'amara', type: 'skill', rarity: 'rare', cost: 1, consume: true,
   target: 'self',
-  desc: () => `Until your next turn, successful parries reflect the parried attack's full damage back at the attacker. Consume.`,
+  desc: () => `Until your next turn, a successful parry reflects the attack's full damage back at the attacker. Consume.`,
   upgrade: (c) => { c.cost = 0; },
   onPlay: (ctx) => {
     ctx.combat._parryReflect = true;
@@ -348,7 +348,7 @@ def('untouchable', {
 def('call_the_duel', {
   name: 'Call the Duel', char: 'amara', type: 'skill', rarity: 'uncommon', cost: 0, consume: true,
   magic: 3, target: 'enemy',
-  desc: (c) => `Challenge an enemy: your attacks deal +${c.magic} damage to it. When it dies, draw 3 cards. Consume.`,
+  desc: (c) => `Challenge an enemy: your attacks deal +${c.magic} damage to it. On its death, draw 3 cards. Consume.`,
   upgrade: (c) => { c.magic = 4; },
   onPlay: (ctx) => {
     if (!ctx.enemy || !ctx.enemy.alive) return;
@@ -360,7 +360,7 @@ def('call_the_duel', {
 def('take_their_name', {
   name: 'Take Their Name', char: 'amara', type: 'attack', rarity: 'rare', cost: 3, consume: true,
   dmg: 26, magic: 3, target: 'none',
-  desc: (c) => `Deal ${c.dmg} damage to the Challenged enemy. If this kills it, gain ${c.magic} Resolve and heal ${c.upgraded ? 8 : 6}. Consume.`,
+  desc: (c) => `Deal ${c.dmg} damage to the Challenged enemy. If it dies, gain ${c.magic} Resolve and heal ${c.upgraded ? 8 : 6}. Consume.`,
   upgrade: (c) => { c.dmg = 34; c.magic = 4; },
   playable: (ctx) => ctx.combat.livingEnemies().some((e) => e.powers.challenged),
   onPlay: (ctx) => {
@@ -471,7 +471,7 @@ def('accelerando', {
 def('catalyst', {
   name: 'Fester', char: 'kofi', type: 'skill', rarity: 'uncommon', cost: 1,
   target: 'enemy', consume: true,
-  desc: (c) => `An enemy suffers its Blight as damage immediately. Its Blight is not reduced. Draw 1 card. Consume.`,
+  desc: (c) => `An enemy suffers its Blight as damage now; its Blight isn't reduced. Draw 1 card. Consume.`,
   upgrade: (c) => { c.cost = 0; },
   onPlay: (ctx) => {
     if (ctx.enemy && ctx.enemy.powers.poison) {
@@ -506,7 +506,7 @@ def('blight_bloom', {
 def('the_long_song', {
   name: 'The Long Song', char: 'kofi', type: 'power', rarity: 'rare', cost: 2,
   magic: 1, target: 'self',
-  desc: (c) => `At the end of your turn, apply Blight to ALL enemies equal to ${c.magic}× the Verses you played this turn.`,
+  desc: (c) => `At turn end, apply Blight to ALL enemies equal to ${c.magic}× Verses played this turn.`,
   upgrade: (c) => { c.magic = 2; },
   onPlay: (ctx) => ctx.combat.addTrigger('turnEnd', () => {
     const n = ctx.combat.versesThisTurn * ctx.c.magic;
@@ -639,14 +639,14 @@ def('summon_sun', {
 def('overclock', {
   name: 'Overdrive', char: 'zara', type: 'power', rarity: 'rare', cost: 1,
   magic: 4, target: 'self',
-  desc: (c) => `Gain ${c.magic} Focus. At the start of your turn, lose 1 Focus.`,
+  desc: (c) => `Gain ${c.magic} Focus. Lose 1 Focus each turn.`,
   upgrade: (c) => { c.magic = 5; },
   onPlay: (ctx) => { ctx.applySelf('focus', ctx.c.magic); ctx.combat.addTrigger('turnStart', () => ctx.applySelf('focus', -1), 'Overdrive'); },
 });
 def('stormcall', {
   name: 'Stormcall', char: 'zara', type: 'skill', rarity: 'rare', cost: 1,
   magic: 2, target: 'self',
-  desc: (c) => `Channel ${c.magic} Storm. Storm evokes now strike ALL enemies.`,
+  desc: (c) => `Channel ${c.magic} Storm. Storm now strikes ALL enemies.`,
   upgrade: (c) => { c.magic = 3; },
   onPlay: (ctx) => { ctx.channel('storm', ctx.c.magic); ctx.combat.stormAll = true; },
 });
@@ -724,21 +724,21 @@ def('swallow_sorrow', {
 def('step_turn_strike', {
   name: 'Step, Turn, Strike', char: 'colorless', type: 'attack', rarity: 'common', cost: 1,
   dmg: 6, magic: 10, target: 'enemy',
-  desc: (c) => `Deal ${c.dmg} damage — ${c.magic} instead if the previous card you played this turn was a Skill.`,
+  desc: (c) => `Deal ${c.dmg} damage — ${c.magic} if your previous card this turn was a Skill.`,
   upgrade: (c) => { c.dmg = 8; c.magic = 13; },
   onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.combat._prevPlayedType === 'skill' ? ctx.c.magic : ctx.c.dmg),
 });
 def('answer_song', {
   name: 'Answer-Song', char: 'colorless', type: 'skill', rarity: 'common', cost: 1,
   block: 4, magic: 7, target: 'self',
-  desc: (c) => `Gain ${c.block} Block — ${c.magic} instead if the previous card you played this turn was an Attack.`,
+  desc: (c) => `Gain ${c.block} Block — ${c.magic} if your previous card this turn was an Attack.`,
   upgrade: (c) => { c.block = 5; c.magic = 9; },
   onPlay: (ctx) => ctx.gainBlock(ctx.combat._prevPlayedType === 'attack' ? ctx.c.magic : ctx.c.block),
 });
 def('call_and_response', {
   name: 'Call and Response', char: 'colorless', type: 'power', rarity: 'uncommon', cost: 1,
   magic: 3, target: 'self',
-  desc: (c) => `Whenever you play an Attack directly after a Skill, or a Skill directly after an Attack, draw 1 card (up to ${c.magic}× per turn).`,
+  desc: (c) => `Play an Attack after a Skill (or a Skill after an Attack) to draw 1 card. Up to ${c.magic}× per turn.`,
   upgrade: (c) => { c.magic = 4; },
   onPlay: (ctx) => {
     ctx.combat._callResponseCount = 0;

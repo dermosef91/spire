@@ -68,7 +68,49 @@ export function renderCard(card, opts = {}) {
     node.style.removeProperty('--mx');
     node.style.removeProperty('--my');
   });
+  scheduleFit(node);
   return node;
+}
+
+// Auto-fit: shrink the description font just enough that long text fits the
+// fixed-size card box instead of overflowing or growing the card. Cards keep a
+// uniform size; only the text scales. Purely cosmetic.
+export function fitCardDesc(node) {
+  const desc = node && node.querySelector('.card-desc');
+  if (!desc) return;
+  desc.style.setProperty('--desc-scale', '1');
+  let scale = 1;
+  const MIN = 0.62, STEP = 0.05;
+  // scrollHeight > clientHeight means the text spills past the box.
+  for (let guard = 0; guard < 12 && scale > MIN && desc.scrollHeight > desc.clientHeight + 0.5; guard++) {
+    scale -= STEP;
+    desc.style.setProperty('--desc-scale', scale.toFixed(3));
+  }
+}
+
+// Fit after the node is laid out in the DOM. Fonts load async, so also re-fit
+// once web fonts are ready (their metrics change how much text fits).
+function scheduleFit(node) {
+  if (typeof requestAnimationFrame !== 'function') return;
+  const run = () => { if (node.isConnected) fitCardDesc(node); };
+  requestAnimationFrame(() => requestAnimationFrame(run));
+  if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => requestAnimationFrame(run)).catch(() => {});
+  }
+}
+
+// Orientation/resize changes --card-h (and thus the base font), so re-fit every
+// card currently on screen. Debounced to one pass per frame.
+if (typeof window !== 'undefined') {
+  let queued = false;
+  window.addEventListener('resize', () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      document.querySelectorAll('.card').forEach(fitCardDesc);
+    });
+  });
 }
 
 // Keywords to visually highlight in card and tooltip text. Derived from the
