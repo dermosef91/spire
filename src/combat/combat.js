@@ -303,6 +303,8 @@ export class Combat {
       target.hp -= remaining;
       hpLost = remaining;
       if (target.isPlayer) this.fire('hpLost', { amount: remaining });
+      // Display only: the end screen names who landed the killing blow.
+      if (target.isPlayer && source && source.name) this.lastAttacker = source.name;
     }
     this.fx('damage', { target, dmg, hpLost, blocked, isAttack, source, ...this._swingInfo() });
     // Hit-counted debuffs: this hit used up one Exposed on the target and one

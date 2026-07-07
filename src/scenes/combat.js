@@ -66,7 +66,7 @@ export const CombatScene = {
     const bg = background(); if (bg) bg.setCombat(false);
     // Write HP back
     this.run.hp = Math.max(0, combat.player.hp);
-    if (!combat.victory) { this.gameOver(false); return; }
+    if (!combat.victory) { this.gameOver(false, { slainBy: combat.lastAttacker }); return; }
     audio.play('reward');
     // combat-end relic hooks
     for (const rid of this.run.relics) {
