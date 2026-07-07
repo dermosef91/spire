@@ -9,6 +9,7 @@ import { CARDS, createCard, upgradeCard } from '../data/cards.js';
 import { RELICS } from '../data/relics.js';
 import { POTIONS } from '../data/potions.js';
 import { COLORLESS_POOL } from '../data/characters.js';
+import { isCardLocked } from '../core/cardUnlocks.js';
 import { UI, relicIcon, potionIcon } from '../ui/icons.js';
 import { hasPotionArt } from '../ui/potion-art.js';
 import { audio } from '../audio.js';
@@ -193,7 +194,7 @@ export const RewardScene = {
 
   cardRewardOptions(kind) {
     const run = this.run;
-    const pool = run.character.cardPool.slice();
+    const pool = run.character.cardPool.filter((id) => !isCardLocked(id, this.meta));
     // small chance to inject a colorless option
     const byRar = { common: [], uncommon: [], rare: [] };
     for (const id of pool) { const r = CARDS[id].rarity; if (byRar[r]) byRar[r].push(id); }
@@ -209,7 +210,8 @@ export const RewardScene = {
       if (!opts.includes(id)) opts.push(id);
     }
     // include a colorless sometimes
-    if (run.rng.bool(0.12) && opts.length === 3) opts[2] = run.rng.pick(COLORLESS_POOL);
+    const colorlessPool = COLORLESS_POOL.filter((id) => !isCardLocked(id, this.meta));
+    if (run.rng.bool(0.12) && opts.length === 3 && colorlessPool.length) opts[2] = run.rng.pick(colorlessPool);
     return opts.map((id) => { const c = createCard(id); if (run.rng.bool(0.10)) upgradeCard(c); return c; });
   },
 

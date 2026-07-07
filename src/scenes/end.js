@@ -8,6 +8,7 @@ import { clearSave, saveMeta } from '../core/save.js';
 import { button, relicChip, renderCard } from '../ui/components.js';
 import { ASCENSION_LEVELS, MAX_ASCENSION } from '../core/state.js';
 import { newlyUnlockedChars } from '../core/unlocks.js';
+import { checkNewCardUnlocks } from '../core/cardUnlocks.js';
 import { CHARACTERS } from '../data/characters.js';
 import { audio } from '../audio.js';
 
@@ -40,10 +41,23 @@ function runSummary(game, run) {
   return wrap;
 }
 
+// Appends a "✦ New card unlocked — <Name> ✦" line per card in
+// game._cardsJustUnlocked, then clears it (mirrors the Ascension/character
+// unlock reveals below).
+function appendCardUnlocks(game, panel) {
+  if (!game._cardsJustUnlocked || !game._cardsJustUnlocked.length) return;
+  for (const bp of game._cardsJustUnlocked) {
+    panel.appendChild(el('div', { class: 'end-unlock', html: `✦ New card unlocked — <b>${bp.name}</b> ✦` }));
+  }
+  game._cardsJustUnlocked = [];
+}
+
 export const EndScene = {
   gameOver(victory, info = {}) {
     const run = this.run;
     clearSave();
+    this._cardsJustUnlocked = checkNewCardUnlocks(this.meta, run);
+    if (this._cardsJustUnlocked.length) saveMeta(this.meta);
     audio.play(victory ? 'victory' : 'defeat');
     const panel = el('div', { class: 'end-scene' });
     panel.appendChild(el('h1', { class: victory ? 'end-win' : 'end-lose', text: victory ? 'THE SPIRE IS CLEANSED' : 'YOU HAVE FALLEN' }));
@@ -73,6 +87,7 @@ export const EndScene = {
       }
       this._charsJustUnlocked = [];
     }
+    appendCardUnlocks(this, panel);
     panel.appendChild(button('Return to Title', () => this.showTitle(), 'primary'));
     this.setScene(panel, 'end');
   },
@@ -80,6 +95,7 @@ export const EndScene = {
     this.meta.wins += 1;
     // Check if any characters just became unlocked at this win count.
     this._charsJustUnlocked = newlyUnlockedChars(this.meta.wins);
+    this._cardsJustUnlocked = checkNewCardUnlocks(this.meta, this.run);
     // Winning at the highest unlocked Ascension unlocks the next level.
     const beat = this.run ? this.run.ascension : 0;
     let unlocked = false;
@@ -160,6 +176,7 @@ export const EndScene = {
       }
       this._charsJustUnlocked = [];
     }
+    appendCardUnlocks(this, panel);
     panel.appendChild(button('Return to Title', () => this.showTitle(), 'primary'));
     this.setScene(panel, 'end');
   },

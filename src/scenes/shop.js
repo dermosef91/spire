@@ -8,6 +8,7 @@ import { CARDS, createCard } from '../data/cards.js';
 import { RELICS } from '../data/relics.js';
 import { POTIONS } from '../data/potions.js';
 import { COLORLESS_POOL } from '../data/characters.js';
+import { isCardLocked } from '../core/cardUnlocks.js';
 import { UI, potionIcon } from '../ui/icons.js';
 import { audio } from '../audio.js';
 
@@ -79,9 +80,10 @@ export const ShopScene = {
 
   generateShop() {
     const run = this.run;
-    const pool = run.character.cardPool.slice();
+    const pool = run.character.cardPool.filter((id) => !isCardLocked(id, this.meta));
     const cardIds = run.rng.sample(pool, Math.min(4, pool.length));
-    cardIds.push(run.rng.pick(COLORLESS_POOL));
+    const colorlessPool = COLORLESS_POOL.filter((id) => !isCardLocked(id, this.meta));
+    if (colorlessPool.length) cardIds.push(run.rng.pick(colorlessPool));
     const priceFor = (rar) => ({ common: run.rng.int(45, 60), uncommon: run.rng.int(70, 90), rare: run.rng.int(120, 160), special: run.rng.int(70, 100), basic: 50 }[rar] || 60);
     const cards = cardIds.map((id) => ({ card: createCard(id), price: priceFor(CARDS[id].rarity), sold: false }));
 
