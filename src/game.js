@@ -32,6 +32,7 @@ import { RestScene } from './scenes/rest.js';
 import { EventScene } from './scenes/event.js';
 import { TreasureScene } from './scenes/treasure.js';
 import { EndScene } from './scenes/end.js';
+import { DebugScene } from './scenes/debug.js';
 
 export class Game {
   constructor(root) {
@@ -543,4 +544,5 @@ Object.assign(
   EventScene,
   TreasureScene,
   EndScene,
+  DebugScene,
 );

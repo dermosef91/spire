@@ -15,6 +15,7 @@ import { spriteOrSvg } from '../ui/sprites.js';
 import { ACT_NAMES, ACT_BLURB } from '../data/encounters.js';
 import { audio } from '../audio.js';
 import { fullscreenSupported, isFullscreen, toggleFullscreen, enterFullscreen } from '../core/fullscreen.js';
+import { DEBUG_MENU_ENABLED } from './debug.js';
 
 export const TitleScene = {
   // ----------------------------------------------------------- title
@@ -88,6 +89,13 @@ export const TitleScene = {
       }
     });
     settings.appendChild(musicBtn);
+    if (DEBUG_MENU_ENABLED) {
+      settings.appendChild(el('button', {
+        class: 'title-setting-btn',
+        text: 'Debug Menu',
+        on: { click: () => { audio.play('click'); this.showDebugMenu(); } },
+      }));
+    }
     panel.appendChild(settings);
 
     // Fullscreen toggle positioned in the top-right corner of the title scene

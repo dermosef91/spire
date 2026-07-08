@@ -3027,3 +3027,76 @@ img.svg-ic { object-fit: contain; }
     transition: none !important;
   }
 }
+
+/* ---------------------------------------------------------- debug menu ---
+   Internal content browser (src/scenes/debug.js) — not player-facing. Plain
+   scrollable list, no theming beyond matching the rest of the chrome. */
+.scene.debug {
+  height: 100dvh;
+  overflow-y: auto;
+  align-items: stretch;
+  padding: 24px clamp(12px, 4vw, 48px) 48px;
+}
+.debug-menu {
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+.debug-sub {
+  opacity: 0.65;
+  font-size: 0.85em;
+  margin: 4px 0 18px;
+}
+.debug-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.debug-body {
+  margin-bottom: 20px;
+}
+.debug-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  --card-h: clamp(84px, 9vw, 108px);
+  --card-w: calc(var(--card-h) * 0.7);
+}
+.debug-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.debug-row > .card {
+  flex: 0 0 auto;
+}
+.debug-row > .relic,
+.debug-row > .potion {
+  flex: 0 0 auto;
+}
+.debug-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.85em;
+  min-width: 0;
+}
+.debug-info-line {
+  opacity: 0.85;
+}
+.debug-name {
+  font-weight: 700;
+  opacity: 1;
+}
+.debug-desc {
+  opacity: 0.7;
+  font-style: italic;
+}
+.debug-locked {
+  color: var(--orange);
+}
