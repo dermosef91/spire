@@ -3074,6 +3074,16 @@ img.svg-ic { object-fit: contain; }
 }
 .debug-row > .card {
   flex: 0 0 auto;
+  cursor: pointer;
+  transition: height 0.25s ease, width 0.25s ease;
+}
+.debug-row-expanded {
+  align-items: flex-start;
+}
+.debug-row-expanded > .card {
+  --card-h: clamp(220px, 30vw, 320px);
+  --card-w: calc(var(--card-h) * 0.7);
+  z-index: 2;
 }
 .debug-row > .relic,
 .debug-row > .potion {
