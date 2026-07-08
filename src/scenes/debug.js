@@ -10,7 +10,7 @@
 // instance), same pattern as every other scenes/*.js module.
 
 import { el, clear } from '../core/util.js';
-import { CARDS, createCard, ALL_CARD_IDS } from '../data/cards.js';
+import { CARDS, createCard, cardDesc, ALL_CARD_IDS } from '../data/cards.js';
 import { RELICS } from '../data/relics.js';
 import { POTIONS } from '../data/potions.js';
 import { CHARACTERS, COLORLESS_POOL } from '../data/characters.js';
@@ -98,17 +98,13 @@ export const DebugScene = {
       const bp = CARDS[id];
       const inst = createCard(id);
       const row = el('div', { class: 'debug-row' });
-      row.appendChild(renderCard(inst, {
-        onHover: (cd, n, on) => this.tooltip(cd, n, on, 'card'),
-        // Cards render tiny in this list — click to expand in place so the
-        // name/art/description are actually readable, click again to shrink.
-        onClick: () => row.classList.toggle('debug-row-expanded'),
-      }));
+      row.appendChild(renderCard(inst, { onHover: (cd, n, on) => this.tooltip(cd, n, on, 'card') }));
       const info = el('div', { class: 'debug-info' });
       info.appendChild(infoLine(`${bp.name} (${id})`, 'debug-name'));
       info.appendChild(infoLine(`Rarity: ${bp.rarity || 'common'} · Type: ${bp.type} · Cost: ${bp.cost === -1 ? '—' : bp.cost}`));
       info.appendChild(infoLine(`Owner: ${ownerLabel(bp.char)}`));
       info.appendChild(infoLine(cardAvailability(id)));
+      info.appendChild(infoLine(cardDesc(inst), 'debug-desc'));
       if (bp.locked) {
         const u = CARD_UNLOCKS[id];
         info.appendChild(infoLine(`Locked — ${u ? u.desc : 'unlock condition unknown'}`, 'debug-locked'));
