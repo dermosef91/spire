@@ -5,7 +5,7 @@
 
 import { el } from '../core/util.js';
 import { clearSave, saveMeta } from '../core/save.js';
-import { button, relicChip, renderCard } from '../ui/components.js';
+import { button, relicChip } from '../ui/components.js';
 import { ASCENSION_LEVELS, MAX_ASCENSION } from '../core/state.js';
 import { newlyUnlockedChars } from '../core/unlocks.js';
 import { checkNewCardUnlocks } from '../core/cardUnlocks.js';
@@ -20,23 +20,13 @@ function fmtTime(secs) {
            : `${m}:${String(r).padStart(2, '0')}`;
 }
 
-// Trophy case shared by the defeat and both victory screens: the run's relic
-// row (with tooltips) and the final deck in a scrollable grid.
+// Trophy case shared by the defeat and both victory screens: the run's relic row (with tooltips).
 function runSummary(game, run) {
   const wrap = el('div', { class: 'end-summary' });
   if (run.relics.length) {
     const row = el('div', { class: 'end-relics' });
     for (const rid of run.relics) row.appendChild(relicChip(rid, (o, n, on) => game.tooltip(o, n, on)));
     wrap.appendChild(row);
-  }
-  if (run.deck.length) {
-    const holder = el('div', { class: 'end-deck' });
-    const grid = el('div', { class: 'deck-grid' });
-    for (const entry of run.deck) {
-      grid.appendChild(renderCard(run.instance(entry), { onHover: (cd, n, on) => game.tooltip(cd, n, on, 'card') }));
-    }
-    holder.appendChild(grid);
-    wrap.appendChild(holder);
   }
   return wrap;
 }
@@ -73,7 +63,7 @@ export const EndScene = {
     }
     run.updateElapsedTime();
     const ascStat = (run.ascension || 0) > 0 ? ` · Ascension <b>${run.ascension}</b>` : '';
-    panel.appendChild(el('div', { class: 'end-stats', html: `Act reached: <b>${run.act}</b> · Cards: <b>${run.deck.length}</b> · Relics: <b>${run.relics.length}</b> · Gold: <b>${run.gold}</b> · Time: <b>${fmtTime(run.elapsedTime)}</b>${ascStat}` }));
+    panel.appendChild(el('div', { class: 'end-stats', html: `Act reached: <b>${run.act}</b> · Relics: <b>${run.relics.length}</b> · Gold: <b>${run.gold}</b> · Time: <b>${fmtTime(run.elapsedTime)}</b>${ascStat}` }));
     panel.appendChild(runSummary(this, run));
     if (this._ascJustUnlocked) {
       const lv = ASCENSION_LEVELS[this._ascJustUnlocked - 1];
@@ -162,7 +152,7 @@ export const EndScene = {
     }));
     run.updateElapsedTime();
     const ascStat = (run.ascension || 0) > 0 ? ` · Ascension <b>${run.ascension}</b>` : '';
-    panel.appendChild(el('div', { class: 'end-stats', html: `Act reached: <b>${run.act}</b> · Cards: <b>${run.deck.length}</b> · Relics: <b>${run.relics.length}</b> · Gold: <b>${run.gold}</b> · Time: <b>${fmtTime(run.elapsedTime)}</b>${ascStat}` }));
+    panel.appendChild(el('div', { class: 'end-stats', html: `Act reached: <b>${run.act}</b> · Relics: <b>${run.relics.length}</b> · Gold: <b>${run.gold}</b> · Time: <b>${fmtTime(run.elapsedTime)}</b>${ascStat}` }));
     panel.appendChild(runSummary(this, run));
     if (this._ascJustUnlocked) {
       const lv = ASCENSION_LEVELS[this._ascJustUnlocked - 1];
