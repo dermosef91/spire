@@ -98,7 +98,12 @@ export const DebugScene = {
       const bp = CARDS[id];
       const inst = createCard(id);
       const row = el('div', { class: 'debug-row' });
-      row.appendChild(renderCard(inst, { onHover: (cd, n, on) => this.tooltip(cd, n, on, 'card') }));
+      row.appendChild(renderCard(inst, {
+        onHover: (cd, n, on) => this.tooltip(cd, n, on, 'card'),
+        // Cards render tiny in this list — click to expand in place so the
+        // name/art/description are actually readable, click again to shrink.
+        onClick: () => row.classList.toggle('debug-row-expanded'),
+      }));
       const info = el('div', { class: 'debug-info' });
       info.appendChild(infoLine(`${bp.name} (${id})`, 'debug-name'));
       info.appendChild(infoLine(`Rarity: ${bp.rarity || 'common'} · Type: ${bp.type} · Cost: ${bp.cost === -1 ? '—' : bp.cost}`));
