@@ -380,6 +380,12 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
   dir must `import pkg from '/home/user/spire/node_modules/playwright-core/index.js'; const { chromium } = pkg;` (CommonJS default export, absolute path).
 
 ## Conventions
+- **Ideation stays in chat — never commit ideation docs.** When asked to
+  brainstorm/ideate/rank ideas (game-differentiation ideas, card ideas, feature
+  ideas, etc.), answer directly in the chat reply; do **not** create a markdown
+  file, commit it, or open a PR for it. Deliverables are code changes, not idea
+  docs. (The one legacy exception, `docs/design/card-ideas-2026-07.md`, predates
+  this rule — don't add new siblings to it.)
 - Keep it dependency-free and build-free. Don't introduce a bundler/framework.
 - Mechanic names stay readable; afrofuturist flavor lives in card/enemy/relic
   text and the world, not in renaming core mechanics.
