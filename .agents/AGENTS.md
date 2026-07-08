@@ -1,5 +1,6 @@
 # Rules for ÀṢẸ Development
 
+- **Ideation stays in chat — never commit ideation docs.** When asked to brainstorm/ideate/rank ideas (game-differentiation ideas, card ideas, feature ideas, etc.), answer directly in the chat reply; do **not** create a markdown file, commit it, or open a PR for it. Deliverables are code changes, not idea docs. (The one legacy exception, `docs/design/card-ideas-2026-07.md`, predates this rule — don't add new siblings to it.)
 - Always use the `gpt-image-2` model for all image, sprite, and background art generations.
 - Never use Gemini or any other image models for generating assets.
 - **OPENAI_API_KEY location**: the key for live asset-generation runs lives in the gitignored `.env` at the primary checkout's repo root (`~/spire/.env`). Worktrees don't inherit it — symlink it in (`ln -s <primary-checkout>/.env .env`). The `tools/gen-*.js` scripts read `process.env.OPENAI_API_KEY` directly and do **not** auto-load `.env`; load it via `node --env-file=.env tools/gen-<x>.js` (Node ≥ 20.6) or `set -a; source .env; set +a`. Never commit the key.
