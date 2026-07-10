@@ -31,11 +31,11 @@ export const EVENTS = [
       },
       {
         label: 'Pry loose the brass throat (Gain 70 gold, lose 10 HP)',
-        effect: (run) => { run.gold += 70; run.takeDamage(10); return 'The throat comes free in a spray of trapped static (+70 gold) that bites back through your hands (−10 HP).'; },
+        effect: (run) => { run.gold += 70; run.takeDamage(10); run.actFlags.hardened = true; return 'The throat comes free in a spray of trapped static (+70 gold) that bites back through your hands (−10 HP). The market’s guardians harden against the theft.'; },
       },
       {
         label: 'Lay the griot to rest (Heal 15 HP)',
-        effect: (run) => { run.heal(15); return 'You close the singer’s eyes and press them beneath the tide. The market’s murmur quiets; you breathe easier (+15 HP).'; },
+        effect: (run) => { run.heal(15); run.actFlags.blessed = true; return 'You close the singer’s eyes and press them beneath the tide. The market’s murmur quiets; you breathe easier (+15 HP). A half-finished praise-song follows you, waiting to be sung.'; },
       },
     ],
   },
@@ -97,7 +97,7 @@ export const EVENTS = [
       },
       {
         label: 'Sell a memory (Lose 6 Max HP, gain 80 gold)',
-        effect: (run) => { run.maxHp = Math.max(1, run.maxHp - 6); run.hp = Math.min(run.hp, run.maxHp); run.gold += 80; return 'A shelf-clerk files a piece of you away forever (−6 Max HP) and slides a heavy purse across the desk (+80 gold).'; },
+        effect: (run) => { run.maxHp = Math.max(1, run.maxHp - 6); run.hp = Math.min(run.hp, run.maxHp); run.gold += 80; run.actFlags.hardened = true; return 'A shelf-clerk files a piece of you away forever (−6 Max HP) and slides a heavy purse across the desk (+80 gold). The Archive notes the sale, and its wardens sharpen.'; },
       },
       { label: 'Close the ledger and leave', effect: () => 'You refuse to be catalogued today. The shelves sigh shut.' },
     ],

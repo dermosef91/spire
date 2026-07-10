@@ -283,6 +283,7 @@ export const MapScene = {
     run.act += 1;
     run.heal(run.maxHp);
     run._actMonster = 0;
+    run.actFlags = {}; // reactive-map flags are per-act (#18)
     run.map = generateMap(run.rng, run.act);
     run.position = null;
     run.pathTaken = [];

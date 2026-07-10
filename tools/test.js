@@ -1322,6 +1322,72 @@ test("Oathbreaker's Edge deals more once a Vow has been broken this combat", () 
   assert.equal(enemy.hp, 999 - 12 - 20, 'boosted damage once a Vow has broken');
 });
 
+// ------------------------------------------------- Reactive map & Nemesis
+console.log('Reactive map (#18) & Nemesis rematch (#19)');
+
+test('actFlags and nemesisDone round-trip through save/load', () => {
+  const run = new RunState('amara', 7);
+  run.actFlags.hardened = true;
+  run.nemesisDone = true;
+  const clone = RunState.fromJSON(JSON.parse(JSON.stringify(run.toJSON())));
+  assert.deepEqual(clone.actFlags, { hardened: true }, 'per-act flags persisted');
+  assert.equal(clone.nemesisDone, true, 'nemesis guard persisted');
+  // legacy saves (no keys) load with safe defaults
+  const legacy = JSON.parse(JSON.stringify(run.toJSON()));
+  delete legacy.actFlags; delete legacy.nemesisDone;
+  const old = RunState.fromJSON(legacy);
+  assert.deepEqual(old.actFlags, {}, 'legacy save defaults actFlags to {}');
+  assert.equal(old.nemesisDone, false, 'legacy save defaults nemesisDone to false');
+});
+
+test('reactive-map event choices set the expected actFlags', () => {
+  const griot = EVENTS.find((e) => e.id === 'drowned_griot');
+  const rest = new RunState('amara', 3);
+  griot.choices.find((c) => c.label.startsWith('Lay the griot')).effect(rest);
+  assert.equal(rest.actFlags.blessed, true, 'mercy blesses the act');
+
+  const loot = new RunState('amara', 3);
+  griot.choices.find((c) => c.label.startsWith('Pry loose')).effect(loot);
+  assert.equal(loot.actFlags.hardened, true, 'looting hardens the act');
+
+  const archive = EVENTS.find((e) => e.id === 'archive_of_names');
+  const sell = new RunState('amara', 3);
+  archive.choices.find((c) => c.label.startsWith('Sell a memory')).effect(sell);
+  assert.equal(sell.actFlags.hardened, true, 'selling a memory hardens the act');
+});
+
+test('#18 enemyHpMult toughens the fight; playerStartBlock shields at the boss', () => {
+  const base = new Combat(new RunState('amara', 55), ['husk_drone']);
+  const hard = new Combat(new RunState('amara', 55), ['husk_drone'], { mods: { enemyHpMult: 1.2 } });
+  assert.ok(hard.enemies[0].maxHp > base.enemies[0].maxHp, 'hardened enemy has more HP');
+  assert.equal(hard.enemies[0].hp, hard.enemies[0].maxHp, 'starts at full');
+
+  const boss = new Combat(new RunState('amara', 55), ['husk_drone'], { mods: { playerStartBlock: 12 } });
+  boss.start();
+  assert.ok(boss.player.block >= 12, 'the mercy boon grants starting Block');
+});
+
+test('#19 nemesis mods rename + buff one enemy and grant Resolve on start', () => {
+  const c = new Combat(new RunState('amara', 71), ['static_jackal'], { mods: { nemesisId: 'static_jackal' } });
+  const e = c.enemies[0];
+  assert.equal(e._nemesis, true, 'flagged as the nemesis');
+  assert.match(e.name, /^Rendered /, 'renamed with the Rendered prefix');
+  const plain = new Combat(new RunState('amara', 71), ['static_jackal']);
+  assert.ok(e.maxHp > plain.enemies[0].maxHp, 'non-boss nemesis is padded');
+  c.start();
+  assert.ok((e.powers.strength || 0) >= 2, 'nemesis begins with Resolve');
+});
+
+test('#19 lastAttackerId records the enemy that damages the player', () => {
+  const c = freshCombat();
+  c.applyDamage(c.player, 30, { isAttack: true, source: c.enemies[0] });
+  assert.equal(c.lastAttackerId, 'husk_drone', 'killer id captured for the next run');
+  // player self-damage must not seed a nemesis
+  c.lastAttackerId = null;
+  c.applyDamage(c.player, 5, { isAttack: false, source: c.player });
+  assert.equal(c.lastAttackerId, null, 'self-damage leaves no nemesis');
+});
+
 // ----------------------------------------------------------------- summary
 console.log('');
 if (failures.length) {

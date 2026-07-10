@@ -54,6 +54,14 @@ export class RunState {
     this.bossesDefeated = 0;
     this.foesSlain = 0;
     this.usedEvents = [];
+    // Reactive-map state (#18): per-act flags an event can set that later nodes
+    // read — e.g. `hardened` (you looted/desecrated → monster+elite fights come
+    // tougher this act) or `blessed` (you showed mercy → a boon at the act boss).
+    // Reset each act in nextAct().
+    this.actFlags = {};
+    // Nemesis rematch (#19): once-per-run guard so only the first elite becomes
+    // the buffed "Rendered <name>" fight.
+    this.nemesisDone = false;
 
     // starter relic
     this.addRelic(ch.relic, true);
@@ -186,6 +194,7 @@ export class RunState {
       potions: this.potions, relics: this.relics, deck: this.deck,
       encountersCleared: this.encountersCleared, eliteCleared: this.eliteCleared,
       actMonster: this._actMonster || 0,
+      actFlags: this.actFlags || {}, nemesisDone: !!this.nemesisDone,
       bossesDefeated: this.bossesDefeated, foesSlain: this.foesSlain, usedEvents: this.usedEvents,
       map: this.map, position: this.position, pathTaken: this.pathTaken || [],
       elapsedTime: this.elapsedTime,
@@ -208,6 +217,8 @@ export class RunState {
     run.deck = data.deck || [];
     run.encountersCleared = data.encountersCleared || 0;
     run._actMonster = data.actMonster || 0;
+    run.actFlags = data.actFlags || {}; // legacy saves default to no flags
+    run.nemesisDone = !!data.nemesisDone;
     run.eliteCleared = data.eliteCleared || 0;
     run.bossesDefeated = data.bossesDefeated || 0;
     run.foesSlain = data.foesSlain || 0;

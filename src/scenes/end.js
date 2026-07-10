@@ -10,6 +10,7 @@ import { ASCENSION_LEVELS, MAX_ASCENSION } from '../core/state.js';
 import { newlyUnlockedChars } from '../core/unlocks.js';
 import { checkNewCardUnlocks } from '../core/cardUnlocks.js';
 import { CHARACTERS } from '../data/characters.js';
+import { ENEMIES } from '../data/enemies.js';
 import { audio } from '../audio.js';
 
 // mm:ss (or h:mm:ss) from the run's elapsed seconds.
@@ -46,6 +47,16 @@ export const EndScene = {
   gameOver(victory, info = {}) {
     const run = this.run;
     clearSave();
+    // Nemesis seed (#19): remember the foe that felled you so the next run can
+    // stage a buffed rematch. Guard on a real, current enemy id.
+    if (!victory && info.slainById && ENEMIES[info.slainById]) {
+      this.meta.lastNemesis = {
+        id: info.slainById,
+        name: info.slainBy || ENEMIES[info.slainById].name,
+        act: run.act,
+      };
+      saveMeta(this.meta);
+    }
     this._cardsJustUnlocked = checkNewCardUnlocks(this.meta, run);
     if (this._cardsJustUnlocked.length) saveMeta(this.meta);
     audio.play(victory ? 'victory' : 'defeat');

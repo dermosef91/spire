@@ -93,6 +93,39 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   mind (weak ≲ 30, normal ~30–65, hard ~45–85) and keep new packs to **two**
   enemies — nothing has ever shipped a 3-pack, so the enemy-side layout at
   landscape-phone widths is unproven for it.
+  **Encounter modifiers (`opts.mods`, `combat/combat.js`)** — the seam both the
+  reactive map and the nemesis rematch ride on. `beginCombat(enemyIds, kind,
+  mods)` (`scenes/combat.js`) threads `mods` into `new Combat(run, ids, {kind,
+  mods})`; the constructor applies **pure-data** tweaks to the freshly-built
+  enemies (`enemyHpMult` scales every enemy's HP; `nemesisId` renames one enemy
+  `Rendered <name>` + pads non-boss HP by 30% — bosses get 0 pad so a boss
+  rematch isn't an unwinnable wall), and `start()` applies the grants that need
+  the mounted view (`_nemesis` enemies get +2 Resolve; `enemyResolve`;
+  `playerStartBlock` via `gainBlockTo(player, n, true)`) plus a log line each.
+  Never put mod grants that fire `fx`/`applyPower` in the constructor — the view
+  isn't mounted there; defer them to `start()` like the ascension-11 boss buff.
+  **Reactive map (#18)** — `run.actFlags` (`{hardened?, blessed?}`, persisted in
+  the save, **reset per act** in `map.js` `nextAct()`) is set by event choices
+  (`data/events.js`: looting/desecration → `hardened`, mercy → `blessed`) and
+  read at fight start: `startMonster`/`startElite` pass `{enemyHpMult:1.2}` when
+  `hardened`; `startBoss` passes `{playerStartBlock:12}` when `blessed`. To add a
+  new reactive consequence, set a flag in an event effect and branch on it in the
+  relevant `startX()`.
+  **Nemesis rematch (#19)** — the enemy that ends a run is saved to
+  `meta.lastNemesis` (`{id,name,act}` in `save.js` defaultMeta) from
+  `end.js`'s `gameOver` via `combat.lastAttackerId` (set in `applyDamage` only
+  when the source is a foe, not player self-damage). The next run's **first
+  elite** is replaced by a solo buffed `[nemesisId]` fight — `startElite` calls
+  `nemesisForThisFight()`, gated once-per-run by the persisted `run.nemesisDone`
+  (so a mid-run reload can't re-trigger it) and by the id still existing in
+  `ENEMIES`. Besting it pays +40 gold and clears `meta.lastNemesis`; the aura is
+  the `.combatant.nemesis` gold halo toggled in `combatView.updateCombatant`
+  alongside `.phased`/`.enraged`. **Verify gotcha**: driving this via Playwright,
+  do the run→map→elite steps as *separate* `page.evaluate` calls with Node-side
+  waits between them — a single long in-page `evaluate` throttles the rAF that
+  drives combat renders, so the `.nemesis` aura class never lands (the same
+  rAF-throttle noted for the preview tool below). `startElite()` also needs a
+  `showMap()` first; called straight off the act-intro it doesn't mount combat.
 - `combat/combat.js` — the turn-based engine (energy, piles, powers, orbs,
   enemy AI, win/loss). Emits visual `fx(type, payload)` events that are
   **purely cosmetic** — never put game logic in the view's fx handler.
