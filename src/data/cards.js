@@ -153,11 +153,11 @@ def('ancestral_fury', {
   onPlay: (ctx) => { ctx.applySelf('strength', 2); ctx.combat.addTrigger('turnStart', () => ctx.applySelf('strength', ctx.c.magic), 'Rite of Fury'); },
 });
 def('blood_offering', {
-  name: 'Crimson Rite', char: 'amara', type: 'skill', rarity: 'rare', cost: 0,
+  name: 'Crimson Rite', char: 'amara', type: 'skill', rarity: 'rare', cost: 1,
   magic: 5, target: 'self', consume: true,
-  desc: (c) => `Lose ${c.magic} HP. Gain 2 Àṣẹ. Draw ${c.upgraded ? 3 : 2} cards. Consume.`,
-  upgrade: (c) => { c.upgraded = true; },
-  onPlay: (ctx) => { ctx.loseHpSelf(ctx.c.magic); ctx.gainEnergy(2); ctx.draw(ctx.c.upgraded ? 3 : 2); },
+  desc: (c) => `Lose ${c.magic} HP. Gain 2 Àṣẹ. Draw ${c.upgraded ? 2 : 1} card${c.upgraded ? 's' : ''}. Consume.`,
+  upgrade: (c) => { c.upgraded = true; c.cost = 0; },
+  onPlay: (ctx) => { ctx.loseHpSelf(ctx.c.magic); ctx.gainEnergy(2); ctx.draw(ctx.c.upgraded ? 2 : 1); },
 });
 def('devour', {
   name: 'Sate', char: 'amara', type: 'attack', rarity: 'rare', cost: 1,
@@ -179,7 +179,7 @@ def('harvest', {
 });
 def('skyfall', {
   name: 'Skyfall Hammer', char: 'amara', type: 'attack', rarity: 'rare', cost: 3,
-  dmg: 32, target: 'enemy', vfx: 'skyfall-hammer',
+  dmg: 25, target: 'enemy', vfx: 'skyfall-hammer',
   desc: (c) => `Deal ${c.dmg} damage.`,
   upgrade: (c) => { c.dmg = 42; },
   onPlay: (ctx) => ctx.deal(ctx.enemy, ctx.c.dmg),
@@ -336,7 +336,7 @@ def('read_the_wind', {
   onPlay: (ctx) => ctx.applySelf('flow', ctx.c.magic),
 });
 def('untouchable', {
-  name: 'Untouchable', char: 'amara', type: 'power', rarity: 'rare', cost: 3,
+  name: 'Untouchable', char: 'amara', type: 'power', rarity: 'rare', cost: 3, locked: true,
   magic: 1, target: 'self',
   desc: (c) => `At the start of each turn, gain ${c.magic} Flow.`,
   upgrade: (c) => { c.cost = 2; },
@@ -848,7 +848,7 @@ def('provoke_the_tell', {
   },
 });
 def('stagger', {
-  name: 'Stagger', char: 'colorless', type: 'skill', rarity: 'rare', cost: 2, consume: true,
+  name: 'Stagger', char: 'colorless', type: 'skill', rarity: 'rare', cost: 2, consume: true, locked: true,
   target: 'enemy',
   desc: () => `An enemy skips its next action; its intent carries over unchanged. Consume.`,
   upgrade: (c) => { c.cost = 1; },

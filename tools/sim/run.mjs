@@ -20,12 +20,17 @@ import { CARDS, createCard, upgradeCard } from '../../src/data/cards.js';
 import { COLORLESS_POOL } from '../../src/data/characters.js';
 import { ENCOUNTERS } from '../../src/data/encounters.js';
 import { generateMap, nextNodes, nodeAt } from '../../src/map/mapgen.js';
+import { isCardLocked } from '../../src/core/cardUnlocks.js';
 import { runCombat } from './harness.mjs';
 import {
   defaultPlayerPolicy, defaultDeckPolicy, defaultRestPolicy, makePathPolicy,
 } from './policies.mjs';
 
 const MAX_ACT = 3;
+
+// A fresh player with nothing unlocked yet — the baseline balance-testing
+// assumption, matching a new save's meta.unlockedCards (see core/save.js).
+const FRESH_META = { unlockedCards: [] };
 
 // --- faithful ports of the two RNG-consuming reward helpers from game.js -----
 // Kept in lock-step with game.js so the deck the bot climbs with is drawn from
@@ -43,7 +48,7 @@ function monsterTier(n) {
 }
 
 function cardRewardOptions(run, kind) {
-  const pool = run.character.cardPool.slice();
+  const pool = run.character.cardPool.filter((id) => !isCardLocked(id, FRESH_META));
   const byRar = { common: [], uncommon: [], rare: [] };
   for (const id of pool) { const r = CARDS[id].rarity; if (byRar[r]) byRar[r].push(id); }
   const weights = (kind === 'boss' || kind === 'elite')
@@ -59,7 +64,8 @@ function cardRewardOptions(run, kind) {
     const id = run.rng.pick(arr);
     if (!opts.includes(id)) opts.push(id);
   }
-  if (run.rng.bool(0.12) && opts.length === 3) opts[2] = run.rng.pick(COLORLESS_POOL);
+  const colorlessPool = COLORLESS_POOL.filter((id) => !isCardLocked(id, FRESH_META));
+  if (run.rng.bool(0.12) && opts.length === 3 && colorlessPool.length) opts[2] = run.rng.pick(colorlessPool);
   return opts.map((id) => { const c = createCard(id); if (run.rng.bool(0.10)) upgradeCard(c); return c; });
 }
 
