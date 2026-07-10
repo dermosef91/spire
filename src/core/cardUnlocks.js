@@ -11,6 +11,14 @@ export const CARD_UNLOCKS = {
     desc: 'Slay 20 foes in a single run.',
     check: (run) => run.foesSlain >= 20,
   },
+  untouchable: {
+    desc: 'Reach Act 3 in a single run.',
+    check: (run) => run.act >= 3,
+  },
+  stagger: {
+    desc: 'Defeat 2 elite enemies in a single run.',
+    check: (run) => (run.eliteCleared || 0) >= 2,
+  },
 };
 
 /** True when a card is locked and its owner hasn't met the unlock condition yet. */
