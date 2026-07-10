@@ -37,9 +37,12 @@ function defaultMeta() {
   // rhythm: the timed-hit QTE mode on attacks/parries (off = classic combat).
   // unlockedCards: ids of locked cards (data/cards.js `locked: true`) whose
   //   unlock condition (core/cardUnlocks.js) has been met at least once.
+  // lastNemesis: {id,name,act} of the foe that ended the previous run. The next
+  //   run promotes its first elite into a buffed "Rendered <name>" rematch.
   return {
     runs: 0, wins: 0, bestFloor: 0, ascensions: 0, maxAscension: 0, ascension: 0,
     tutorialDone: false, multiEnemyTutorialDone: false, ascendedOnce: false, timesAscended: 0, spireUnwritten: false,
     rhythm: true, bestTime: 0, unlockedCards: [],
+    lastNemesis: null,
   };
 }

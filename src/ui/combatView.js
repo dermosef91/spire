@@ -373,6 +373,7 @@ export class CombatView {
     if (wrap) {
       wrap.classList.toggle('phased', !!ent._phased);
       wrap.classList.toggle('enraged', !!ent._enraged);
+      wrap.classList.toggle('nemesis', !!ent._nemesis);
     }
 
     if (!this.tempPoses[eidOf(ent)]) {

@@ -55,6 +55,31 @@ export class Combat {
 
     this.enemies = enemyIds.map((id, i) => this.makeEnemy(id, i));
 
+    // Encounter modifiers (#18 reactive map / #19 nemesis). Pure data tweaks to
+    // the freshly-built enemies here; Resolve/Block grants that need fx are
+    // deferred to start() (below), where the view is mounted. `mods`:
+    //   enemyHpMult — scale every enemy's HP (a "hardened" act)
+    //   nemesisId   — rename + pad one enemy into the returning "Rendered" foe
+    this.mods = opts.mods || {};
+    const m = this.mods;
+    if (m.enemyHpMult && m.enemyHpMult !== 1) {
+      for (const e of this.enemies) {
+        const add = Math.round(e.maxHp * (m.enemyHpMult - 1));
+        e.maxHp += add; e.hp += add;
+      }
+    }
+    if (m.nemesisId) {
+      const e = this.enemies.find((x) => x.id === m.nemesisId);
+      if (e) {
+        e._nemesis = true;
+        e.name = 'Rendered ' + e.name;
+        // Bosses are already high-HP; only pad non-boss nemeses so a rematch
+        // stays hard-but-fair rather than an unwinnable solo-boss wall.
+        const add = e.bp.boss ? 0 : Math.round(e.maxHp * 0.3);
+        e.maxHp += add; e.hp += add;
+      }
+    }
+
     // Piles
     this.hand = [];
     this.drawPile = [];
@@ -153,6 +178,16 @@ export class Combat {
     if (this.run.ascension >= 11) {
       for (const e of this.enemies) if (e.bp.boss) this.applyPower(e, 'strength', 2, e);
     }
+
+    // Encounter-modifier grants that need the mounted view (fx/pips). See the
+    // constructor for the pure-data half.
+    const m = this.mods;
+    for (const e of this.enemies) if (e._nemesis) this.applyPower(e, 'strength', 2, e);
+    if (m.enemyResolve) for (const e of this.enemies) this.applyPower(e, 'strength', m.enemyResolve, e);
+    if (m.playerStartBlock) this.gainBlockTo(this.player, m.playerStartBlock, true);
+    if (m.nemesisId) this.log('It remembers you — the one that felled you climbs again, remade.');
+    if (m.enemyHpMult) this.log('The Spire has hardened against your greed.');
+    if (m.playerStartBlock) this.log('A fallen song you honored rises to shield you.');
 
     // Display the per-turn damage cap as an Invincibility pip (informational).
     for (const e of this.enemies) if (e.dmgCapPerTurn > 0) e.powers.invincibility = e.dmgCapPerTurn;
@@ -303,8 +338,13 @@ export class Combat {
       target.hp -= remaining;
       hpLost = remaining;
       if (target.isPlayer) this.fire('hpLost', { amount: remaining });
-      // Display only: the end screen names who landed the killing blow.
-      if (target.isPlayer && source && source.name) this.lastAttacker = source.name;
+      // Display only: the end screen names who landed the killing blow. The
+      // enemy id (only when the source is a foe, not player self-damage) also
+      // seeds the next run's nemesis rematch (#19).
+      if (target.isPlayer && source && source.name) {
+        this.lastAttacker = source.name;
+        if (!source.isPlayer && source.id) this.lastAttackerId = source.id;
+      }
     }
     this.fx('damage', { target, dmg, hpLost, blocked, isAttack, source, ...this._swingInfo() });
     // Hit-counted debuffs: this hit used up one Exposed on the target and one
