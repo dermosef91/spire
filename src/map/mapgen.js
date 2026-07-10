@@ -52,11 +52,11 @@ export function generateMap(rng, act) {
 function rollRoom(rng, row) {
   const table = [];
   table.push({ value: 'monster', weight: 45 });
-  table.push({ value: 'event', weight: 22 });
+  table.push({ value: 'event', weight: 11 });
   table.push({ value: 'shop', weight: 9 });
   if (row >= 4) {
     table.push({ value: 'elite', weight: 16 });
-    table.push({ value: 'rest', weight: 8 });
+    table.push({ value: 'rest', weight: 9.6 });
   } else {
     table.push({ value: 'monster', weight: 24 });
   }
