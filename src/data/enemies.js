@@ -202,10 +202,10 @@ def('rust_maw', {
 // casts off its seals: phase 2 drops the defensive Seal entirely and just
 // batters an already-weakened hero.
 def('the_gatekeeper', {
-  name: 'The Gatekeeper', act: 1, boss: true, hpMin: 250, hpMax: 250,
+  name: 'The Gatekeeper', act: 1, boss: true, hpMin: 200, hpMax: 200,
   moves: {
-    judge: atk('Judgement', 16),
-    barrage: atk('Sevenfold Strike', 4, 4, { sfx: 'thunder' }),
+    judge: atk('Judgement', 13),
+    barrage: atk('Sevenfold Strike', 3, 4, { sfx: 'thunder' }),
     seal: { name: 'Seal the Gate', intent: { type: 'debuffblock', block: 18 }, run: (c, s) => { c.gainBlockTo(s, 18); c.applyPower(c.player, 'frail', 2, s); } },
     decree: { name: 'Decree', intent: { type: 'debuff' }, run: (c, s) => { c.applyPower(c.player, 'weak', 2, s); c.applyPower(c.player, 'vulnerable', 2, s); } },
   },
