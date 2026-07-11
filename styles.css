@@ -1184,7 +1184,6 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .status-presence {
   --status-moment: rgba(255,181,91,0.9);
   position: absolute;
-  z-index: 3;
   left: 50%;
   top: 50%;
   width: calc(var(--med) * 1.42);
@@ -1193,6 +1192,11 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   pointer-events: none;
 }
 .status-presence > span { position: absolute; inset: 0; opacity: 0; transition: opacity 0.28s ease; }
+/* Tempo encircles the fighter, but belongs behind their silhouette so the
+   character remains the visual focus. The other presence channels stay above
+   it for their more immediate status feedback. */
+.presence-tempo { z-index: 1; }
+.status-presence > span:not(.presence-tempo) { z-index: 3; }
 .status-presence.has-armor .presence-armor,
 .status-presence.has-spirit .presence-spirit,
 .status-presence.has-blight .presence-blight,
