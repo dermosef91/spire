@@ -5,7 +5,7 @@ import { RNG, randomSeed } from './rng.js';
 import { CHARACTERS } from '../data/characters.js';
 import { RELICS } from '../data/relics.js';
 import { createCard, upgradeCard, canUpgrade } from '../data/cards.js';
-import { generateMap } from '../map/mapgen.js';
+import { deactivateEventRooms, generateMap } from '../map/mapgen.js';
 
 // Ascension ladder — each level ADDS its modifier on top of every lower level,
 // so the climb grows steadily crueler. Unlocked one at a time by winning at the
@@ -224,7 +224,7 @@ export class RunState {
     run.bossesDefeated = data.bossesDefeated || 0;
     run.foesSlain = data.foesSlain || 0;
     run.usedEvents = data.usedEvents || [];
-    run.map = data.map;
+    run.map = deactivateEventRooms(data.map);
     run.position = data.position;
     run.pathTaken = data.pathTaken || []; // default keeps legacy saves loading
     run.mapDiscovered = data.mapDiscovered || [];

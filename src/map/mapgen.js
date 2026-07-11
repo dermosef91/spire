@@ -6,6 +6,11 @@ const ROWS = 15;
 const COLS = 5;
 const PATHS = 5;
 
+// Event content remains implemented, but Unknown Event rooms are currently
+// disabled from the climb. Keep this switch and the event scene intact so the
+// room type can be restored without rebuilding its content.
+export const EVENT_ROOMS_ENABLED = false;
+
 export function generateMap(rng, act) {
   const grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
 
@@ -52,7 +57,7 @@ export function generateMap(rng, act) {
 function rollRoom(rng, row) {
   const table = [];
   table.push({ value: 'monster', weight: 45 });
-  table.push({ value: 'event', weight: 11 });
+  if (EVENT_ROOMS_ENABLED) table.push({ value: 'event', weight: 11 });
   table.push({ value: 'shop', weight: 9 });
   if (row >= 4) {
     table.push({ value: 'elite', weight: 16 });
@@ -61,6 +66,18 @@ function rollRoom(rng, row) {
     table.push({ value: 'monster', weight: 24 });
   }
   return rng.weighted(table);
+}
+
+// Saved runs may contain rooms generated before events were disabled. Convert
+// those rooms in place so continuing an older run cannot surface an event.
+export function deactivateEventRooms(map) {
+  if (EVENT_ROOMS_ENABLED || !map?.grid) return map;
+  for (const row of map.grid) {
+    for (const node of row) {
+      if (node?.type === 'event') node.type = 'monster';
+    }
+  }
+  return map;
 }
 
 // Nodes reachable from the player's current position.

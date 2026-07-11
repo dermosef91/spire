@@ -229,6 +229,21 @@ test('same seed produces an identical map', () => {
   assert.deepEqual(a.starts, b.starts);
 });
 
+test('generated maps contain no Unknown Event rooms', () => {
+  for (let i = 0; i < 100; i++) {
+    const map = generateMap(new RNG(i), 1);
+    assert.ok(map.grid.flat().every((node) => !node || node.type !== 'event'));
+  }
+});
+
+test('legacy event rooms are converted to combats when loading a run', () => {
+  const saved = new RunState('amara', 1).toJSON();
+  const node = saved.map.grid.flat().find(Boolean);
+  node.type = 'event';
+  const loaded = RunState.fromJSON(saved);
+  assert.equal(loaded.map.grid[node.row][node.col].type, 'monster');
+});
+
 // ----------------------------------------------------------------- cards
 console.log('Cards (data/cards.js)');
 

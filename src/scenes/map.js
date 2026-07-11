@@ -13,8 +13,8 @@ import { audio } from '../audio.js';
 
 const MAX_ACT = 3;
 
-const NODE_ICON = { monster: NODE.monster, elite: NODE.elite, boss: NODE.boss, event: NODE.event, shop: NODE.shop, rest: NODE.rest, treasure: NODE.treasure };
-const NODE_LABEL = { monster: 'Combat', elite: 'Elite (hard fight, relic)', boss: 'Boss', event: 'Unknown event', shop: 'Bazaar', rest: 'Ancestor Fire', treasure: 'Treasure' };
+const NODE_ICON = { monster: NODE.monster, elite: NODE.elite, boss: NODE.boss, shop: NODE.shop, rest: NODE.rest, treasure: NODE.treasure };
+const NODE_LABEL = { monster: 'Combat', elite: 'Elite (hard fight, relic)', boss: 'Boss', shop: 'Bazaar', rest: 'Ancestor Fire', treasure: 'Treasure' };
 function legendHtml() {
   return Object.entries(NODE_LABEL).map(([k, v]) => `<span class="leg"><span class="leg-ic node-${k}">${NODE_ICON[k]}</span>${v}</span>`).join('');
 }
