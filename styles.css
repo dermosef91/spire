@@ -650,10 +650,10 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 }
 .potion:has(.potion-art-img):hover { transform: scale(1.16); filter: drop-shadow(0 0 8px var(--orange)) !important; }
 
-.reward-icon:has(.potion-art-img) {
+.reward-icon:has(.potion-art-img), .reward-icon:has(.relic-art-img) {
   position: relative;
 }
-.reward-icon:has(.potion-art-img) svg {
+.reward-icon:has(.potion-art-img) svg, .reward-icon:has(.relic-art-img) svg {
   display: none;
 }
 
