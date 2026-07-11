@@ -305,16 +305,6 @@ export class CombatView {
     hpwrap.appendChild(parts.hpghost);
     hpwrap.appendChild(parts.hpfill);
     hpwrap.appendChild(parts.hpforecast);
-    if (isEnemy && ent.bp.phase) {
-      const threshold = Math.max(0, Math.min(1, ent.bp.phase.at ?? 0.5));
-      hpwrap.classList.add('has-phase-marker');
-      parts.phaseMarker = el('div', {
-        class: 'hp-phase-marker',
-        attrs: { title: `${ent.bp.phase.name || 'Second phase'} at ${Math.round(threshold * 100)}% HP`, 'aria-hidden': 'true' },
-        style: { left: `${threshold * 100}%` },
-      });
-      hpwrap.appendChild(parts.phaseMarker);
-    }
     hpwrap.appendChild(parts.hptext);
 
     infoWrap.appendChild(nameRow);

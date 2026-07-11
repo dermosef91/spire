@@ -175,11 +175,9 @@ try {
   await page.waitForFunction(() => !document.querySelector('.combat-scene.enemy-phase'), null, { timeout: 3500 });
   if (await page.locator('.enemy-acting').count()) throw new Error('enemy spotlight survived the player-turn handoff');
 
-  // Bosses enter with their own marquee/rank treatment, and phase thresholds
-  // are visible on the HP bar before any card is played.
+  // Bosses enter with their own marquee/rank treatment.
   await page.evaluate(() => window.__ase.startBoss());
   await page.waitForSelector('.combat-scene.encounter-boss .announce-boss', { timeout: 1200 });
-  await page.waitForSelector('.enemy-boss .hp-phase-marker', { timeout: 1200 });
   const bossSubtitle = await page.locator('.enemy-boss .combatant-subtitle').textContent();
   if (!bossSubtitle || !bossSubtitle.includes('BOSS · PHASE I')) throw new Error(`boss rank subtitle missing: ${bossSubtitle}`);
   await page.waitForSelector('.combat-scene.encounter-boss .hand .card', { timeout: 3500 });

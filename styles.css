@@ -1408,28 +1408,6 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   overflow: hidden;
   position: relative;
 }
-.hp-phase-marker {
-  position: absolute;
-  z-index: 4;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  transform: translateX(-50%);
-  background: #ffd6e5;
-  box-shadow: 0 0 7px rgba(255,111,163,0.95), 0 0 0 1px rgba(20,2,10,0.8);
-  pointer-events: none;
-}
-.hp-phase-marker::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 7px;
-  height: 7px;
-  transform: translate(-50%, -50%) rotate(45deg);
-  background: #ffd6e5;
-  border: 1px solid #5b1532;
-}
 .hpfill {
   height: 100%;
   background: #c62828;
