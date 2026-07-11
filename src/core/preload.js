@@ -47,6 +47,7 @@ const STATIC_ASSETS = [
   'assets/sounds/attack-blocked.mp3',
   'assets/sounds/block.wav',
   'assets/sounds/summon.wav',
+  'assets/sounds/phase.wav',
   'assets/music/titletheme.mp3',
   'assets/music/combattheme1.mp3',
   'assets/music/combattheme2.mp3',

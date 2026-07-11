@@ -1234,7 +1234,7 @@ const FX_HANDLERS = {
       burst(layer, el2, '#e0457b', 24);
     }
     const bg = background(); if (bg) bg.pulse('heavy', 2);
-    audio.play('reward');
+    audio.play('phase');
   },
 
   enrage(payload, layer) {

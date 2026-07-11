@@ -18,6 +18,7 @@ const SOUNDS = {
   growl: 'assets/sounds/growl.mp3',
   block: 'assets/sounds/block.wav',
   summon: 'assets/sounds/summon.wav',
+  phase: 'assets/sounds/phase.wav',
   tempo_release: 'assets/sounds/tempo_release.wav',
   power_surge: 'assets/sounds/power_surge.wav',
 };
@@ -147,6 +148,7 @@ class Audio {
     if (name === 'growl') gain = 0.45;
     if (name === 'block') gain = 0.42;
     if (name === 'summon') gain = 0.46;
+    if (name === 'phase') gain = 0.5;
     if (name === 'tempo_release') gain = 0.4;
     if (name === 'power_surge') gain = 0.4;
     
@@ -170,6 +172,7 @@ class Audio {
         break;
       }
       case 'relicland': this.tone(880, 0.09, 'triangle', 0.11); this.tone(1318, 0.14, 'sine', 0.09, 0.04); break;
+      case 'phase': this.tone(98, 0.5, 'sawtooth', 0.12); this.tone(392, 0.38, 'triangle', 0.08, 0.12); break;
       case 'hit': this.tone(140, 0.1, 'square', 0.1); break;
       case 'block': this.tone(440, 0.15, 'sine', 0.1); break;
       case 'victory': [523, 659, 784, 1046].forEach((f, i) => this.tone(f, 0.25, 'triangle', 0.12, i * 0.12)); break;
