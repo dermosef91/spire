@@ -462,6 +462,21 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
   `game.js`), which are dingbat punctuation, not pictographic emoji, and to
   emoji used only in dev-tooling console logs (`tools/gen-*.js`), which never
   reach the player.
+- **Post-combat relic rewards are pre-rolled and declinable** (`scenes/rewards.js`
+  `showRewards`/`renderRewards`): elite/boss relic rows call `run.peekRandomRelic()`
+  (or `pickBossRelicId()` for boss) **at reward-build time**, not on click, so the
+  row shows the real relic's name/desc/art via `this.relicVisual(rw.id, ...)`
+  immediately — no generic "Ancestral Relic" placeholder. Clicking the row opens
+  `Game.relicAcquired(rw.id, onClaim, { deferred: true, onLeave })` (the same
+  Claim/Leave-it choice the treasure cache already used) instead of granting the
+  relic unconditionally — `deferred: true` means `relicAcquired` itself calls
+  `run.addRelic` only if the player clicks Claim; `onLeave` just marks the reward
+  row `taken` (so it drops off the list without being granted) and rebuilds. If a
+  reward roll comes back empty (pool exhausted), skip pushing that reward entry
+  entirely rather than pushing a placeholder row that does nothing useful on
+  click. Event-granted relics (`data/events.js`, `run.grantRandomRelic()`) stay
+  non-declinable by design — those are a consequence of the choice already made,
+  not a fresh offer.
 - **Card-choice ("pick a card") popup** (`Game.cardChoiceOverlay` in `game.js`,
   `.card-picker` in `styles.css`) has no boxed panel — `.overlay-box.card-picker`
   strips the shared `.overlay-box` background/border/border-radius/box-shadow
