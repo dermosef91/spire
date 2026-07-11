@@ -47,6 +47,12 @@ export class CombatView {
     this._intentPreviewEnemy = null;
     this._intentPinnedEnemy = null;
     this.activePlay = null;
+    this._dragGuide = null;
+  }
+
+  haptic(pattern = 10) {
+    if (!this.game.isTouch() || !navigator.vibrate) return;
+    try { navigator.vibrate(pattern); } catch (_) {}
   }
 
   // Does this card visibly synergize with the current board? (used to telegraph
@@ -173,6 +179,8 @@ export class CombatView {
       html: `<span class="env-haze"></span><span class="env-rhythm"></span><span class="env-crackle">${'<i></i>'.repeat(6)}</span>`,
     });
     scene.appendChild(this.environmentLayer);
+    this._dragGuide = el('div', { class: 'drag-play-guide', attrs: { 'aria-hidden': 'true' } });
+    scene.appendChild(this._dragGuide);
 
     const field = el('div', { class: 'battlefield' });
     this.playerSide = el('div', { class: 'player-side' });
@@ -426,16 +434,21 @@ export class CombatView {
     this.scene.classList.toggle('targeting', targeting);
     for (const e of c.enemies) {
       const node = this.els[eidOf(e)];
-      if (node) node.classList.toggle('targetable', targeting && e.alive);
+      if (node) {
+        node.classList.toggle('targetable', targeting && e.alive);
+        if (targeting && e.alive) node.dataset.targetAction = `PLAY ${this.pendingCard.name}`;
+        else delete node.dataset.targetAction;
+      }
     }
 
     // targeting prompt
     let promptEl = this.scene.querySelector('.targeting-prompt');
     if (targeting) {
       if (!promptEl) {
-        promptEl = el('div', { class: 'targeting-prompt', text: 'SELECT A TARGET' });
+        promptEl = el('div', { class: 'targeting-prompt' });
         this.scene.appendChild(promptEl);
       }
+      promptEl.textContent = `TAP A FOE · ${this.pendingCard.name}`;
     } else {
       if (promptEl) promptEl.remove();
     }
@@ -928,6 +941,12 @@ export class CombatView {
 
       node.style.setProperty('--angle', `${angle}deg`);
       node.style.setProperty('--shift', `${shift}px`);
+      if (isPreview && this.game.isTouch()) {
+        node.appendChild(el('div', {
+          class: 'touch-commit-hint',
+          text: card.target === 'enemy' && c.livingEnemies().length > 1 ? 'TAP A FOE' : 'TAP AGAIN TO PLAY',
+        }));
+      }
 
       // Drag-and-drop to play (mouse + touch); a tap falls back to click-to-play.
       node.addEventListener('pointerdown', (e) => this.onCardPointerDown(e, card, node));
@@ -1071,12 +1090,14 @@ export class CombatView {
       if (needsTargetFirst) {
         this.previewCard = null;
         this.pendingCard = null;
+        this.haptic(8);
         this.update();
         return;
       }
       // Second tap on a normal previewed card → commit.
       this.previewCard = null;
       if (!c.canPlay(card)) { audio.play('error'); this.update(); return; }
+      this.haptic([10, 22, 18]);
       if (card.target === 'enemy') {
         if (living.length === 1) { this.playCard(card, living[0]); return; }
         this.pendingCard = card;
@@ -1089,6 +1110,7 @@ export class CombatView {
 
     // First tap on the card:
     audio.play('pickcard');
+    this.haptic(9);
     this.previewCard = card;
     if (needsTargetFirst) {
       this.pendingCard = card;
@@ -1103,6 +1125,7 @@ export class CombatView {
     const card = this.pendingCard;
     this.pendingCard = null;
     this.previewCard = null;
+    this.haptic([12, 24, 18]);
     this.playCard(card, enemy);
   }
 
@@ -1139,18 +1162,28 @@ export class CombatView {
       d.node.classList.add('dragging');
       d.node.style.width = d.w + 'px';
       d.node.style.height = d.h + 'px';
+      this.scene.classList.add('dragging-card');
+      this.haptic(8);
       if (d.card.target === 'enemy') this.setDragTargeting(true);
     }
     d.node.style.left = (e.clientX - d.w / 2) + 'px';
-    d.node.style.top = (e.clientY - d.h / 2) + 'px';
+    // On touch, keep the lifted card above the finger so both the target and
+    // its confirmation state remain visible during the drop.
+    d.node.style.top = (d.pointerType === 'touch' ? e.clientY - d.h - 24 : e.clientY - d.h / 2) + 'px';
     const playable = this.combat.canPlay(d.card);
     if (d.card.target === 'enemy') {
       const hit = this.enemyAt(e.clientX, e.clientY);
       this.setDragOver(hit ? hit.node : null);
-      d.node.classList.toggle('will-play', !!hit && playable);
+      const valid = !!hit && playable;
+      d.node.classList.toggle('will-play', valid);
+      this.syncDragGuide(d.card, valid, hit && hit.e);
+      this.dragFeedback(d, valid, hit && hit.e);
     } else {
       const inZone = e.clientY < d.handTop - 6;
-      d.node.classList.toggle('will-play', inZone && playable);
+      const valid = inZone && playable;
+      d.node.classList.toggle('will-play', valid);
+      this.syncDragGuide(d.card, valid);
+      this.dragFeedback(d, valid);
     }
   }
 
@@ -1162,6 +1195,7 @@ export class CombatView {
     d.node.removeEventListener('pointercancel', this._dragCancel);
     d.node.removeEventListener('lostpointercapture', this._dragCancel);
     this.drag = null;
+    this.hideDragGuide();
     this.setDragOver(null);
     this.setDragTargeting(false);
     if (d.captured) { try { d.node.releasePointerCapture(d.id); } catch (_) {} }
@@ -1172,13 +1206,14 @@ export class CombatView {
     if (this.combat.canPlay(d.card)) {
       if (d.card.target === 'enemy') {
         const hit = this.enemyAt(e.clientX, e.clientY);
-        if (hit) { this.playCard(d.card, hit.e); played = true; }
+        if (hit) { this.haptic([10, 22, 20]); this.playCard(d.card, hit.e); played = true; }
       } else if (e.clientY < d.handTop - 6) {
+        this.haptic([10, 22, 20]);
         this.playCard(d.card, this.combat.randomEnemy());
         played = true;
       }
     }
-    if (!played) audio.play('error');
+    if (!played) { audio.play('error'); this.haptic([22, 32, 22]); }
     this.update(); // re-render the hand (clears the lifted node, restores layout)
   }
 
@@ -1190,6 +1225,7 @@ export class CombatView {
     d.node.removeEventListener('pointercancel', this._dragCancel);
     d.node.removeEventListener('lostpointercapture', this._dragCancel);
     this.drag = null;
+    this.hideDragGuide();
     this.setDragOver(null);
     this.setDragTargeting(false);
     if (d.captured) { try { d.node.releasePointerCapture(d.id); } catch (_) {} }
@@ -1199,14 +1235,19 @@ export class CombatView {
   setDragTargeting(on) {
     if (!this.scene) return;
     this.scene.classList.toggle('targeting', on || !!this.pendingCard);
+    const card = (this.drag && this.drag.card) || this.pendingCard;
     for (const enemy of this.combat.livingEnemies()) {
       const node = this.els[eidOf(enemy)];
-      if (node) node.classList.toggle('targetable', on || !!this.pendingCard);
+      if (!node) continue;
+      const active = on || !!this.pendingCard;
+      node.classList.toggle('targetable', active);
+      if (active && card) node.dataset.targetAction = `PLAY ${card.name}`;
+      else delete node.dataset.targetAction;
     }
   }
 
   enemyAt(x, y) {
-    const pad = 14;
+    const pad = this.game.isTouch() ? 34 : 14;
     for (const en of this.combat.livingEnemies()) {
       const node = this.els[eidOf(en)];
       if (!node) continue;
@@ -1221,6 +1262,28 @@ export class CombatView {
     if (this._dragOverNode) this._dragOverNode.classList.remove('drag-over');
     this._dragOverNode = node;
     if (node) node.classList.add('drag-over');
+  }
+
+  syncDragGuide(card, valid, target = null) {
+    if (!this._dragGuide) return;
+    const targetText = target ? ` → ${target.name}` : '';
+    this._dragGuide.textContent = valid
+      ? `RELEASE · ${card.name}${targetText}`
+      : card.target === 'enemy' ? 'DRAG TO A GLOWING FOE' : 'DRAG ABOVE THE HAND';
+    this._dragGuide.classList.toggle('valid', valid);
+    this._dragGuide.classList.add('show');
+  }
+
+  dragFeedback(drag, valid, target = null) {
+    const key = valid ? (target ? `target:${target.idx}` : 'play') : 'none';
+    if (drag.feedbackKey === key) return;
+    drag.feedbackKey = key;
+    if (valid) this.haptic(12);
+  }
+
+  hideDragGuide() {
+    if (this._dragGuide) this._dragGuide.classList.remove('show', 'valid');
+    if (this.scene) this.scene.classList.remove('dragging-card');
   }
 
   async playCard(card, target) {

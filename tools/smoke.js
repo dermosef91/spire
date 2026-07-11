@@ -182,6 +182,46 @@ try {
   if (!bossSubtitle || !bossSubtitle.includes('BOSS · PHASE I')) throw new Error(`boss rank subtitle missing: ${bossSubtitle}`);
   await page.waitForSelector('.combat-scene.encounter-boss .hand .card', { timeout: 3500 });
 
+  // Touch mode exposes large, explicit confirmation states and uses haptics
+  // only when the platform supports navigator.vibrate.
+  await page.evaluate(() => {
+    const game = window.__ase;
+    const view = game.combatView;
+    const combat = window.__combat;
+    game.touch = true;
+    document.body.classList.add('is-touch');
+    Object.defineProperty(navigator, 'vibrate', {
+      configurable: true,
+      value: (pattern) => { window.__lastHaptic = pattern; return true; },
+    });
+    const card = combat.hand.find((item) => combat.canPlay(item)) || combat.hand[0];
+    view.previewCard = card;
+    view.pendingCard = null;
+    view.update();
+    view.haptic(13);
+  });
+  await page.waitForSelector('.hand .card.previewing .touch-commit-hint', { timeout: 1000 });
+  const hapticPattern = await page.evaluate(() => window.__lastHaptic);
+  if (hapticPattern !== 13) throw new Error(`touch haptic did not fire: ${hapticPattern}`);
+  await page.evaluate(() => {
+    const view = window.__ase.combatView;
+    const card = view.previewCard;
+    view.pendingCard = card;
+    view.update();
+    view.syncDragGuide(card, true, window.__combat.livingEnemies()[0]);
+  });
+  await page.waitForSelector('.enemy-boss.targetable[data-target-action]', { timeout: 1000 });
+  await page.waitForSelector('.drag-play-guide.show.valid', { timeout: 1000 });
+  const targetPrompt = await page.locator('.targeting-prompt').textContent();
+  if (!targetPrompt || !targetPrompt.includes('TAP A FOE')) throw new Error(`touch target prompt is unclear: ${targetPrompt}`);
+  await page.evaluate(() => {
+    const view = window.__ase.combatView;
+    view.pendingCard = null;
+    view.previewCard = null;
+    view.hideDragGuide();
+    view.update();
+  });
+
   // Persistent statuses must inhabit the combatants, not exist only as pips.
   await page.evaluate(() => {
     const combat = window.__combat;
