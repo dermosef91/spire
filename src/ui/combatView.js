@@ -6,7 +6,7 @@ import { el, clear } from '../core/util.js';
 import { renderCard, topBar } from './components.js';
 import { POWERS } from '../data/keywords.js';
 import { audio } from '../audio.js';
-import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, impactWave, burst, shine, chargeUp, singleFrameAnim, faultLineVFX, hiltCrackVFX } from './fx.js';
+import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, impactWave, burst, shine, chargeUp, singleFrameAnim, faultLineVFX, hiltCrackVFX, reapingArcVFX, fallingStarVFX, cycloneDanceVFX } from './fx.js';
 import { runAttackQTE, runParryQTE } from './rhythm.js';
 import { combatModel, INTENT, UI, powerIcon } from './icons.js';
 import { spriteOrSvg, hasSprite } from './sprites.js';
@@ -1741,6 +1741,9 @@ const VFX_PLAYBOOK = {
   'skyfall-hammer': { play: (layer, el) => singleFrameAnim(layer, el, 'skyfall-hammer'), sound: 'thunder' },
   'fault-line': { play: (layer, el) => faultLineVFX(layer, el), sound: 'attack' },
   'hilt-crack': { play: (layer, el) => hiltCrackVFX(layer, el), sound: 'attack', timing: 'windup' },
+  'reaping-arc': { play: (layer, el) => reapingArcVFX(layer, el), sound: 'attack', timing: 'windup' },
+  'falling-star': { play: (layer, el) => fallingStarVFX(layer, el), sound: 'thunder', timing: 'windup' },
+  'cyclone-dance': { play: (layer, el) => cycloneDanceVFX(layer, el), sound: 'attack', timing: 'windup' },
   zap: { play: (layer, el) => singleFrameAnim(layer, el, 'zap'), sound: 'zap' },
   spit: { play: (layer, el) => singleFrameAnim(layer, el, 'spit'), sound: 'slime' },
   splash: { play: (layer, el) => singleFrameAnim(layer, el, 'splash'), sound: 'splash' },
@@ -1858,11 +1861,16 @@ const FX_HANDLERS = {
 
     if (payload.source) {
       this.holdPose(payload.source, 'attack', charged ? 920 : 760);
-      if (isPlayer && payload.card && payload.target) {
+      if (isPlayer && payload.card) {
         const vfxName = payload.card._bp.vfx;
         const vfx = VFX_PLAYBOOK[vfxName];
-        const targetEl = this.elFor(payload.target);
-        if (vfx && vfx.timing === 'windup' && targetEl) vfx.play(layer, targetEl);
+        if (vfx && vfx.timing === 'windup') {
+          const targets = payload.target ? [payload.target] : this.combat.livingEnemies();
+          for (const target of targets) {
+            const targetEl = this.elFor(target);
+            if (targetEl) vfx.play(layer, targetEl);
+          }
+        }
       }
       if (!isPlayer) {
         const move = currentMove(payload.source);

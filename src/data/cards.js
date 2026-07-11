@@ -140,7 +140,7 @@ def('disarm', {
 });
 def('whirlwind', {
   name: 'Cyclone Dance', char: 'amara', type: 'attack', rarity: 'uncommon', cost: 3,
-  dmg: 2, magic: 2, target: 'all', qteMarks: 3,
+  dmg: 2, magic: 2, target: 'all', qteMarks: 3, vfx: 'cyclone-dance',
   desc: (c) => `Deal ${c.dmg} damage to ALL enemies. Consume ALL your Tempo: +${c.magic} damage for each consumed.`,
   upgrade: (c) => { c.dmg = 6; c.magic = 3; },
   onPlay: (ctx) => { const t = ctx.spendAllTempo(); ctx.dealAll(ctx.c.dmg + ctx.c.magic * t); },
@@ -172,7 +172,7 @@ def('devour', {
 });
 def('harvest', {
   name: 'Reaping Arc', char: 'amara', type: 'attack', rarity: 'rare', cost: 2,
-  dmg: 6, magic: 3, target: 'all', consume: true,
+  dmg: 6, magic: 3, target: 'all', consume: true, vfx: 'reaping-arc',
   desc: (c) => `Deal ${c.dmg} damage to ALL enemies. Heal ${c.magic} HP per enemy struck. Consume.`,
   upgrade: (c) => { c.dmg = 8; c.magic = 4; },
   onPlay: (ctx) => { const n = ctx.combat.livingEnemies().length; ctx.dealAll(ctx.c.dmg); ctx.heal(n * ctx.c.magic); },
@@ -659,7 +659,7 @@ def('echo_form', {
 });
 def('falling_star', {
   name: 'Falling Star', char: 'zara', type: 'attack', rarity: 'rare', cost: 5,
-  dmg: 24, magic: 3, target: 'enemy',
+  dmg: 24, magic: 3, target: 'enemy', vfx: 'falling-star',
   desc: (c) => `Deal ${c.dmg} damage. Channel ${c.magic} Storm.`,
   upgrade: (c) => { c.dmg = 30; },
   onPlay: (ctx) => { ctx.deal(ctx.enemy, ctx.c.dmg); ctx.channel('storm', ctx.c.magic); },
