@@ -878,6 +878,26 @@ test('Snared (entangle) blocks Attacks for one turn, then expires', () => {
 // ----------------------------------------------------------------- smarter enemies
 console.log('Smarter enemies (phase / summon / enrage)');
 
+test('Gilded Warden phases at 40% — a marquee moment that telegraphs the wrath loop', () => {
+  const run = new RunState('amara', 29);
+  const c = new Combat(run, ['gilded_warden']);
+  c.start();
+  const e = c.enemies[0];
+  assert.ok(e.bp.phase, 'the elite has a real phase now');
+  e.hp = Math.floor(e.maxHp * 0.4) - 1;
+  c.checkPhase(e);
+  assert.equal(e._phased, true);
+  assert.ok(e.block >= 10, 'shields-up block on transform');
+  // Presentation, not a free stat buff (sim-tuned): the Resolve still costs
+  // the wrath turn, which the transform's intent re-pick telegraphs first.
+  assert.ok(!e.powers.strength, 'no free Resolve in onEnter');
+  assert.equal(e.move, 'wrath', "phase 2 opens with a telegraphed Gild Wrath");
+  e.last = 'wrath';
+  assert.notEqual(ENEMIES.gilded_warden.pick(e, c, c.rng), 'wrath', 'never twice running');
+  c.checkPhase(e);
+  assert.equal(e._phased, true, 'the transform is one-shot');
+});
+
 test('a boss transforms once when its HP crosses the phase threshold', () => {
   const run = new RunState('amara', 3);
   const c = new Combat(run, ['the_gatekeeper']);

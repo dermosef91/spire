@@ -92,7 +92,16 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   normals). When retuning Act 1 numbers, keep each tier's total-HP band in
   mind (weak ≲ 30, normal ~30–65, hard ~45–85) and keep new packs to **two**
   enemies — nothing has ever shipped a 3-pack, so the enemy-side layout at
-  landscape-phone widths is unproven for it.
+  landscape-phone widths is unproven for it. The bands are only a first
+  approximation, though: **tier by measured threat, not raw HP** — run
+  `node tools/balance-sim.mjs --mode encounters --act 1` (drives the real
+  engine; ~2min per 100 samples/fight) and read the AvgHPLost column. Two
+  pairs have already been re-tiered against their HP: `static_jackal +
+  reef_spitter` (42–53 HP but the hottest non-elite fight, ~17–39 HP lost →
+  hard) and `spark_imp + brass_sentinel` (57–71 HP but ~3–8 HP lost →
+  normal). Encounters mode uses the *starter* deck, so the Act 1 boss
+  reading ~0% win there is an artifact, not a regression — use `--mode runs`
+  for boss/late-act judgment.
   **Encounter modifiers (`opts.mods`, `combat/combat.js`)** — the seam both the
   reactive map and the nemesis rematch ride on. `beginCombat(enemyIds, kind,
   mods)` (`scenes/combat.js`) threads `mods` into `new Combat(run, ids, {kind,
@@ -167,7 +176,7 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   `playerLacks`/`selfLowHp`) over fixed `turn % n` cycles. A blueprint
   dmgCapPerTurn` field caps damage taken per player turn (Heart of Static's Invincibility) — enforced in `applyDamage`, reset in `startPlayerTurn`, shown as a display-only `invincibility` pip. Ascension per-hit damage scaling flows through `run.enemyDamageMult()` applied in `enemyAttack`. The thorns (Backlash) damage mechanic when attacked has been deactivated entirely to reduce intransparency, and all enemy-move references to `thorns` have been removed.
   **Smarter-enemy hooks (all data-driven, one-shot):**
-  (1) **Boss phase transitions** — a blueprint `phase: { at: 0.5, name, log, onEnter(c,s) }`. `Combat.checkPhase(e)` runs inside `applyDamage` (covers every damage source: cards, orbs, poison); when HP first crosses `at`, it sets `e._phased`, logs, fires `fx('phase')`, runs `onEnter`, and **re-picks the intent** so the telegraph updates immediately. The blueprint's `pick()` branches on `s._phased` for its phase-2 move table. All three bosses have phases. Note `onEnter` block granted mid-*player*-turn is wiped by `enemyPhase`'s `e.block = 0`, so it only walls the rest of the current player turn (a deliberate "shields up on transform" beat).
+  (1) **Boss phase transitions** — a blueprint `phase: { at: 0.5, name, log, onEnter(c,s) }`. `Combat.checkPhase(e)` runs inside `applyDamage` (covers every damage source: cards, orbs, poison); when HP first crosses `at`, it sets `e._phased`, logs, fires `fx('phase')`, runs `onEnter`, and **re-picks the intent** so the telegraph updates immediately. The blueprint's `pick()` branches on `s._phased` for its phase-2 move table. All three bosses have phases, and phases aren't boss-only: `gilded_warden` gives Act 1 an **elite** phase (Gild Wrath at 40% HP, replacing its old `wrath` *move*, which silently re-buffed every other turn below 40% with no marquee moment). Note `onEnter` block granted mid-*player*-turn is wiped by `enemyPhase`'s `e.block = 0`, so it only walls the rest of the current player turn (a deliberate "shields up on transform" beat).
   (2) **Summoning** — `Combat.summonEnemy(id, {max=4})` pushes a fresh enemy mid-combat, board-capped, and sets `e._justSummoned` so `enemyPhase` skips it for one phase (its intent is telegraphed during the player's turn first). The view builds the new combatant node **lazily in `update()`** (any living enemy with no `els[id]` node gets one, with a `.summoning` entrance class) — `fx('summon')` fires *before* that node exists (notify is a microtask), so its burst is deferred with a small `setTimeout`. Summoner + minion: `choir_master` / `echo_mote` (Act 3).
   (3) **Enrage** — a blueprint `enrage: { turn, strength }`; `enemyPhase` grants the Resolve once on/after that enemy's own `turn`, with `fx('enrage')`. Applied to `brass_colossus` and `chrome_archon` (walls that could otherwise be stalled out).
   (4) **Counter Stance** — the `counter` power (keywords.js): while braced, every player attack hit the enemy takes (blocked or not — but not a killing blow, gated on `hp > 0`) grants it `counter`-value Resolve, resolved in `applyDamage`; the brace expires in `enemyPhase` the moment the enemy next acts (a staggered foe keeps it — it never acted). Telegraphed by the `counter` intent type; `brass_sentinel`'s Counter Stance is the archetype — the transparent replacement for its dead Backlash "retaliator" identity.
