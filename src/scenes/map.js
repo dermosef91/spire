@@ -15,6 +15,23 @@ const MAX_ACT = 3;
 
 const NODE_ICON = { monster: NODE.monster, elite: NODE.elite, boss: NODE.boss, event: NODE.event, shop: NODE.shop, rest: NODE.rest, treasure: NODE.treasure };
 const NODE_LABEL = { monster: 'Combat', elite: 'Elite (hard fight, relic)', boss: 'Boss', event: 'Unknown event', shop: 'Bazaar', rest: 'Ancestor Fire', treasure: 'Treasure' };
+const ACT_LANDMARKS = {
+  1: [
+    { row: 0, title: 'Floodgate', detail: 'The market opens beneath black water.' },
+    { row: 8, title: 'Ancestor Vault', detail: 'Old wealth waits behind drowned brass.' },
+    { row: 14, title: 'The Sealed Rise', detail: 'The Gatekeeper watches the final stair.' },
+  ],
+  2: [
+    { row: 0, title: 'Salt Causeway', detail: 'A white road cuts across the furnace wind.' },
+    { row: 8, title: 'Mirror Well', detail: 'The desert remembers every face.' },
+    { row: 14, title: 'Archive Threshold', detail: 'Names vanish beyond the red stacks.' },
+  ],
+  3: [
+    { row: 0, title: 'Static Verge', detail: 'The air begins to sing through bone.' },
+    { row: 8, title: 'Choir of Ash', detail: 'Rendered champions hum below the crown.' },
+    { row: 14, title: 'The Last Circuit', detail: 'Only the engine remains above.' },
+  ],
+};
 function legendHtml() {
   return Object.entries(NODE_LABEL).map(([k, v]) => `<span class="leg"><span class="leg-ic node-${k}">${NODE_ICON[k]}</span>${v}</span>`).join('');
 }
@@ -31,7 +48,7 @@ export const MapScene = {
     const width = COLS * colW;
     const height = ROWS * rowH + bossSpace + pad;
 
-    const panel = el('div', { class: 'map-scene' });
+    const panel = el('div', { class: `map-scene map-act-${run.act}` });
     panel.appendChild(topBar(run, {
       onPotion: (p, i) => this.usePotionOnMap(p, i),
       onHover: (o, n, on) => this.tooltip(o, n, on),
@@ -45,6 +62,24 @@ export const MapScene = {
       el('div', { class: 'map-legend-list', html: legendHtml() }),
     ]);
     const board = el('div', { class: 'map-board', style: { width: width + 'px', height: height + 'px' } });
+
+    // Atmosphere belongs to the board so it scrolls with the climb. Motes are
+    // deterministic DOM particles; act-specific CSS turns them into rain,
+    // sand/embers, or static without advancing the run RNG.
+    const atmosphere = el('div', { class: `map-atmosphere atmosphere-act-${run.act}`, attrs: { 'aria-hidden': 'true' } });
+    for (let i = 0; i < 14; i++) {
+      atmosphere.appendChild(el('i', {
+        class: 'map-weather-mote',
+        style: {
+          left: `${(i * 37 + run.act * 11) % 100}%`,
+          top: `${(i * 53 + 17) % 100}%`,
+          '--drift': `${((i * 19) % 70) - 35}px`,
+          '--delay': `${-(i % 7) * 0.73}s`,
+          '--duration': `${4.8 + (i % 5) * 0.8}s`,
+        },
+      }));
+    }
+    board.appendChild(atmosphere);
 
     const X = (col) => col * colW + colW / 2;
     const Y = (row) => (ROWS - 1 - row) * rowH + rowH / 2 + bossSpace;
@@ -71,6 +106,14 @@ export const MapScene = {
     svg.setAttribute('width', width); svg.setAttribute('height', height);
     const reachable = nextNodes(map, run.position);
     const reachKey = new Set(reachable.map((n) => n.boss ? 'boss' : `${n.row}-${n.col}`));
+    const discoveredBefore = new Set(run.mapDiscovered || []);
+    const newlyDiscovered = new Set();
+    for (const key of reachKey) {
+      if (!discoveredBefore.has(key)) newlyDiscovered.add(key);
+      discoveredBefore.add(key);
+    }
+    run.mapDiscovered = [...discoveredBefore];
+    saveRun(run);
     // Path memory: nodes already entered this act, and the edges walked
     // between consecutive entries (keys match the edge loop's from>to shape).
     const pathTaken = run.pathTaken || [];
@@ -95,6 +138,7 @@ export const MapScene = {
           line.setAttribute('x2', to.x); line.setAttribute('y2', to.y);
           const walked = traveledEdge.has(`${r}-${c}>${t.boss ? 'boss' : `${t.row}-${t.col}`}`);
           line.setAttribute('class', walked ? 'edge edge-traveled' : 'edge');
+          line.dataset.edge = `${r}-${c}>${t.boss ? 'boss' : `${t.row}-${t.col}`}`;
           svg.appendChild(line);
           // Subtle connector ornaments: a small diamond waypoint near the
           // middle and a directional chevron pointing up the spire (toward
@@ -118,13 +162,25 @@ export const MapScene = {
     }
     board.appendChild(svg);
 
+    // Landmarks give each act a sense of geography instead of reading as a
+    // floating node graph. They are non-interactive and never affect routing.
+    for (const [i, landmark] of (ACT_LANDMARKS[run.act] || []).entries()) {
+      const y = Y(landmark.row) - rowH / 2;
+      board.appendChild(el('div', {
+        class: `map-landmark landmark-${i + 1}`,
+        style: { left: `${width / 2}px`, top: `${y}px` },
+        html: `<span>${landmark.title}</span><small>${landmark.detail}</small>`,
+      }));
+    }
+
     // nodes
     const placeNode = (type, x, y, key, posObj) => {
       const isReach = reachKey.has(key);
       const isCurrent = run.position && !posObj.boss && run.position.row === posObj.row && run.position.col === posObj.col;
       const isVisited = visitedKey.has(key) && !isCurrent;
+      const discovered = discoveredBefore.has(key) || isCurrent || isVisited;
       const n = el('div', {
-        class: `map-node node-${type} ${isReach ? 'reachable' : ''} ${isCurrent ? 'current' : ''} ${isVisited ? 'visited' : ''}`,
+        class: `map-node node-${type} ${isReach ? 'reachable' : ''} ${isCurrent ? 'current' : ''} ${isVisited ? 'visited' : ''} ${discovered ? 'discovered' : 'unexplored'} ${newlyDiscovered.has(key) ? 'discovering' : ''}`,
         style: { left: x + 'px', top: y + 'px' },
         html: NODE_ICON[type] || '',
         title: NODE_LABEL[type] || type,
@@ -232,28 +288,61 @@ export const MapScene = {
   },
 
   enterNode(pos) {
+    if (this._mapTraveling) return;
+    this._mapTraveling = true;
     audio.play('click_heavy');
-    this.run.position = pos;
+    const arrive = () => {
+      this.run.position = pos;
     // Path memory: remember every node entered this act (guard covers runs
     // loaded from legacy saves that predate pathTaken).
-    this.run.pathTaken = this.run.pathTaken || [];
-    this.run.pathTaken.push(pos.boss ? 'boss' : { row: pos.row, col: pos.col });
-    const node = nodeAt(this.run.map, pos);
-    const type = pos.boss ? 'boss' : node.type;
-    saveRun(this.run);
-    // Ease into the node behind a fade veil so combat/events don't snap in.
-    this.veilTransition(() => {
-      switch (type) {
-        case 'monster': this.startMonster(); break;
-        case 'elite': this.startElite(); break;
-        case 'boss': this.startBoss(); break;
-        case 'event': this.showEvent(); break;
-        case 'shop': this.showShop(); break;
-        case 'rest': this.showRest(); break;
-        case 'treasure': this.showTreasure(); break;
-        default: this.showMap();
-      }
-    });
+      this.run.pathTaken = this.run.pathTaken || [];
+      this.run.pathTaken.push(pos.boss ? 'boss' : { row: pos.row, col: pos.col });
+      const node = nodeAt(this.run.map, pos);
+      const type = pos.boss ? 'boss' : node.type;
+      saveRun(this.run);
+      // Ease into the node behind a fade veil so combat/events don't snap in.
+      this.veilTransition(() => {
+        this._mapTraveling = false;
+        switch (type) {
+          case 'monster': this.startMonster(); break;
+          case 'elite': this.startElite(); break;
+          case 'boss': this.startBoss(); break;
+          case 'event': this.showEvent(); break;
+          case 'shop': this.showShop(); break;
+          case 'rest': this.showRest(); break;
+          case 'treasure': this.showTreasure(); break;
+          default: this.showMap();
+        }
+      });
+    };
+
+    const board = document.querySelector('.map-board');
+    const targetKey = pos.boss ? 'boss' : `${pos.row}-${pos.col}`;
+    const target = board && board.querySelector(`[data-key="${targetKey}"]`);
+    if (!board || !target || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { arrive(); return; }
+
+    board.classList.add('journey-traveling');
+    target.classList.add('journey-destination');
+    const current = board.querySelector('.map-node.current');
+    const fromKey = current && current.dataset.key;
+    const edge = fromKey && board.querySelector(`[data-edge="${fromKey}>${targetKey}"]`);
+    if (edge) edge.classList.add('edge-selected');
+    const traveler = el('div', { class: 'map-traveler', html: '<span></span>', attrs: { 'aria-hidden': 'true' } });
+    const start = current
+      ? { x: current.offsetLeft, y: current.offsetTop }
+      : { x: target.offsetLeft, y: Math.min(board.clientHeight - 18, target.offsetTop + 96) };
+    const end = { x: target.offsetLeft, y: target.offsetTop };
+    traveler.style.left = `${start.x}px`;
+    traveler.style.top = `${start.y}px`;
+    board.appendChild(traveler);
+    const dx = end.x - start.x, dy = end.y - start.y;
+    const anim = traveler.animate([
+      { transform: 'translate(-50%, -50%) scale(0.72)', opacity: 0 },
+      { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: 0.14 },
+      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1.08)`, opacity: 1, offset: 0.88 },
+      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1.45)`, opacity: 0 },
+    ], { duration: 680, easing: 'cubic-bezier(.2,.72,.22,1)' });
+    anim.onfinish = arrive;
   },
 
   pickEncounter(tier) {
@@ -287,6 +376,7 @@ export const MapScene = {
     run.map = generateMap(run.rng, run.act);
     run.position = null;
     run.pathTaken = [];
+    run.mapDiscovered = [];
     saveRun(run);
     this.showActIntro();
   },
