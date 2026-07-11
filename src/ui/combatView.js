@@ -1252,6 +1252,7 @@ const FX_HANDLERS = {
   summon(payload, layer) {
     // The combatant node is built on the next tick by update(); flash it once
     // it exists so the burst lands on the newly-appeared foe.
+    audio.play('summon');
     const t = payload.target;
     setTimeout(() => {
       const el2 = this.elFor(t);

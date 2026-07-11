@@ -16,6 +16,8 @@ const SOUNDS = {
   zap: 'assets/sounds/zap.mp3',
   splash: 'assets/sounds/splash.mp3',
   growl: 'assets/sounds/growl.mp3',
+  block: 'assets/sounds/block.wav',
+  summon: 'assets/sounds/summon.wav',
   tempo_release: 'assets/sounds/tempo_release.wav',
   power_surge: 'assets/sounds/power_surge.wav',
 };
@@ -143,6 +145,8 @@ class Audio {
     if (name === 'zap') gain = 0.45;
     if (name === 'splash') gain = 0.45;
     if (name === 'growl') gain = 0.45;
+    if (name === 'block') gain = 0.42;
+    if (name === 'summon') gain = 0.46;
     if (name === 'tempo_release') gain = 0.4;
     if (name === 'power_surge') gain = 0.4;
     
