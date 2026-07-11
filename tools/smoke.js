@@ -196,10 +196,22 @@ try {
   });
   await page.waitForSelector('.player .status-presence.has-tempo.has-armor.has-spirit', { timeout: 1200 });
   await page.waitForSelector('.enemy-boss .status-presence.has-blight.has-mark', { timeout: 1200 });
+  await page.waitForSelector('.combat-scene.env-boss.env-blight.env-tempo', { timeout: 1200 });
   const tempoAngle = await page.locator('.player .status-presence').evaluate((node) => node.style.getPropertyValue('--tempo-angle'));
   if (tempoAngle !== '180deg') throw new Error(`Tempo presence did not reflect five stacks: ${tempoAngle}`);
   await page.evaluate(() => window.__combat.applyPower(window.__combat.player, 'flow', -1, window.__combat.player));
   await page.waitForSelector('.player .status-presence.status-expiring[data-moment="flow"]', { timeout: 800 });
+  await page.evaluate(() => {
+    const combat = window.__combat;
+    const boss = combat.livingEnemies()[0];
+    combat.player.hp = Math.floor(combat.player.maxHp * 0.2);
+    boss.hp = Math.floor(boss.maxHp * 0.3);
+    boss._phased = true;
+    combat.notify();
+  });
+  await page.waitForSelector('.combat-scene.env-danger.env-advantage.env-phase', { timeout: 1200 });
+  const pressure = Number(await page.locator('.combat-scene').evaluate((node) => node.style.getPropertyValue('--env-pressure')));
+  if (pressure < 0.5) throw new Error(`low-health environment pressure too weak: ${pressure}`);
 
   if (errors.length) throw new Error('uncaught JS errors during the flow:\n  ' + errors.join('\n  '));
 

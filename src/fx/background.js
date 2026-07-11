@@ -7,6 +7,7 @@
 // mountBackground() returns a controller (also reachable via background()):
 //   setAct(act)          — shift the palette to match the current act
 //   setCombat(on)        — raise/lower ambient intensity for fights
+//   setCombatState(state)— ease toward persistent pressure/element/phase mood
 //   pulse(kind, power)   — a brief colored flash: 'damage' | 'heavy' | 'gold' | 'heal'
 
 // Palette per act: [nebula A, nebula B] colors + warm-star tint + ember hue.
@@ -46,12 +47,15 @@ export function mountBackground() {
 
   // Combat intensity (0..1) brightens the nebula and quickens embers.
   let intensity = 0, intensityTarget = 0;
+  let combatState = { pressure: 0, advantage: 0, phase: 0, blight: 0, tempo: 0, boss: 0 };
+  let combatStateTarget = { ...combatState };
 
   // Pointer parallax (normalized -0.5..0.5, eased).
   let pxT = 0, pyT = 0, px = 0, py = 0;
 
   // Reactive flash.
   let flashA = 0; let flashColor = [255, 122, 26];
+  const shockwaves = [];
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -98,13 +102,14 @@ export function mountBackground() {
     cur.star = lerpRGB(cur.star, target.star, k);
     cur.ember = lerpRGB(cur.ember, target.ember, k);
     intensity = lerp(intensity, intensityTarget, Math.min(1, dt * 2));
+    for (const key of Object.keys(combatState)) combatState[key] = lerp(combatState[key], combatStateTarget[key], Math.min(1, dt * 2.4));
     px = lerp(px, pxT, Math.min(1, dt * 3));
     py = lerp(py, pyT, Math.min(1, dt * 3));
     if (flashA > 0) flashA = Math.max(0, flashA - dt * 1.6);
 
     ctx.clearRect(0, 0, W, H);
 
-    const nebBoost = 1 + intensity * 0.7;
+    const nebBoost = 1 + intensity * 0.7 + combatState.advantage * 0.28;
 
     // smoky nebula (parallaxed by depth)
     for (const m of motes) {
@@ -144,6 +149,60 @@ export function mountBackground() {
       ctx.shadowColor = `rgba(${cur.ember[0] | 0},${cur.ember[1] | 0},${cur.ember[2] | 0},0.8)`; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0;
     }
 
+    // Persistent combat mood: danger closes in from the edges, Blight stains
+    // the floor, Tempo breathes in rings, and phase transitions crackle across
+    // the field. These layers ease with state; they are not one-frame flashes.
+    if (combatState.boss > 0.01) {
+      const g = ctx.createRadialGradient(W / 2, H * 0.48, Math.min(W, H) * 0.15, W / 2, H * 0.48, Math.max(W, H) * 0.78);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, `rgba(22,0,12,${0.16 * combatState.boss})`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    }
+    if (combatState.pressure > 0.01) {
+      const breathe = reduce ? 1 : 0.82 + Math.sin(t * 3.1) * 0.18;
+      const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.24, W / 2, H / 2, Math.max(W, H) * 0.72);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, `rgba(150,12,8,${0.25 * combatState.pressure * breathe})`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    }
+    if (combatState.blight > 0.01) {
+      const g = ctx.createLinearGradient(0, H * 0.45, 0, H);
+      g.addColorStop(0, 'rgba(70,120,35,0)');
+      g.addColorStop(1, `rgba(77,128,35,${0.18 * combatState.blight})`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    }
+    if (combatState.advantage > 0.01) {
+      const g = ctx.createRadialGradient(W * 0.72, H * 0.5, 0, W * 0.72, H * 0.5, Math.min(W, H) * 0.52);
+      g.addColorStop(0, `rgba(255,156,60,${0.11 * combatState.advantage})`);
+      g.addColorStop(1, 'rgba(255,156,60,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    }
+    if (combatState.tempo > 0.01) {
+      ctx.save(); ctx.strokeStyle = `rgba(255,195,96,${0.12 * combatState.tempo})`; ctx.lineWidth = 1.2;
+      for (let i = 0; i < 3; i++) {
+        const phase = (t * 0.32 + i / 3) % 1;
+        ctx.beginPath(); ctx.arc(W * 0.28, H * 0.55, 35 + phase * Math.min(W, H) * 0.38, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    if (combatState.phase > 0.01 && !reduce) {
+      ctx.save(); ctx.strokeStyle = `rgba(201,164,255,${0.25 * combatState.phase})`; ctx.lineWidth = 1.4; ctx.shadowColor = '#a879ff'; ctx.shadowBlur = 7;
+      for (let j = 0; j < 3; j++) {
+        const y = H * (0.24 + j * 0.2) + Math.sin(t * 5 + j) * 9;
+        ctx.beginPath(); ctx.moveTo(W * 0.48, y);
+        for (let x = W * 0.56; x <= W * 0.96; x += W * 0.08) ctx.lineTo(x, y + Math.sin(x * 0.04 + t * 9 + j) * 13);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    for (let i = shockwaves.length - 1; i >= 0; i--) {
+      const s = shockwaves[i]; s.life -= dt * 1.7; s.r += dt * Math.max(W, H) * 0.45;
+      if (s.life <= 0) { shockwaves.splice(i, 1); continue; }
+      ctx.beginPath(); ctx.arc(W / 2, H / 2, s.r, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${s.color[0]},${s.color[1]},${s.color[2]},${s.life * 0.22})`; ctx.lineWidth = 2 + s.life * 3; ctx.stroke();
+    }
+
     // reactive flash — an edge vignette in the pulse color
     if (flashA > 0.001) {
       const [fr, fg, fb] = flashColor;
@@ -173,11 +232,18 @@ export function mountBackground() {
 
   _controller = {
     setAct(act) { target = ACT_PALETTES[act] || ACT_PALETTES.title; },
-    setCombat(on) { intensityTarget = on ? 1 : 0; },
+    setCombat(on) {
+      intensityTarget = on ? 1 : 0;
+      if (!on) combatStateTarget = { pressure: 0, advantage: 0, phase: 0, blight: 0, tempo: 0, boss: 0 };
+    },
+    setCombatState(state = {}) {
+      for (const key of Object.keys(combatStateTarget)) combatStateTarget[key] = Math.max(0, Math.min(1, Number(state[key]) || 0));
+    },
     pulse(kind = 'damage', power = 1) {
       if (reduce) return;
       flashColor = PULSE_COLORS[kind] || PULSE_COLORS.damage;
       flashA = Math.min(0.5, Math.max(flashA, 0.22 * power));
+      shockwaves.push({ r: Math.min(W, H) * 0.1, life: Math.min(1, 0.45 + power * 0.22), color: [...flashColor] });
     },
   };
   return _controller;

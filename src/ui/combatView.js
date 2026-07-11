@@ -167,6 +167,13 @@ export class CombatView {
     this.topbarHolder = el('div', { class: 'combat-topbar' });
     scene.appendChild(this.topbarHolder);
 
+    this.environmentLayer = el('div', {
+      class: 'combat-environment',
+      attrs: { 'aria-hidden': 'true' },
+      html: `<span class="env-haze"></span><span class="env-rhythm"></span><span class="env-crackle">${'<i></i>'.repeat(6)}</span>`,
+    });
+    scene.appendChild(this.environmentLayer);
+
     const field = el('div', { class: 'battlefield' });
     this.playerSide = el('div', { class: 'player-side' });
     this.enemySide = el('div', { class: 'enemy-side' });
@@ -207,6 +214,7 @@ export class CombatView {
     // the moment they matter most.
     this.updateCombatant(this.combat.player);
     for (const e of this.combat.enemies) this.updateCombatant(e);
+    this.syncEnvironment();
 
     this.logHolder = el('div', { class: 'combat-log' });
     scene.appendChild(this.logHolder);
@@ -374,6 +382,7 @@ export class CombatView {
     this._intentPinnedEnemy = null;
     this.clearIntentForecast();
     const c = this.combat;
+    this.syncEnvironment();
 
     clear(this.topbarHolder).appendChild(topBar(this.game.run, {
       hp: c.player.hp,
@@ -582,6 +591,37 @@ export class CombatView {
     if (previousArmor && !armor) this.statusMoment(ent, 'block', 'expire');
     this._lastArmorPresence = this._lastArmorPresence || {};
     this._lastArmorPresence[eid] = !!armor;
+  }
+
+  syncEnvironment() {
+    if (!this.scene) return;
+    const c = this.combat;
+    const living = c.livingEnemies();
+    const playerRatio = c.player.maxHp > 0 ? c.player.hp / c.player.maxHp : 0;
+    const enemyHp = living.reduce((sum, e) => sum + Math.max(0, e.hp), 0);
+    const enemyMax = living.reduce((sum, e) => sum + Math.max(1, e.maxHp), 0) || 1;
+    const enemyRatio = enemyHp / enemyMax;
+    const pressure = Math.max(0, Math.min(1, (0.48 - playerRatio) / 0.38));
+    const advantage = Math.max(0, Math.min(1, (0.52 - enemyRatio) / 0.42));
+    const phase = living.some((e) => e._phased || e.powers.intangible) ? 1 : 0;
+    const blight = Math.max(c.player.powers.poison || 0, ...living.map((e) => e.powers.poison || 0)) / 10;
+    const tempo = Math.min(1, (c.player.powers.tempo || 0) / 10);
+    const boss = c.opts.kind === 'boss' ? 1 : 0;
+    this.scene.classList.toggle('env-danger', pressure > 0.02);
+    this.scene.classList.toggle('env-advantage', advantage > 0.15);
+    this.scene.classList.toggle('env-phase', phase > 0);
+    this.scene.classList.toggle('env-blight', blight > 0);
+    this.scene.classList.toggle('env-tempo', tempo >= 0.3);
+    this.scene.classList.toggle('env-boss', boss > 0);
+    this.scene.style.setProperty('--env-pressure', String(pressure));
+    this.scene.style.setProperty('--env-advantage', String(advantage));
+    this.scene.style.setProperty('--env-blight', String(Math.min(1, blight)));
+    this.scene.style.setProperty('--env-tempo', String(tempo));
+    this.scene.style.setProperty('--env-haze', String(Math.max(Math.min(1, blight), advantage)));
+    this.scene.style.setProperty('--env-advantage-alpha', String(advantage * 0.16));
+    this.scene.style.setProperty('--env-blight-alpha', String(Math.min(1, blight) * 0.23));
+    const bg = background();
+    if (bg && bg.setCombatState) bg.setCombatState({ pressure, advantage, phase, blight, tempo, boss });
   }
 
   statusMoment(ent, key, kind = 'awaken') {
