@@ -89,7 +89,7 @@ export const CombatScene = {
 
   afterCombat(combat, kind) {
     this.combatView = null;
-    audio.setCombat(false);
+    audio.setCombat(false, false, this.run.act);
     const bg = background(); if (bg) bg.setCombat(false);
     // Write HP back
     this.run.hp = Math.max(0, combat.player.hp);
