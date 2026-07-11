@@ -211,6 +211,24 @@ try {
   const pressure = Number(await page.locator('.combat-scene').evaluate((node) => node.style.getPropertyValue('--env-pressure')));
   if (pressure < 0.5) throw new Error(`low-health environment pressure too weak: ${pressure}`);
 
+  // A perfect, charged strike consuming setup receives the apex presentation
+  // channel without changing the engine's damage rules.
+  await page.evaluate(() => {
+    const combat = window.__combat;
+    const boss = combat.livingEnemies()[0];
+    boss.hp = Math.max(40, boss.hp);
+    boss.powers.vulnerable = 1;
+    const card = combat.hand.find((item) => item.type === 'attack');
+    if (!card) throw new Error('boss hand has no attack for impact smoke');
+    combat._play = { card, rhythmMult: 1, rhythmGrade: 'perfect', charge: 5, synergy: true };
+    combat._swing = true;
+    combat.applyDamage(boss, 8, { isAttack: true, source: combat.player });
+    combat._swing = false;
+    combat._play = null;
+  });
+  await page.waitForSelector('.impact-wave-apex', { timeout: 1200 });
+  await page.waitForSelector('.float-impact-callout.impact-apex', { timeout: 1200 });
+
   if (errors.length) throw new Error('uncaught JS errors during the flow:\n  ' + errors.join('\n  '));
 
   console.log(`smoke ok — reached combat with ${handCount} cards in hand, no JS errors`);

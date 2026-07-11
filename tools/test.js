@@ -15,7 +15,7 @@ import { RunState } from '../src/core/state.js';
 import { generateMap, nextNodes, nodeAt } from '../src/map/mapgen.js';
 import { createCard, upgradeCard, canUpgrade } from '../src/data/cards.js';
 import { Combat } from '../src/combat/combat.js';
-import { enemyMovePacing, previewCardBlock, previewEnemyAttack } from '../src/combat/presentation.js';
+import { enemyMovePacing, impactProfile, previewCardBlock, previewEnemyAttack } from '../src/combat/presentation.js';
 import { ENCOUNTERS } from '../src/data/encounters.js';
 import { ENEMIES } from '../src/data/enemies.js';
 import { EVENTS } from '../src/data/events.js';
@@ -36,6 +36,18 @@ function test(name, fn) {
     console.log(`       ${err.message.split('\n')[0]}`);
   }
 }
+
+test('impact profiles reserve apex treatment for marquee plays', () => {
+  assert.equal(impactProfile({ hpLost: 6 }).tier, 'standard');
+  assert.equal(impactProfile({ hpLost: 16, charge: 4 }).tier, 'heavy');
+  const perfectSetup = impactProfile({ hpLost: 10, charge: 5, rhythmGrade: 'perfect', synergy: true });
+  assert.equal(perfectSetup.tier, 'apex');
+  assert.equal(perfectSetup.label, 'PERFECT');
+  assert.ok(perfectSetup.hitStop > 120);
+  const finisher = impactProfile({ hpLost: 4, lethal: true });
+  assert.equal(finisher.tier, 'apex');
+  assert.equal(finisher.label, 'FINISH');
+});
 // async variant for the combat turn flow (endTurn awaits real timers)
 async function testAsync(name, fn) {
   try {
@@ -661,16 +673,19 @@ test('playCard opts: rhythmMult scales damage; fx payloads echo card/charge/swin
   const c = freshCombat();
   const attack = c.hand.find((card) => card.type === 'attack');
   const enemy = c.enemies[0];
+  enemy.powers.vulnerable = 1;
   const payloads = [];
   c.fx = (type, payload) => { if (type === 'damage' || type === 'attackstart') payloads.push({ type, payload }); };
   const hpBefore = enemy.hp + enemy.block;
   c.playCard(attack, enemy, { rhythmMult: 2, rhythmGrade: 'perfect', charge: 4 });
   const dealt = hpBefore - (enemy.hp + enemy.block);
-  assert.equal(dealt, attack.dmg * 2 * (attack.hits || 1), 'rhythm multiplier applied to the swing');
+  assert.equal(dealt, Math.floor(attack.dmg * 2 * 1.5) * (attack.hits || 1), 'rhythm multiplier and setup applied to the swing');
   const start = payloads.find((p) => p.type === 'attackstart');
   assert.equal(start.payload.charge, 4, 'attackstart echoes the charge level');
   const hit = payloads.find((p) => p.type === 'damage');
   assert.equal(hit.payload.swing, true, 'damage marks the player swing');
+  assert.equal(hit.payload.rhythmGrade, 'perfect', 'damage echoes the rhythm grade');
+  assert.equal(hit.payload.synergy, true, 'damage remembers the setup consumed by the hit');
   assert.equal(hit.payload.card, attack, 'damage echoes the played card');
   assert.equal(hit.payload.charge, 4, 'damage echoes the charge level');
 });

@@ -157,6 +157,7 @@ class Audio {
     if (name === 'heal') gain = 0.32;
     if (name === 'dodge' || name === 'reflect' || name === 'stagger') gain = 0.34;
     if (name === 'negated' || name === 'lethal') gain = 0.4;
+    if (name === 'impact_apex') gain = 0.46;
     
     // Try to play from user WAV/MP3 asset files first
     const played = this.playBuffer(name, gain);
@@ -179,6 +180,7 @@ class Audio {
       }
       case 'relicland': this.tone(880, 0.09, 'triangle', 0.11); this.tone(1318, 0.14, 'sine', 0.09, 0.04); break;
       case 'phase': this.tone(98, 0.5, 'sawtooth', 0.12); this.tone(392, 0.38, 'triangle', 0.08, 0.12); break;
+      case 'impact_apex': this.tone(72, 0.34, 'sawtooth', 0.14); this.tone(144, 0.2, 'square', 0.09, 0.025); this.tone(880, 0.18, 'triangle', 0.08, 0.07); break;
       case 'hit': this.tone(140, 0.1, 'square', 0.1); break;
       case 'block': this.tone(440, 0.15, 'sine', 0.1); break;
       case 'victory': [523, 659, 784, 1046].forEach((f, i) => this.tone(f, 0.25, 'triangle', 0.12, i * 0.12)); break;

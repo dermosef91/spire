@@ -140,11 +140,26 @@ export function ring(layer, targetEl, color) {
 
 export function screenShake(container, big = false) {
   if (!container || reduce()) return;
-  const cls = big ? 'scene-shake-big' : 'scene-shake';
-  container.classList.remove('scene-shake', 'scene-shake-big');
+  const apex = big === 'apex';
+  const cls = apex ? 'scene-shake-apex' : big ? 'scene-shake-big' : 'scene-shake';
+  container.classList.remove('scene-shake', 'scene-shake-big', 'scene-shake-apex');
   void container.offsetWidth;
   container.classList.add(cls);
-  setTimeout(() => container.classList.remove(cls), big ? 480 : 300);
+  setTimeout(() => container.classList.remove(cls), apex ? 620 : big ? 480 : 300);
+}
+
+// Wide impact wave reserved for marquee hits and phase breaks. It is DOM-only
+// and self-removing so it cannot affect combat state or input.
+export function impactWave(layer, targetEl, tier = 'heavy') {
+  if (!layer || !targetEl || reduce()) return;
+  const lr = layer.getBoundingClientRect();
+  const tr = targetEl.getBoundingClientRect();
+  const wave = document.createElement('div');
+  wave.className = `impact-wave impact-wave-${tier}`;
+  wave.style.left = (tr.left - lr.left + tr.width / 2) + 'px';
+  wave.style.top = (tr.top - lr.top + tr.height / 2) + 'px';
+  layer.appendChild(wave);
+  setTimeout(() => wave.remove(), 760);
 }
 
 // Burst of small particles from an element (used on death / big hits).

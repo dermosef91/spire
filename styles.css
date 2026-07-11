@@ -2370,6 +2370,11 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   animation: slashAnim 0.4s ease-out forwards; }
 @keyframes slashAnim { 0% { opacity: 0; transform: translate(-50%,-50%) rotate(-52deg) scale(0.5); } 35% { opacity: 0.95; } 100% { opacity: 0; transform: translate(-50%,-50%) rotate(-10deg) scale(1.3); } }
 .ring-fx { position: absolute; width: 30px; height: 30px; transform: translate(-50%, -50%); border-radius: 50%; border: 3px solid rgba(255,176,80,0.9); opacity: 0.9; animation: ringAnim 0.55s ease-out forwards; }
+.impact-wave { position:absolute; width:54px; height:54px; transform:translate(-50%,-50%); border:3px solid rgba(255,190,92,.9); border-radius:50%; box-shadow:0 0 22px rgba(255,155,52,.72), inset 0 0 16px rgba(255,235,176,.35); pointer-events:none; animation:impactWave .7s cubic-bezier(.08,.58,.18,1) forwards; }
+.impact-wave-apex { width:72px; height:72px; border-width:5px; border-color:#fff1b5; box-shadow:0 0 32px rgba(255,181,64,.96), 0 0 80px rgba(224,69,123,.46), inset 0 0 22px rgba(255,255,255,.7); }
+@keyframes impactWave { 0%{opacity:1;transform:translate(-50%,-50%) scale(.2)} 55%{opacity:.85} 100%{opacity:0;transform:translate(-50%,-50%) scale(5.2)} }
+.float-num.float-impact-callout { color:#ffd77c; font-family:var(--font-display); letter-spacing:.16em; text-shadow:0 2px 0 #32150b,0 0 12px rgba(255,176,80,.95); z-index:7; }
+.float-num.impact-apex { color:#fff4c7; letter-spacing:.22em; text-shadow:0 2px 0 #32150b,0 0 14px #ffb050,0 0 34px rgba(224,69,123,.92); }
 @keyframes ringAnim { to { width: 160px; height: 160px; opacity: 0; } }
 .particle { position: absolute; width: 7px; height: 7px; border-radius: 50%; transform: translate(-50%,-50%); box-shadow: 0 0 8px currentColor; animation: particleAnim 0.7s ease-out forwards; }
 @keyframes particleAnim { 0% { opacity: 1; transform: translate(-50%,-50%); } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.4); } }
@@ -2482,6 +2487,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   .combatant.phased .medallion, .combatant.enraged .medallion, .combatant.nemesis .medallion { animation: none; }
 }
 .combat-scene.scene-shake { animation: sShake 0.3s; } .combat-scene.scene-shake-big { animation: sShakeBig 0.46s; }
+.combat-scene.scene-shake-apex { animation:sShakeApex .6s cubic-bezier(.2,.8,.3,1); }
+@keyframes sShakeApex { 0%,100%{transform:none;filter:none} 8%{transform:translate(-10px,3px) scale(1.012);filter:brightness(1.42)} 18%{transform:translate(9px,-5px) rotate(.25deg)} 31%{transform:translate(-7px,4px) rotate(-.2deg)} 48%{transform:translate(5px,-2px)} 68%{transform:translate(-3px,2px)} }
 @keyframes sShake { 0%,100%{transform:translate(0,0)} 25%{transform:translate(-4px,2px)} 50%{transform:translate(3px,-2px)} 75%{transform:translate(-2px,1px)} }
 @keyframes sShakeBig { 0%,100%{transform:translate(0,0)} 20%{transform:translate(-9px,4px)} 40%{transform:translate(8px,-4px)} 60%{transform:translate(-6px,3px)} 80%{transform:translate(4px,-2px)} }
 .combat-scene.won .enemy-side { animation: winFade 0.6s ease forwards; }
