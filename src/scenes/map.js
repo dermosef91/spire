@@ -15,23 +15,6 @@ const MAX_ACT = 3;
 
 const NODE_ICON = { monster: NODE.monster, elite: NODE.elite, boss: NODE.boss, event: NODE.event, shop: NODE.shop, rest: NODE.rest, treasure: NODE.treasure };
 const NODE_LABEL = { monster: 'Combat', elite: 'Elite (hard fight, relic)', boss: 'Boss', event: 'Unknown event', shop: 'Bazaar', rest: 'Ancestor Fire', treasure: 'Treasure' };
-const ACT_LANDMARKS = {
-  1: [
-    { row: 0, title: 'Floodgate', detail: 'The market opens beneath black water.' },
-    { row: 8, title: 'Ancestor Vault', detail: 'Old wealth waits behind drowned brass.' },
-    { row: 14, title: 'The Sealed Rise', detail: 'The Gatekeeper watches the final stair.' },
-  ],
-  2: [
-    { row: 0, title: 'Salt Causeway', detail: 'A white road cuts across the furnace wind.' },
-    { row: 8, title: 'Mirror Well', detail: 'The desert remembers every face.' },
-    { row: 14, title: 'Archive Threshold', detail: 'Names vanish beyond the red stacks.' },
-  ],
-  3: [
-    { row: 0, title: 'Static Verge', detail: 'The air begins to sing through bone.' },
-    { row: 8, title: 'Choir of Ash', detail: 'Rendered champions hum below the crown.' },
-    { row: 14, title: 'The Last Circuit', detail: 'Only the engine remains above.' },
-  ],
-};
 function legendHtml() {
   return Object.entries(NODE_LABEL).map(([k, v]) => `<span class="leg"><span class="leg-ic node-${k}">${NODE_ICON[k]}</span>${v}</span>`).join('');
 }
@@ -161,17 +144,6 @@ export const MapScene = {
       }
     }
     board.appendChild(svg);
-
-    // Landmarks give each act a sense of geography instead of reading as a
-    // floating node graph. They are non-interactive and never affect routing.
-    for (const [i, landmark] of (ACT_LANDMARKS[run.act] || []).entries()) {
-      const y = Y(landmark.row) - rowH / 2;
-      board.appendChild(el('div', {
-        class: `map-landmark landmark-${i + 1}`,
-        style: { left: `${width / 2}px`, top: `${y}px` },
-        html: `<span>${landmark.title}</span><small>${landmark.detail}</small>`,
-      }));
-    }
 
     // nodes
     const placeNode = (type, x, y, key, posObj) => {
