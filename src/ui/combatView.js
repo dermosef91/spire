@@ -1332,7 +1332,6 @@ export class CombatView {
     this.activePlay = active;
     this._committingUid = card.uid;
     this.game.tooltip(null, null, false);
-    audio.play('cardcommit');
     this.update();
     await active.arrived;
 
@@ -2015,7 +2014,7 @@ const FX_HANDLERS = {
           if (vfx.timing !== 'windup') vfx.play(layer, el2);
           if (payload.source && payload.source.isPlayer) audio.play(vfx.sound);
         }
-        if (payload.target.isPlayer) audio.play(payload.lethal ? 'lethal' : 'hit');
+        if (payload.target.isPlayer) audio.play('hit');
         const bg = background();
         // Hit-stop: on big hits the number/flash land instantly but the target
         // freezes for a beat before the shake and follow-through, so the impact
@@ -2055,7 +2054,7 @@ const FX_HANDLERS = {
         this.holdPose(payload.target, 'block', 430);
         floatText(layer, el2, payload.guardBroken ? 'GUARD BROKEN' : `${payload.blocked} BLOCKED`, 'blocked');
         hitFlash(el2, 'block');
-        audio.play(payload.guardBroken ? 'guardbreak' : 'attack-blocked');
+        audio.play('attack-blocked');
       }
     };
     // Delay the impact fx/sfx on the enemy so it lands a beat after the
