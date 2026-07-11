@@ -712,15 +712,74 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 /* Board on the left, always-on legend panel pinned to the right. */
 .map-body { flex: 1 1 auto; min-height: 0; display: flex; gap: 12px; align-items: stretch; }
 .map-scroller { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 10px 0; -webkit-overflow-scrolling: touch; }
-.map-board { position: relative; margin: 0 auto; }
-.map-edges { position: absolute; left: 0; top: 0; pointer-events: none; }
+.map-board { position: relative; margin: 0 auto; isolation: isolate; }
+.map-board::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255,196,118,0.08), transparent 24%, transparent 75%, rgba(8,3,2,0.28)),
+    repeating-linear-gradient(180deg, transparent 0 122px, rgba(255,159,75,0.04) 123px 124px);
+}
+.map-atmosphere { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.map-weather-mote {
+  position: absolute;
+  display: block;
+  opacity: 0;
+  animation: mapWeather var(--duration) linear var(--delay) infinite;
+}
+.atmosphere-act-1 .map-weather-mote {
+  width: 1px; height: 42px;
+  background: linear-gradient(transparent, rgba(104,190,220,0.45), transparent);
+  transform: rotate(8deg);
+}
+.atmosphere-act-2 .map-weather-mote {
+  width: 5px; height: 5px; border-radius: 50%;
+  color: rgba(255,157,69,0.64); background: currentColor; box-shadow: 0 0 9px currentColor;
+}
+.atmosphere-act-3 .map-weather-mote {
+  width: 8px; height: 2px;
+  background: rgba(206,167,255,0.62); box-shadow: 0 0 8px rgba(160,105,255,0.75);
+  animation-timing-function: steps(5, end);
+}
+@keyframes mapWeather {
+  0% { opacity: 0; translate: 0 46px; }
+  18% { opacity: 0.7; }
+  82% { opacity: 0.34; }
+  100% { opacity: 0; translate: var(--drift) -92px; }
+}
+.map-edges { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; }
 .edge { stroke: rgba(255, 122, 26, 0.28); stroke-width: 2; stroke-dasharray: 4 7; animation: dashFlow 16s linear infinite; }
 @keyframes dashFlow { to { stroke-dashoffset: -220; } }
 /* Path memory: the walked route reads as a solid, brighter trail. */
 .edge.edge-traveled { stroke: rgba(255, 176, 70, 0.75); stroke-width: 2.5; stroke-dasharray: none; animation: none; }
+.edge.edge-selected {
+  stroke: #ffd28a;
+  stroke-width: 4;
+  stroke-dasharray: 8 7;
+  filter: drop-shadow(0 0 7px rgba(255,151,58,0.95));
+  animation: selectedPath 0.52s linear infinite;
+}
+@keyframes selectedPath { to { stroke-dashoffset: -30; } }
 /* Connector ornaments — deliberately faint so the paths read first. */
 .edge-dot { fill: rgba(255, 176, 70, 0.32); }
 .edge-arrow { fill: none; stroke: rgba(255, 176, 70, 0.42); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.map-landmark {
+  position: absolute;
+  z-index: 1;
+  width: min(72%, 410px);
+  padding: 6px 14px 7px;
+  transform: translate(-50%, -50%);
+  color: rgba(255,214,166,0.64);
+  background: linear-gradient(90deg, transparent, rgba(15,8,4,0.8) 20%, rgba(15,8,4,0.8) 80%, transparent);
+  border-top: 1px solid rgba(255,151,69,0.2);
+  text-align: center;
+  pointer-events: none;
+}
+.map-landmark span { display: block; font-family: var(--font-display); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--amber); }
+.map-landmark small { display: block; margin-top: 2px; font-size: 9px; line-height: 1.3; letter-spacing: 0.02em; }
 /* Plain line-art glyphs — no circular badge behind them — connected by the
    dashed edges above. Sizing is on the wrapper div; the icon fills most of
    it (see .map-node .svg-ic below) so "bigger node" == "bigger glyph". */
@@ -728,7 +787,23 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   position: absolute; width: 50px; height: 50px; transform: translate(-50%, -50%);
   display: grid; place-items: center; color: var(--muted); cursor: default;
   transition: transform 0.16s ease, filter 0.16s ease, color 0.16s ease;
-  filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75));
+  filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)); z-index: 2;
+}
+.map-node.unexplored { opacity: 0.42; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) saturate(0.38) brightness(0.7); }
+.map-node.unexplored::before {
+  content: '';
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(40,27,18,0.12), rgba(7,4,3,0.72) 74%);
+  filter: blur(5px);
+  pointer-events: none;
+}
+.map-node.discovering .svg-ic { animation: roomDiscover 0.72s cubic-bezier(.2,.85,.25,1.2) both; }
+@keyframes roomDiscover {
+  0% { opacity: 0; transform: scale(0.45) rotate(-12deg); filter: blur(7px) brightness(2); }
+  58% { opacity: 1; transform: scale(2.5) rotate(3deg); filter: blur(0) brightness(1.55); }
+  100% { opacity: 1; filter: none; }
 }
 /* Selectable next nodes read noticeably larger than the rest and pulse
    (scale + glow) so the eye goes straight to where you can move. */
@@ -763,6 +838,27 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 /* Already-cleared nodes: dimmed + desaturated so the trail reads as history
    (an accent, not a badge — keep .current/.reachable visually dominant). */
 .map-node.visited { opacity: 0.55; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.75)) saturate(0.35); }
+.map-board.journey-traveling .map-node.reachable:not(.journey-destination) { opacity: 0.3; filter: saturate(0.3) brightness(0.65); }
+.map-node.journey-destination { color: #fff2d4; filter: drop-shadow(0 0 22px rgba(255,155,64,1)); }
+.map-traveler {
+  position: absolute;
+  z-index: 8;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  filter: drop-shadow(0 0 9px rgba(255,177,82,0.95));
+}
+.map-traveler::before, .map-traveler::after, .map-traveler span {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  transform: rotate(45deg);
+  border: 2px solid #ffd89b;
+  background: rgba(44,17,5,0.9);
+}
+.map-traveler::after { inset: 9px; border: 0; background: #fff0c9; box-shadow: 0 0 8px #ff9b45; }
+.map-traveler span { inset: -2px; border-width: 1px; border-color: rgba(255,178,88,0.44); background: transparent; animation: travelerRing 0.7s linear infinite; }
+@keyframes travelerRing { to { transform: rotate(225deg); } }
 /* Node colors are shared by the board glyphs AND the legend icons, so they
    stay unscoped. Size / rings / sparkle / pulse are board-only — scoped to
    `.map-node` so they don't leak onto the legend's `.leg-ic.node-*` icons
@@ -2355,6 +2451,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   .stage.hitstop { transform: none; filter: none; }
   .combatant-subtitle.subtitle-warning, .combat-opening .combatant.enemy, .enemy-move-callout { animation: none !important; }
   .enemy-side.enemy-sequencing .combatant.enemy.enemy-acting { transform: none; }
+  .map-weather-mote, .map-node.discovering .svg-ic, .edge.edge-selected, .map-traveler span { animation: none !important; }
+  .map-weather-mote { display: none; }
 }
 
 @media (max-height: 560px) {
@@ -2453,6 +2551,12 @@ html { -webkit-text-size-adjust: 100%; }
   .map-legend { width: clamp(128px, 22vw, 158px); gap: 7px; padding: 9px 11px; font-size: 11px; }
   .map-legend-head { font-size: 12px; padding-bottom: 6px; }
   .map-legend-list { gap: 7px; }
+  /* The large reachable glyphs nearly fill the 124px floor spacing on short
+     screens. Leave a slim, readable altitude band between rows for landmarks. */
+  .map-node.reachable:not(.node-boss) .svg-ic { transform: scale(1.84); }
+  .map-landmark { width: 58%; padding: 3px 10px 4px; }
+  .map-landmark span { font-size: 9px; }
+  .map-landmark small { display: none; }
   .relic, .potion { width: 28px; height: 28px; }
   .relic:has(.relic-art-img) { width: 34px; height: 34px; }
   .potion:has(.potion-art-img) { width: 34px; height: 34px; }

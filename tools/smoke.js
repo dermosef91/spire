@@ -96,7 +96,12 @@ try {
   // click-stability check never settles — force the click (node is visible and
   // enabled; only the infinite animation blocks the actionability wait).
   await page.waitForSelector('.map-node.reachable', { timeout: 5000 });
+  if (await page.locator('.map-landmark').count() !== 3) throw new Error('map did not render all three act landmarks');
+  if (await page.locator('.map-atmosphere .map-weather-mote').count() < 10) throw new Error('map atmosphere motes are missing');
+  if (await page.locator('.map-node.reachable.discovered').count() < 1) throw new Error('reachable rooms were not discovered');
+  if (await page.locator('.map-node.unexplored').count() < 1) throw new Error('future rooms have no discovery haze');
   await page.locator('.map-node.reachable').first().click({ force: true });
+  await page.waitForSelector('.map-traveler', { timeout: 800 });
 
   // Combat must mount with a hand and an enemy present
   await page.waitForSelector('.battlefield', { timeout: 8000 });

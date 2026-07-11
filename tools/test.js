@@ -137,6 +137,16 @@ test('pathTaken round-trips and defaults empty on legacy saves', () => {
   assert.deepEqual(RunState.fromJSON(legacy).pathTaken, [], 'legacy save defaults to []');
 });
 
+test('map discovery round-trips and defaults empty on legacy saves', () => {
+  const run = new RunState('amara', 78);
+  run.mapDiscovered.push('0-2', '1-3');
+  const clone = RunState.fromJSON(run.toJSON());
+  assert.deepEqual(clone.mapDiscovered, ['0-2', '1-3']);
+  const legacy = run.toJSON();
+  delete legacy.mapDiscovered;
+  assert.deepEqual(RunState.fromJSON(legacy).mapDiscovered, []);
+});
+
 test('full potion belt: swap sequence (remove then add) works', () => {
   const run = new RunState('amara', 42);
   while (run.potions.length < run.maxPotions) run.addPotion('elixir');

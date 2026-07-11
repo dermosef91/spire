@@ -70,6 +70,7 @@ export class RunState {
     this.map = generateMap(this.rng, this.act);
     this.position = null; // {row, col}
     this.pathTaken = []; // visited nodes this act: {row, col} entries, 'boss' last
+    this.mapDiscovered = []; // node keys revealed this act (e.g. "0-2", "boss")
     this.lastResult = null;
 
     this.elapsedTime = 0;
@@ -196,7 +197,7 @@ export class RunState {
       actMonster: this._actMonster || 0,
       actFlags: this.actFlags || {}, nemesisDone: !!this.nemesisDone,
       bossesDefeated: this.bossesDefeated, foesSlain: this.foesSlain, usedEvents: this.usedEvents,
-      map: this.map, position: this.position, pathTaken: this.pathTaken || [],
+      map: this.map, position: this.position, pathTaken: this.pathTaken || [], mapDiscovered: this.mapDiscovered || [],
       elapsedTime: this.elapsedTime,
     };
   }
@@ -226,6 +227,7 @@ export class RunState {
     run.map = data.map;
     run.position = data.position;
     run.pathTaken = data.pathTaken || []; // default keeps legacy saves loading
+    run.mapDiscovered = data.mapDiscovered || [];
     run.lastResult = null;
     run.elapsedTime = data.elapsedTime || 0;
     run.sessionStartTime = Date.now();

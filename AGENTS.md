@@ -220,6 +220,15 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   ring halo via `::before`; reachable nodes and the boss get a tiny twinkling
   four-point sparkle via `::after` (`sparkTwinkle`, disabled under reduced
   motion). Keep these subtle — they're accents, not badges.
+- **Map journey presentation (2026-07):** `RunState.mapDiscovered` persists node
+  keys revealed this act and defaults to `[]` for legacy saves; reset it in
+  `nextAct()` beside `pathTaken`. `showMap()` reveals the next reachable keys,
+  renders unrevealed future rooms with `.unexplored` haze, and adds exactly
+  three act-specific `.map-landmark` labels plus deterministic CSS weather
+  motes (never advance the run RNG). `enterNode()` is guarded by
+  `_mapTraveling`, highlights the selected SVG edge via its `data-edge`, and
+  runs a 680ms `.map-traveler` animation before mutating `run.position` and
+  entering the room. Reduced motion skips the travel delay and weather.
 - The top-bar utility buttons (`.tb-fs`, `.tb-mute`) are **circular** with a
   faint inset ornamental ring (they show on every scene's top bar, so this is a
   global chrome tweak, not map-only — QA covers combat to catch regressions).
