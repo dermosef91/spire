@@ -1,3 +1,11 @@
+// Per-act overworld ambience (map/shop/rest/event/treasure) — matches
+// ACT_NAMES in data/encounters.js and the ACT_PALETTES mood in fx/background.js.
+const ACT_MUSIC = {
+  1: 'assets/music/SunkenMarket.mp3',
+  2: 'assets/music/BrassArchive.mp3',
+  3: 'assets/music/StaticCrown.mp3',
+};
+
 const SOUNDS = {
   select: 'assets/sounds/click.wav',
   reward: 'assets/sounds/reward.wav',
@@ -33,10 +41,13 @@ class Audio {
     this.musicOn = true;
     this.muted = false;
     this._music = null;
-    this.musicMode = 'title'; // 'title', 'ambient', 'combat'
+    this.musicMode = 'title'; // 'title', 'ambient', 'combat', 'boss', 'act'
+    this.musicAct = null; // which act's ambience 'act' mode should play
     this.titleMusic = null;
     this.combatMusic = null;
     this.bossMusic = null;
+    this.actMusic = null;
+    this.actMusicAct = null;
     this.buffers = {};
     this.loadingBuffers = {};
   }
@@ -108,6 +119,18 @@ class Audio {
       this.bossMusic.loop = true;
       this.bossMusic.volume = 0.08;
     }
+  }
+  ensureActMusic(act) {
+    const src = ACT_MUSIC[act];
+    if (!src) return null;
+    if (!this.actMusic || this.actMusicAct !== act) {
+      if (this.actMusic) this.actMusic.pause();
+      this.actMusic = new window.Audio(src);
+      this.actMusic.loop = true;
+      this.actMusic.volume = 0.08;
+      this.actMusicAct = act;
+    }
+    return this.actMusic;
   }
   tone(freq, dur, type = 'sine', gain = 0.12, when = 0) {
     if (this.muted || !this.enabled) return;
@@ -253,6 +276,13 @@ class Audio {
         this.bossMusic.currentTime = 0;
         this.bossMusic.play().catch(e => console.warn("Boss music autoplay blocked:", e));
       }
+    } else if (this.musicMode === 'act') {
+      const track = this.ensureActMusic(this.musicAct);
+      if (track && track.paused) {
+        this.stopMusic();
+        track.currentTime = 0;
+        track.play().catch(e => console.warn("Act music autoplay blocked:", e));
+      }
     } else {
       if (!this._music) {
         this.stopMusic();
@@ -296,17 +326,24 @@ class Audio {
     if (this.bossMusic) {
       this.bossMusic.pause();
     }
+    if (this.actMusic) {
+      this.actMusic.pause();
+    }
   }
-  setMusicMode(mode) {
-    if (this.musicMode === mode) return;
+  setMusicMode(mode, act) {
+    const actChanged = mode === 'act' && act !== this.musicAct;
+    if (this.musicMode === mode && !actChanged) return;
     this.musicMode = mode;
+    if (mode === 'act') this.musicAct = act;
     if (this.musicOn) {
       this.startMusic();
     }
   }
-  setCombat(isCombat, isBoss = false) {
+  setCombat(isCombat, isBoss = false, act) {
     if (isCombat) {
       this.setMusicMode(isBoss ? 'boss' : 'combat');
+    } else if (act != null) {
+      this.setMusicMode('act', act);
     } else {
       this.setMusicMode('title');
     }
