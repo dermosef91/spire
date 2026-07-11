@@ -1242,28 +1242,99 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 6px;
+  flex-direction: column;
+  gap: 1px;
   align-items: center;
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   white-space: nowrap;
   background: linear-gradient(180deg, rgba(18,10,6,0.95), rgba(8,4,2,0.95));
-  padding: 4px 11px;
+  min-width: 94px;
+  padding: 4px 10px 5px;
   border-radius: 4px;
   border: 1px solid var(--orange);
   box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 14px rgba(255,106,26,0.25);
   animation: intentBob 2.6s ease-in-out infinite;
   z-index: 6;
   pointer-events: auto;
+  cursor: help;
 }
 @keyframes intentBob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-4px); } }
 .intent::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%) rotate(45deg); width: 9px; height: 9px;
   background: rgba(8,4,2,0.95); border-right: 1px solid var(--orange); border-bottom: 1px solid var(--orange); }
+.intent-name {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 9px;
+  line-height: 1.15;
+  letter-spacing: 0.1em;
+  color: var(--cream);
+  opacity: 0.82;
+  text-transform: uppercase;
+}
+.intent-icons { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 25px; }
+.intent-consequence {
+  font-size: 8px;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
 .intent-atk { color: var(--ember); } .intent-def { color: #9fc2ff; } .intent-buf { color: var(--amber); }
 .intent-deb { color: var(--orange); } .intent-unk { color: var(--muted); } .intent-steal { color: var(--amber); }
 .intent-ctr { color: var(--amber); } .intent-flee { color: var(--orange); }
 .intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk, .intent-steal, .intent-ctr, .intent-flee { cursor: pointer; display: inline-flex; align-items: center; }
+.intent.intent-guarded { border-color: rgba(159,194,255,0.9); box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 16px rgba(94,169,230,0.32); }
+.intent.intent-guarded .intent-consequence { color: #bcd6ff; }
+.intent.intent-danger { border-color: var(--ember); box-shadow: 0 4px 14px rgba(0,0,0,0.65), 0 0 22px rgba(232,67,26,0.48); }
+.intent.intent-danger .intent-consequence { color: #ff9a78; }
+.intent.intent-lethal { border-color: #ff4f2e; box-shadow: 0 4px 14px rgba(0,0,0,0.7), 0 0 26px rgba(255,55,28,0.72); animation: lethalIntent 0.9s ease-in-out infinite; }
+.intent.intent-lethal .intent-consequence { color: #fff; text-shadow: 0 0 8px #ff3d1f; }
+.intent.intent-inspecting { filter: brightness(1.2); transform: translateX(-50%) translateY(-3px) scale(1.06); }
+@keyframes lethalIntent {
+  0%,100% { transform: translateX(-50%) scale(1); box-shadow: 0 4px 14px rgba(0,0,0,0.7), 0 0 20px rgba(255,55,28,0.55); }
+  50% { transform: translateX(-50%) scale(1.04); box-shadow: 0 4px 14px rgba(0,0,0,0.7), 0 0 34px rgba(255,55,28,0.85); }
+}
+
+.hp-intent-loss {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 0;
+  opacity: 0;
+  background: repeating-linear-gradient(135deg, rgba(255,238,218,0.85) 0 3px, rgba(232,67,26,0.92) 3px 6px);
+  box-shadow: inset 0 0 7px rgba(255,255,255,0.55);
+  transition: opacity 0.12s ease;
+  pointer-events: none;
+}
+.intent-forecasting .hp-intent-loss { opacity: 0.92; }
+.intent-forecast {
+  display: block;
+  margin-top: 3px;
+  padding: 2px 7px;
+  min-height: 15px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: rgba(8,5,3,0.88);
+  color: var(--cream);
+  font-family: var(--font-display);
+  font-size: 9px;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  pointer-events: none;
+}
+.intent-forecast:empty { display: none; }
+.intent-forecasting .intent-forecast { opacity: 1; transform: translateY(0); }
+.intent-forecast.forecast-guarded { color: #bcd6ff; border-color: rgba(159,194,255,0.65); }
+.intent-forecast.forecast-danger { color: #ffad8e; border-color: rgba(232,67,26,0.72); }
+.intent-forecast.forecast-lethal { color: #fff; border-color: #ff4f2e; box-shadow: 0 0 14px rgba(255,55,28,0.5); }
 
 .combat-scene.targeting .enemy.targetable { cursor: pointer; }
 .combat-scene.targeting .enemy.targetable .med-core { animation: targetPulse 1s ease-in-out infinite; }
@@ -1272,7 +1343,7 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 /* Dim player, orbs, hand cards (except previewed), and non-targetable enemies during targeting */
 .combat-scene.targeting .combatant.player,
 .combat-scene.targeting .orbs,
-.combat-scene.targeting .hand .card:not(.previewing),
+.combat-scene.targeting .hand .card:not(.previewing):not(.dragging),
 .combat-scene.targeting .enemy:not(.targetable) {
   opacity: 0.35;
   filter: grayscale(40%);
@@ -2029,9 +2100,9 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   }
 }
 
-.combatant.flash-hit .stage { animation: flashHit 0.4s ease; }
-.combatant.flash-block .stage { animation: flashBlock 0.4s ease; }
-.combatant.flash-heal .stage { animation: flashHeal 0.4s ease; }
+.glyph.flash-hit { animation: flashHit 0.4s ease; }
+.glyph.flash-block { animation: flashBlock 0.4s ease; }
+.glyph.flash-heal { animation: flashHeal 0.4s ease; }
 @keyframes flashHit { 0%,100% { filter: none; } 30% { filter: brightness(2.6) saturate(3); } }
 @keyframes flashBlock { 0%,100% { filter: none; } 30% { filter: brightness(1.8) hue-rotate(180deg) saturate(2); } }
 @keyframes flashHeal { 0%,100% { filter: none; } 30% { filter: brightness(1.9) saturate(2.4); } }
@@ -2046,6 +2117,10 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .combatant.lunge-charged.lunge-left .stage { animation: lungeChargedL 0.52s cubic-bezier(0.5,-0.4,0.3,1.4); }
 @keyframes lungeChargedR { 0%{transform:translateX(0) scale(1)} 26%{transform:translateX(-18px) scale(0.96)} 58%{transform:translateX(60px) scale(1.14)} 100%{transform:translateX(0) scale(1)} }
 @keyframes lungeChargedL { 0%{transform:translateX(0) scale(1)} 26%{transform:translateX(18px) scale(0.96)} 58%{transform:translateX(-60px) scale(1.14)} 100%{transform:translateX(0) scale(1)} }
+.combatant.combat-dodge.player .stage { animation: combatDodgeLeft 0.5s cubic-bezier(.25,.85,.35,1); }
+.combatant.combat-dodge.enemy .stage { animation: combatDodgeRight 0.5s cubic-bezier(.25,.85,.35,1); }
+@keyframes combatDodgeLeft { 0%,100% { transform: translateX(0); opacity: 1; } 38% { transform: translateX(-28px) skewX(-5deg); opacity: .45; } 60% { transform: translateX(-20px); opacity: .7; } }
+@keyframes combatDodgeRight { 0%,100% { transform: translateX(0); opacity: 1; } 38% { transform: translateX(28px) skewX(5deg); opacity: .45; } 60% { transform: translateX(20px); opacity: .7; } }
 .combatant.dying {
   animation: die 0.62s ease forwards;
   transition: min-width 0.62s ease, max-width 0.62s ease, width 0.62s ease, margin-left 0.62s ease, margin-right 0.62s ease, opacity 0.62s ease;
@@ -2058,6 +2133,17 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   overflow: hidden !important;
 }
 @keyframes die { to { opacity: 0; transform: translateY(10px) scale(0.7) rotate(8deg); filter: grayscale(1) brightness(0.4); } }
+.combatant.fleeing {
+  animation: fleeCombat .5s cubic-bezier(.3,.05,.7,.2) forwards;
+  transition: min-width .5s ease, max-width .5s ease, width .5s ease, margin-left .5s ease, margin-right .5s ease, opacity .5s ease;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  width: 0 !important;
+  margin-left: calc(var(--enemy-gap, 20px) / -2) !important;
+  margin-right: calc(var(--enemy-gap, 20px) / -2) !important;
+  overflow: hidden !important;
+}
+@keyframes fleeCombat { to { opacity: 0; transform: translateX(90px) scale(.78); filter: blur(2px) brightness(1.2); } }
 
 /* --- Smarter-enemy state auras --- */
 /* Summoned foe entrance: rises up from below and fades in. */
@@ -2076,6 +2162,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .combatant.nemesis .medallion { animation: nemesisPulse 1.7s ease-in-out infinite; }
 @keyframes nemesisPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,209,102,0); } 50% { box-shadow: 0 0 24px 4px rgba(255,209,102,0.55); } }
 @media (prefers-reduced-motion: reduce) {
+  .combatant.dying, .combatant.fleeing { animation: none; transition: none; }
+  .combatant.fleeing { opacity: 0; }
   .combatant.summoning { animation: none; }
   .combatant.phased .medallion, .combatant.enraged .medallion, .combatant.nemesis .medallion { animation: none; }
 }
@@ -2533,6 +2621,28 @@ img.svg-ic { object-fit: contain; }
   opacity: 1;
 }
 
+/* Every combatant gets a readable pose even when no generated pose PNG exists.
+   The optional image variation crossfades inside this same procedural motion. */
+.glyph[data-pose="idle"] > * { animation: poseIdle 3.6s ease-in-out infinite; }
+.player .glyph[data-pose="attack"] > * { animation: poseAttackRight 0.48s cubic-bezier(.25,.8,.35,1); }
+.enemy .glyph[data-pose="attack"] > * { animation: poseAttackLeft 0.48s cubic-bezier(.25,.8,.35,1); }
+.glyph[data-pose="skill"] > * { animation: poseSkill 0.72s cubic-bezier(.2,.85,.3,1); }
+.glyph[data-pose="block"] > * { animation: poseBlock 0.55s cubic-bezier(.2,.8,.3,1); }
+.player .glyph[data-pose="hurt"] > * { animation: poseHurtLeft 0.36s cubic-bezier(.2,.8,.3,1); }
+.enemy .glyph[data-pose="hurt"] > * { animation: poseHurtRight 0.36s cubic-bezier(.2,.8,.3,1); }
+@keyframes poseIdle { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.012); } }
+@keyframes poseAttackRight { 0% { transform: translateX(0) rotate(0); } 32% { transform: translateX(-7px) rotate(-2deg) scale(.98); } 62% { transform: translateX(12px) rotate(2deg) scale(1.035); } 100% { transform: translateX(0) rotate(0); } }
+@keyframes poseAttackLeft { 0% { transform: translateX(0) rotate(0); } 32% { transform: translateX(7px) rotate(2deg) scale(.98); } 62% { transform: translateX(-12px) rotate(-2deg) scale(1.035); } 100% { transform: translateX(0) rotate(0); } }
+@keyframes poseSkill { 0% { transform: scale(1); filter: brightness(1); } 45% { transform: translateY(-5px) scale(1.045); filter: brightness(1.35) saturate(1.3); } 100% { transform: scale(1); filter: brightness(1); } }
+@keyframes poseBlock { 0% { transform: scale(1); filter: brightness(1); } 38% { transform: translateY(3px) scale(.96,1.035); filter: brightness(1.18) saturate(.85); } 100% { transform: scale(1); filter: brightness(1); } }
+@keyframes poseHurtLeft { 0% { transform: translateX(0) rotate(0); } 28% { transform: translateX(-10px) rotate(-3deg) scale(.97); } 58% { transform: translateX(3px) rotate(1deg); } 100% { transform: translateX(0) rotate(0); } }
+@keyframes poseHurtRight { 0% { transform: translateX(0) rotate(0); } 28% { transform: translateX(10px) rotate(3deg) scale(.97); } 58% { transform: translateX(-3px) rotate(-1deg); } 100% { transform: translateX(0) rotate(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .glyph[data-pose] > * { animation: none !important; }
+  .sprite-container .model-img { transition: none; }
+}
+
 /* Fade the bottom 15% of character sprites to transparency (not a black
    overlay) so they dissolve into the scene behind them instead of fading
    into an opaque dark box. mask-image gradients key off alpha, so opaque
@@ -2595,7 +2705,7 @@ img.svg-ic { object-fit: contain; }
 /* ============================================================
    DRAG & DROP to play cards (mouse + touch)
    ============================================================ */
-.hand .card { touch-action: none; }          /* let pointer-drag play, not scroll */
+.hand .card { touch-action: pan-x; }          /* horizontal hand scroll wins; vertical motion becomes a drag */
 .card.dragging {
   position: fixed; margin: 0 !important; z-index: 300; transition: none;
   transform: scale(1.06) rotate(0deg); cursor: grabbing;
@@ -2604,6 +2714,45 @@ img.svg-ic { object-fit: contain; }
 .card.dragging.will-play { border-color: var(--amber); box-shadow: 0 26px 56px rgba(0,0,0,0.85), 0 0 42px var(--amber); }
 .combatant.enemy.drag-over { outline: 2px dashed var(--amber); outline-offset: 8px; border-radius: 16px; }
 .combatant.enemy.drag-over .med-core { box-shadow: inset 0 0 22px rgba(0,0,0,0.7), 0 0 44px rgba(255,176,80,1); }
+
+/* One sequence-owned ghost carries a committed card through cast → resolve →
+   discard/consume. The source remains in layout but invisible until state
+   removes it, preventing the hand from snapping before the commitment reads. */
+.card.committing-source { visibility: hidden; pointer-events: none; }
+.card-cast-ghost {
+  position: absolute;
+  z-index: 82;
+  pointer-events: none;
+  transform-origin: center;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 18px 24px rgba(0,0,0,.78));
+}
+.card-cast-ghost.cast-ready {
+  box-shadow: 0 20px 52px rgba(0,0,0,.82), 0 0 28px rgba(255,140,40,.52);
+}
+.card-cast-ghost.resolving { animation: cardResolvePulse .56s ease-in-out infinite alternate; }
+.card-cast-ghost.cast-skill.resolving { box-shadow: 0 18px 48px rgba(0,0,0,.8), 0 0 38px rgba(94,169,230,.78); }
+.card-cast-ghost.cast-power.resolving { box-shadow: 0 18px 48px rgba(0,0,0,.8), 0 0 42px rgba(196,140,255,.82); }
+@keyframes cardResolvePulse { from { filter: brightness(1) drop-shadow(0 14px 22px rgba(0,0,0,.8)); } to { filter: brightness(1.18) drop-shadow(0 16px 32px rgba(255,132,45,.6)); } }
+.card-cast-line {
+  position: absolute;
+  height: 2px;
+  z-index: 2;
+  transform-origin: 0 50%;
+  pointer-events: none;
+  opacity: .84;
+  background: linear-gradient(90deg, rgba(255,176,80,.08), rgba(255,176,80,.95), rgba(255,176,80,.12));
+  box-shadow: 0 0 10px rgba(255,140,40,.8);
+  animation: castLineFlow .48s ease-in-out infinite alternate;
+}
+.card-cast-line.line-skill { background: linear-gradient(90deg, transparent, rgba(159,194,255,.95), transparent); box-shadow: 0 0 10px rgba(94,169,230,.85); }
+.card-cast-line.line-power { background: linear-gradient(90deg, transparent, rgba(210,165,255,.95), transparent); box-shadow: 0 0 12px rgba(180,120,255,.88); }
+@keyframes castLineFlow { from { opacity: .34; filter: brightness(.9); } to { opacity: 1; filter: brightness(1.4); } }
+.combatant.card-cast-target .stage { filter: drop-shadow(0 0 22px rgba(255,176,80,.74)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .card-cast-ghost.resolving, .card-cast-line, .combatant.combat-dodge .stage { animation: none !important; }
+}
 
 /* Card-choice / deck overlays scroll independently of the combat viewport.
    Cards keep a uniform fixed size; long descriptions auto-fit (see fitCardDesc
@@ -2953,6 +3102,7 @@ img.svg-ic { object-fit: contain; }
 .kb-focus.btn, .kb-focus.title-setting-btn, .kb-focus.tb-fs, .kb-focus.tb-mute, .kb-focus.tb-abandon {
   transform: scale(1.04) !important;
 }
+.kb-focus.intent { transform: translateX(-50%) scale(1.06) !important; }
 
 .kb-focus .btn-decor.border-outer,
 .kb-focus .end-turn-decor.border-outer {
@@ -3023,6 +3173,7 @@ img.svg-ic { object-fit: contain; }
   .kb-focus.map-node {
     transform: translate(-50%, -50%) !important;
   }
+  .kb-focus.intent { transform: translateX(-50%) !important; }
   .kb-focus.combatant .stage {
     transform: none !important;
     transition: none !important;

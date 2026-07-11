@@ -61,6 +61,38 @@
 - **Hit-counted debuffs (divergence from StS, combat.js + keywords.js)**: Exposed (`vulnerable`), Sapped (`weak`) and Brittle (`frail`) are **consumed per event, not per turn** — one stack per attack hit taken / attack hit made / card Block gain (multiplier unchanged: +50% / −25% / −25%). They have **no `ticksDown`** flag, so `tickTurnDebuffs` never touches them; consumption lives in `applyDamage` (`consumeStack`, blocked hits still consume) and the two `gainBlock*` paths. `calcAttackDamage` still *reads* stacks without consuming — it doubles as the next-hit preview math, so don't move consumption in there. **Blight spreads on death**: `onEnemyDeath` moves a dead foe's remaining Blight to a random living enemy (via `applyPower`, so Charm can negate it); the Blight Bloom power replaces the spread with an instant burst on ALL others. Snared/Sundered stay turn-ticked (inherently turn-based). Tests in the "Divergent statuses" group of `tools/test.js`. When adding cards/enemies, treat debuff amounts as **hit counts**, not turn counts — 1–2 stacks is the normal band.
 - **Smooth Enemy Repositioning**: When an enemy is defeated, their `.dying` transition collapses their `min-width`, `max-width`, `width`, and `margin-left`/`margin-right` to `0` over `0.62s`. This allows the remaining flex children in `.enemy-side` to slide smoothly into their centered positions rather than hopping abruptly. The negative margins are sized to half of `--enemy-gap` to offset the flex container's gaps exactly.
 - **Event scene audio dependency**: `src/scenes/event.js` calls `audio.play()` while resolving choices that change gold/remove cards. Keep `import { audio } from '../audio.js';` in that scene and cover gold-changing event choices in `tools/test.js`; otherwise a choice can mutate run state, throw before `resultThenMap()`, and stay clickable for repeated rewards/costs.
+- **Delayed combat FX must use immutable snapshots**: combat state mutates
+  synchronously, while the view deliberately delays and staggers impacts. Any
+  value read inside a delayed callback (`Block`, HP, guard-break state, hit
+  index) must come from the engine FX payload, not the live entity object,
+  otherwise an earlier hit is rendered using the final state of a multi-hit or
+  a later card. `applyDamage()` snapshots `hpBefore/After`,
+  `blockBefore/After`, `guardBroken`, `hitIndex/hitCount`, and outcome fields;
+  extend that contract when adding another delayed result.
+- **Combat animation channels must not compete for `.stage`**: `.stage` owns
+  displacement (`lunge`, `shake`, hit-stop). Color flashes animate `.glyph` and
+  card/beam overlays live on their own nodes. Two CSS classes that both assign
+  `animation:` to `.stage` silently override one another by source order, so a
+  hit can lose either its flash or recoil with no console error.
+- **Card-play choreography has one owner**: `CombatView.activePlay` creates one
+  persistent card ghost for commit → resolve → discard/consume and locks all
+  other combat input until the readable impact beat. `renderHand()` must skip
+  its legacy departing-card clone for UIDs in `_choreographedCards`. Pose holds
+  are generation-tokened; never restore a pose from an unowned timer. Intent
+  forecasts live in DOM-free `combat/presentation.js` and must not consume or
+  mutate hit-counted status stacks.
+- **Web Animation cleanup needs a timer fallback**: backgrounded/hidden browser
+  tabs may throttle `Element.animate()` enough that `.finished`/`onfinish`
+  arrives very late. Choreography may await the animation for presentation, but
+  race that wait against a bounded timer and give transient DOM nodes an
+  idempotent `setTimeout(remove, duration + slack)` fallback so a card ghost can
+  never retain UI state indefinitely.
+- **Intent-icon clicks are intercepted in capture phase**:
+  `Game.setupGlossaryPopups()` stops propagation on `.intent-*` icons before
+  the parent `.intent` handler can run. Any whole-intent click behavior must be
+  forwarded explicitly from that capture handler (currently the custom
+  `intentinspect` event), or clicking the visible icon works differently from
+  clicking the pill's name/padding.
 - **Lost Pointer Capture**: When card nodes (or any nodes capturing pointer events) are removed from the DOM or rebuilt during a state update while pointer capture is active, the browser fires a `lostpointercapture` event. Since `pointerup` or `pointercancel` may not fire on the node after it's removed, you must always listen to `lostpointercapture` to cleanly reset drag/gesture state (e.g., `this.drag = null`) and prevent permanent input locks.
 - **Block/parry QTE scales with attack size, and is color-coded blue** (rhythm.js
   `runParryQTE({marks})` + `combatView.js` `parryMarksFor(e)`): a plain single
@@ -145,4 +177,5 @@ its own worktree instead:
   primary checkout before assuming the key isn't set anywhere, and symlink
   (or copy) it and `tools/node_modules` into the worktree manually.
 - **Encounter difficulty tiers (weak/normal/hard)**: monster fights escalate *within* an act. `startMonster()` (`src/scenes/combat.js`) picks the tier from the per-act fight counter `run._actMonster` — fights 1–2 `weak`, 3–4 `normal`, 5+ `hard` — and `pickEncounter()` (`src/scenes/map.js`) falls back to `normal` when the act's table defines no `hard` pool. `_actMonster` is persisted in the run save as `actMonster` (`state.js` toJSON/fromJSON) so a reload mid-act doesn't reset the run to weak fights. Only Act 1 has a `hard` pool so far — added because Act 1 went flat once the deck outgrew its many low-HP normals (spark_imp was 8–11 HP; several fights totaled <40 HP). When retuning, aim for total-HP bands of roughly weak ≲ 30 / normal ~30–65 / hard ~45–85, and keep packs to **two** enemies — no encounter has ever shipped 3, so the `.enemy-side` layout at landscape-phone widths is unproven for it. Bands are a first approximation only — **tier by measured threat**: `node tools/balance-sim.mjs --mode encounters --act 1` drives the real engine and its AvgHPLost column is the arbiter (two pairs are deliberately tiered against their raw HP: jackal+spitter → hard, imp+sentinel → normal). Encounters mode fights with the *starter* deck, so the boss reading ~0% win there is expected — use `--mode runs` for boss/late-act judgment.
+- **Attack-VFX spritesheets**: `spriteAnim()` consumes a 1536×1024 RGBA PNG with exactly 24 contiguous 256×256 frames in a 6×4 grid (row-major). Register the PNG in `src/core/preload.js`, the playback recipe in `combatView.js`'s `VFX_PLAYBOOK`, and the key on the card blueprint's `vfx`. For a sheet whose contact frame should align with the view's 300ms player-hit delay, use a `timing: 'windup'` recipe started by `attackstart`, and skip replaying it in the damage handler. Custom screen shake must target `.combat-scene`, not only the nearest generic `.scene`, because the shake CSS is scoped to `.combat-scene.scene-shake*`.
 - **Silent enemy side-effects need telegraph + feedback, not just state mutation** (Market Thief's `swipe`): give the move a distinct `intent.type` (e.g. `attacksteal`) rendered as an extra icon in `renderIntent` (`combatView.js`), register it in `INTENT`/`INTENT_INFO` (`icons.js`) and the `.intent-*` selector lists in `game.js`, and fire a dedicated `fx` (e.g. `c.fx('gold', {amount})`) from the move's `run()` using the *actual* amount applied (state can clamp, e.g. `run.gold` floors at 0). Any `fx` that needs to flash/float over a **top-bar** element can't do it inline in `onFx` — `CombatView.update()` fully rebuilds the top bar every tick, so the target node doesn't exist yet at fire time. Queue it and drain the queue in a small `applyFooFx()` called right after the topbar rebuild in `update()`, mirroring the existing `_pendingRelicPulses`/`applyRelicPulses()` pattern. Also: `Combat.pickEnemyMove` never merged the move's `name` onto `e.intent`, so `renderIntent`'s `wrap.title = it.name` was dead code (always blank) for every enemy — fixed by spreading `{ ...move.intent, name: move.name }`.

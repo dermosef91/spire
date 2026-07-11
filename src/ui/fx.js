@@ -50,11 +50,14 @@ export function floatHTML(layer, targetEl, html, kind = 'damage') {
 
 export function hitFlash(el, kind = 'damage') {
   if (!el) return;
+  // Movement feedback (shake/lunge) owns `.stage`'s animation property. Put
+  // the color flash on the glyph so the two channels can play simultaneously.
+  const target = el.querySelector ? (el.querySelector('.glyph') || el) : el;
   const cls = kind === 'block' ? 'flash-block' : kind === 'heal' ? 'flash-heal' : 'flash-hit';
-  el.classList.remove(cls);
-  void el.offsetWidth; // restart animation
-  el.classList.add(cls);
-  setTimeout(() => el.classList.remove(cls), 420);
+  target.classList.remove(cls);
+  void target.offsetWidth; // restart animation
+  target.classList.add(cls);
+  setTimeout(() => target.classList.remove(cls), 420);
 }
 
 export function shake(el, big = false) {
@@ -413,7 +416,7 @@ export function singleFrameAnim(layer, targetEl, name, opts = {}) {
 export async function faultLineVFX(layer, targetEl) {
   if (!layer || !targetEl || reduce()) return;
   
-  const sceneEl = targetEl.closest('.scene') || document.body;
+  const sceneEl = targetEl.closest('.combat-scene') || targetEl.closest('.scene') || document.body;
   
   // Phase 1: Ground Crack & initial shake
   screenShake(sceneEl, false);
@@ -431,3 +434,22 @@ export async function faultLineVFX(layer, targetEl) {
   burst(layer, targetEl, '#5c5454', 14);
 }
 
+// Hilt Crack is timed from attackstart rather than the damage callback: its
+// sheet's pommel contact sits around frames 9–12, so a 40fps wind-up lands
+// exactly on the view's existing 300ms player-impact beat.
+export async function hiltCrackVFX(layer, targetEl) {
+  if (!layer || !targetEl || reduce()) return;
+
+  const sceneEl = targetEl.closest('.combat-scene') || targetEl.closest('.scene') || document.body;
+  const impactTimer = setTimeout(() => {
+    screenShake(sceneEl, false);
+    ring(layer, targetEl, 'rgba(255, 194, 104, 0.96)');
+    burst(layer, targetEl, '#ffad4a', 14);
+  }, 285);
+
+  try {
+    await spriteAnim(layer, targetEl, 'hilt-crack', { fps: 40 });
+  } finally {
+    clearTimeout(impactTimer);
+  }
+}

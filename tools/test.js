@@ -15,6 +15,7 @@ import { RunState } from '../src/core/state.js';
 import { generateMap, nextNodes, nodeAt } from '../src/map/mapgen.js';
 import { createCard, upgradeCard, canUpgrade } from '../src/data/cards.js';
 import { Combat } from '../src/combat/combat.js';
+import { previewCardBlock, previewEnemyAttack } from '../src/combat/presentation.js';
 import { ENCOUNTERS } from '../src/data/encounters.js';
 import { ENEMIES } from '../src/data/enemies.js';
 import { EVENTS } from '../src/data/events.js';
@@ -340,11 +341,15 @@ test('the fight is won when the last enemy flees', () => {
   const c = new Combat(run, ['market_thief']);
   c.start();
   const thief = c.enemies[0];
+  const exits = [];
+  c.fx = (type) => exits.push(type);
   thief.bp.moves.flee.run(c, thief);
   assert.equal(thief.alive, false, 'thief left combat');
   assert.equal(thief.fled, true, 'thief marked as fled');
   assert.equal(c.over, true, 'combat ended');
   assert.equal(c.victory, true, 'counted as a victory');
+  assert.ok(exits.includes('flee'), 'uses an escape presentation');
+  assert.ok(!exits.includes('death'), 'does not use the unwritten/death presentation');
 });
 
 test('a missed parry halves block instead of voiding it', () => {
@@ -519,6 +524,83 @@ test('a wounded Reef Spitter shells up instead of spitting', () => {
   assert.equal(e.move, 'shell');
   e.last = 'shell';
   assert.notEqual(ENEMIES.reef_spitter.pick(e, c, c.rng), 'shell', 'never twice running');
+});
+
+test('intent forecast matches hit-counted modifiers and Block without mutating state', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  c.player.block = 5;
+  enemy.powers.weak = 1;
+  c.player.powers.vulnerable = 1;
+  const before = { block: c.player.block, hp: c.player.hp, weak: enemy.powers.weak, vulnerable: c.player.powers.vulnerable };
+  const preview = previewEnemyAttack(c, enemy, { type: 'attack', dmg: 10, hits: 2 });
+  assert.deepEqual(preview.perHit, [10, 10], 'each one-use modifier affects only the first hit');
+  assert.equal(preview.blocked, 5);
+  assert.equal(preview.hpLost, 15);
+  assert.equal(preview.afterBlock, 0);
+  assert.deepEqual({ block: c.player.block, hp: c.player.hp, weak: enemy.powers.weak, vulnerable: c.player.powers.vulnerable }, before, 'forecast is pure');
+});
+
+test('printed Block preview includes Grace and Brittle but does not mutate either', () => {
+  const c = freshCombat();
+  const blockCard = createCard('brace');
+  c.player.powers.dexterity = 2;
+  c.player.powers.frail = 1;
+  assert.equal(previewCardBlock(c, blockCard), 5, '(5 + 2) × 0.75 floors to 5');
+  assert.equal(c.player.powers.frail, 1, 'forecast did not consume Brittle');
+});
+
+test('multi-hit damage FX carries immutable per-hit guard snapshots', () => {
+  const c = freshCombat();
+  const enemy = c.enemies[0];
+  c.player.block = 6;
+  const hits = [];
+  c.fx = (type, payload) => { if (type === 'damage') hits.push(payload); };
+  c.enemyAttack(enemy, 4, 2);
+  assert.equal(hits.length, 2);
+  assert.deepEqual(hits.map((p) => ({ index: p.hitIndex, count: p.hitCount, before: p.blockBefore, after: p.blockAfter, blocked: p.blocked, hp: p.hpLost, broken: p.guardBroken })), [
+    { index: 0, count: 2, before: 6, after: 2, blocked: 4, hp: 0, broken: false },
+    { index: 1, count: 2, before: 2, after: 0, blocked: 2, hp: 2, broken: true },
+  ]);
+});
+
+test('semantic FX reports actual healing, direct HP loss, resistance, and blocked Block gain', () => {
+  const c = freshCombat();
+  const events = [];
+  c.fx = (type, payload) => events.push({ type, payload });
+  c.player.hp = c.player.maxHp - 3;
+  c.heal(20);
+  c.heal(20);
+  c.loseHp(c.player, 2);
+  c.player.powers.artifact = 1;
+  c.applyPower(c.player, 'weak', 2, c.enemies[0]);
+  c.player.powers.noBlock = 1;
+  c.gainBlock(8);
+  assert.deepEqual(events.filter((e) => e.type === 'heal').map((e) => e.payload.amount), [3], 'overheal reports only HP restored and full-HP heal is silent');
+  assert.deepEqual(events.filter((e) => e.type === 'healthloss').map((e) => e.payload.amount), [2]);
+  assert.equal(events.filter((e) => e.type === 'negated').length, 1, 'Charm resistance is visible');
+  assert.equal(events.filter((e) => e.type === 'blockprevented').length, 1, 'Sundered rejection is visible');
+});
+
+test('power FX reports the actual delta after clamping', () => {
+  const c = freshCombat();
+  const events = [];
+  c.player.powers.weak = 1;
+  c.fx = (type, payload) => { if (type === 'power') events.push(payload); };
+  c.applyPower(c.player, 'weak', -5, c.player);
+  assert.equal(events[0].amount, -1, 'removing one existing stack does not display -5');
+  assert.equal(events[0].before, 1);
+  assert.equal(events[0].after, 0);
+});
+
+test('non-basic enemy intents explain their secondary outcome', () => {
+  for (const enemy of Object.values(ENEMIES)) {
+    for (const move of Object.values(enemy.moves)) {
+      const type = move.intent.type;
+      if (type === 'block' || type === 'attack') continue;
+      assert.ok(move.intent.detail || move.intent.gold, `${enemy.id} / ${move.name} is missing intent detail`);
+    }
+  }
 });
 
 // ----------------------------------------------------------------- Tempo (rhythm layer → card game)
@@ -780,6 +862,7 @@ test('Obsidian Tide grants Block equal to HP damage dealt', () => {
 test('Hilt Crack draws 2 at the Tempo threshold, else 1', () => {
   const c = freshCombat();
   const enemy = c.enemies[0];
+  assert.equal(createCard('pommel')._bp.vfx, 'hilt-crack', 'uses its bespoke impact spritesheet');
   enemy.hp = enemy.maxHp = 999;
   // playCrafted pushes then plays (net 0 on hand size), so the draw is the delta.
   let before = c.hand.length;

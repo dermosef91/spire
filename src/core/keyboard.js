@@ -64,7 +64,7 @@ export class KeyboardController {
 
       const handCards = Array.from(document.querySelectorAll('.hand .card'))
         .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0);
-      const controlButtons = Array.from(document.querySelectorAll('.end-turn, .potion:not(.empty), .screen-pile, .tb-fs, .tb-mute, .tb-abandon'))
+      const controlButtons = Array.from(document.querySelectorAll('.intent, .end-turn, .potion:not(.empty), .screen-pile, .tb-fs, .tb-mute, .tb-abandon'))
         .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0);
       return [...handCards, ...controlButtons];
     }
