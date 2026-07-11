@@ -5,7 +5,7 @@
 // (game.js) for card selection.
 
 import { el } from '../core/util.js';
-import { topBar, button, renderCard } from '../ui/components.js';
+import { topBar, button, renderCard, sceneHeading } from '../ui/components.js';
 import { canUpgrade } from '../data/cards.js';
 import { NODE } from '../ui/icons.js';
 import { audio } from '../audio.js';
@@ -17,7 +17,7 @@ export const RestScene = {
     const panel = el('div', { class: 'rest-scene' });
     panel.appendChild(topBar(run, { onHover: (o, n, on) => this.tooltip(o, n, on) }));
     panel.appendChild(el('div', { class: 'rest-fire', html: NODE.rest }));
-    panel.appendChild(el('h2', { text: 'An Ancestor Fire' }));
+    panel.appendChild(sceneHeading('An Ancestor Fire'));
     panel.appendChild(el('p', { class: 'event-text', text: 'Warmth in the cold throat of the Spire. You may tend your wounds or sharpen your craft.' }));
     const choices = el('div', { class: 'choices' });
     if (run.canRestHeal()) {

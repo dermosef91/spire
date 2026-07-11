@@ -472,6 +472,17 @@ body.scene-reward #bg-image.show {
 }
 .charselect { text-align: center; }
 .charselect h2 { font-size: 36px; margin-bottom: 18px; color: var(--orange); letter-spacing: 0.1em; }
+
+/* Shared scene-title heading flourish (sceneHeading() in ui/components.js) —
+   flanks the heading text with the game's ❖ dingbat divider language instead
+   of a bare heading. Color/font-size/letter-spacing are inherited from
+   whatever `h2` rule already targets the scene (e.g. `.charselect h2`,
+   `.event-scene h2`), so this only needs to add the flex layout + ornaments. */
+.scene-heading { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.scene-heading .sh-orn {
+  font-size: 0.42em; color: var(--orange); opacity: 0.75; letter-spacing: 0.05em;
+  font-family: var(--font-body); flex-shrink: 0;
+}
 .char-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 22px; margin-bottom: 18px; }
 .char-card {
   --notch: 14px;
@@ -2510,6 +2521,10 @@ img.svg-ic { object-fit: contain; }
     font-size: 20px;
     margin: 0;
   }
+  /* Row 1 already overlaps the heading with the Back button (see comment
+     above) — the flourish spans would widen the heading further and risk
+     colliding with it, so drop them at this cramped height. */
+  .charselect h2 .sh-orn { display: none; }
   .charselect > .btn {
     grid-row: 1;
     grid-column: 1;

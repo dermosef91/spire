@@ -376,3 +376,15 @@ export function button(label, onClick, cls = '') {
     }
   });
 }
+
+// Shared scene-title heading: flanks the text with the game's dingbat
+// flourish (matches the title screen's ❖ divider language) instead of a bare
+// <h2>. Use for a scene's single main heading; reward/act-intro headings keep
+// their own bespoke treatment, so don't reach for this there.
+export function sceneHeading(text, cls = '') {
+  return el('h2', { class: `scene-heading ${cls}`.trim() }, [
+    el('span', { class: 'sh-orn sh-left', text: '❖ »', attrs: { 'aria-hidden': 'true' } }),
+    el('span', { class: 'sh-text', text }),
+    el('span', { class: 'sh-orn sh-right', text: '« ❖', attrs: { 'aria-hidden': 'true' } }),
+  ]);
+}

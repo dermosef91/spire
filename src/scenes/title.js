@@ -8,7 +8,7 @@ import { RunState, ASCENSION_LEVELS, MAX_ASCENSION } from '../core/state.js';
 import { saveRun, loadRun, hasSave, saveMeta } from '../core/save.js';
 import { CHARACTERS } from '../data/characters.js';
 import { RELICS } from '../data/relics.js';
-import { button } from '../ui/components.js';
+import { button, sceneHeading } from '../ui/components.js';
 import { UI, characterModel } from '../ui/icons.js';
 import { isCharUnlocked, charUnlockReq } from '../core/unlocks.js';
 import { spriteOrSvg } from '../ui/sprites.js';
@@ -129,7 +129,7 @@ export const TitleScene = {
   showCharSelect() {
     audio.play('select');
     const panel = el('div', { class: 'charselect' });
-    panel.appendChild(el('h2', { text: 'Choose Your Champion' }));
+    panel.appendChild(sceneHeading('Choose Your Champion'));
     const grid = el('div', { class: 'char-grid' });
     for (const id of Object.keys(CHARACTERS)) {
       const ch = CHARACTERS[id];
@@ -147,7 +147,7 @@ export const TitleScene = {
           el('div', { class: 'char-relic-label', text: `Starter: ${starter.name}` }),
           el('div', { class: 'char-relic-desc', text: starter.desc })
         ]));
-        card.appendChild(button('Begin', () => { audio.play('click_heavy'); this.startRun(id); }, 'primary'));
+        card.appendChild(button('Begin Journey', () => { audio.play('click_heavy'); this.startRun(id); }, 'primary'));
       } else {
         card.appendChild(el('div', { class: 'char-glyph imodel char-glyph-locked', html: UI.lock }));
         card.appendChild(el('div', { class: 'char-name', text: '???' }));
