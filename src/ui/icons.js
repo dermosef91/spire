@@ -87,7 +87,10 @@ export const UI = {
 
 /* ============================== INTENTS ============================== */
 export const INTENT = {
-  attack: `<svg ${NS} viewBox="0 0 100 100" class="svg-ic" fill="none"><path d="M30 70 L70 30 M62 30 H72 V40 M30 62 L40 72" stroke="${E}" stroke-width="8" stroke-linecap="round"/></svg>`,
+  // Attack — a clear dagger silhouette (filled blade + crossguard + grip +
+  // pommel), reusing the same blade language as CARD_MOTIF.blade instead of
+  // the old ambiguous disconnected-stroke sketch it replaced.
+  attack: `<svg ${NS} viewBox="0 0 100 100" class="svg-ic" fill="none"><path d="M36 72 L72 32 L80 24 L84 28 L76 36 L40 76 Z" fill="${E}" stroke="${C}" stroke-width="2.5" stroke-linejoin="round"/><path d="M28 64 L48 84" stroke="${A}" stroke-width="7" stroke-linecap="round"/><path d="M38 74 L27 85" stroke="${A}" stroke-width="6" stroke-linecap="round"/><circle cx="26" cy="86" r="4.5" fill="${C}"/></svg>`,
   block: UI.shield,
   buff: `<svg ${NS} viewBox="0 0 100 100" class="svg-ic" fill="none"><path d="M50 22 L72 54 H58 V78 H42 V54 H28 Z" fill="${A}" stroke="${C}" stroke-width="3"/></svg>`,
   debuff: `<svg ${NS} viewBox="0 0 100 100" class="svg-ic" fill="none"><path d="M50 78 L28 46 H42 V22 H58 V46 H72 Z" fill="${O}" stroke="${C}" stroke-width="3"/></svg>`,
