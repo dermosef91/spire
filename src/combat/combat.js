@@ -369,6 +369,12 @@ export class Combat {
       delete target.powers.riposte;
       this.applyDamage(source, back, { isAttack: false });
     }
+    // Counter Stance (enemy-side, e.g. the Brass Sentinel): while braced, every
+    // attack hit the enemy takes — blocked or not — feeds it Resolve. Gated on
+    // hp > 0 so a killing blow doesn't float a pointless buff on a corpse.
+    if (isAttack && !target.isPlayer && target.hp > 0 && source && source.isPlayer && target.powers.counter) {
+      this.applyPower(target, 'strength', target.powers.counter, target);
+    }
     this.checkDeath(target);
     if (!target.isPlayer) this.checkPhase(target);
     return hpLost;
@@ -428,6 +434,14 @@ export class Combat {
     this.log(`${enemy.name} is destroyed.`);
     this.run.foesSlain += 1;
     this.fire('enemyDeath', { enemy });
+    // Blueprint death hooks (data-driven, like `phase`/`enrage`): the dead
+    // foe's own onDeath (e.g. the Market Thief dropping its loot), then every
+    // living ally's onAllyDeath (e.g. a Husk Drone salvaging its fallen
+    // sibling). Neither fires on a flee — enemyFlee never routes through here.
+    if (enemy.bp.onDeath) enemy.bp.onDeath(this, enemy);
+    for (const e of this.livingEnemies()) {
+      if (e.bp.onAllyDeath) e.bp.onAllyDeath(this, e, enemy);
+    }
     // The Duel: killing your Challenged foe claims what the Spire would have
     // taken — a windfall of momentum. Baked in here (not a registered
     // trigger), same as Blight's spread below, so replaying Call the Duel on
@@ -991,6 +1005,13 @@ export class Combat {
         e.turn += 1;
         this.tickTurnDebuffs(e);
         continue;
+      }
+      // Counter Stance lasts exactly the player turn it was braced for: it
+      // expires the moment the enemy acts again. (A staggered foe keeps its
+      // brace above — it never acted.)
+      if (e.powers.counter) {
+        delete e.powers.counter;
+        this.fx('powerfade', { target: e, key: 'counter' });
       }
       const move = e.bp.moves[e.move];
       this.log(`${e.name} uses ${move.name}.`);

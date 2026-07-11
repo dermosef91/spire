@@ -93,6 +93,10 @@ export const INTENT = {
   debuff: `<svg ${NS} viewBox="0 0 100 100" class="svg-ic" fill="none"><path d="M50 78 L28 46 H42 V22 H58 V46 H72 Z" fill="${O}" stroke="${C}" stroke-width="3"/></svg>`,
   unknown: `<svg ${NS} viewBox="0 0 100 100" class="svg-ic" fill="none"><path d="M38 40 C38 28 62 28 62 42 C62 52 50 52 50 62" stroke="${O}" stroke-width="8" stroke-linecap="round"/><circle cx="50" cy="76" r="5" fill="${O}"/></svg>`,
   steal: UI.coin,
+  // Counter stance — a sword ricocheting off a raised brace.
+  counter: `<svg ${NS} viewBox="0 0 100 100" class="svg-ic" fill="none"><path d="M30 26 V74" stroke="${A}" stroke-width="8" stroke-linecap="round"/><path d="M42 64 L72 34 M64 34 H74 V44 M42 44 L72 74 M64 74 H74 V64" stroke="${E}" stroke-width="7" stroke-linecap="round"/></svg>`,
+  // Flee — an arrow bolting through a doorway threshold.
+  flee: `<svg ${NS} viewBox="0 0 100 100" class="svg-ic" fill="none"><path d="M26 50 H60 M50 38 L64 50 L50 62" stroke="${O}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M74 28 V72" stroke="${A}" stroke-width="7" stroke-linecap="round"/></svg>`,
 };
 
 // Human-readable explanations for each intent icon, shown in a popup when the
@@ -104,6 +108,8 @@ export const INTENT_INFO = {
   debuff: { label: 'Threatening', desc: 'This enemy intends to apply a Debuff.' },
   unknown: { label: 'Unknown', desc: "This enemy's intent cannot be predicted." },
   steal: { label: 'Thieving', desc: 'This enemy intends to steal gold from you.' },
+  counter: { label: 'Braced', desc: 'This enemy intends to take a Counter Stance: every Attack hit it takes while braced grants it Resolve. Consider holding your attacks for a turn.' },
+  flee: { label: 'Fleeing', desc: 'This enemy intends to flee the fight — taking everything it stole with it. Cut it down first to recover your gold, with interest.' },
 };
 
 /* ============================== MAP NODES ============================== */
@@ -147,6 +153,8 @@ const POWER_SVG = {
   entangle: `<path d="M30 40 Q50 60 70 40 M30 56 Q50 76 70 56" stroke="${O}" stroke-width="5" fill="none"/>`,
   strengthDown: `<path d="M30 40 l40 0 M50 40 L50 70 L40 60 M50 70 L60 60" stroke="${O}" stroke-width="6"/>`,
   noBlock: `<path d="M50 22 L76 30 V52 C76 68 64 78 50 82 C36 78 24 68 24 52 V30Z" fill="none" stroke="${O}" stroke-width="4"/><path d="M30 30 L70 74" stroke="${E}" stroke-width="5"/>`,
+  // Counter Stance — a raised brace with a ricocheting blade (matches INTENT.counter).
+  counter: `<path d="M32 24 V76" stroke="${A}" stroke-width="7" stroke-linecap="round"/><path d="M44 62 L70 36 M62 36 H72 V46 M44 46 L70 72 M62 72 H72 V62" stroke="${O}" stroke-width="6" stroke-linecap="round"/>`,
 };
 export function powerIcon(key) {
   return S(POWER_SVG[key] || `<circle cx="50" cy="50" r="22" stroke="${O}" stroke-width="5"/>`);

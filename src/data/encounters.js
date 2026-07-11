@@ -14,19 +14,23 @@ export const ENCOUNTERS = {
       ['reef_spitter'],                        // lone poisoner — learn the clock
     ],
     normal: [
-      ['spark_imp', 'spark_imp'],              // twin glass cannons — burst check
-      ['husk_drone', 'husk_drone'],            // sturdy pair — grind check
+      ['spark_imp', 'spark_imp'],              // twin glass cannons — two Burn Out clocks
+      ['husk_drone', 'husk_drone'],            // sturdy pair — the survivor salvages its sibling
+      ['static_jackal', 'static_jackal'],      // pack hunt — one howls while the other lunges
       ['tide_priest', 'static_jackal'],        // healer + attacker — kill priority
-      ['brass_sentinel'],                      // retaliator wall
-      ['market_thief', 'husk_drone'],          // thief pressure
+      ['brass_sentinel'],                      // counter-stance wall — hold your hits
+      ['market_thief', 'husk_drone'],          // thief pressure — race the flee turn
       ['tide_priest', 'spark_imp'],            // healer feeds a ramping cannon
       ['static_jackal', 'reef_spitter'],       // swarm + poison
+      ['spark_imp', 'reef_spitter'],           // two clocks — which fire do you put out first?
     ],
     hard: [
       ['reef_spitter', 'brass_sentinel'],      // poison behind a turtle — race the wall
       ['brass_sentinel', 'static_jackal'],     // wall + flurry — split your answers
       ['tide_priest', 'brass_sentinel'],       // healer behind a wall — kill priority
       ['tide_priest', 'reef_spitter'],         // heal + poison — attrition race
+      ['market_thief', 'tide_priest'],         // the healer keeps the thief alive past its escape
+      ['spark_imp', 'brass_sentinel'],         // ramper behind a counter-wall — triage under a clock
     ],
     elite: [
       ['gilded_warden'],
