@@ -205,6 +205,28 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   pipeline; use `context.newCDPSession(page)` +
   `Input.dispatchTouchEvent('touchStart'/'touchMove'/'touchEnd', {
   touchPoints: [{x,y}] })` against a `hasTouch:true, isMobile:true` context.
+  **Touch drag smoothness — use `transform`, not `left`/`top`, for per-frame
+  positioning.** `dragMove` originally repositioned the lifted card every
+  `pointermove` by writing `style.left`/`style.top`; those mutate the box's
+  layout position and force a synchronous reflow on *every single event*,
+  which is imperceptible in a headless per-call timing trace (each `dragMove`
+  call still executes in <3ms) but visibly stutters on real phone hardware,
+  where layout thrash competes with paint/composite for the frame budget.
+  Fixed by anchoring `left`/`top` once, at the moment `d.moved` flips true
+  (`d.baseX`/`d.baseY` capture the cursor position then), and driving every
+  subsequent frame via `style.transform =
+  translate3d(dx,dy,0) scale(1.06)` instead — compositor-only, no reflow.
+  `.card.dragging` also gets `will-change: transform` so the browser
+  promotes it to its own layer proactively. Reset `style.transform = ''`
+  alongside the existing `style.touchAction = ''` reset in both `dragEnd`
+  and `cancelDrag`. **Testing gotcha**: an automated drag-to-enemy check can
+  look like a random regression if the dragged card is an `attack` and
+  Rhythm mode is on (`meta.rhythm !== false`, the default) — `playCard()`
+  then `await`s `runAttackQTE(...)`, which hangs waiting for timed QTE input
+  the test never provides, so the hand length never updates. Not a real
+  bug: either set `rhythm: false` in the seeded `spire_of_ase_meta_v1`
+  localStorage before combat, or only assert on `type==='skill'` cards, when
+  writing this kind of check.
   Enemies choose moves via `bp.pick(s, c, rng)`; prefer `rng.weighted(...)` +
   the player-state helpers in `enemies.js` (`playerLowHp`/`playerBlocked`/
   `playerLacks`/`selfLowHp`) over fixed `turn % n` cycles. A blueprint

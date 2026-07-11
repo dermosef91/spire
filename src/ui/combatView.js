@@ -1185,6 +1185,18 @@ export class CombatView {
       d.node.classList.add('dragging');
       d.node.style.width = d.w + 'px';
       d.node.style.height = d.h + 'px';
+      // Anchor the fixed-position card once under the initial cursor point,
+      // then track all further movement via `transform: translate3d(...)`
+      // (below) instead of repeatedly writing left/top. left/top mutate the
+      // box's layout position and force a synchronous reflow every single
+      // touchmove; transform is compositor-only and doesn't. Left/top-driven
+      // dragging visibly stutters on real phones even though the JS itself
+      // executes in under a millisecond per event — the cost is the forced
+      // layout, not our code.
+      d.node.style.left = (e.clientX - d.w / 2) + 'px';
+      d.node.style.top = (e.clientY - d.h / 2) + 'px';
+      d.baseX = e.clientX;
+      d.baseY = e.clientY;
       // Once we've committed to a JS-driven drag (as opposed to the native
       // hand-scroll swipe .hand .card's base touch-action:pan-x exists for),
       // opt this node out of native panning so the browser's scroll gesture
@@ -1194,10 +1206,10 @@ export class CombatView {
       // scroll, and the card never plays.
       if (d.pointerType === 'touch') d.node.style.touchAction = 'none';
       if (d.card.target === 'enemy') this.setDragTargeting(true);
+    } else {
+      d.node.style.transform = `translate3d(${e.clientX - d.baseX}px, ${e.clientY - d.baseY}px, 0) scale(1.06)`;
     }
     if (d.pointerType === 'touch') e.preventDefault();
-    d.node.style.left = (e.clientX - d.w / 2) + 'px';
-    d.node.style.top = (e.clientY - d.h / 2) + 'px';
     const playable = this.combat.canPlay(d.card);
     if (d.card.target === 'enemy') {
       const hit = this.enemyAt(e.clientX, e.clientY);
@@ -1221,6 +1233,7 @@ export class CombatView {
     this.setDragTargeting(false);
     if (d.captured) { try { d.node.releasePointerCapture(d.id); } catch (_) {} }
     d.node.style.touchAction = '';
+    d.node.style.transform = '';
 
     if (!d.moved) { this.clickCard(d.card); return; } // tap → click-to-play
 
@@ -1250,6 +1263,7 @@ export class CombatView {
     this.setDragTargeting(false);
     if (d.captured) { try { d.node.releasePointerCapture(d.id); } catch (_) {} }
     d.node.style.touchAction = '';
+    d.node.style.transform = '';
     if (!preserveLayout && d.node.isConnected) this.update();
   }
 

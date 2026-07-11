@@ -3064,7 +3064,7 @@ img.svg-ic { object-fit: contain; }
 .hand .card { touch-action: pan-x; }          /* horizontal hand scroll wins; vertical motion becomes a drag */
 .card.dragging {
   position: fixed; margin: 0 !important; z-index: 300; transition: none;
-  transform: scale(1.06) rotate(0deg); cursor: grabbing;
+  transform: scale(1.06) rotate(0deg); cursor: grabbing; will-change: transform;
   box-shadow: 0 26px 56px rgba(0,0,0,0.85), 0 0 30px rgba(255,106,26,0.55);
 }
 .card.dragging.will-play { border-color: var(--amber); box-shadow: 0 26px 56px rgba(0,0,0,0.85), 0 0 42px var(--amber); }
