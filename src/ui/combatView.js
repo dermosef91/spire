@@ -6,12 +6,12 @@ import { el, clear } from '../core/util.js';
 import { renderCard, topBar } from './components.js';
 import { POWERS } from '../data/keywords.js';
 import { audio } from '../audio.js';
-import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine, chargeUp, singleFrameAnim, faultLineVFX, hiltCrackVFX } from './fx.js';
+import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, impactWave, burst, shine, chargeUp, singleFrameAnim, faultLineVFX, hiltCrackVFX } from './fx.js';
 import { runAttackQTE, runParryQTE } from './rhythm.js';
 import { combatModel, INTENT, UI, powerIcon } from './icons.js';
 import { spriteOrSvg, hasSprite } from './sprites.js';
 import { background } from '../fx/background.js';
-import { attackNotation, intentDescription, previewCardBlock, previewEnemyAttack } from '../combat/presentation.js';
+import { attackNotation, impactProfile, intentDescription, previewCardBlock, previewEnemyAttack } from '../combat/presentation.js';
 
 const eidOf = (ent) => (ent.isPlayer ? 'p' : 'e' + ent.idx);
 const waitMs = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -1751,13 +1751,15 @@ const FX_HANDLERS = {
   phase(payload, layer) {
     // A boss crosses its HP threshold and transforms — the marquee moment.
     this.announce(payload.name || 'Phase', { kind: 'phase', duration: 1500 });
-    screenShake(this.scene, true);
+    screenShake(this.scene, 'apex');
     const el2 = this.elFor(payload.target);
     if (el2) {
       el2.classList.add('phased');
       hitFlash(el2, 'damage');
       ring(layer, el2, 'rgba(224,69,123,0.95)');
-      burst(layer, el2, '#e0457b', 24);
+      impactWave(layer, el2, 'apex');
+      burst(layer, el2, '#e0457b', 40);
+      floatText(layer, el2, 'PHASE BROKEN', 'impact-callout impact-apex', { size: 34 });
     }
     const bg = background(); if (bg) bg.pulse('heavy', 2);
     audio.play('phase');
@@ -1903,11 +1905,15 @@ const FX_HANDLERS = {
         audio.play('negated');
       }
       if (payload.hpLost > 0) {
-        const size = Math.round(Math.min(60, 26 + payload.hpLost * 1.4));
+        const impact = impactProfile(payload);
+        const apex = impact.tier === 'apex';
+        const heavy = impact.tier !== 'standard';
+        const size = Math.round(Math.min(apex ? 76 : 60, 26 + payload.hpLost * (apex ? 1.8 : 1.4)));
         floatText(layer, el2, String(payload.hpLost), 'damage', { size });
+        if (impact.label && heavy) floatText(layer, el2, impact.label, `impact-callout impact-${impact.tier}`, { size: apex ? 32 : 24 });
         hitFlash(el2, 'damage');
         this.holdPose(payload.target, 'hurt', payload.lethal ? 980 : 430);
-        const big = payload.lethal || payload.hpLost >= 14 || chLevel > 0;
+        const big = heavy;
         if (payload.isAttack) {
           if (vfx.timing !== 'windup') vfx.play(layer, el2);
           if (payload.source && payload.source.isPlayer) audio.play(vfx.sound);
@@ -1919,7 +1925,11 @@ const FX_HANDLERS = {
         // reads heavy. Purely a view-side delay — never await in the engine.
         const followThrough = () => {
           shake(el2, big);
-          if (payload.target.isPlayer || big) screenShake(this.scene, big);
+          if (payload.target.isPlayer || big) screenShake(this.scene, apex ? 'apex' : big);
+          if (big) {
+            impactWave(layer, el2, impact.tier);
+            burst(layer, el2, apex ? '#fff1b5' : '#ffb050', impact.particles);
+          }
           if (chLevel > 0) {
             // Charged release: a heavier burst + ring on the strike.
             const gold = chLevel >= 5;
@@ -1929,17 +1939,18 @@ const FX_HANDLERS = {
           // Reactive backdrop pulse: red when the player is hurt, amber on big hits.
           if (bg) {
             if (payload.target.isPlayer) bg.pulse('damage', Math.min(2, payload.hpLost / 12));
-            else if (big) bg.pulse('heavy', Math.min(2, payload.hpLost / 18));
+            else if (big) bg.pulse('heavy', apex ? 2.8 : Math.min(2, payload.hpLost / 18));
           }
+          if (apex && payload.source && payload.source.isPlayer) audio.play('impact_apex');
         };
         const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (big && !reduceMotion) {
+        if (impact.hitStop && !reduceMotion) {
           const stage = el2.querySelector('.stage');
           if (stage) {
             stage.classList.add('hitstop');
-            setTimeout(() => stage.classList.remove('hitstop'), 85);
+            setTimeout(() => stage.classList.remove('hitstop'), impact.hitStop);
           }
-          setTimeout(followThrough, 85);
+          setTimeout(followThrough, impact.hitStop);
         } else {
           followThrough();
         }

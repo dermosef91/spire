@@ -311,7 +311,13 @@ export class Combat {
   // visuals and sequencing from the payload alone.
   _swingInfo() {
     const active = this._swing && this._play;
-    return { swing: this._swing, card: active ? this._play.card : null, charge: active ? this._play.charge : 0 };
+    return {
+      swing: this._swing,
+      card: active ? this._play.card : null,
+      charge: active ? this._play.charge : 0,
+      rhythmGrade: active ? this._play.rhythmGrade : null,
+      synergy: active ? this._play.synergy : false,
+    };
   }
 
   // Apply a chunk of damage to an entity through Block, returns HP actually lost.
@@ -830,7 +836,12 @@ export class Combat {
 
     // The active play context: deal()/applyDamage read the rhythm multiplier
     // from it and echo card/charge into fx payloads for the view.
-    this._play = { card, rhythmMult, charge };
+    this._play = {
+      card, rhythmMult, charge, rhythmGrade,
+      // Snapshot setup at commitment time: Exposed/Challenged may be consumed
+      // by this very hit before the presentation payload is handled.
+      synergy: card.type === 'attack' && !!target && !!(target.powers.vulnerable || target.powers.challenged),
+    };
 
     // Tempo registers BEFORE onPlay: the QTE already resolved, so this strike
     // is part of the flow it creates — a Tempo-scaling card counts its own

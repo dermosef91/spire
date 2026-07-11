@@ -107,3 +107,30 @@ export function enemyMovePacing(intent = {}, { boss = false } = {}) {
   if (type.startsWith('attack')) return { read: 560, settle: 440, weight: 'attack' };
   return { read: 480, settle: 390, weight: 'utility' };
 }
+
+// Convert already-resolved hit facts into a purely cosmetic impact tier. The
+// combat engine remains authoritative; this only gives every view the same
+// language for ordinary, heavy, and marquee plays.
+export function impactProfile({
+  lethal = false,
+  hpLost = 0,
+  charge = 0,
+  rhythmGrade = null,
+  synergy = false,
+  guardBroken = false,
+} = {}) {
+  let score = 0;
+  if (hpLost >= 14) score += 1;
+  if (charge >= 3) score += 1;
+  if (synergy) score += 1;
+  if (guardBroken) score += 1;
+  if (rhythmGrade === 'perfect') score += 2;
+  if (lethal) score += 4;
+  const tier = score >= 4 ? 'apex' : score >= 2 ? 'heavy' : 'standard';
+  return {
+    tier,
+    hitStop: tier === 'apex' ? 145 : tier === 'heavy' ? 105 : 0,
+    particles: tier === 'apex' ? 34 : tier === 'heavy' ? 20 : 10,
+    label: lethal ? 'FINISH' : rhythmGrade === 'perfect' ? 'PERFECT' : synergy ? 'SYNERGY' : guardBroken ? 'BREAK' : null,
+  };
+}
