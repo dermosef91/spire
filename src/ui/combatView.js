@@ -694,10 +694,6 @@ export class CombatView {
     if (it.type === 'counter') icons.appendChild(el('span', { class: 'intent-ctr', attrs: { 'data-intent-type': 'counter' }, html: `<i class="intent-ic">${INTENT.counter}</i>` }));
     if (it.type === 'flee') icons.appendChild(el('span', { class: 'intent-flee', attrs: { 'data-intent-type': 'flee' }, html: `<i class="intent-ic">${INTENT.flee}</i>` }));
     wrap.appendChild(icons);
-    if (preview) {
-      const consequence = preview.lethal ? 'LETHAL' : preview.guarded ? 'BLOCKED' : `${preview.hpLost} HP`;
-      wrap.appendChild(el('span', { class: 'intent-consequence', text: consequence }));
-    }
     wrap.classList.remove('intent-routine', 'intent-guarded', 'intent-danger', 'intent-lethal');
     wrap.classList.add(`intent-${preview ? preview.severity : 'routine'}`);
     wrap.setAttribute('aria-label', `${name}. ${intentDescription(it, preview)}`);

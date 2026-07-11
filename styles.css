@@ -1541,23 +1541,13 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   text-transform: uppercase;
 }
 .intent-icons { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 25px; }
-.intent-consequence {
-  font-size: 8px;
-  line-height: 1;
-  letter-spacing: 0.12em;
-  color: var(--muted);
-  text-transform: uppercase;
-}
 .intent-atk { color: var(--ember); } .intent-def { color: #9fc2ff; } .intent-buf { color: var(--amber); }
 .intent-deb { color: var(--orange); } .intent-unk { color: var(--muted); } .intent-steal { color: var(--amber); }
 .intent-ctr { color: var(--amber); } .intent-flee { color: var(--orange); }
 .intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk, .intent-steal, .intent-ctr, .intent-flee { cursor: pointer; display: inline-flex; align-items: center; }
 .intent.intent-guarded { border-color: rgba(159,194,255,0.9); box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 16px rgba(94,169,230,0.32); }
-.intent.intent-guarded .intent-consequence { color: #bcd6ff; }
 .intent.intent-danger { border-color: var(--ember); box-shadow: 0 4px 14px rgba(0,0,0,0.65), 0 0 22px rgba(232,67,26,0.48); }
-.intent.intent-danger .intent-consequence { color: #ff9a78; }
 .intent.intent-lethal { border-color: #ff4f2e; box-shadow: 0 4px 14px rgba(0,0,0,0.7), 0 0 26px rgba(255,55,28,0.72); animation: lethalIntent 0.9s ease-in-out infinite; }
-.intent.intent-lethal .intent-consequence { color: #fff; text-shadow: 0 0 8px #ff3d1f; }
 .intent.intent-inspecting { filter: brightness(1.2); transform: translateX(-50%) translateY(-3px) scale(1.06); }
 @keyframes lethalIntent {
   0%,100% { transform: translateX(-50%) scale(1); box-shadow: 0 4px 14px rgba(0,0,0,0.7), 0 0 20px rgba(255,55,28,0.55); }
