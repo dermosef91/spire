@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-05T12:21:44.687Z",
+  "generated": "2026-07-11T18:13:37.948Z",
   "dryRun": false,
   "ids": [
     "amara",
@@ -55,6 +55,9 @@
     "the_gatekeeper_block",
     "the_gatekeeper_skill",
     "tide_priest",
+    "tide_priest_attack",
+    "tide_priest_block",
+    "tide_priest_skill",
     "void_chanter",
     "zara",
     "zara_attack",

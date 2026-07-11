@@ -90,6 +90,11 @@ function getVariationPrompt(id, basePrompt, pose) {
       return basePrompt
         .replace('Segmented gear-jointed limbs and heavy brass fists.', 'Segmented gear-jointed limbs winding up in a dynamic attacking pose, one massive brass fist rearing back and the other driving forward in a piston-driven punch, cracks of ember-orange energy bursting from the point of impact.');
     }
+    if (id === 'tide_priest') {
+      return basePrompt
+        .replace('Serene yet powerful stance', 'in dynamic attacking pose, lunging forward and casting a violent splash of glowing amber water')
+        .replace('Surrounded by a radiating energy aura', 'Surrounded by radiating rings of water droplets and amber waves');
+    }
     return basePrompt.replace('standing pose', 'dynamic attacking pose, lunging and striking');
   }
 
@@ -134,6 +139,11 @@ function getVariationPrompt(id, basePrompt, pose) {
         .replace('Segmented gear-jointed limbs and heavy brass fists.', 'Segmented gear-jointed limbs braced wide in a defensive blocking pose, both heavy brass fists raised and crossed in front of its visor as brass shield-plates unfold outward from its forearms.')
         .replace('A circular power core in the center of its torso radiates glowing concentric energy rings.', 'A circular power core in the center of its torso dims and pulses steadily, feeding power into the raised shield-plates.');
     }
+    if (id === 'tide_priest') {
+      return basePrompt
+        .replace('Serene yet powerful stance', 'in defensive blocking pose, bracing behind a protective circular shield of swirling water-plates and amber runes')
+        .replace('glowing concentric light rings', 'glowing concentric light rings forming a circular water shield');
+    }
     return basePrompt.replace('standing pose', 'defensive blocking pose, shielding and guarding');
   }
 
@@ -176,6 +186,11 @@ function getVariationPrompt(id, basePrompt, pose) {
     if (id === 'brass_sentinel') {
       return basePrompt
         .replace('A dented cowrie-shell collar and a single snapped star-iron blade are fused into its chest plating', 'In dynamic action pose, its chest plating grinding open to reveal the dented cowrie-shell collar and the single snapped star-iron blade fused inside, both glowing with fierce ember-orange light as a spray of glowing brass rivets fires outward from its opened chest');
+    }
+    if (id === 'tide_priest') {
+      return basePrompt
+        .replace('Serene yet powerful stance', 'in dynamic casting pose, raising hands to channel restorative mists and radiating waves of amber healing light')
+        .replace('Surrounded by a radiating energy aura', 'Surrounded by a glowing green and amber aura of healing mists and rising bubbles');
     }
     return basePrompt.replace('standing pose', 'dynamic casting pose, channeling energy with geometric sigils floating around');
   }
@@ -406,7 +421,7 @@ async function main() {
   
   // Filter for champions only, and optionally apply ID filter
   // Filter for champions and specified key enemies, and optionally apply ID filter
-  const targetIds = ['amara', 'kofi', 'zara', 'static_jackal', 'the_gatekeeper', 'husk_drone', 'reef_spitter', 'brass_sentinel'];
+  const targetIds = ['amara', 'kofi', 'zara', 'static_jackal', 'the_gatekeeper', 'husk_drone', 'reef_spitter', 'brass_sentinel', 'tide_priest'];
   let entities = manifest.filter(e => targetIds.includes(e.id));
   if (ID_FILTER) {
     entities = entities.filter(e => ID_FILTER.includes(e.id));
