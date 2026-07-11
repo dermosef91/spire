@@ -155,6 +155,30 @@ try {
   if (!hiltSheet.includes('hilt-crack.png')) throw new Error(`Hilt Crack used the wrong VFX sheet: ${hiltSheet}`);
   await page.waitForSelector('.sprite-vfx-hilt-crack', { state: 'detached', timeout: 1800 });
 
+  // The fixed enemy-turn cadence should visibly hand focus to exactly one foe,
+  // quiet the hand, then restore both when the player turn returns.
+  await page.evaluate(() => {
+    window.__combat.parryPrompt = null;
+    window.__combat.player.block = 0;
+    window.__combat.endTurn();
+  });
+  await page.waitForSelector('.enemy-acting', { timeout: 2200 });
+  const actingCount = await page.locator('.enemy-acting').count();
+  if (actingCount !== 1) throw new Error(`enemy phase spotlighted ${actingCount} foes instead of one`);
+  const enemyPhaseHandOpacity = Number(await page.locator('.hand').evaluate((node) => getComputedStyle(node).opacity));
+  if (enemyPhaseHandOpacity > 0.7) throw new Error(`hand did not quiet during enemy phase (opacity ${enemyPhaseHandOpacity})`);
+  await page.waitForFunction(() => !document.querySelector('.combat-scene.enemy-phase'), null, { timeout: 3500 });
+  if (await page.locator('.enemy-acting').count()) throw new Error('enemy spotlight survived the player-turn handoff');
+
+  // Bosses enter with their own marquee/rank treatment, and phase thresholds
+  // are visible on the HP bar before any card is played.
+  await page.evaluate(() => window.__ase.startBoss());
+  await page.waitForSelector('.combat-scene.encounter-boss .announce-boss', { timeout: 1200 });
+  await page.waitForSelector('.enemy-boss .hp-phase-marker', { timeout: 1200 });
+  const bossSubtitle = await page.locator('.enemy-boss .combatant-subtitle').textContent();
+  if (!bossSubtitle || !bossSubtitle.includes('BOSS · PHASE I')) throw new Error(`boss rank subtitle missing: ${bossSubtitle}`);
+  await page.waitForSelector('.combat-scene.encounter-boss .hand .card', { timeout: 3500 });
+
   if (errors.length) throw new Error('uncaught JS errors during the flow:\n  ' + errors.join('\n  '));
 
   console.log(`smoke ok — reached combat with ${handCount} cards in hand, no JS errors`);

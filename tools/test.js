@@ -15,7 +15,7 @@ import { RunState } from '../src/core/state.js';
 import { generateMap, nextNodes, nodeAt } from '../src/map/mapgen.js';
 import { createCard, upgradeCard, canUpgrade } from '../src/data/cards.js';
 import { Combat } from '../src/combat/combat.js';
-import { previewCardBlock, previewEnemyAttack } from '../src/combat/presentation.js';
+import { enemyMovePacing, previewCardBlock, previewEnemyAttack } from '../src/combat/presentation.js';
 import { ENCOUNTERS } from '../src/data/encounters.js';
 import { ENEMIES } from '../src/data/enemies.js';
 import { EVENTS } from '../src/data/events.js';
@@ -548,6 +548,17 @@ test('printed Block preview includes Grace and Brittle but does not mutate eithe
   c.player.powers.frail = 1;
   assert.equal(previewCardBlock(c, blockCard), 5, '(5 + 2) × 0.75 floors to 5');
   assert.equal(c.player.powers.frail, 1, 'forecast did not consume Brittle');
+});
+
+test('enemy action cadence keeps utility brisk and gives heavy attacks a longer tell', () => {
+  const utility = enemyMovePacing({ type: 'buffblock', block: 12 });
+  const attack = enemyMovePacing({ type: 'attack', dmg: 8 });
+  const heavy = enemyMovePacing({ type: 'attackdebuff', dmg: 9, hits: 3 }, { boss: true });
+  assert.equal(utility.weight, 'utility');
+  assert.equal(attack.weight, 'attack');
+  assert.equal(heavy.weight, 'heavy');
+  assert.ok(utility.read < attack.read, 'utility moves resolve more briskly than attacks');
+  assert.ok(heavy.read > attack.read && heavy.settle > attack.settle, 'heavy attacks keep the strongest anticipation and recovery beats');
 });
 
 test('multi-hit damage FX carries immutable per-hit guard snapshots', () => {

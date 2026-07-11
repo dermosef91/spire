@@ -71,20 +71,26 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
 - `combat/combat.js` — the turn-based engine (energy, piles, powers, orbs,
   enemy AI, win/loss). Emits visual `fx(type, payload)` events that are
   **purely cosmetic** — never put game logic in the view's fx handler.
-  Cosmetic-pacing events: `announce` (`{text,kind}` → `CombatView.announce()`
-  centered banner: `battle`/`player`/`enemy` kinds for Battle Start / Your Turn /
-  Enemy Turn) and `enemyMove` (`{source,name}` → move name floated over the enemy
-  via `floatText(...,'name')`). `enemyPhase` deliberately `await`s after the
-  Enemy-Turn banner (850ms), after each move-name float (750ms), and after each
-  action resolves (550ms) so the strike never lands in the same instant it's
-  announced — keep those waits when editing the loop. `endTurn` also `await`s
-  a further 600ms after `enemyPhase()` returns, before calling
+  Cosmetic-pacing events: `announce` (`{text,kind,subtext}` →
+  `CombatView.announce()`), `enemyPhaseStart`/`enemyPhaseEnd` (quiet/restore the
+  player UI), and `enemyActing`/`enemyActed` (spotlight one foe at a time).
+  `enemyMove` renders the move-name callout. `enemyMovePacing()` in
+  `combat/presentation.js` owns the one fixed cadence: utility 480/390ms,
+  attacks 560/440ms, heavy attacks 680–720/560ms (read/settle). Keep those
+  anticipation and recovery waits; they make the action name read before the
+  consequence without adding a fast-mode branch. `endTurn` also `await`s
+  a further 460ms after `enemyPhase()` returns, before calling
   `startPlayerTurn(false)`, so "Your Turn" doesn't fire in the same instant the
   last enemy's hit lands; skipped when `this.over` (no point pausing before a
   win/loss screen).
-  Combat also **opens deferred**: `CombatView.mount` shows the Battle Start banner
-  and calls `combat.start()` ~650ms later, so the opening draw plays *after* the
-  popup; `beginCombat`'s tutorial kickoff (game.js, ~1700ms) is timed to that.
+  Combat also **opens deferred**: monster/elite/boss marquees call
+  `combat.start()` after 650/1250/1500ms, so the opening draw plays *after* the
+  popup; `beginCombat`'s monster-tutorial kickoff (~1700ms) is timed to that.
+  Elite/boss identity is view-only: `.encounter-elite`/`.encounter-boss`, rank
+  subtitles, enrage countdowns, and `hp-phase-marker` must not drive logic.
+  Because combat start is deferred, `build()` initializes every combatant via
+  `updateCombatant()` immediately; otherwise intro nameplates stay blank until
+  the first engine `notify()` beneath the marquee.
   `Combat.notify()` **coalesces same-tick calls** via a microtask
   (`Promise.resolve().then(...)`, guarded by `_notifyScheduled`) into one
   deferred `onUpdate()` — added because several call sites (e.g.

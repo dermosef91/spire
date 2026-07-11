@@ -93,11 +93,25 @@ export class CombatView {
     this._onKeydown = (e) => this.handleKeydown(e);
     document.addEventListener('keydown', this._onKeydown);
 
-    // Slower combat open: show a "Battle Start" banner first, then let the
-    // opening draw play out after it so cards deal in one-by-one rather than
-    // appearing underneath the popup.
-    this.announce('Battle Start', { kind: 'battle' });
-    setTimeout(() => { if (this.scene && !this.combat.over) this.combat.start(); }, 650);
+    // Give elite and boss encounters their own entrance hierarchy. The combat
+    // still starts deferred, so the opening hand never deals underneath the
+    // marquee.
+    const kind = this.combat.opts.kind || 'monster';
+    const lead = this.combat.enemies.find((e) => e.bp.boss) || this.combat.enemies[0];
+    this.scene.classList.add(`encounter-${kind}`, 'combat-opening');
+    if (kind === 'boss') {
+      this.announce(lead ? lead.name : 'The Spire Awaits', { kind: 'boss', eyebrow: 'Boss Encounter', subtext: 'Break the keeper. Climb higher.', duration: 1500 });
+    } else if (kind === 'elite') {
+      this.announce(lead ? lead.name : 'Elite Encounter', { kind: 'elite', eyebrow: 'Elite Encounter', subtext: 'A champion bars the path.', duration: 1250 });
+    } else {
+      this.announce('Battle Start', { kind: 'battle' });
+    }
+    const openingDelay = kind === 'boss' ? 1500 : kind === 'elite' ? 1250 : 650;
+    setTimeout(() => {
+      if (!this.scene || this.combat.over) return;
+      this.scene.classList.remove('combat-opening');
+      this.combat.start();
+    }, openingDelay);
   }
 
   handleKeydown(e) {
@@ -137,7 +151,11 @@ export class CombatView {
     const layer = this.fxLayer;
     if (!layer) return;
     const kind = opts.kind || 'turn';
-    const node = el('div', { class: `combat-announce announce-${kind}`, text });
+    const node = el('div', { class: `combat-announce announce-${kind}` });
+    if (opts.eyebrow) node.appendChild(el('span', { class: 'announce-eyebrow', text: opts.eyebrow }));
+    node.appendChild(el('span', { class: 'announce-title', text }));
+    if (opts.subtext) node.appendChild(el('span', { class: 'announce-subtext', text: opts.subtext }));
+    if (opts.duration) node.style.animationDuration = `${opts.duration}ms`;
     layer.appendChild(node);
     setTimeout(() => { node.remove(); }, opts.duration || 1150);
   }
@@ -183,6 +201,13 @@ export class CombatView {
       this.enemySide.appendChild(node);
     }
 
+    // Populate HP, rank subtitles, phase markers and idle poses immediately.
+    // Combat starts deferred beneath the encounter marquee, so waiting for its
+    // first notify() would leave boss/elite nameplates visually blank during
+    // the moment they matter most.
+    this.updateCombatant(this.combat.player);
+    for (const e of this.combat.enemies) this.updateCombatant(e);
+
     this.logHolder = el('div', { class: 'combat-log' });
     scene.appendChild(this.logHolder);
     this.controlsHolder = el('div', { class: 'combat-controls-holder' });
@@ -213,7 +238,8 @@ export class CombatView {
   }
 
   buildCombatant(ent, isEnemy) {
-    const wrap = el('div', { class: `combatant ${isEnemy ? 'enemy' : 'player'}`, attrs: { 'data-eid': eidOf(ent) } });
+    const rankClass = isEnemy && ent.bp.boss ? ' enemy-boss' : isEnemy && this.combat.opts.kind === 'elite' ? ' enemy-elite' : '';
+    const wrap = el('div', { class: `combatant ${isEnemy ? 'enemy' : 'player'}${rankClass}`, attrs: { 'data-eid': eidOf(ent) } });
     const parts = {};
     if (isEnemy) {
       parts.intent = el('div', {
@@ -257,9 +283,23 @@ export class CombatView {
     hpwrap.appendChild(parts.hpghost);
     hpwrap.appendChild(parts.hpfill);
     hpwrap.appendChild(parts.hpforecast);
+    if (isEnemy && ent.bp.phase) {
+      const threshold = Math.max(0, Math.min(1, ent.bp.phase.at ?? 0.5));
+      hpwrap.classList.add('has-phase-marker');
+      parts.phaseMarker = el('div', {
+        class: 'hp-phase-marker',
+        attrs: { title: `${ent.bp.phase.name || 'Second phase'} at ${Math.round(threshold * 100)}% HP`, 'aria-hidden': 'true' },
+        style: { left: `${threshold * 100}%` },
+      });
+      hpwrap.appendChild(parts.phaseMarker);
+    }
     hpwrap.appendChild(parts.hptext);
 
     infoWrap.appendChild(nameRow);
+    if (isEnemy) {
+      parts.subtitle = el('div', { class: 'combatant-subtitle' });
+      infoWrap.appendChild(parts.subtitle);
+    }
     infoWrap.appendChild(hpwrap);
     infoWrap.appendChild(parts.block);
     parts.forecast = el('div', { class: 'intent-forecast', attrs: { 'aria-live': 'polite' } });
@@ -421,6 +461,17 @@ export class CombatView {
       wrap.classList.toggle('phased', !!ent._phased);
       wrap.classList.toggle('enraged', !!ent._enraged);
       wrap.classList.toggle('nemesis', !!ent._nemesis);
+    }
+
+    if (p.subtitle && !ent.isPlayer) {
+      let label = ent._nemesis ? 'NEMESIS' : ent.bp.boss ? `BOSS · PHASE ${ent._phased ? 'II' : 'I'}` : this.combat.opts.kind === 'elite' ? 'ELITE' : '';
+      const enrage = ent.bp.enrage;
+      const remaining = enrage && !ent._enraged ? Math.max(0, enrage.turn - ent.turn) : null;
+      if (remaining != null) label += `${label ? ' · ' : ''}ENRAGES IN ${remaining}`;
+      if (ent._enraged) label += `${label ? ' · ' : ''}ENRAGED`;
+      p.subtitle.textContent = label;
+      p.subtitle.classList.toggle('subtitle-warning', remaining != null && remaining <= 1);
+      p.subtitle.hidden = !label;
     }
 
     if (!this.tempPoses[eidOf(ent)]) {
@@ -1548,12 +1599,48 @@ const currentMove = (enemy) => (enemy && enemy.bp && enemy.bp.moves[enemy.move])
 // move) arrives in the payload — handlers never reach into engine internals.
 const FX_HANDLERS = {
   announce(payload) {
-    this.announce(payload.text, { kind: payload.kind });
+    this.announce(payload.text, { kind: payload.kind, subtext: payload.subtext });
+  },
+
+  enemyPhaseStart() {
+    if (!this.scene) return;
+    this.scene.classList.add('enemy-phase');
+    this.enemySide.classList.add('enemy-sequencing');
+  },
+
+  enemyActing(payload) {
+    if (!this.enemySide) return;
+    this.enemySide.querySelectorAll('.combatant.enemy').forEach((node) => {
+      node.classList.toggle('enemy-acting', node === this.elFor(payload.source));
+    });
+  },
+
+  enemyActed(payload) {
+    const node = this.elFor(payload.source);
+    if (node) node.classList.remove('enemy-acting');
+  },
+
+  enemyPhaseEnd() {
+    if (this.scene) this.scene.classList.remove('enemy-phase');
+    if (this.enemySide) {
+      this.enemySide.classList.remove('enemy-sequencing');
+      this.enemySide.querySelectorAll('.enemy-acting').forEach((node) => node.classList.remove('enemy-acting'));
+    }
   },
 
   enemyMove(payload, layer) {
     const el2 = this.elFor(payload.source);
-    if (el2 && payload.name) floatText(layer, el2, payload.name, 'name');
+    if (el2 && payload.name) {
+      const layerRect = layer.getBoundingClientRect();
+      const actorRect = el2.getBoundingClientRect();
+      const callout = el('div', { class: `enemy-move-callout move-${payload.weight || 'utility'}` });
+      callout.appendChild(el('span', { class: 'enemy-move-source', text: payload.source.name }));
+      callout.appendChild(el('span', { class: 'enemy-move-name', text: payload.name }));
+      callout.style.left = `${actorRect.left - layerRect.left + actorRect.width / 2}px`;
+      callout.style.top = `${actorRect.top - layerRect.top + actorRect.height * 0.18}px`;
+      layer.appendChild(callout);
+      setTimeout(() => callout.remove(), payload.weight === 'heavy' ? 1050 : 900);
+    }
     // Flare the acting enemy's intent pill during the move-name beat, so the
     // player connects "that icon = this action". The class lives on the
     // persistent wrapper (renderIntent only swaps its children).
