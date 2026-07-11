@@ -1197,21 +1197,12 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
    it for their more immediate status feedback. */
 .presence-tempo { z-index: 1; }
 .status-presence > span:not(.presence-tempo) { z-index: 3; }
-.status-presence.has-armor .presence-armor,
 .status-presence.has-spirit .presence-spirit,
 .status-presence.has-blight .presence-blight,
 .status-presence.has-tempo .presence-tempo,
 .status-presence.has-resolve .presence-resolve,
 .status-presence.has-affliction .presence-affliction,
 .status-presence.has-mark .presence-mark { opacity: 1; }
-
-/* Armor plates: four hard blue-white brackets visibly lock around the body. */
-.presence-armor { inset: 13% !important; }
-.presence-armor i { position: absolute; width: 17%; height: 6%; border: 1px solid rgba(204,230,255,0.72); clip-path: polygon(10% 0, 90% 0, 100% 50%, 90% 100%, 10% 100%, 0 50%); background: linear-gradient(180deg, rgba(195,225,255,0.56), rgba(38,78,123,0.58)); filter: drop-shadow(0 0 4px rgba(90,165,255,0.55)); }
-.presence-armor i:nth-child(1) { left: 16%; top: 27%; transform: rotate(-34deg); }
-.presence-armor i:nth-child(2) { right: 16%; top: 27%; transform: rotate(34deg); }
-.presence-armor i:nth-child(3) { left: 16%; bottom: 20%; transform: rotate(34deg); }
-.presence-armor i:nth-child(4) { right: 16%; bottom: 20%; transform: rotate(-34deg); }
 
 /* Charm / Phase / Flow / Focus: small spirits orbit rather than becoming one
    more static pip below the health bar. */

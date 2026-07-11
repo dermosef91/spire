@@ -302,7 +302,6 @@ export class CombatView {
       class: 'status-presence',
       attrs: { 'aria-hidden': 'true' },
       html: `
-        <span class="presence-armor">${'<i></i>'.repeat(4)}</span>
         <span class="presence-spirit">${'<i></i>'.repeat(3)}</span>
         <span class="presence-blight">${'<i></i>'.repeat(5)}</span>
         <span class="presence-tempo">${'<i></i>'.repeat(10)}</span>
