@@ -258,20 +258,33 @@ def('spark_imp', {
   },
 });
 
-// Act 1 elite — Warden: enrages, hardening and hitting harder as the fight drags.
+// Act 1 elite — Warden: a measured guard until wounded, then a proper phase
+// transition (the run's first, before the boss shows one): at 40% HP its
+// gilding ignites — Gild Wrath fires once (+4 Resolve, shields-up block, the
+// .phased aura + banner) and its rotation turns relentlessly aggressive.
+// Replaces the old wrath *move* loop, which silently re-buffed every other
+// turn below 40% with no marquee moment.
 def('gilded_warden', {
   name: 'Gilded Warden', act: 1, elite: true, hpMin: 58, hpMax: 64,
   moves: {
     cleave: atk('Wide Cleave', 14),
     barrage: atk('Brass Barrage', 5, 3),
     fortify: { name: 'Fortify', intent: { type: 'buffblock', block: 12 }, run: (c, s) => { c.gainBlockTo(s, 12); c.applyPower(s, 'strength', 2, s); c.fx('powersurge', { target: s }); } },
-    wrath: { name: 'Gild Wrath', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
+  },
+  phase: {
+    at: 0.4, name: 'Gild Wrath',
+    log: "The Warden's gilding ignites — Gild Wrath!",
+    onEnter: (c, s) => { c.applyPower(s, 'strength', 4, s); c.gainBlockTo(s, 10); },
   },
   pick: (s, c, rng) => {
+    if (s._phased) {
+      // No more patient guard — sustained aggression, re-gilding on a cycle.
+      const cyc = ['barrage', 'cleave', 'fortify'];
+      return cyc[(s.turn - 1) % cyc.length];
+    }
     if (s.turn === 1) return 'cleave';
-    if (s.hp < s.maxHp * 0.4 && s.last !== 'wrath') return 'wrath';
     if (s.last === 'cleave') return 'fortify';
-    if (s.last === 'fortify' || s.last === 'wrath') return 'barrage';
+    if (s.last === 'fortify') return 'barrage';
     return 'cleave';
   },
 });

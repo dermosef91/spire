@@ -878,6 +878,23 @@ test('Snared (entangle) blocks Attacks for one turn, then expires', () => {
 // ----------------------------------------------------------------- smarter enemies
 console.log('Smarter enemies (phase / summon / enrage)');
 
+test('Gilded Warden phases once at 40% — Gild Wrath fires a single +4 Resolve', () => {
+  const run = new RunState('amara', 29);
+  const c = new Combat(run, ['gilded_warden']);
+  c.start();
+  const e = c.enemies[0];
+  assert.ok(e.bp.phase, 'the elite has a real phase now');
+  e.hp = Math.floor(e.maxHp * 0.4) - 1;
+  c.checkPhase(e);
+  assert.equal(e._phased, true);
+  assert.equal(e.powers.strength, 4, 'Gild Wrath granted its Resolve once');
+  assert.ok(e.block >= 10, 'shields-up block on transform');
+  // Re-crossing can't re-fire, and the old repeat-buff loop is gone.
+  c.checkPhase(e);
+  assert.equal(e.powers.strength, 4, 'no second wrath');
+  assert.ok(!e.bp.moves.wrath, 'the wrath move was retired into the phase');
+});
+
 test('a boss transforms once when its HP crosses the phase threshold', () => {
   const run = new RunState('amara', 3);
   const c = new Combat(run, ['the_gatekeeper']);

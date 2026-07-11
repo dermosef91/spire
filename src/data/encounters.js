@@ -21,8 +21,11 @@ export const ENCOUNTERS = {
       ['brass_sentinel'],                      // counter-stance wall — hold your hits
       ['market_thief', 'husk_drone'],          // thief pressure — race the flee turn
       ['tide_priest', 'spark_imp'],            // healer feeds a ramping cannon
-      ['static_jackal', 'reef_spitter'],       // swarm + poison
       ['spark_imp', 'reef_spitter'],           // two clocks — which fire do you put out first?
+      // Sim-tuned (tools/balance-sim.mjs): imp+sentinel plays at normal level
+      // (~3-8 HP lost) despite its 57-71 total HP, because the imp dies fast
+      // and a solo sentinel is slow — tier by measured threat, not raw HP.
+      ['spark_imp', 'brass_sentinel'],         // ramper behind a counter-wall — triage under a clock
     ],
     hard: [
       ['reef_spitter', 'brass_sentinel'],      // poison behind a turtle — race the wall
@@ -30,7 +33,10 @@ export const ENCOUNTERS = {
       ['tide_priest', 'brass_sentinel'],       // healer behind a wall — kill priority
       ['tide_priest', 'reef_spitter'],         // heal + poison — attrition race
       ['market_thief', 'tide_priest'],         // the healer keeps the thief alive past its escape
-      ['spark_imp', 'brass_sentinel'],         // ramper behind a counter-wall — triage under a clock
+      // Sim-tuned: the reactive jackal (lunges at an open hero) + Blight
+      // stacking measured hotter than every other pair (~17-39 HP lost) —
+      // hard-tier in practice even at 42-53 total HP.
+      ['static_jackal', 'reef_spitter'],       // pounce + poison — no safe turn to skip blocking
     ],
     elite: [
       ['gilded_warden'],
