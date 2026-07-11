@@ -10,7 +10,7 @@ import { RELICS } from '../data/relics.js';
 import { POTIONS } from '../data/potions.js';
 import { COLORLESS_POOL } from '../data/characters.js';
 import { isCardLocked } from '../core/cardUnlocks.js';
-import { UI, relicIcon, potionIcon } from '../ui/icons.js';
+import { UI, potionIcon } from '../ui/icons.js';
 import { hasPotionArt } from '../ui/potion-art.js';
 import { audio } from '../audio.js';
 
@@ -29,11 +29,18 @@ export const RewardScene = {
     }
     // relic for elite/boss. Bosses crown you with a boss-tier relic (the
     // Ascendant Crown among them) — an offer you may take or leave on the map.
+    // Rolled up front (not on click) so the reward row can show the real
+    // relic's name/art instead of a generic placeholder.
     if (kind === 'boss') {
       const bid = run.pickBossRelicId();
-      rewards.push(bid ? { type: 'bossrelic', id: bid, taken: false } : { type: 'relic', taken: false });
+      if (bid) rewards.push({ type: 'bossrelic', id: bid, taken: false });
+      else {
+        const r = run.peekRandomRelic();
+        if (r) rewards.push({ type: 'relic', id: r.id, taken: false });
+      }
     } else if (kind === 'elite') {
-      rewards.push({ type: 'relic', taken: false });
+      const r = run.peekRandomRelic();
+      if (r) rewards.push({ type: 'relic', id: r.id, taken: false });
     }
     // card reward
     rewards.push({ type: 'card', options: this.cardRewardOptions(kind), taken: false });
@@ -92,23 +99,17 @@ export const RewardScene = {
             // Full belt: offer to swap or drink instead of silently refusing.
             else this.offerPotionSwap(rw.id, (took) => { if (took) { rw.taken = true; rebuild(); } });
           });
-        } else if (rw.type === 'relic') {
-          content.appendChild(el('div', { class: 'reward-icon', html: relicIcon('default') }));
-          content.appendChild(el('div', { class: 'reward-label', text: 'Ancestral Relic' }));
-          row.addEventListener('click', () => {
-            const r = run.grantRandomRelic();
-            rw.taken = true;
-            if (r) this.relicAcquired(r.id, rebuild);
-            else { audio.play('reward'); rebuild(); }
-          });
-        } else if (rw.type === 'bossrelic') {
+        } else if (rw.type === 'relic' || rw.type === 'bossrelic') {
           const rel = RELICS[rw.id];
-          content.appendChild(el('div', { class: 'reward-icon', html: relicIcon('default') }));
+          content.appendChild(this.relicVisual(rw.id, 'reward-icon'));
           content.appendChild(el('div', { class: 'reward-label', html: `<b>${rel.name}</b> — ${rel.desc}` }));
           row.addEventListener('click', () => {
-            run.addRelic(rw.id);
-            rw.taken = true;
-            this.relicAcquired(rw.id, rebuild);
+            // Rolled up front (see showRewards) and never granted until claimed —
+            // the reveal overlay's Claim/Leave it choice lets the player decline.
+            this.relicAcquired(rw.id, () => { rw.taken = true; rebuild(); }, {
+              deferred: true,
+              onLeave: () => { rw.taken = true; audio.play('click'); rebuild(); },
+            });
           });
         } else if (rw.type === 'card') {
           content.appendChild(el('div', { class: 'reward-icon', html: UI.draw }));
