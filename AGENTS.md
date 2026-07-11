@@ -120,6 +120,16 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   lunges, slashes, rings, particles, screen shake), `tutorial` (first-play
   coaching banner — see below).
 - `fx/background.js` — canvas starfield + nebula behind every scene.
+- **Reactive combat environment (2026-07):** `CombatView.syncEnvironment()`
+  derives presentation-only pressure, enemy advantage, phase, Blight, Tempo,
+  and boss values from live combat state. It toggles `.env-*` classes/CSS
+  variables on `.combat-scene` and calls `background().setCombatState()`; never
+  feed these values back into mechanics. The stable `.combat-environment` layer
+  owns vignette/haze/rhythm/crackle CSS, while `fx/background.js` eases matching
+  canvas mood and draws expanding shockwaves for existing `pulse()` calls.
+  `setCombat(false)` must zero every mood target so scenes after combat do not
+  inherit it. Keep persistent mood separate from one-shot hit pulses and honor
+  reduced motion in both layers.
 - `styles.css` — the entire theme; respects `prefers-reduced-motion` and scales
   for phones (portrait + landscape) using `dvh` and height/width breakpoints.
 - **Persistent status presence (2026-07):** every combatant owns one stable
