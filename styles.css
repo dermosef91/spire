@@ -1572,8 +1572,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .intent-forecast.forecast-danger { color: #ffad8e; border-color: rgba(232,67,26,0.72); }
 .intent-forecast.forecast-lethal { color: #fff; border-color: #ff4f2e; box-shadow: 0 0 14px rgba(255,55,28,0.5); }
 
-.combat-scene.targeting .enemy.targetable { cursor: pointer; }
-.combat-scene.targeting .enemy.targetable .med-core { animation: targetPulse 1s ease-in-out infinite; }
+.combat-scene.targeting .combatant.targetable { cursor: pointer; }
+.combat-scene.targeting .combatant.targetable .med-core { animation: targetPulse 1s ease-in-out infinite; }
 @keyframes targetPulse { 0%,100% { box-shadow: inset 0 0 22px rgba(0,0,0,0.7), 0 0 18px rgba(255,106,26,0.5); } 50% { box-shadow: inset 0 0 22px rgba(0,0,0,0.7), 0 0 36px rgba(255,176,80,0.95); } }
 
 /* Dim player, orbs, hand cards (except previewed), and non-targetable enemies during targeting */
@@ -1585,21 +1585,22 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   filter: grayscale(40%);
   transition: opacity 0.3s ease, filter 0.3s ease;
 }
+.combat-scene.targeting .combatant.player.targetable { opacity: 1; filter: none; }
 
 /* Highlight targetable enemies */
-.combat-scene.targeting .enemy.targetable {
+.combat-scene.targeting .combatant.targetable {
   opacity: 1;
   filter: none;
   transition: opacity 0.3s ease;
 }
 
-.combat-scene.targeting .enemy.targetable .stage {
+.combat-scene.targeting .combatant.targetable .stage {
   transform: scale(1.08);
   filter: drop-shadow(0 0 18px rgba(255, 106, 26, 0.75));
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.combat-scene.targeting .enemy.targetable:hover .stage {
+.combat-scene.targeting .combatant.targetable:hover .stage {
   transform: scale(1.15);
   filter: drop-shadow(0 0 28px rgba(255, 176, 80, 0.95));
 }
@@ -3041,12 +3042,12 @@ img.svg-ic { object-fit: contain; }
 .hand .card { touch-action: pan-x; }          /* horizontal hand scroll wins; vertical motion becomes a drag */
 .card.dragging {
   position: fixed; margin: 0 !important; z-index: 300; transition: none;
-  transform: scale(1.06) rotate(0deg); cursor: grabbing; will-change: transform;
+  transform: scale(1.06) rotate(0deg) !important; cursor: grabbing; will-change: transform;
   box-shadow: 0 26px 56px rgba(0,0,0,0.85), 0 0 30px rgba(255,106,26,0.55);
 }
 .card.dragging.will-play { border-color: var(--amber); box-shadow: 0 26px 56px rgba(0,0,0,0.85), 0 0 42px var(--amber); }
-.combatant.enemy.drag-over { outline: 2px dashed var(--amber); outline-offset: 8px; border-radius: 16px; }
-.combatant.enemy.drag-over .med-core { box-shadow: inset 0 0 22px rgba(0,0,0,0.7), 0 0 44px rgba(255,176,80,1); }
+.combatant.drag-over { outline: 2px dashed var(--amber); outline-offset: 8px; border-radius: 16px; }
+.combatant.drag-over .med-core { box-shadow: inset 0 0 22px rgba(0,0,0,0.7), 0 0 44px rgba(255,176,80,1); }
 
 /* One sequence-owned ghost carries a committed card through cast → resolve →
    discard/consume. The source remains in layout but invisible until state

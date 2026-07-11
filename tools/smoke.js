@@ -141,6 +141,67 @@ try {
     throw new Error(`attacking intent is missing its post-Block consequence: ${intentLabel}`);
   }
 
+  // Dragging is a real drop gesture, including from a first-tap preview. A
+  // self-targeted card must land on the player, then an attack must land on
+  // the enemy; both plays prove the lifted card follows the pointer instead
+  // of remaining in the hand under a preview/selected transform.
+  const selfCard = page.locator('.hand .card.type-skill.affordable').first();
+  const selfUid = await selfCard.getAttribute('data-uid');
+  if (!selfUid) throw new Error('starter hand has no affordable self-targeted card for drag smoke');
+  await selfCard.click({ force: true });
+  await page.waitForSelector(`.hand .card.previewing[data-uid="${selfUid}"]`, { timeout: 1000 });
+  const selfBox = await page.locator(`.hand .card[data-uid="${selfUid}"]`).boundingBox();
+  const playerBox = await page.locator('.combatant.player').boundingBox();
+  if (!selfBox || !playerBox) throw new Error('drag smoke could not measure the player or self card');
+  await page.mouse.move(selfBox.x + selfBox.width / 2, selfBox.y + selfBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(playerBox.x + playerBox.width / 2, playerBox.y + playerBox.height / 2, { steps: 8 });
+  await page.mouse.up();
+  try {
+    await page.waitForFunction((uid) => !document.querySelector(`.hand .card[data-uid="${uid}"]`), selfUid, { timeout: 2500 });
+  } catch (_) {
+    const state = await page.evaluate((uid) => ({
+      drag: !!window.__ase.combatView.drag,
+      active: !!window.__ase.combatView.activePlay,
+      cardStillInHand: !!document.querySelector(`.hand .card[data-uid="${uid}"]`),
+      previewing: !!document.querySelector(`.hand .card.previewing[data-uid="${uid}"]`),
+      playerDropZone: !!document.querySelector('.combatant.player.drag-over'),
+      energy: window.__combat.energy,
+    }), selfUid);
+    throw new Error(`self-target drag did not play: ${JSON.stringify(state)}`);
+  }
+  await page.waitForSelector('.card-cast-ghost', { state: 'detached', timeout: 2500 });
+
+  const attackUid = await page.evaluate(() => window.__combat.hand
+    .find((card) => card.type === 'attack' && card.target === 'enemy' && window.__combat.canPlay(card))?.uid || null);
+  if (!attackUid) throw new Error('starter hand has no affordable attack for drag smoke');
+  const attackCard = page.locator(`.hand .card[data-uid="${attackUid}"]`);
+  const attackBox = await attackCard.boundingBox();
+  const enemyBox = await page.locator('.combatant.enemy').first().boundingBox();
+  if (!attackBox || !enemyBox) throw new Error('drag smoke could not measure the enemy or attack card');
+  const enemyCenterIsDroppable = await page.evaluate(({ x, y }) => !!window.__ase.combatView.enemyAt(x, y), {
+    x: enemyBox.x + enemyBox.width / 2, y: enemyBox.y + enemyBox.height / 2,
+  });
+  if (!enemyCenterIsDroppable) throw new Error(`enemy center is outside its drop zone: ${JSON.stringify(enemyBox)}`);
+  await page.mouse.move(attackBox.x + attackBox.width / 2, attackBox.y + attackBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(enemyBox.x + enemyBox.width / 2, enemyBox.y + enemyBox.height / 2, { steps: 8 });
+  await page.mouse.up();
+  try {
+    await page.waitForFunction((uid) => !document.querySelector(`.hand .card[data-uid="${uid}"]`), attackUid, { timeout: 2500 });
+  } catch (_) {
+    const state = await page.evaluate((uid) => ({
+      drag: !!window.__ase.combatView.drag,
+      active: !!window.__ase.combatView.activePlay,
+      cardStillInHand: !!document.querySelector(`.hand .card[data-uid="${uid}"]`),
+      previewing: !!document.querySelector(`.hand .card.previewing[data-uid="${uid}"]`),
+      enemyDropZone: !!document.querySelector('.combatant.enemy.drag-over'),
+      energy: window.__combat.energy,
+    }), attackUid);
+    throw new Error(`enemy-target drag did not play: ${JSON.stringify(state)}`);
+  }
+  await page.waitForSelector('.card-cast-ghost', { state: 'detached', timeout: 2500 });
+
   // First tap previews; second tap commits one sequence-owned ghost. Input is
   // locked through resolution, the hand updates once, and the ghost always
   // cleans itself up after reaching discard/consume.

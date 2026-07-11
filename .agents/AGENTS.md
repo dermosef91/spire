@@ -101,6 +101,7 @@
   `intentinspect` event), or clicking the visible icon works differently from
   clicking the pill's name/padding.
 - **Lost Pointer Capture**: When card nodes (or any nodes capturing pointer events) are removed from the DOM or rebuilt during a state update while pointer capture is active, the browser fires a `lostpointercapture` event. Since `pointerup` or `pointercancel` may not fire on the node after it's removed, you must always listen to `lostpointercapture` to cleanly reset drag/gesture state (e.g., `this.drag = null`) and prevent permanent input locks.
+- **True card drops**: Capture mouse/pen pointers on card `pointerdown` (touch already captures implicitly) and retain a document-level move/up fallback. A fanned card can otherwise be exited before its first `pointermove`, leaving it to preview or rotate instead of receiving the drop. Drag transforms must also override preview/selected `!important` transforms, and self-target cards should require a drop on the player combatant just as attacks require one on an enemy.
 - **Block/parry QTE scales with attack size, and is color-coded blue** (rhythm.js
   `runParryQTE({marks})` + `combatView.js` `parryMarksFor(e)`): a plain single
   hit is still one any-direction tap, but bigger attacks get a short sequence

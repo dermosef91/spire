@@ -1148,18 +1148,32 @@ export class CombatView {
     const r = node.getBoundingClientRect();
     this.drag = {
       card, node, id: e.pointerId, sx: e.clientX, sy: e.clientY,
-      w: r.width, h: r.height, moved: false, captured: false, pointerType: e.pointerType,
+      w: r.width, h: r.height, moved: false, captured: false, pointerType: e.pointerType, dropTarget: null,
       handTop: this.handHolder.getBoundingClientRect().top,
     };
+    // A mouse can leave a fanned card before the first pointermove reaches
+    // its listener. Capture immediately so a fast drag still crosses the
+    // movement threshold and delivers its eventual drop to this card.
+    // Touch already has implicit capture, so leave that path untouched.
+    if (e.pointerType !== 'touch') {
+      try { node.setPointerCapture(e.pointerId); this.drag.captured = true; } catch (_) {}
+    }
     node.addEventListener('pointermove', this._dragMove);
     node.addEventListener('pointerup', this._dragEnd);
     node.addEventListener('pointercancel', this._dragCancel);
     node.addEventListener('lostpointercapture', this._dragCancel);
+    // Keep a document-level fallback as well. Pointer capture is the normal
+    // path, but some browsers retarget the first fast move outside the card
+    // before capture takes effect; the bubbling document listener still sees
+    // that move and can begin the drag.
+    document.addEventListener('pointermove', this._dragMove);
+    document.addEventListener('pointerup', this._dragEnd);
+    document.addEventListener('pointercancel', this._dragCancel);
   }
 
   dragMove(e) {
     const d = this.drag;
-    if (!d) return;
+    if (!d || e.pointerId !== d.id) return;
     const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
     if (!d.moved) {
       if (d.pointerType === 'touch' && Math.abs(dx) > Math.abs(dy) * 1.15 && Math.abs(dx) >= 8) {
@@ -1168,18 +1182,6 @@ export class CombatView {
       }
       if (Math.hypot(dx, dy) < 8) return;
       d.moved = true;
-      // Touch pointers already get implicit capture to their initial target
-      // per the Pointer Events spec, so an explicit setPointerCapture() call
-      // is redundant there — and calling it mid-gesture (from a pointermove
-      // handler rather than pointerdown) fires a spurious immediate
-      // 'lostpointercapture', which our cancelDrag() treats as "the user let
-      // go" and tears the whole drag down before it ever really starts.
-      // Confirmed against real touch input, not just mouse emulation. Keep
-      // the explicit capture for mouse/pen, where there's no implicit
-      // capture and the pointer can otherwise stray off the dragged card.
-      if (d.pointerType !== 'touch') {
-        try { d.node.setPointerCapture(d.id); d.captured = true; } catch (_) {}
-      }
       this.game.tooltip(null, null, false);
       d.node.classList.add('dragging');
       d.node.style.width = d.w + 'px';
@@ -1204,44 +1206,54 @@ export class CombatView {
       // toward an off-center enemy can get silently swallowed into a hand
       // scroll, and the card never plays.
       if (d.pointerType === 'touch') d.node.style.touchAction = 'none';
-      if (d.card.target === 'enemy') this.setDragTargeting(true);
+      this.setDragTargeting(true, d.card);
     } else {
-      d.node.style.transform = `translate3d(${e.clientX - d.baseX}px, ${e.clientY - d.baseY}px, 0) scale(1.06)`;
+      // Preview/selected hand states intentionally use !important transforms.
+      // A drag must always win over those states, or the card remains in the
+      // hand and merely rotates while the pointer moves.
+      d.node.style.setProperty('transform', `translate3d(${e.clientX - d.baseX}px, ${e.clientY - d.baseY}px, 0) scale(1.06)`, 'important');
     }
     if (d.pointerType === 'touch') e.preventDefault();
     const playable = this.combat.canPlay(d.card);
     if (d.card.target === 'enemy') {
       const hit = this.enemyAt(e.clientX, e.clientY);
+      d.dropTarget = hit;
       this.setDragOver(hit ? hit.node : null);
       d.node.classList.toggle('will-play', !!hit && playable);
     } else {
-      const inZone = e.clientY < d.handTop - 6;
-      d.node.classList.toggle('will-play', inZone && playable);
+      const hit = this.playerAt(e.clientX, e.clientY);
+      d.dropTarget = hit;
+      this.setDragOver(hit ? hit.node : null);
+      d.node.classList.toggle('will-play', !!hit && playable);
     }
   }
 
   dragEnd(e) {
     const d = this.drag;
-    if (!d) return;
+    if (!d || e.pointerId !== d.id) return;
+    const dropTarget = d.dropTarget;
     d.node.removeEventListener('pointermove', this._dragMove);
     d.node.removeEventListener('pointerup', this._dragEnd);
     d.node.removeEventListener('pointercancel', this._dragCancel);
     d.node.removeEventListener('lostpointercapture', this._dragCancel);
+    document.removeEventListener('pointermove', this._dragMove);
+    document.removeEventListener('pointerup', this._dragEnd);
+    document.removeEventListener('pointercancel', this._dragCancel);
     this.drag = null;
     this.setDragOver(null);
     this.setDragTargeting(false);
     if (d.captured) { try { d.node.releasePointerCapture(d.id); } catch (_) {} }
     d.node.style.touchAction = '';
-    d.node.style.transform = '';
+    d.node.style.removeProperty('transform');
 
     if (!d.moved) { this.clickCard(d.card); return; } // tap → click-to-play
 
     let played = false;
     if (this.combat.canPlay(d.card)) {
       if (d.card.target === 'enemy') {
-        const hit = this.enemyAt(e.clientX, e.clientY);
+        const hit = dropTarget || this.enemyAt(e.clientX, e.clientY);
         if (hit) { this.playCard(d.card, hit.e); played = true; }
-      } else if (e.clientY < d.handTop - 6) {
+      } else if (dropTarget || this.playerAt(e.clientX, e.clientY)) {
         this.playCard(d.card, this.combat.randomEnemy());
         played = true;
       }
@@ -1250,29 +1262,35 @@ export class CombatView {
     this.update(); // re-render the hand (clears the lifted node, restores layout)
   }
 
-  cancelDrag(_event, { preserveLayout = false } = {}) {
+  cancelDrag(event, { preserveLayout = false } = {}) {
     const d = this.drag;
-    if (!d) return;
+    if (!d || (event && event.pointerId !== d.id)) return;
     d.node.removeEventListener('pointermove', this._dragMove);
     d.node.removeEventListener('pointerup', this._dragEnd);
     d.node.removeEventListener('pointercancel', this._dragCancel);
     d.node.removeEventListener('lostpointercapture', this._dragCancel);
+    document.removeEventListener('pointermove', this._dragMove);
+    document.removeEventListener('pointerup', this._dragEnd);
+    document.removeEventListener('pointercancel', this._dragCancel);
     this.drag = null;
     this.setDragOver(null);
     this.setDragTargeting(false);
     if (d.captured) { try { d.node.releasePointerCapture(d.id); } catch (_) {} }
     d.node.style.touchAction = '';
-    d.node.style.transform = '';
+    d.node.style.removeProperty('transform');
     if (!preserveLayout && d.node.isConnected) this.update();
   }
 
-  setDragTargeting(on) {
+  setDragTargeting(on, card = null) {
     if (!this.scene) return;
     this.scene.classList.toggle('targeting', on || !!this.pendingCard);
+    const targetsEnemies = !card || card.target === 'enemy' || !!this.pendingCard;
     for (const enemy of this.combat.livingEnemies()) {
       const node = this.els[eidOf(enemy)];
-      if (node) node.classList.toggle('targetable', on || !!this.pendingCard);
+      if (node) node.classList.toggle('targetable', targetsEnemies && (on || !!this.pendingCard));
     }
+    const player = this.els.p;
+    if (player) player.classList.toggle('targetable', !!on && !!card && card.target !== 'enemy');
   }
 
   enemyAt(x, y) {
@@ -1282,6 +1300,17 @@ export class CombatView {
       if (!node) continue;
       const r = node.getBoundingClientRect();
       if (x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad) return { e: en, node };
+    }
+    return null;
+  }
+
+  playerAt(x, y) {
+    const node = this.els.p;
+    if (!node) return null;
+    const r = node.getBoundingClientRect();
+    const pad = 14;
+    if (x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad) {
+      return { e: this.combat.player, node };
     }
     return null;
   }
