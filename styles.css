@@ -1075,9 +1075,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .combat-environment::before { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity .7s ease; background: radial-gradient(circle at 50% 45%, transparent 34%, rgba(22,0,12,0.55) 100%); }
 .env-boss .combat-environment::before { opacity: .48; }
 .env-haze, .env-haze::before, .env-haze::after { position: absolute; inset: 0; content: ''; transition: opacity .5s ease; }
-.env-haze::before { opacity: var(--env-pressure, 0); background: radial-gradient(circle at 50% 48%, transparent 28%, rgba(150,15,8,0.5) 100%); animation: dangerBreathe 1.8s ease-in-out infinite; }
+.env-haze::before { opacity: var(--env-pressure, 0); background: radial-gradient(circle at 50% 48%, transparent 28%, rgba(150,15,8,0.5) 100%); }
 .env-haze::after { opacity: var(--env-haze, 0); background: radial-gradient(circle at 74% 48%, rgba(255,142,53,var(--env-advantage-alpha, 0)), transparent 45%), linear-gradient(0deg, rgba(79,132,38,var(--env-blight-alpha, 0)), transparent 48%); }
-@keyframes dangerBreathe { 50% { filter: brightness(1.28); } }
 .env-rhythm { position: absolute; left: 28%; top: 52%; width: min(56vw, 520px); aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); opacity: var(--env-tempo, 0); border: 1px solid rgba(255,190,92,0.2); box-shadow: 0 0 0 28px rgba(255,190,92,0.04), 0 0 0 62px rgba(255,190,92,0.025); animation: environmentBeat 1.1s ease-in-out infinite; }
 @keyframes environmentBeat { 50% { transform: translate(-50%, -50%) scale(1.045); filter: brightness(1.45); } }
 .env-crackle { position: absolute; inset: 0; opacity: 0; transition: opacity .35s ease; }
