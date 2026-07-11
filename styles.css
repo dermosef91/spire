@@ -1068,6 +1068,24 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .combat-scene { position: relative; display: flex; flex-direction: column; height: 100dvh; min-height: 0; overflow: hidden; }
 .combat-topbar { flex: 0 0 auto; position: relative; z-index: 10; }
 .combat-environment { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; transition: background 0.7s ease; }
+.combat-depth { position:absolute; inset:0; overflow:hidden; pointer-events:none; transform-style:preserve-3d; }
+.depth-back { z-index:0; transform:translate(var(--depth-back-x,0px),var(--depth-back-y,0px)) scale(1.018); transition:transform .32s cubic-bezier(.2,.7,.2,1); }
+.depth-arch { position:absolute; inset:7% 3% 18%; border:clamp(10px,1.4vw,24px) solid transparent; border-bottom:0; border-radius:46% 46% 0 0 / 22% 22% 0 0; background:linear-gradient(#0b0705,#0b0705) padding-box,linear-gradient(90deg,rgba(0,0,0,.82),rgba(118,62,27,.26),rgba(0,0,0,.86)) border-box; opacity:.7; filter:drop-shadow(0 18px 20px rgba(0,0,0,.78)); }
+.depth-column { position:absolute; top:6%; bottom:14%; width:clamp(28px,4vw,72px); opacity:.72; background:linear-gradient(90deg,#050302,rgba(74,39,20,.78) 34%,rgba(13,8,5,.96) 72%,#020101),repeating-linear-gradient(0deg,transparent 0 34px,rgba(255,160,70,.13) 35px 37px); box-shadow:inset 0 0 0 1px rgba(255,176,80,.12),0 22px 32px rgba(0,0,0,.9); }
+.depth-column::before,.depth-column::after { content:''; position:absolute; left:-16%; width:132%; height:5%; min-height:12px; background:linear-gradient(90deg,#060302,#6b381d 46%,#080402); border:1px solid rgba(255,176,80,.12); }
+.depth-column::before { top:0; }.depth-column::after { bottom:0; }
+.depth-column-left { left:1.5%; }.depth-column-right { right:1.5%; transform:scaleX(-1); }
+.depth-floor { position:absolute; left:8%; right:8%; bottom:8%; height:34%; transform:perspective(420px) rotateX(66deg); transform-origin:bottom; opacity:.48; background:radial-gradient(ellipse at 50% 100%,rgba(255,125,42,.15),transparent 54%),repeating-linear-gradient(90deg,rgba(255,176,80,.1) 0 1px,transparent 1px 9%),repeating-linear-gradient(0deg,rgba(255,176,80,.08) 0 1px,transparent 1px 18%); mask-image:linear-gradient(0deg,#000,transparent 88%); filter:drop-shadow(0 -8px 14px rgba(0,0,0,.7)); }
+.depth-lamp { position:absolute; top:27%; width:clamp(12px,1.3vw,22px); aspect-ratio:1; border-radius:50%; background:#ffd28a; opacity:var(--depth-light-opacity,.38); box-shadow:0 0 8px #ff9d39,0 0 34px 12px rgba(255,115,35,.26),0 0 90px 34px rgba(255,95,28,.09); transition:opacity .5s ease,filter .5s ease; }
+.depth-lamp::after { content:''; position:absolute; left:50%; top:50%; width:clamp(150px,22vw,360px); height:70vh; transform:translate(-50%,-8%); transform-origin:top; background:conic-gradient(from 166deg at 50% 0,transparent 0 10deg,rgba(255,149,68,.08) 18deg,transparent 28deg); filter:blur(7px); }
+.depth-lamp-left { left:14%; }.depth-lamp-right { right:14%; }
+.env-danger .depth-lamp { filter:saturate(1.35) brightness(var(--depth-light-brightness,1)); }
+.env-blight .depth-lamp { box-shadow:0 0 8px #d2cc68,0 0 34px 12px rgba(118,155,50,.22),0 0 90px 34px rgba(70,124,38,.08); }
+.depth-front { z-index:9; transform:translate(var(--depth-front-x,0px),var(--depth-front-y,0px)) scale(1.025); transition:transform .24s cubic-bezier(.2,.7,.2,1); }
+.depth-ledge { position:absolute; left:-3%; right:-3%; bottom:-3%; height:11%; background:linear-gradient(180deg,rgba(69,37,20,.9),#090503 28%,#020101 76%); clip-path:polygon(0 24%,8% 10%,23% 21%,38% 8%,54% 19%,72% 6%,88% 18%,100% 9%,100% 100%,0 100%); box-shadow:0 -14px 30px rgba(0,0,0,.78),inset 0 2px 0 rgba(255,176,80,.11); }
+.depth-prop { position:absolute; bottom:4%; width:clamp(38px,6vw,96px); height:clamp(72px,17vh,170px); opacity:.9; background:linear-gradient(90deg,#020101,#23120a 48%,#050202); clip-path:polygon(24% 0,76% 0,68% 13%,82% 35%,72% 100%,28% 100%,18% 35%,32% 13%); filter:drop-shadow(0 -5px 12px rgba(255,116,42,.12)) drop-shadow(0 12px 12px #000); }
+.depth-prop::after { content:''; position:absolute; inset:21% 30% 34%; border:1px solid rgba(255,176,80,.16); border-radius:50%; box-shadow:inset 0 0 12px #000; }
+.depth-prop-left { left:2%; transform:rotate(-4deg); }.depth-prop-right { right:2%; transform:rotate(5deg) scale(.86); }
 .combat-environment::before { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity .7s ease; background: radial-gradient(circle at 50% 45%, transparent 34%, rgba(22,0,12,0.55) 100%); }
 .env-boss .combat-environment::before { opacity: .48; }
 .env-haze, .env-haze::before, .env-haze::after { position: absolute; inset: 0; content: ''; transition: opacity .5s ease; }
@@ -1278,7 +1296,7 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .enemy:nth-child(2n) .glyph { animation-duration: 4.1s; } .enemy:nth-child(3n) .glyph { animation-duration: 4.6s; }
 @keyframes medFloat { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-8px) scale(1.035); } }
 .ground-shadow { width: calc(var(--med) * 1.1); height: calc(var(--med) * 0.14); margin-top: 4px; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(255,106,26,0.32), transparent); filter: blur(3px); animation: shadowPulse 3.6s ease-in-out infinite; }
+  background: radial-gradient(closest-side at var(--depth-light-pos,50%), rgba(255,106,26,0.32), transparent); filter: blur(3px) drop-shadow(var(--depth-shadow-x,0px) 3px 3px rgba(0,0,0,.6)); animation: shadowPulse 3.6s ease-in-out infinite; }
 @keyframes shadowPulse { 0%,100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(0.85); opacity: 0.42; } }
 
 .block-badge {
@@ -2777,6 +2795,7 @@ html { -webkit-text-size-adjust: 100%; }
   .card:hover, .card.in-hand:hover { transform: none !important; }
   .scene { transform: none; }
   #bg-image { transition: none !important; }
+  .depth-back, .depth-front { transform: none !important; transition: none !important; }
   .combat-scene.targeting .enemy.targetable .stage,
   .combat-scene.targeting .enemy.targetable:hover .stage {
     transform: none !important;
