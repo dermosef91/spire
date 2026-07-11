@@ -110,6 +110,28 @@ try {
   const enemySides = await page.locator('.enemy-side').count();
   if (handCount < 1) throw new Error('combat mounted but no cards in hand');
   if (enemySides < 1) throw new Error('combat mounted but no enemy side rendered');
+  if (await page.locator('.combat-depth').count() !== 2) throw new Error('combat spatial-depth layers are missing');
+  if (await page.locator('.depth-column, .depth-lamp, .depth-prop').count() < 6) throw new Error('combat depth props are incomplete');
+  const depthSafety = await page.evaluate(() => {
+    const front = getComputedStyle(document.querySelector('.depth-front'));
+    const hand = getComputedStyle(document.querySelector('.hand'));
+    return { pointerEvents: front.pointerEvents, frontZ: Number(front.zIndex), handZ: Number(hand.zIndex) };
+  });
+  if (depthSafety.pointerEvents !== 'none' || depthSafety.frontZ >= depthSafety.handZ) {
+    throw new Error(`depth props can obstruct interaction: ${JSON.stringify(depthSafety)}`);
+  }
+  await page.evaluate(() => {
+    const scene = document.querySelector('.combat-scene');
+    const rect = scene.getBoundingClientRect();
+    scene.dispatchEvent(new PointerEvent('pointermove', {
+      pointerType: 'mouse', clientX: rect.right - 4, clientY: rect.top + rect.height * 0.35,
+    }));
+  });
+  const depthX = Number(await page.locator('.combat-scene').evaluate((node) => node.style.getPropertyValue('--depth-x')));
+  if (depthX < 0.8) throw new Error(`restrained pointer parallax did not respond: ${depthX}`);
+  await page.locator('.combat-scene').dispatchEvent('pointerleave');
+  const resetDepthX = Number(await page.locator('.combat-scene').evaluate((node) => node.style.getPropertyValue('--depth-x')));
+  if (resetDepthX !== 0) throw new Error(`pointer parallax did not settle: ${resetDepthX}`);
   await page.waitForFunction(() => Array.from(document.querySelectorAll('.hand .card')).every((card) => getComputedStyle(card).pointerEvents !== 'none'), null, { timeout: 2500 });
 
   // Intent communicates exact damage + post-Block consequence through its

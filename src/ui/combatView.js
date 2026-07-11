@@ -179,6 +179,12 @@ export class CombatView {
       html: `<span class="env-haze"></span><span class="env-rhythm"></span><span class="env-crackle">${'<i></i>'.repeat(6)}</span>`,
     });
     scene.appendChild(this.environmentLayer);
+    this.depthBack = el('div', {
+      class: 'combat-depth depth-back',
+      attrs: { 'aria-hidden': 'true' },
+      html: '<span class="depth-arch"></span><span class="depth-column depth-column-left"></span><span class="depth-column depth-column-right"></span><span class="depth-floor"></span><span class="depth-lamp depth-lamp-left"></span><span class="depth-lamp depth-lamp-right"></span>',
+    });
+    scene.appendChild(this.depthBack);
     this._dragGuide = el('div', { class: 'drag-play-guide', attrs: { 'aria-hidden': 'true' } });
     scene.appendChild(this._dragGuide);
 
@@ -188,6 +194,37 @@ export class CombatView {
     field.appendChild(this.playerSide);
     field.appendChild(this.enemySide);
     scene.appendChild(field);
+    this.depthFront = el('div', {
+      class: 'combat-depth depth-front',
+      attrs: { 'aria-hidden': 'true' },
+      html: '<span class="depth-ledge"></span><span class="depth-prop depth-prop-left"></span><span class="depth-prop depth-prop-right"></span>',
+    });
+    scene.appendChild(this.depthFront);
+    const setDepth = (event) => {
+      if (event.pointerType === 'touch' || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+      const rect = scene.getBoundingClientRect();
+      const x = Math.max(-1, Math.min(1, ((event.clientX - rect.left) / rect.width - 0.5) * 2));
+      const y = Math.max(-1, Math.min(1, ((event.clientY - rect.top) / rect.height - 0.5) * 2));
+      scene.style.setProperty('--depth-x', x.toFixed(3));
+      scene.style.setProperty('--depth-y', y.toFixed(3));
+      scene.style.setProperty('--depth-back-x', `${(-x * 5).toFixed(2)}px`);
+      scene.style.setProperty('--depth-back-y', `${(-y * 3).toFixed(2)}px`);
+      scene.style.setProperty('--depth-front-x', `${(x * 8).toFixed(2)}px`);
+      scene.style.setProperty('--depth-front-y', `${(y * 5).toFixed(2)}px`);
+      scene.style.setProperty('--depth-shadow-x', `${(-x * 5).toFixed(2)}px`);
+      scene.style.setProperty('--depth-light-pos', `${(50 - x * 7).toFixed(2)}%`);
+    };
+    scene.addEventListener('pointermove', setDepth);
+    scene.addEventListener('pointerleave', () => {
+      scene.style.setProperty('--depth-x', '0');
+      scene.style.setProperty('--depth-y', '0');
+      scene.style.setProperty('--depth-back-x', '0px');
+      scene.style.setProperty('--depth-back-y', '0px');
+      scene.style.setProperty('--depth-front-x', '0px');
+      scene.style.setProperty('--depth-front-y', '0px');
+      scene.style.setProperty('--depth-shadow-x', '0px');
+      scene.style.setProperty('--depth-light-pos', '50%');
+    });
 
     scene.addEventListener('click', (e) => {
       if (!e.target.closest('.card, .combatant, .btn, .screen-pile, .potion-slot, .topbar-btn')) {
@@ -623,6 +660,8 @@ export class CombatView {
     this.scene.style.setProperty('--env-haze', String(Math.max(Math.min(1, blight), advantage)));
     this.scene.style.setProperty('--env-advantage-alpha', String(advantage * 0.16));
     this.scene.style.setProperty('--env-blight-alpha', String(Math.min(1, blight) * 0.23));
+    this.scene.style.setProperty('--depth-light-opacity', String(Math.min(0.9, 0.38 + tempo * 0.28 + advantage * 0.22)));
+    this.scene.style.setProperty('--depth-light-brightness', String(1 - pressure * 0.28));
     const bg = background();
     if (bg && bg.setCombatState) bg.setCombatState({ pressure, advantage, phase, blight, tempo, boss });
   }
