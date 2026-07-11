@@ -22,7 +22,7 @@ export const ShopScene = {
     panel.appendChild(el('h2', { text: 'The Brass Bazaar' }));
     panel.appendChild(el('div', { class: 'shop-gold', html: `You carry <i class="tb-ic">${UI.coin}</i> <b>${run.gold}</b> gold` }));
 
-    const cardSec = el('div', { class: 'shop-section' });
+    const cardSec = el('div', { class: 'shop-section shop-stall' });
     cardSec.appendChild(el('h3', { text: 'Cards' }));
     const cardRow = el('div', { class: 'card-row' });
     shop.cards.forEach((item, i) => {
@@ -36,7 +36,9 @@ export const ShopScene = {
     cardSec.appendChild(cardRow);
     panel.appendChild(cardSec);
 
-    const otherSec = el('div', { class: 'shop-section shop-mixed' });
+    const otherSec = el('div', { class: 'shop-section shop-stall' });
+    otherSec.appendChild(el('h3', { text: 'Curiosities' }));
+    const otherRow = el('div', { class: 'shop-mixed' });
     // relics
     shop.relics.forEach((item, i) => {
       if (item.sold) return;
@@ -46,7 +48,7 @@ export const ShopScene = {
       holder.appendChild(el('div', { class: 'mini-label', text: r.name }));
       holder.appendChild(el('div', { class: `price ${run.gold < item.price ? 'cant' : ''}`, html: `<i class="tb-ic">${UI.coin}</i> ${item.price}` }));
       holder.addEventListener('click', () => this.confirmBuy(shop, 'relics', i));
-      otherSec.appendChild(holder);
+      otherRow.appendChild(holder);
     });
     // potions
     shop.potions.forEach((item, i) => {
@@ -57,14 +59,16 @@ export const ShopScene = {
       holder.appendChild(el('div', { class: 'mini-label', text: p.name }));
       holder.appendChild(el('div', { class: `price ${run.gold < item.price ? 'cant' : ''}`, html: `<i class="tb-ic">${UI.coin}</i> ${item.price}` }));
       holder.addEventListener('click', () => this.confirmBuy(shop, 'potions', i));
-      otherSec.appendChild(holder);
+      otherRow.appendChild(holder);
     });
+    otherSec.appendChild(otherRow);
     panel.appendChild(otherSec);
 
     // card removal service
-    const removeRow = el('div', { class: 'shop-section' });
+    const removeRow = el('div', { class: 'shop-section shop-stall' });
+    removeRow.appendChild(el('h3', { text: 'The Reforge' }));
     if (!shop.removeUsed) {
-      removeRow.appendChild(button(`Reforge — remove a card (${shop.removePrice} gold)`, () => {
+      removeRow.appendChild(button(`Remove a card (${shop.removePrice} gold)`, () => {
         if (run.gold < shop.removePrice) { audio.play('error'); return; }
         this.deckOverlay(() => true, (entry) => {
           run.gold -= shop.removePrice; run.removeCardAt(entry._i); shop.removeUsed = true; shop.removePrice += 25;
