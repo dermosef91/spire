@@ -253,6 +253,19 @@ export class CombatView {
     parts.medallion = el('div', { class: 'medallion' });
     parts.medallion.appendChild(el('div', { class: 'med-ring' }));
     parts.medallion.appendChild(el('div', { class: 'med-core' }));
+    parts.statusAura = el('div', {
+      class: 'status-presence',
+      attrs: { 'aria-hidden': 'true' },
+      html: `
+        <span class="presence-armor">${'<i></i>'.repeat(4)}</span>
+        <span class="presence-spirit">${'<i></i>'.repeat(3)}</span>
+        <span class="presence-blight">${'<i></i>'.repeat(5)}</span>
+        <span class="presence-tempo">${'<i></i>'.repeat(10)}</span>
+        <span class="presence-resolve">${'<i></i>'.repeat(5)}</span>
+        <span class="presence-affliction">${'<i></i>'.repeat(3)}</span>
+        <span class="presence-mark"></span>
+      `,
+    });
 
     const spriteId = ent.isPlayer ? this.combat.run.character.id : ent.id;
     const svgHtml = combatModel(ent, this.combat.run.character.id);
@@ -260,6 +273,7 @@ export class CombatView {
     parts.block = el('div', { class: 'block-badge', style: { display: 'none' } });
 
     stage.appendChild(parts.medallion);
+    stage.appendChild(parts.statusAura);
     stage.appendChild(parts.glyph);
     stage.appendChild(el('div', { class: 'ground-shadow' }));
     wrap.appendChild(stage);
@@ -507,6 +521,7 @@ export class CombatView {
     }
     if (ent.block > 0) { p.block.style.display = ''; p.block.textContent = ent.block; }
     else p.block.style.display = 'none';
+    this.updateStatusPresence(ent, p);
     // powers (block shown separately)
     clear(p.powers);
     const prevPowers = this._lastPowers[eid] || {};
@@ -542,6 +557,46 @@ export class CombatView {
     this._lastPowers[eid] = { ...ent.powers };
     // intent
     if (p.intent) this.renderIntent(ent, p.intent);
+  }
+
+  updateStatusPresence(ent, parts) {
+    const aura = parts && parts.statusAura;
+    if (!aura) return;
+    const powers = ent.powers || {};
+    const armor = ent.block > 0 || powers.metallicize || powers.invincibility || powers.counter;
+    const spirit = powers.artifact || powers.intangible || powers.flow || powers.focus;
+    const affliction = powers.vulnerable || powers.weak || powers.frail || powers.entangle || powers.noBlock || powers.strengthDown;
+    aura.classList.toggle('has-armor', !!armor);
+    aura.classList.toggle('has-spirit', !!spirit);
+    aura.classList.toggle('has-blight', !!powers.poison);
+    aura.classList.toggle('has-tempo', !!powers.tempo);
+    aura.classList.toggle('has-resolve', !!powers.strength);
+    aura.classList.toggle('has-affliction', !!affliction);
+    aura.classList.toggle('has-mark', !!powers.challenged);
+    const tempo = Math.max(0, Math.min(10, powers.tempo || 0));
+    const blight = Math.max(1, Math.min(10, powers.poison || 1));
+    aura.style.setProperty('--tempo-angle', `${tempo * 36}deg`);
+    aura.style.setProperty('--blight-saturation', String(0.8 + blight * 0.06));
+    const eid = eidOf(ent);
+    const previousArmor = this._lastArmorPresence && this._lastArmorPresence[eid];
+    if (previousArmor && !armor) this.statusMoment(ent, 'block', 'expire');
+    this._lastArmorPresence = this._lastArmorPresence || {};
+    this._lastArmorPresence[eid] = !!armor;
+  }
+
+  statusMoment(ent, key, kind = 'awaken') {
+    const parts = this.parts[eidOf(ent)];
+    const aura = parts && parts.statusAura;
+    if (!aura) return;
+    const cls = kind === 'expire' ? 'status-expiring' : 'status-awakening';
+    aura.dataset.moment = key || '';
+    aura.classList.remove(cls);
+    void aura.offsetWidth;
+    aura.classList.add(cls);
+    setTimeout(() => {
+      aura.classList.remove(cls);
+      if (aura.dataset.moment === (key || '')) delete aura.dataset.moment;
+    }, kind === 'expire' ? 620 : 480);
   }
 
   renderIntent(enemy, wrap) {
@@ -1736,6 +1791,7 @@ const FX_HANDLERS = {
     // A missed beat zeroes the Tempo counter — name the loss.
     const el2 = this.elFor(payload.entity);
     if (el2) floatText(layer, el2, 'RHYTHM BROKEN', 'debuff');
+    this.statusMoment(payload.entity, 'tempo', 'expire');
   },
 
   temporelease(payload, layer) {
@@ -1748,6 +1804,7 @@ const FX_HANDLERS = {
     ring(layer, el2, big ? 'rgba(255,224,140,0.95)' : 'rgba(255,209,102,0.9)');
     burst(layer, el2, big ? '#ffe6a0' : '#ffd166', Math.min(10 + payload.amount * 2, 26));
     audio.play('tempo_release');
+    this.statusMoment(payload.entity, 'tempo', 'expire');
   },
 
   powersurge(payload, layer) {
@@ -1946,6 +2003,7 @@ const FX_HANDLERS = {
     const def = POWERS[payload.key]; if (!def) return;
     const beneficial = (def.type === 'buff' && payload.amount > 0) || (def.type === 'debuff' && payload.amount < 0);
     floatHTML(layer, el2, `<i class="pip-ic">${powerIcon(payload.key)}</i>${payload.amount > 0 ? '+' : ''}${payload.amount}`, beneficial ? 'buff' : 'debuff');
+    this.statusMoment(payload.target, payload.key, payload.after === 0 ? 'expire' : 'awaken');
     audio.play(beneficial ? 'buff' : 'debuff');
   },
 
@@ -1957,6 +2015,7 @@ const FX_HANDLERS = {
     const def = POWERS[payload.key]; if (!def) return;
     const beneficial = def.type === 'debuff';
     floatHTML(layer, el2, `<i class="pip-ic">${powerIcon(payload.key)}</i> ${def.name} fades`, beneficial ? 'buff' : 'debuff');
+    this.statusMoment(payload.target, payload.key, 'expire');
     audio.play(beneficial ? 'buff' : 'debuff');
   },
 

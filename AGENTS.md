@@ -122,6 +122,15 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
 - `fx/background.js` — canvas starfield + nebula behind every scene.
 - `styles.css` — the entire theme; respects `prefers-reduced-motion` and scales
   for phones (portrait + landscape) using `dvh` and height/width breakpoints.
+- **Persistent status presence (2026-07):** every combatant owns one stable
+  `.status-presence` layer built with its node. `updateStatusPresence()` maps
+  live power state into seven orthogonal channels: armor plates, orbiting
+  spirits, Blight corrosion, the 0–10 Tempo dial, Resolve rays, affliction
+  static, and the Challenged mark. Do not rebuild the aura DOM during updates;
+  toggle its `has-*` classes and CSS variables. `statusMoment()` owns awaken /
+  expiry beats. Any mechanic that deletes a power outside `applyPower()` must
+  emit `powerfade` (or its dedicated Tempo event) so presence never vanishes
+  silently. All loops/flicker have reduced-motion fallbacks.
 
 ## First-play tutorial
 - `src/ui/tutorial.js` (`CombatTutorial`) is a single **coaching banner** pinned

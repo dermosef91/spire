@@ -184,6 +184,23 @@ try {
   if (!bossSubtitle || !bossSubtitle.includes('BOSS · PHASE I')) throw new Error(`boss rank subtitle missing: ${bossSubtitle}`);
   await page.waitForSelector('.combat-scene.encounter-boss .hand .card', { timeout: 3500 });
 
+  // Persistent statuses must inhabit the combatants, not exist only as pips.
+  await page.evaluate(() => {
+    const combat = window.__combat;
+    const boss = combat.livingEnemies()[0];
+    combat.applyPower(combat.player, 'tempo', 5, combat.player);
+    combat.applyPower(combat.player, 'metallicize', 3, combat.player);
+    combat.applyPower(combat.player, 'flow', 1, combat.player);
+    combat.applyPower(boss, 'poison', 4, combat.player);
+    combat.applyPower(boss, 'challenged', 3, combat.player);
+  });
+  await page.waitForSelector('.player .status-presence.has-tempo.has-armor.has-spirit', { timeout: 1200 });
+  await page.waitForSelector('.enemy-boss .status-presence.has-blight.has-mark', { timeout: 1200 });
+  const tempoAngle = await page.locator('.player .status-presence').evaluate((node) => node.style.getPropertyValue('--tempo-angle'));
+  if (tempoAngle !== '180deg') throw new Error(`Tempo presence did not reflect five stacks: ${tempoAngle}`);
+  await page.evaluate(() => window.__combat.applyPower(window.__combat.player, 'flow', -1, window.__combat.player));
+  await page.waitForSelector('.player .status-presence.status-expiring[data-moment="flow"]', { timeout: 800 });
+
   if (errors.length) throw new Error('uncaught JS errors during the flow:\n  ' + errors.join('\n  '));
 
   console.log(`smoke ok — reached combat with ${handCount} cards in hand, no JS errors`);

@@ -385,6 +385,7 @@ export class Combat {
     if (isAttack && target.isPlayer && source && target.powers.riposte) {
       const back = target.powers.riposte;
       delete target.powers.riposte;
+      this.fx('powerfade', { target, key: 'riposte' });
       this.applyDamage(source, back, { isAttack: false });
     }
     // Counter Stance (enemy-side, e.g. the Brass Sentinel): while braced, every
@@ -665,7 +666,10 @@ export class Combat {
     // Artifact (Charm) negates incoming debuffs
     if (amount > 0 && def && def.type === 'debuff' && target.powers.artifact > 0) {
       target.powers.artifact -= 1;
-      if (target.powers.artifact <= 0) delete target.powers.artifact;
+      if (target.powers.artifact <= 0) {
+        delete target.powers.artifact;
+        this.fx('powerfade', { target, key: 'artifact' });
+      }
       this.fx('negated', { target, key });
       this.notify();
       return;
