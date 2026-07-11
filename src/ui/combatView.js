@@ -1169,13 +1169,33 @@ export class CombatView {
       }
       if (Math.hypot(dx, dy) < 8) return;
       d.moved = true;
-      try { d.node.setPointerCapture(d.id); d.captured = true; } catch (_) {}
+      // Touch pointers already get implicit capture to their initial target
+      // per the Pointer Events spec, so an explicit setPointerCapture() call
+      // is redundant there — and calling it mid-gesture (from a pointermove
+      // handler rather than pointerdown) fires a spurious immediate
+      // 'lostpointercapture', which our cancelDrag() treats as "the user let
+      // go" and tears the whole drag down before it ever really starts.
+      // Confirmed against real touch input, not just mouse emulation. Keep
+      // the explicit capture for mouse/pen, where there's no implicit
+      // capture and the pointer can otherwise stray off the dragged card.
+      if (d.pointerType !== 'touch') {
+        try { d.node.setPointerCapture(d.id); d.captured = true; } catch (_) {}
+      }
       this.game.tooltip(null, null, false);
       d.node.classList.add('dragging');
       d.node.style.width = d.w + 'px';
       d.node.style.height = d.h + 'px';
+      // Once we've committed to a JS-driven drag (as opposed to the native
+      // hand-scroll swipe .hand .card's base touch-action:pan-x exists for),
+      // opt this node out of native panning so the browser's scroll gesture
+      // recognizer can't steal the rest of the touch sequence out from under
+      // us mid-drag — without this, a real finger drifting even slightly
+      // toward an off-center enemy can get silently swallowed into a hand
+      // scroll, and the card never plays.
+      if (d.pointerType === 'touch') d.node.style.touchAction = 'none';
       if (d.card.target === 'enemy') this.setDragTargeting(true);
     }
+    if (d.pointerType === 'touch') e.preventDefault();
     d.node.style.left = (e.clientX - d.w / 2) + 'px';
     d.node.style.top = (e.clientY - d.h / 2) + 'px';
     const playable = this.combat.canPlay(d.card);
@@ -1200,6 +1220,7 @@ export class CombatView {
     this.setDragOver(null);
     this.setDragTargeting(false);
     if (d.captured) { try { d.node.releasePointerCapture(d.id); } catch (_) {} }
+    d.node.style.touchAction = '';
 
     if (!d.moved) { this.clickCard(d.card); return; } // tap → click-to-play
 
@@ -1228,6 +1249,7 @@ export class CombatView {
     this.setDragOver(null);
     this.setDragTargeting(false);
     if (d.captured) { try { d.node.releasePointerCapture(d.id); } catch (_) {} }
+    d.node.style.touchAction = '';
     if (!preserveLayout && d.node.isConnected) this.update();
   }
 

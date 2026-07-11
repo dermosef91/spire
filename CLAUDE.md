@@ -171,6 +171,40 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   enlarges via `.previewing`, `--angle/--shift` zeroed), second tap commits;
   drag-to-play bypasses the preview. Always compare `previewCard` / `pendingCard` against hand card items using `.uid` (not strict reference inequality/equality), as reference mismatches will break keyboard selectors and trigger redundant highlights. Node entry runs through `Game.veilTransition`
   (a `.scene-veil` fade) so combat/events don't snap in.
+  **Touch drag-and-drop gotcha — don't call `setPointerCapture()` for touch
+  pointers from a `pointermove` handler.** `dragMove`'s drag-vs-swipe
+  disambiguation only knows a gesture is a deliberate drag once it has
+  already moved ≥8px, so the `setPointerCapture()` call that locks the
+  dragged card to receive further events necessarily happens from inside
+  `pointermove`, not `pointerdown`. Verified against real touch input (via
+  CDP `Input.dispatchTouchEvent`, not just synthetic `PointerEvent`s or
+  Playwright mouse emulation — those don't reproduce this) that calling
+  `setPointerCapture()` there fires a **spurious immediate
+  `lostpointercapture`**, which `_dragCancel`/`cancelDrag()` treats as "the
+  user let go" and tears the whole drag down (calls `update()`, which
+  destroys and rebuilds the hand's DOM) before the drag ever really starts —
+  so touch-dragging a card onto an enemy silently fails on real devices even
+  though it works fine in every mouse/synthetic-event test. Fix: skip the
+  explicit capture for `pointerType === 'touch'` entirely — touch pointers
+  already get *implicit* capture to their initial target per the Pointer
+  Events spec (confirmed: `pointermove` keeps landing on the card node with
+  capture skipped), so nothing is lost; mouse/pen still need the explicit
+  call since they have no implicit capture and would otherwise stop
+  receiving events once the cursor strays off the (now-`position:fixed`,
+  shrunk) card. Also set `touch-action: none` on the card once `d.moved`
+  flips true and call `e.preventDefault()` in the touch branch of
+  `dragMove`, so the browser's native `pan-x` scroll recognizer (the base
+  `.hand .card { touch-action: pan-x }` rule that lets a horizontal swipe
+  scroll the hand) can't compete with an in-progress drag as the finger
+  drifts sideways toward an enemy; reset `node.style.touchAction = ''` in
+  both `dragEnd` and `cancelDrag` (including the `preserveLayout` path,
+  which reuses the same node) so a plain tap/swipe on the next touch keeps
+  the native scroll-friendly behavior. When testing any touch-drag change,
+  Playwright mouse-emulation and JS-dispatched `PointerEvent`s are **not
+  sufficient** — they don't exercise the browser's real touch-action/capture
+  pipeline; use `context.newCDPSession(page)` +
+  `Input.dispatchTouchEvent('touchStart'/'touchMove'/'touchEnd', {
+  touchPoints: [{x,y}] })` against a `hasTouch:true, isMobile:true` context.
   Enemies choose moves via `bp.pick(s, c, rng)`; prefer `rng.weighted(...)` +
   the player-state helpers in `enemies.js` (`playerLowHp`/`playerBlocked`/
   `playerLacks`/`selfLowHp`) over fixed `turn % n` cycles. A blueprint
