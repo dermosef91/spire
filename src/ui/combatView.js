@@ -467,6 +467,8 @@ export class CombatView {
     }
     if (it.type === 'buff' || it.type === 'buffblock') wrap.appendChild(el('span', { class: 'intent-buf', attrs: { 'data-intent-type': 'buff' }, html: `<i class="intent-ic">${INTENT.buff}</i>` }));
     if (it.type === 'unknown') wrap.appendChild(el('span', { class: 'intent-unk', attrs: { 'data-intent-type': 'unknown' }, html: `<i class="intent-ic">${INTENT.unknown}</i>` }));
+    if (it.type === 'counter') wrap.appendChild(el('span', { class: 'intent-ctr', attrs: { 'data-intent-type': 'counter' }, html: `<i class="intent-ic">${INTENT.counter}</i>` }));
+    if (it.type === 'flee') wrap.appendChild(el('span', { class: 'intent-flee', attrs: { 'data-intent-type': 'flee' }, html: `<i class="intent-ic">${INTENT.flee}</i>` }));
     wrap.title = it.name || '';
     // Pop the pill when the telegraphed move actually changed (move name, type
     // or the displayed damage — Strength/Exposed shifts count too). Skipped on

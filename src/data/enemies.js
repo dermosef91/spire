@@ -25,6 +25,8 @@
 //   • Berserker — escalating Resolve, no defense → a damage clock.
 //   • Phaser — periodic Phase (intangible) → don't waste your burst.
 
+import { POWERS } from './keywords.js';
+
 export const ENEMIES = {};
 function def(id, bp) { ENEMIES[id] = { id, ...bp }; }
 
@@ -64,20 +66,43 @@ const playerLowHp = (c, frac = 0.35) => c.player.hp <= c.player.maxHp * frac;
 const playerBlocked = (c, min = 1) => (c.player.block || 0) >= min;
 const playerLacks = (c, key) => !c.player.powers[key];
 const selfLowHp = (s, frac = 0.4) => s.hp <= s.maxHp * frac;
+// Total debuff stacks on an entity (Blight 4 counts as 4). Used by cleansers
+// (Tide Priest's Baptize) to spot the most-afflicted ally.
+const debuffStacks = (e) => Object.keys(e.powers)
+  .reduce((n, k) => n + (POWERS[k]?.type === 'debuff' ? Math.max(1, e.powers[k]) : 0), 0);
 
 // ===================== ACT 1 — The Sunken Market =====================
 
 // Basic attacker — light pressure, an occasional self-buff. The tutorial foe.
+// In a pair, a surviving drone strips its fallen sibling for parts (telegraphed
+// Salvage Core: Resolve + Block), so splitting damage evenly vs. focusing one
+// down becomes a real decision instead of a pure grind.
 def('husk_drone', {
   name: 'Husk Drone', act: 1, hpMin: 24, hpMax: 32, startBlock: 6,
   moves: {
     zap: atk('Zap', 6, 1, { sfx: 'zap', vfx: 'zap' }),
     buzz: { name: 'Overcharge', intent: { type: 'buffblock', block: 4 }, run: (c, s) => { c.applyPower(s, 'strength', 2, s); c.gainBlockTo(s, 4); c.fx('powersurge', { target: s }); } },
+    scavenge: { name: 'Salvage Core', intent: { type: 'buffblock', block: 4 }, run: (c, s) => { s._scavenge = false; c.applyPower(s, 'strength', 2, s); c.gainBlockTo(s, 4); c.fx('powersurge', { target: s }); } },
   },
-  pick: (s, c, rng) => (s.history.filter((m) => m === 'buzz').length === 0 && s.turn === 1 ? 'zap' : (s.turn % 3 === 0 ? 'buzz' : 'zap')),
+  // The tutorial pins this fight solo, so `zap` on turn 1 stays guaranteed —
+  // _scavenge can only be set by a sibling's death (never in a solo fight).
+  onAllyDeath: (c, s, dead) => {
+    if (dead.id !== 'husk_drone') return; // it salvages drone cores, not any corpse
+    s._scavenge = true;
+    c.pickEnemyMove(s); // re-telegraph immediately, like checkPhase does
+    c.log(`${s.name} turns on its fallen sibling, stripping it for parts!`);
+    c.notify();
+  },
+  pick: (s, c, rng) => {
+    if (s._scavenge) return 'scavenge';
+    return s.history.filter((m) => m === 'buzz').length === 0 && s.turn === 1 ? 'zap' : (s.turn % 3 === 0 ? 'buzz' : 'zap');
+  },
 });
 
-// Swarm / debuffer — quick flurries and Sapped. Block eats its little bites.
+// Pack hunter / debuffer — reads your guard: an open hero gets lunged at, a
+// blocked one gets howled Sapped. In a pair the jackals split roles (only one
+// howls at a time — enemies pick intents in order, so the second sees the
+// first's choice), so the pack always mixes teeth with the howl.
 def('static_jackal', {
   name: 'Static Jackal', act: 1, hpMin: 20, hpMax: 26,
   moves: {
@@ -85,69 +110,122 @@ def('static_jackal', {
     howl: { name: 'Howl', sfx: 'growl', intent: { type: 'debuffblock', block: 5 }, run: (c, s) => { c.applyPower(c.player, 'weak', 1, s); c.gainBlockTo(s, 5); } },
     lunge: atk('Lunge', 5, 2),
   },
-  pick: (s, c, rng) => rng.pick(['bite', 'lunge', 'howl']),
+  pick: (s, c, rng) => {
+    // An undefended player gets pounced on.
+    if (!playerBlocked(c)) return rng.weighted([{ value: 'lunge', weight: 3 }, { value: 'bite', weight: 2 }]);
+    // A defended one gets Sapped — unless a packmate is already mid-howl.
+    const allyHowls = c.enemies.some((e) => e.alive && e !== s && e.id === 'static_jackal' && e.move === 'howl');
+    if (s.last !== 'howl' && !allyHowls) return 'howl';
+    return rng.pick(['bite', 'lunge']);
+  },
 });
 
-// Retaliator / turtle — parks Block and Backlash, then a heavy Slam. Flurries
-// hurt you back; answer it with one big hit or by holding your attacks.
+// Retaliator / turtle — the Counter Stance enemy. Every third turn it braces
+// (telegraphed `counter` intent): while braced, each attack hit it takes feeds
+// it Resolve, and the swing after the brace is a Piston Slam powered by
+// whatever you fed it. The puzzle: hold your attacks (or set up) for one turn,
+// or pay for the hits later. Replaces the old Backlash identity, which was
+// removed from the game.
 def('brass_sentinel', {
   name: 'Brass Sentinel', act: 1, hpMin: 44, hpMax: 54, startBlock: 6,
   moves: {
     slam: atk('Piston Slam', 10),
     barricade: { name: 'Barricade', intent: { type: 'block', block: 8 }, run: (c, s) => { c.gainBlockTo(s, 8); } },
     rivet: { name: 'Rivet', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.addCardToPile(c.makeCard('dazed'), 'draw'); } },
+    stance: { name: 'Counter Stance', intent: { type: 'counter' }, run: (c, s) => { c.applyPower(s, 'counter', 2, s); } },
   },
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'barricade';
-    if (s.last === 'barricade') return 'slam';
-    return s.turn % 3 === 0 ? 'barricade' : rng.pick(['slam', 'rivet']);
+    if (s.last === 'stance') return 'slam'; // the payoff swing, fed by any hits into the brace
+    if (s.turn % 3 === 0) return 'stance';
+    if (selfLowHp(s, 0.5) && s.last !== 'barricade') return 'barricade';
+    return rng.pick(['slam', 'rivet']);
   },
 });
 
-// Gold thief — chips your purse and flees. Kill it fast or eat the loss.
+// Gold thief — a race with a payoff. Its steals escalate each turn (8/12/16),
+// the escape is telegraphed with a distinct `flee` intent, and cutting it down
+// before it slips away recovers everything it stole plus a bounty. Ignoring it
+// gets progressively wrong; killing it is actively profitable.
+const thiefSwipe = (name, gold) => ({
+  name, intent: { type: 'attacksteal', dmg: 7, gold },
+  run: (c, s) => {
+    c.enemyAttack(s, 7);
+    if (!s.alive || s.fled) return; // e.g. cut down by a parry reflect mid-swipe
+    const stolen = Math.min(gold, c.run.gold);
+    c.run.gold -= stolen;
+    s._stolen = (s._stolen || 0) + stolen;
+    if (stolen > 0) c.fx('gold', { amount: -stolen });
+  },
+});
 def('market_thief', {
   name: 'Market Thief', act: 1, hpMin: 26, hpMax: 32,
   moves: {
-    swipe: {
-      name: 'Purse Snatch', intent: { type: 'attacksteal', dmg: 7, gold: 8 },
-      run: (c, s) => {
-        c.enemyAttack(s, 7);
-        if (s.fled) return;
-        const stolen = Math.min(8, c.run.gold);
-        c.run.gold -= stolen;
-        if (stolen > 0) c.fx('gold', { amount: -stolen });
-      },
-    },
-    flee: { name: 'Flee', intent: { type: 'unknown' }, run: (c, s) => c.enemyFlee(s) },
+    swipe: thiefSwipe('Purse Snatch', 8),
+    swipe2: thiefSwipe('Pocket Rake', 12),
+    swipe3: thiefSwipe('Grand Filch', 16),
+    flee: { name: 'Flee', intent: { type: 'flee' }, run: (c, s) => c.enemyFlee(s) },
   },
-  pick: (s, c, rng) => (s.turn >= 4 ? 'flee' : 'swipe'),
+  // Killed (not fled): the satchel spills — full refund of what it stole this
+  // fight, plus a 15-gold bounty.
+  onDeath: (c, s) => {
+    const bounty = (s._stolen || 0) + 15;
+    c.run.gold += bounty;
+    c.fx('gold', { amount: bounty });
+    c.log(`The thief's satchel spills — you recover ${bounty} gold.`);
+  },
+  pick: (s, c, rng) => (s.turn >= 4 ? 'flee' : ['swipe', 'swipe2', 'swipe3'][s.turn - 1]),
 });
 
 // Poisoner — light attacks but stacks Blight fast. A race: end it before the
-// poison snowballs, or bring healing.
+// poison snowballs, or bring healing. Once wounded it shells up defensively,
+// so chip damage lets it hide while the Blight ticks — committed burst is
+// rewarded over poking.
 def('reef_spitter', {
   name: 'Reef Spitter', act: 1, hpMin: 22, hpMax: 27,
   moves: {
     spit: { name: 'Brine Spit', sfx: 'slime', vfx: 'spit', intent: { type: 'attackdebuff', dmg: 4 }, run: (c, s) => { c.enemyAttack(s, 4); c.applyPower(c.player, 'poison', 3, s); } },
     cloud: { name: 'Blight Cloud', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'poison', 4, s) },
     snap: atk('Shell Snap', 7),
+    shell: { name: 'Shell Up', intent: { type: 'block', block: 7 }, run: (c, s) => c.gainBlockTo(s, 7) },
   },
   pick: (s, c, rng) => {
+    if (selfLowHp(s, 0.4) && s.last !== 'shell') return 'shell';
     if (s.turn === 1) return 'spit';
     return s.turn % 3 === 0 ? 'snap' : rng.pick(['spit', 'cloud']);
   },
 });
 
 // Support / healer — barely attacks, but mends the most-wounded ally and lends
-// it Resolve. In a group it is the priority target; alone it is harmless.
+// it Resolve. Baptize washes a heavily-Blighted/Exposed ally clean, so debuff
+// decks feel the kill-priority pressure just as hard as damage decks do. In a
+// group it is the priority target; alone it is nearly harmless.
 def('tide_priest', {
   name: 'Tide Priest', act: 1, hpMin: 25, hpMax: 31,
   moves: {
     mend: { name: 'Tidal Mending', intent: { type: 'buff' }, run: (c, s) => { eHeal(c, weakestAlly(c) || s, 10); } },
     anoint: { name: 'Anoint', intent: { type: 'buff' }, run: (c, s) => { const t = otherAlly(c, s); c.applyPower(t, 'strength', 2, s); c.fx('powersurge', { target: t }); } },
+    baptize: {
+      name: 'Baptize', intent: { type: 'buff' },
+      run: (c, s) => {
+        const allies = c.enemies.filter((e) => e.alive);
+        if (!allies.length) return;
+        const t = allies.reduce((a, b) => (debuffStacks(b) > debuffStacks(a) ? b : a));
+        let washed = 0;
+        for (const key of Object.keys(t.powers)) {
+          if (POWERS[key]?.type === 'debuff') { delete t.powers[key]; c.fx('powerfade', { target: t, key }); washed += 1; }
+        }
+        if (washed > 0) c.log(`${s.name} washes ${t === s ? 'itself' : t.name} clean.`);
+        c.notify();
+      },
+    },
     splash: atk('Splash', 5, 1, { sfx: 'splash', vfx: 'splash' }),
   },
   pick: (s, c, rng) => {
+    // Cleanse first when someone carries a real affliction (4+ total stacks),
+    // but never twice running, so a debuff deck can still out-pace the wash.
+    const afflicted = c.enemies.some((e) => e.alive && debuffStacks(e) >= 4);
+    if (afflicted && s.last !== 'baptize') return 'baptize';
     const hurt = c.enemies.some((e) => e.alive && e !== s && e.hp < e.maxHp * 0.6);
     if (hurt) return 'mend';
     return s.turn % 2 === 0 ? 'anoint' : 'splash';
@@ -155,14 +233,29 @@ def('tide_priest', {
 });
 
 // Glass cannon / ramper — low HP, grows Resolve and swings for more each round.
-// It re-kindles every few turns, so it can't be safely ignored; burst it down.
+// The "burst it down" pressure has a hard deadline: once it has kindled to 6+
+// Resolve it overloads, telegraphing Burn Out — a huge strike that destroys
+// the imp itself. Ignore it long enough and you eat the blast either way.
 def('spark_imp', {
   name: 'Spark Imp', act: 1, hpMin: 13, hpMax: 17,
   moves: {
     kindle: { name: 'Kindle', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
     jolt: atk('Jolt', 6, 1, { sfx: 'zap', vfx: 'zap' }),
+    detonate: {
+      name: 'Burn Out', sfx: 'thunder', vfx: 'zap', intent: { type: 'attack', dmg: 10 },
+      run: (c, s) => {
+        c.enemyAttack(s, 10);
+        if (!s.alive) return; // already cut down mid-blast (parry reflect)
+        c.log(`${s.name} burns out to nothing.`);
+        s.hp = 0;
+        c.checkDeath(s);
+      },
+    },
   },
-  pick: (s, c, rng) => (s.turn === 1 || s.turn % 4 === 0 ? 'kindle' : 'jolt'),
+  pick: (s, c, rng) => {
+    if ((s.powers.strength || 0) >= 6) return 'detonate';
+    return s.turn === 1 || s.turn % 4 === 0 ? 'kindle' : 'jolt';
+  },
 });
 
 // Act 1 elite — Warden: enrages, hardening and hitting harder as the fight drags.

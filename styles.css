@@ -1262,7 +1262,8 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
   background: rgba(8,4,2,0.95); border-right: 1px solid var(--orange); border-bottom: 1px solid var(--orange); }
 .intent-atk { color: var(--ember); } .intent-def { color: #9fc2ff; } .intent-buf { color: var(--amber); }
 .intent-deb { color: var(--orange); } .intent-unk { color: var(--muted); } .intent-steal { color: var(--amber); }
-.intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk, .intent-steal { cursor: pointer; display: inline-flex; align-items: center; }
+.intent-ctr { color: var(--amber); } .intent-flee { color: var(--orange); }
+.intent-atk, .intent-def, .intent-buf, .intent-deb, .intent-unk, .intent-steal, .intent-ctr, .intent-flee { cursor: pointer; display: inline-flex; align-items: center; }
 
 .combat-scene.targeting .enemy.targetable { cursor: pointer; }
 .combat-scene.targeting .enemy.targetable .med-core { animation: targetPulse 1s ease-in-out infinite; }

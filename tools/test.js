@@ -373,6 +373,154 @@ test('a successful parry leaves block untouched by the halving rule', () => {
   assert.equal(c.player.block, 4, 'block consumed normally (10 - 6)');
 });
 
+// ----------------------------------------------------------------- Act 1 encounter identities
+console.log('Act 1 encounter identities (data/enemies.js)');
+
+test('Counter Stance converts attack hits into Resolve while braced', () => {
+  const run = new RunState('amara', 5);
+  const c = new Combat(run, ['brass_sentinel']);
+  c.start();
+  const e = c.enemies[0];
+  ENEMIES.brass_sentinel.moves.stance.run(c, e);
+  assert.equal(e.powers.counter, 2, 'stance applied');
+  c.deal(e, 4, 2); // two player hits into the brace (blocked hits count too)
+  assert.equal(e.powers.strength, 4, 'each of the two hits fed 2 Resolve');
+});
+
+test('a killing blow into the brace feeds nothing', () => {
+  const run = new RunState('amara', 5);
+  const c = new Combat(run, ['brass_sentinel']);
+  c.start();
+  const e = c.enemies[0];
+  e.block = 0; e.hp = 3;
+  c.applyPower(e, 'counter', 2, e);
+  c.deal(e, 10, 1);
+  assert.equal(e.alive, false);
+  assert.ok(!e.powers.strength, 'no Resolve floated on the corpse');
+});
+
+await testAsync('Counter Stance expires when the braced enemy next acts', async () => {
+  const run = new RunState('amara', 5);
+  const c = new Combat(run, ['brass_sentinel']);
+  c.start();
+  const e = c.enemies[0];
+  c.applyPower(e, 'counter', 2, e);
+  await c.endTurn();
+  assert.ok(!e.powers.counter, 'the brace dropped as it acted');
+});
+
+test('killing the Market Thief refunds stolen gold plus a bounty', () => {
+  const run = new RunState('amara', 9);
+  const c = new Combat(run, ['market_thief']);
+  c.start();
+  run.gold = 50;
+  const thief = c.enemies[0];
+  thief.bp.moves.swipe.run(c, thief); // its 7-damage hit, then an 8-gold steal
+  assert.equal(run.gold, 42, 'the swipe stole 8');
+  assert.equal(thief._stolen, 8, 'the haul is tracked');
+  c.applyDamage(thief, 999, { isAttack: true, source: c.player });
+  assert.equal(thief.alive, false);
+  assert.equal(run.gold, 42 + 8 + 15, 'stolen gold returned with the 15 bounty');
+});
+
+test('a thief that flees keeps the gold — no refund on escape', () => {
+  const run = new RunState('amara', 9);
+  const c = new Combat(run, ['market_thief']);
+  c.start();
+  run.gold = 50;
+  const thief = c.enemies[0];
+  thief.bp.moves.swipe.run(c, thief);
+  const after = run.gold;
+  c.enemyFlee(thief);
+  assert.equal(run.gold, after, 'flee fires no death hook');
+});
+
+test('the thief escalates its steals and telegraphs the flee', () => {
+  const bp = ENEMIES.market_thief;
+  assert.equal(bp.pick({ turn: 1 }), 'swipe');
+  assert.equal(bp.pick({ turn: 2 }), 'swipe2');
+  assert.equal(bp.pick({ turn: 3 }), 'swipe3');
+  assert.equal(bp.pick({ turn: 4 }), 'flee');
+  assert.equal(bp.moves.swipe.intent.gold, 8);
+  assert.equal(bp.moves.swipe2.intent.gold, 12);
+  assert.equal(bp.moves.swipe3.intent.gold, 16);
+  assert.equal(bp.moves.flee.intent.type, 'flee', 'the escape has its own intent type');
+});
+
+test('a kindled-up Spark Imp telegraphs Burn Out and destroys itself', () => {
+  const run = new RunState('amara', 11);
+  const c = new Combat(run, ['spark_imp']);
+  c.start();
+  const imp = c.enemies[0];
+  c.applyPower(imp, 'strength', 6, imp);
+  c.pickEnemyMove(imp);
+  assert.equal(imp.move, 'detonate', '6+ Resolve forces the Burn Out telegraph');
+  const hpBefore = c.player.hp;
+  imp.bp.moves.detonate.run(c, imp);
+  assert.ok(c.player.hp < hpBefore, 'the blast landed');
+  assert.equal(imp.alive, false, 'the imp burned out');
+  assert.equal(c.over, true, 'last enemy gone ends the fight');
+  assert.equal(c.victory, true);
+});
+
+test('Tide Priest baptizes the most-afflicted ally clean of debuffs', () => {
+  const run = new RunState('amara', 13);
+  const c = new Combat(run, ['tide_priest', 'reef_spitter']);
+  c.start();
+  const [priest, spitter] = c.enemies;
+  c.applyPower(spitter, 'poison', 5, c.player);
+  c.applyPower(spitter, 'vulnerable', 1, c.player);
+  c.pickEnemyMove(priest);
+  assert.equal(priest.move, 'baptize', 'cleansing takes priority at 4+ stacks');
+  priest.bp.moves.baptize.run(c, priest);
+  assert.ok(!spitter.powers.poison && !spitter.powers.vulnerable, 'debuffs washed away');
+  // never twice running, so a debuff deck can out-pace the wash
+  priest.last = 'baptize';
+  c.applyPower(spitter, 'poison', 5, c.player);
+  assert.notEqual(ENEMIES.tide_priest.pick(priest, c, c.rng), 'baptize');
+});
+
+test('a Husk Drone salvages its fallen sibling (telegraphed Salvage Core)', () => {
+  const run = new RunState('amara', 17);
+  const c = new Combat(run, ['husk_drone', 'husk_drone']);
+  c.start();
+  const [a, b] = c.enemies;
+  c.applyDamage(a, 999, { isAttack: true, source: c.player });
+  assert.equal(a.alive, false);
+  assert.equal(b.move, 'scavenge', 'the survivor re-telegraphs Salvage Core');
+  const strBefore = b.powers.strength || 0;
+  b.bp.moves.scavenge.run(c, b);
+  assert.equal((b.powers.strength || 0) - strBefore, 2, 'salvage granted Resolve');
+  assert.ok(!b._scavenge, 'one-shot — the flag cleared');
+});
+
+test('Static Jackal pounces an open hero, howls at a blocked one, and packs split roles', () => {
+  const run = new RunState('amara', 19);
+  const c = new Combat(run, ['static_jackal', 'static_jackal']);
+  c.start();
+  const [j1, j2] = c.enemies;
+  c.player.block = 0;
+  for (let i = 0; i < 20; i++) assert.notEqual(ENEMIES.static_jackal.pick(j1, c, c.rng), 'howl', 'no howl at an open hero');
+  c.player.block = 10;
+  j1.last = null; j1.move = 'bite';
+  assert.equal(ENEMIES.static_jackal.pick(j1, c, c.rng), 'howl', 'a blocked hero gets Sapped');
+  j1.move = 'howl'; // packmate already mid-howl
+  j2.last = null;
+  for (let i = 0; i < 20; i++) assert.notEqual(ENEMIES.static_jackal.pick(j2, c, c.rng), 'howl', 'the pack never doubles the howl');
+});
+
+test('a wounded Reef Spitter shells up instead of spitting', () => {
+  const run = new RunState('amara', 23);
+  const c = new Combat(run, ['reef_spitter']);
+  c.start();
+  const e = c.enemies[0];
+  e.hp = Math.floor(e.maxHp * 0.3);
+  c.pickEnemyMove(e);
+  assert.equal(e.move, 'shell');
+  e.last = 'shell';
+  assert.notEqual(ENEMIES.reef_spitter.pick(e, c, c.rng), 'shell', 'never twice running');
+});
+
 // ----------------------------------------------------------------- Tempo (rhythm layer → card game)
 console.log('Tempo (combat/combat.js)');
 

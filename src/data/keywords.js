@@ -88,6 +88,15 @@ export const POWERS = {
     type: 'buff',
     desc: 'The next {n} enemy attacks against you miss entirely. Each dodge consumes one stack.',
   },
+  // Enemy-side stance (Brass Sentinel): the transparent replacement for the
+  // removed Backlash on the retaliator archetype. Attacking into the brace
+  // feeds the enemy; the counter-play is holding your attacks for one turn.
+  // Expires when the braced enemy next acts (cleared in enemyPhase).
+  counter: {
+    name: 'Counter Stance',
+    type: 'buff',
+    desc: 'Braced to punish: every Attack hit this unit takes grants it {n} Resolve. The stance ends when it next acts.',
+  },
 
   // --- Debuffs ---
   // Exposed / Sapped / Brittle are HIT-COUNTED, not turn-timed: each stack is
