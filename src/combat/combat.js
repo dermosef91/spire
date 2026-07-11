@@ -7,6 +7,7 @@ import { ENEMIES } from '../data/enemies.js';
 import { POWERS } from '../data/keywords.js';
 import { RELICS } from '../data/relics.js';
 import { wait } from '../core/util.js';
+import { enemyMovePacing } from './presentation.js';
 
 const BASE_ENERGY = 3;
 const HAND_LIMIT = 10;
@@ -923,7 +924,7 @@ export class Combat {
 
     // Announce the handoff back to the player. The first turn is covered by the
     // Battle Start popup, so skip the banner there.
-    if (!first) this.fx('announce', { text: 'Your Turn', kind: 'player' });
+    if (!first) this.fx('announce', { text: 'Your Turn', kind: 'player', subtext: `Turn ${this.turn}` });
 
     // draw
     const drawCount = Math.max(0, 5 + (first ? this._extraOpenDraw : 0) - debtDraw);
@@ -991,14 +992,14 @@ export class Combat {
     this.tickTurnDebuffs(this.player);
 
     this.notify();
-    await wait(250);
+    await wait(180);
 
     await this.enemyPhase();
 
     if (!this.over) {
       // Brief pause after the enemy phase settles so "Your Turn" doesn't fire
       // in the same instant the last enemy's hit lands.
-      await wait(600);
+      await wait(460);
       this.startPlayerTurn(false);
     }
     this.animating = false;
@@ -1008,8 +1009,9 @@ export class Combat {
   async enemyPhase() {
     // Announce the enemy turn and let the banner read before any foe acts, so
     // the first strike doesn't land in the same instant the phase begins.
-    this.fx('announce', { text: 'Enemy Turn', kind: 'enemy' });
-    await wait(850);
+    this.fx('enemyPhaseStart', { turn: this.turn });
+    this.fx('announce', { text: 'Enemy Turn', kind: 'enemy', subtext: `Turn ${this.turn}` });
+    await wait(650);
     for (const e of this.enemies) {
       if (!e.alive || this.over) continue;
       // A foe summoned during this same phase waits until the next one to act
@@ -1033,6 +1035,7 @@ export class Combat {
       // proceeds normally. Skipping pickEnemyMove is what makes the intent
       // carry over unchanged into the following phase.
       if (e._skipNext) {
+        this.fx('enemyActing', { source: e, name: 'Staggered', weight: 'utility' });
         e._skipNext = false;
         this.log(`${e.name} is staggered and skips its turn.`);
         this.fx('stagger', { target: e });
@@ -1040,6 +1043,8 @@ export class Combat {
         e.last = e.move;
         e.turn += 1;
         this.tickTurnDebuffs(e);
+        await wait(390);
+        this.fx('enemyActed', { source: e });
         continue;
       }
       // Counter Stance lasts exactly the player turn it was braced for: it
@@ -1052,11 +1057,13 @@ export class Combat {
       const move = e.bp.moves[e.move];
       this.log(`${e.name} uses ${move.name}.`);
       const isAttack = e.intent && e.intent.type && e.intent.type.startsWith('attack');
+      const pacing = enemyMovePacing(e.intent, { boss: !!e.bp.boss });
       // Float the move name over the enemy, then give it a beat before the
       // action resolves so the attack/skill reads as a consequence of the name.
-      this.fx('enemyMove', { source: e, name: move.name, isAttack });
-      await wait(750);
-      if (this.over || !e.alive) continue;
+      this.fx('enemyActing', { source: e, name: move.name, weight: pacing.weight });
+      this.fx('enemyMove', { source: e, name: move.name, isAttack, weight: pacing.weight });
+      await wait(pacing.read);
+      if (this.over || !e.alive) { this.fx('enemyActed', { source: e }); continue; }
       if (!isAttack) {
         const isBlock = e.intent && e.intent.type && e.intent.type.includes('block');
         this.fx('skillstart', { source: e, pose: isBlock ? 'block' : 'skill' });
@@ -1074,14 +1081,16 @@ export class Combat {
       this._qtePrompted = false;
       this._parried = false;
       this.notify();
-      await wait(550);
+      await wait(pacing.settle);
+      this.fx('enemyActed', { source: e });
       e.history.push(e.move);
       e.last = e.move;
       e.turn += 1;
       this.tickTurnDebuffs(e);
-      if (this.over) return;
+      if (this.over) { this.fx('enemyPhaseEnd', { turn: this.turn }); return; }
       this.pickEnemyMove(e); // choose next turn's intent
     }
+    this.fx('enemyPhaseEnd', { turn: this.turn });
     this.notify();
   }
 

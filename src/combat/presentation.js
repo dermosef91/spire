@@ -93,3 +93,17 @@ export function intentDescription(intent, preview) {
   }
   return lines.join(' ');
 }
+
+// A single authored cadence for enemy actions. Routine utility moves should
+// read briskly, while multi-hit and high-damage attacks keep enough wind-up to
+// feel dangerous. This is presentation-only: the returned values never alter
+// combat outcomes.
+export function enemyMovePacing(intent = {}, { boss = false } = {}) {
+  const type = String(intent.type || '');
+  const hits = Math.max(1, intent.hits || 1);
+  const totalDamage = Math.max(0, intent.dmg || 0) * hits;
+  const heavy = type.startsWith('attack') && (totalDamage >= 18 || hits >= 3);
+  if (heavy) return { read: boss ? 720 : 680, settle: 560, weight: 'heavy' };
+  if (type.startsWith('attack')) return { read: 560, settle: 440, weight: 'attack' };
+  return { read: 480, settle: 390, weight: 'utility' };
+}
