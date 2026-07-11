@@ -4,7 +4,7 @@
 // Mixed onto Game.prototype (see game.js).
 
 import { el } from '../core/util.js';
-import { topBar, button } from '../ui/components.js';
+import { topBar, button, sceneHeading } from '../ui/components.js';
 import { canUpgrade } from '../data/cards.js';
 import { eventsForAct } from '../data/events.js';
 import { NODE } from '../ui/icons.js';
@@ -33,7 +33,7 @@ export const EventScene = {
     const panel = el('div', { class: 'event-scene' });
     panel.appendChild(topBar(run, { onHover: (o, n, on) => this.tooltip(o, n, on) }));
     panel.appendChild(eventArt(ev));
-    panel.appendChild(el('h2', { text: ev.name }));
+    panel.appendChild(sceneHeading(ev.name));
     panel.appendChild(el('p', { class: 'event-text', text: ev.text }));
     const choices = el('div', { class: 'choices' });
     for (const ch of ev.choices) {

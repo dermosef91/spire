@@ -3,7 +3,7 @@
 // Mixed onto Game.prototype (see game.js).
 
 import { el } from '../core/util.js';
-import { renderCard, topBar, relicChip, potionChip, button, highlightKeywords } from '../ui/components.js';
+import { renderCard, topBar, relicChip, potionChip, button, highlightKeywords, sceneHeading } from '../ui/components.js';
 import { CARDS, createCard } from '../data/cards.js';
 import { RELICS } from '../data/relics.js';
 import { POTIONS } from '../data/potions.js';
@@ -19,7 +19,7 @@ export const ShopScene = {
     const shop = run._shop;
     const panel = el('div', { class: 'shop-scene' });
     panel.appendChild(topBar(run, { onHover: (o, n, on) => this.tooltip(o, n, on) }));
-    panel.appendChild(el('h2', { text: 'The Brass Bazaar' }));
+    panel.appendChild(sceneHeading('The Brass Bazaar'));
     panel.appendChild(el('div', { class: 'shop-gold', html: `You carry <i class="tb-ic">${UI.coin}</i> <b>${run.gold}</b> gold` }));
 
     const cardSec = el('div', { class: 'shop-section shop-stall' });
