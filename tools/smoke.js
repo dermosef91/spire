@@ -203,6 +203,33 @@ try {
   if (!bossSubtitle || !bossSubtitle.includes('BOSS · PHASE I')) throw new Error(`boss rank subtitle missing: ${bossSubtitle}`);
   await page.waitForSelector('.combat-scene.encounter-boss .hand .card', { timeout: 3500 });
 
+  // Each newly treated marquee card has a real 6×4 spritesheet. This covers
+  // both all-enemy releases and Falling Star's target-focused meteor impact.
+  for (const { id, sheet } of [
+    { id: 'harvest', sheet: 'reaping-arc' },
+    { id: 'falling_star', sheet: 'falling-star' },
+    { id: 'whirlwind', sheet: 'cyclone-dance' },
+  ]) {
+    const uid = await page.evaluate((cardId) => {
+      const combat = window.__combat;
+      const card = combat.makeCard(cardId);
+      combat.energy = 9;
+      combat.hand.unshift(card);
+      combat.notify();
+      return card.uid;
+    }, id);
+    await page.waitForSelector(`.hand .card[data-uid="${uid}"]`, { timeout: 1000 });
+    await page.evaluate((cardUid) => {
+      const combat = window.__combat;
+      const card = combat.hand.find((item) => item.uid === cardUid);
+      window.__ase.combatView.playCard(card, combat.livingEnemies()[0]);
+    }, uid);
+    await page.waitForSelector(`.sprite-vfx-${sheet}`, { timeout: 1800 });
+    const sheetImage = await page.locator(`.sprite-vfx-${sheet}`).first().evaluate((node) => getComputedStyle(node).backgroundImage);
+    if (!sheetImage.includes(`${sheet}.png`)) throw new Error(`${id} used the wrong VFX sheet: ${sheetImage}`);
+    await page.waitForSelector(`.sprite-vfx-${sheet}`, { state: 'detached', timeout: 1800 });
+  }
+
   // Persistent statuses must inhabit the combatants, not exist only as pips.
   await page.evaluate(() => {
     const combat = window.__combat;

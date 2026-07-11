@@ -468,3 +468,31 @@ export async function hiltCrackVFX(layer, targetEl) {
     clearTimeout(impactTimer);
   }
 }
+
+// The three marquee card sheets share the same 24-frame 6×4 format as Fault
+// Line and Hilt Crack. Their timing is started at the player wind-up, so the
+// authored impact cells arrive with the view's delayed damage beat.
+export async function reapingArcVFX(layer, targetEl) {
+  if (!layer || !targetEl || reduce()) return;
+  await spriteAnim(layer, targetEl, 'reaping-arc', { fps: 32 });
+}
+
+export async function fallingStarVFX(layer, targetEl) {
+  if (!layer || !targetEl || reduce()) return;
+  const sceneEl = targetEl.closest('.combat-scene') || targetEl.closest('.scene') || document.body;
+  const impactTimer = setTimeout(() => {
+    screenShake(sceneEl, true);
+    ring(layer, targetEl, 'rgba(188,214,255,0.96)');
+    burst(layer, targetEl, '#dce9ff', 20);
+  }, 285);
+  try {
+    await spriteAnim(layer, targetEl, 'falling-star', { fps: 32 });
+  } finally {
+    clearTimeout(impactTimer);
+  }
+}
+
+export async function cycloneDanceVFX(layer, targetEl) {
+  if (!layer || !targetEl || reduce()) return;
+  await spriteAnim(layer, targetEl, 'cyclone-dance', { fps: 34 });
+}

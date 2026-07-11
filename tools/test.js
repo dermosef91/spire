@@ -926,6 +926,12 @@ test('Hilt Crack draws 2 at the Tempo threshold, else 1', () => {
   assert.equal(c.hand.length, before + 2, 'at threshold: drew 2');
 });
 
+test('Reaping Arc, Falling Star, and Cyclone Dance declare bespoke multi-frame VFX', () => {
+  assert.equal(createCard('harvest')._bp.vfx, 'reaping-arc');
+  assert.equal(createCard('falling_star')._bp.vfx, 'falling-star');
+  assert.equal(createCard('whirlwind')._bp.vfx, 'cyclone-dance');
+});
+
 test('Weather the Blow grants Block and Tempo', () => {
   const c = freshCombat();
   c.player.block = 0;

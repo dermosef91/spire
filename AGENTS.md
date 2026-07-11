@@ -503,6 +503,7 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
   starts from `attackstart`; do not also replay it from the damage handler.
   Custom screen shake must target `.combat-scene` (the selector owning the
   shake animation), not merely the nearest generic `.scene` wrapper.
+- **Generated VFX sheets**: When generating a new 6×4 combat sheet with the built-in image workflow, use a flat magenta chroma-key background and run `remove_chroma_key.py --auto-key border --soft-matte --despill` before committing. Inspect the alpha sheet after removal; the full canvas must remain 1536×1024 and the transparent cells must not retain a colored backing.
 - **GitHub workflow (preferred for live runs)**: the **Generate Assets**
   workflow (`.github/workflows/sprites.yml`, `workflow_dispatch`) runs the
   generators on an open-egress runner with the repo's `OPENAI_API_KEY` secret
