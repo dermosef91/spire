@@ -600,6 +600,7 @@ test('semantic FX reports actual healing, direct HP loss, resistance, and blocke
   assert.deepEqual(events.filter((e) => e.type === 'heal').map((e) => e.payload.amount), [3], 'overheal reports only HP restored and full-HP heal is silent');
   assert.deepEqual(events.filter((e) => e.type === 'healthloss').map((e) => e.payload.amount), [2]);
   assert.equal(events.filter((e) => e.type === 'negated').length, 1, 'Charm resistance is visible');
+  assert.ok(events.some((e) => e.type === 'powerfade' && e.payload.key === 'artifact'), 'the last Charm has an explicit expiry beat');
   assert.equal(events.filter((e) => e.type === 'blockprevented').length, 1, 'Sundered rejection is visible');
 });
 
@@ -1259,10 +1260,13 @@ console.log('New cards — Riposte & Flow (PR4)');
 test('Riposte deals damage back when the player is hit, then consumes a stack', () => {
   const c = freshCombat();
   const enemy = c.enemies[0]; enemy.block = 0; enemy.hp = enemy.maxHp = 999;
+  const fades = [];
+  c.fx = (type, payload) => { if (type === 'powerfade') fades.push(payload.key); };
   c.applyPower(c.player, 'riposte', 6, c.player);
   c.enemyAttack(enemy, 5);
   assert.equal(enemy.hp, 999 - 6, 'enemy took the Riposte damage back');
   assert.equal(c.player.powers.riposte, undefined, 'stack consumed');
+  assert.ok(fades.includes('riposte'), 'spent Riposte emits a visible expiry beat');
   c.enemyAttack(enemy, 5);
   assert.equal(enemy.hp, 999 - 6, 'no further Riposte damage once the stack is spent');
 });
