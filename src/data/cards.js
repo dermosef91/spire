@@ -56,7 +56,7 @@ def('ironwave', {
 });
 def('pommel', {
   name: 'Hilt Crack', char: 'amara', type: 'attack', rarity: 'common', cost: 1,
-  dmg: 8, magic: 4, target: 'enemy',
+  dmg: 8, magic: 4, target: 'enemy', vfx: 'hilt-crack',
   desc: (c) => `Deal ${c.dmg} damage. Draw 1 card — 2 if you have ${c.magic}+ Tempo.`,
   upgrade: (c) => { c.dmg = 10; c.magic = 3; },
   onPlay: (ctx) => { ctx.deal(ctx.enemy, ctx.c.dmg); ctx.draw(ctx.tempo() >= ctx.c.magic ? 2 : 1); },

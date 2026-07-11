@@ -44,8 +44,10 @@ const atk = (name, dmg, hits = 1, extra = {}) => ({
 // Helper: heal an enemy and flash the heal FX.
 const eHeal = (c, e, n) => {
   if (!e || !e.alive || n <= 0) return;
+  const before = e.hp;
   e.hp = Math.min(e.maxHp, e.hp + n);
-  c.fx('heal', { entity: e, amount: n });
+  const healed = e.hp - before;
+  if (healed > 0) c.fx('heal', { entity: e, amount: healed });
   c.notify();
 };
 // The most-wounded living ally (by HP fraction). Used by supports/healers.
@@ -81,8 +83,8 @@ def('husk_drone', {
   name: 'Husk Drone', act: 1, hpMin: 24, hpMax: 32, startBlock: 6,
   moves: {
     zap: atk('Zap', 6, 1, { sfx: 'zap', vfx: 'zap' }),
-    buzz: { name: 'Overcharge', intent: { type: 'buffblock', block: 4 }, run: (c, s) => { c.applyPower(s, 'strength', 2, s); c.gainBlockTo(s, 4); c.fx('powersurge', { target: s }); } },
-    scavenge: { name: 'Salvage Core', intent: { type: 'buffblock', block: 4 }, run: (c, s) => { s._scavenge = false; c.applyPower(s, 'strength', 2, s); c.gainBlockTo(s, 4); c.fx('powersurge', { target: s }); } },
+    buzz: { name: 'Overcharge', intent: { type: 'buffblock', block: 4, detail: 'Gain 2 Resolve.' }, run: (c, s) => { c.applyPower(s, 'strength', 2, s); c.gainBlockTo(s, 4); c.fx('powersurge', { target: s }); } },
+    scavenge: { name: 'Salvage Core', intent: { type: 'buffblock', block: 4, detail: 'Gain 2 Resolve.' }, run: (c, s) => { s._scavenge = false; c.applyPower(s, 'strength', 2, s); c.gainBlockTo(s, 4); c.fx('powersurge', { target: s }); } },
   },
   // The tutorial pins this fight solo, so `zap` on turn 1 stays guaranteed —
   // _scavenge can only be set by a sibling's death (never in a solo fight).
@@ -107,7 +109,7 @@ def('static_jackal', {
   name: 'Static Jackal', act: 1, hpMin: 20, hpMax: 26,
   moves: {
     bite: atk('Snap', 8),
-    howl: { name: 'Howl', sfx: 'growl', intent: { type: 'debuffblock', block: 5 }, run: (c, s) => { c.applyPower(c.player, 'weak', 1, s); c.gainBlockTo(s, 5); } },
+    howl: { name: 'Howl', sfx: 'growl', intent: { type: 'debuffblock', block: 5, detail: 'Apply 1 Sapped.' }, run: (c, s) => { c.applyPower(c.player, 'weak', 1, s); c.gainBlockTo(s, 5); } },
     lunge: atk('Lunge', 5, 2),
   },
   pick: (s, c, rng) => {
@@ -131,8 +133,8 @@ def('brass_sentinel', {
   moves: {
     slam: atk('Piston Slam', 10),
     barricade: { name: 'Barricade', intent: { type: 'block', block: 8 }, run: (c, s) => { c.gainBlockTo(s, 8); } },
-    rivet: { name: 'Rivet', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.addCardToPile(c.makeCard('dazed'), 'draw'); } },
-    stance: { name: 'Counter Stance', intent: { type: 'counter' }, run: (c, s) => { c.applyPower(s, 'counter', 2, s); } },
+    rivet: { name: 'Rivet', intent: { type: 'attackdebuff', dmg: 6, detail: 'Shuffle 1 Dazed into your draw pile.' }, run: (c, s) => { c.enemyAttack(s, 6); c.addCardToPile(c.makeCard('dazed'), 'draw'); } },
+    stance: { name: 'Counter Stance', intent: { type: 'counter', detail: 'Gain 2 Counter.' }, run: (c, s) => { c.applyPower(s, 'counter', 2, s); } },
   },
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'barricade';
@@ -164,7 +166,7 @@ def('market_thief', {
     swipe: thiefSwipe('Purse Snatch', 8),
     swipe2: thiefSwipe('Pocket Rake', 12),
     swipe3: thiefSwipe('Grand Filch', 16),
-    flee: { name: 'Flee', intent: { type: 'flee' }, run: (c, s) => c.enemyFlee(s) },
+    flee: { name: 'Flee', intent: { type: 'flee', detail: 'Leave combat with the stolen Gold.' }, run: (c, s) => c.enemyFlee(s) },
   },
   // Killed (not fled): the satchel spills — full refund of what it stole this
   // fight, plus a 15-gold bounty.
@@ -184,8 +186,8 @@ def('market_thief', {
 def('reef_spitter', {
   name: 'Reef Spitter', act: 1, hpMin: 22, hpMax: 27,
   moves: {
-    spit: { name: 'Brine Spit', sfx: 'slime', vfx: 'spit', intent: { type: 'attackdebuff', dmg: 4 }, run: (c, s) => { c.enemyAttack(s, 4); c.applyPower(c.player, 'poison', 3, s); } },
-    cloud: { name: 'Blight Cloud', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'poison', 4, s) },
+    spit: { name: 'Brine Spit', sfx: 'slime', vfx: 'spit', intent: { type: 'attackdebuff', dmg: 4, detail: 'Apply 3 Blight.' }, run: (c, s) => { c.enemyAttack(s, 4); c.applyPower(c.player, 'poison', 3, s); } },
+    cloud: { name: 'Blight Cloud', intent: { type: 'debuff', detail: 'Apply 4 Blight.' }, run: (c, s) => c.applyPower(c.player, 'poison', 4, s) },
     snap: atk('Shell Snap', 7),
     shell: { name: 'Shell Up', intent: { type: 'block', block: 7 }, run: (c, s) => c.gainBlockTo(s, 7) },
   },
@@ -203,10 +205,10 @@ def('reef_spitter', {
 def('tide_priest', {
   name: 'Tide Priest', act: 1, hpMin: 25, hpMax: 31,
   moves: {
-    mend: { name: 'Tidal Mending', intent: { type: 'buff' }, run: (c, s) => { eHeal(c, weakestAlly(c) || s, 10); } },
-    anoint: { name: 'Anoint', intent: { type: 'buff' }, run: (c, s) => { const t = otherAlly(c, s); c.applyPower(t, 'strength', 2, s); c.fx('powersurge', { target: t }); } },
+    mend: { name: 'Tidal Mending', intent: { type: 'buff', detail: 'Heal the most-wounded ally for 10 HP.' }, run: (c, s) => { eHeal(c, weakestAlly(c) || s, 10); } },
+    anoint: { name: 'Anoint', intent: { type: 'buff', detail: 'Give another ally 2 Resolve.' }, run: (c, s) => { const t = otherAlly(c, s); c.applyPower(t, 'strength', 2, s); c.fx('powersurge', { target: t }); } },
     baptize: {
-      name: 'Baptize', intent: { type: 'buff' },
+      name: 'Baptize', intent: { type: 'buff', detail: 'Cleanse all debuffs from the most-afflicted ally.' },
       run: (c, s) => {
         const allies = c.enemies.filter((e) => e.alive);
         if (!allies.length) return;
@@ -239,7 +241,7 @@ def('tide_priest', {
 def('spark_imp', {
   name: 'Spark Imp', act: 1, hpMin: 13, hpMax: 17,
   moves: {
-    kindle: { name: 'Kindle', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
+    kindle: { name: 'Kindle', intent: { type: 'buff', detail: 'Gain 3 Resolve.' }, run: (c, s) => { c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
     jolt: atk('Jolt', 6, 1, { sfx: 'zap', vfx: 'zap' }),
     detonate: {
       name: 'Burn Out', sfx: 'thunder', vfx: 'zap', intent: { type: 'attack', dmg: 10 },
@@ -272,8 +274,8 @@ def('gilded_warden', {
   moves: {
     cleave: atk('Wide Cleave', 14),
     barrage: atk('Brass Barrage', 5, 3),
-    fortify: { name: 'Fortify', intent: { type: 'buffblock', block: 12 }, run: (c, s) => { c.gainBlockTo(s, 12); c.applyPower(s, 'strength', 2, s); c.fx('powersurge', { target: s }); } },
-    wrath: { name: 'Gild Wrath', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
+    fortify: { name: 'Fortify', intent: { type: 'buffblock', block: 12, detail: 'Gain 2 Resolve.' }, run: (c, s) => { c.gainBlockTo(s, 12); c.applyPower(s, 'strength', 2, s); c.fx('powersurge', { target: s }); } },
+    wrath: { name: 'Gild Wrath', intent: { type: 'buff', detail: 'Gain 4 Resolve.' }, run: (c, s) => { c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
   },
   phase: {
     at: 0.4, name: 'Gild Wrath',
@@ -300,7 +302,7 @@ def('rust_maw', {
   name: 'Rust Maw', act: 1, elite: true, hpMin: 62, hpMax: 68,
   moves: {
     gnash: atk('Gnash', 8, 2),
-    coil: { name: 'Coil', intent: { type: 'buffblock', block: 10 }, run: (c, s) => { c.gainBlockTo(s, 10); c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
+    coil: { name: 'Coil', intent: { type: 'buffblock', block: 10, detail: 'Gain 3 Resolve.' }, run: (c, s) => { c.gainBlockTo(s, 10); c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
     crush: { name: 'Rusted Crush', intent: { type: 'attack', dmg: 24 }, run: (c, s) => c.enemyAttack(s, 24) },
   },
   pick: (s, c, rng) => {
@@ -317,8 +319,8 @@ def('the_gatekeeper', {
   moves: {
     judge: atk('Judgement', 13),
     barrage: atk('Sevenfold Strike', 3, 4, { sfx: 'thunder' }),
-    seal: { name: 'Seal the Gate', intent: { type: 'debuffblock', block: 18 }, run: (c, s) => { c.gainBlockTo(s, 18); c.applyPower(c.player, 'frail', 2, s); } },
-    decree: { name: 'Decree', intent: { type: 'debuff' }, run: (c, s) => { c.applyPower(c.player, 'weak', 2, s); c.applyPower(c.player, 'vulnerable', 2, s); } },
+    seal: { name: 'Seal the Gate', intent: { type: 'debuffblock', block: 18, detail: 'Apply 2 Brittle.' }, run: (c, s) => { c.gainBlockTo(s, 18); c.applyPower(c.player, 'frail', 2, s); } },
+    decree: { name: 'Decree', intent: { type: 'debuff', detail: 'Apply 2 Sapped and 2 Exposed.' }, run: (c, s) => { c.applyPower(c.player, 'weak', 2, s); c.applyPower(c.player, 'vulnerable', 2, s); } },
   },
   phase: {
     at: 0.5, name: 'The Gate Unbars',
@@ -344,8 +346,8 @@ def('sand_wraith', {
   name: 'Sand Wraith', act: 2, hpMin: 28, hpMax: 34,
   moves: {
     rend: atk('Rend', 11),
-    drain: { name: 'Soul Drain', intent: { type: 'attackdebuff', dmg: 8 }, run: (c, s) => { c.enemyAttack(s, 8); c.applyPower(c.player, 'frail', 2, s); eHeal(c, s, 4); } },
-    wither: { name: 'Wither', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'strengthDown', 2, s) },
+    drain: { name: 'Soul Drain', intent: { type: 'attackdebuff', dmg: 8, detail: 'Apply 2 Brittle; heal 4 HP.' }, run: (c, s) => { c.enemyAttack(s, 8); c.applyPower(c.player, 'frail', 2, s); eHeal(c, s, 4); } },
+    wither: { name: 'Wither', intent: { type: 'debuff', detail: 'Apply 2 Resolve Down.' }, run: (c, s) => c.applyPower(c.player, 'strengthDown', 2, s) },
   },
   pick: (s, c, rng) => {
     if ((c.player.powers.strength || 0) >= 3 && playerLacks(c, 'strengthDown')) return 'wither';
@@ -360,7 +362,7 @@ def('mirror_shade', {
   moves: {
     shard: atk('Shard Volley', 6, 2),
     reflect: { name: 'Reflect', intent: { type: 'block', block: 14 }, run: (c, s) => { c.gainBlockTo(s, 14); } },
-    glare: { name: 'Glare', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'vulnerable', 2, s) },
+    glare: { name: 'Glare', intent: { type: 'debuff', detail: 'Apply 2 Exposed.' }, run: (c, s) => c.applyPower(c.player, 'vulnerable', 2, s) },
   },
   pick: (s, c, rng) => (s.turn % 3 === 0 ? 'reflect' : rng.pick(['shard', 'glare'])),
 });
@@ -369,9 +371,9 @@ def('mirror_shade', {
 def('chrome_serpent', {
   name: 'Chrome Serpent', act: 2, hpMin: 40, hpMax: 46,
   moves: {
-    constrict: { name: 'Constrict', intent: { type: 'debuffblock', block: 8 }, run: (c, s) => { c.applyPower(c.player, 'weak', 2, s); c.gainBlockTo(s, 8); } },
+    constrict: { name: 'Constrict', intent: { type: 'debuffblock', block: 8, detail: 'Apply 2 Sapped.' }, run: (c, s) => { c.applyPower(c.player, 'weak', 2, s); c.gainBlockTo(s, 8); } },
     crush: atk('Crush', 16),
-    venom: { name: 'Venom Spit', sfx: 'slime', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.applyPower(c.player, 'poison', 5, s); } },
+    venom: { name: 'Venom Spit', sfx: 'slime', intent: { type: 'attackdebuff', dmg: 6, detail: 'Apply 5 Blight.' }, run: (c, s) => { c.enemyAttack(s, 6); c.applyPower(c.player, 'poison', 5, s); } },
   },
   pick: (s, c, rng) => (s.turn === 1 ? 'constrict' : rng.pick(['crush', 'venom'])),
 });
@@ -381,9 +383,9 @@ def('chrome_serpent', {
 def('ink_leech', {
   name: 'Ink Leech', act: 2, hpMin: 26, hpMax: 32,
   moves: {
-    latch: { name: 'Latch', sfx: 'slime', intent: { type: 'attack', dmg: 9 }, run: (c, s) => { c.enemyAttack(s, 9); eHeal(c, s, 6); } },
-    siphon: { name: 'Siphon', sfx: 'slime', intent: { type: 'attackdebuff', dmg: 5 }, run: (c, s) => { c.enemyAttack(s, 5); c.applyPower(c.player, 'weak', 1, s); eHeal(c, s, 4); } },
-    gorge: { name: 'Gorge', intent: { type: 'buff' }, run: (c, s) => eHeal(c, s, 10) },
+    latch: { name: 'Latch', sfx: 'slime', intent: { type: 'attack', dmg: 9, detail: 'Heal 6 HP.' }, run: (c, s) => { c.enemyAttack(s, 9); eHeal(c, s, 6); } },
+    siphon: { name: 'Siphon', sfx: 'slime', intent: { type: 'attackdebuff', dmg: 5, detail: 'Apply 1 Sapped; heal 4 HP.' }, run: (c, s) => { c.enemyAttack(s, 5); c.applyPower(c.player, 'weak', 1, s); eHeal(c, s, 4); } },
+    gorge: { name: 'Gorge', intent: { type: 'buff', detail: 'Heal 10 HP.' }, run: (c, s) => eHeal(c, s, 10) },
   },
   pick: (s, c, rng) => {
     if (s.hp < s.maxHp * 0.35) return 'gorge';
@@ -397,9 +399,9 @@ def('ink_leech', {
 def('null_scribe', {
   name: 'Null Scribe', act: 2, hpMin: 30, hpMax: 36,
   moves: {
-    redact: { name: 'Redact', intent: { type: 'debuff' }, run: (c, s) => { c.addCardToPile(c.makeCard('dazed'), 'draw'); c.addCardToPile(c.makeCard('dazed'), 'draw'); } },
-    scrawl: { name: 'Scrawl Wound', intent: { type: 'attackdebuff', dmg: 6 }, run: (c, s) => { c.enemyAttack(s, 6); c.addCardToPile(c.makeCard('wound'), 'discard'); } },
-    ward: { name: 'Ward', intent: { type: 'buffblock', block: 8 }, run: (c, s) => { c.gainBlockTo(s, 8); c.applyPower(s, 'artifact', 2, s); } },
+    redact: { name: 'Redact', intent: { type: 'debuff', detail: 'Shuffle 2 Dazed into your draw pile.' }, run: (c, s) => { c.addCardToPile(c.makeCard('dazed'), 'draw'); c.addCardToPile(c.makeCard('dazed'), 'draw'); } },
+    scrawl: { name: 'Scrawl Wound', intent: { type: 'attackdebuff', dmg: 6, detail: 'Add 1 Wound to your discard pile.' }, run: (c, s) => { c.enemyAttack(s, 6); c.addCardToPile(c.makeCard('wound'), 'discard'); } },
+    ward: { name: 'Ward', intent: { type: 'buffblock', block: 8, detail: 'Gain 2 Charm.' }, run: (c, s) => { c.gainBlockTo(s, 8); c.applyPower(s, 'artifact', 2, s); } },
   },
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'ward';
@@ -414,7 +416,7 @@ def('glyph_sentry', {
   name: 'Glyph Sentry', act: 2, hpMin: 34, hpMax: 40, startBlock: 8,
   moves: {
     spark: atk('Rune Spark', 7, 1, { sfx: 'zap' }),
-    charge: { name: 'Charge Glyph', intent: { type: 'buffblock', block: 12 }, run: (c, s) => { c.gainBlockTo(s, 12); c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
+    charge: { name: 'Charge Glyph', intent: { type: 'buffblock', block: 12, detail: 'Gain 4 Resolve.' }, run: (c, s) => { c.gainBlockTo(s, 12); c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
     lance: { name: 'Prism Lance', intent: { type: 'attack', dmg: 22 }, run: (c, s) => c.enemyAttack(s, 22) },
   },
   pick: (s, c, rng) => {
@@ -433,7 +435,7 @@ def('brass_colossus', {
     quake: atk('Quake', 22),
     twin: atk('Piston Punch', 9, 2),
     plate: { name: 'Replate', intent: { type: 'block', block: 20 }, run: (c, s) => { c.gainBlockTo(s, 20); } },
-    overload: { name: 'Overload', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
+    overload: { name: 'Overload', intent: { type: 'buff', detail: 'Gain 4 Resolve.' }, run: (c, s) => { c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
   },
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'plate';
@@ -449,7 +451,7 @@ def('obsidian_maw', {
   moves: {
     rend: atk('Obsidian Rend', 13),
     devour: { name: 'Devour', intent: { type: 'attack', dmg: 10, hits: 2 }, run: (c, s) => c.enemyAttack(s, 10, 2) },
-    hunger: { name: 'Growing Hunger', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
+    hunger: { name: 'Growing Hunger', intent: { type: 'buff', detail: 'Gain 3 Resolve.' }, run: (c, s) => { c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
   },
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'hunger';
@@ -466,8 +468,8 @@ def('the_archivist', {
   name: 'The Archivist', act: 2, boss: true, hpMin: 320, hpMax: 320,
   moves: {
     erase: atk('Erase', 20),
-    catalog: { name: 'Catalog', intent: { type: 'attackdebuff', dmg: 10 }, run: (c, s) => { c.enemyAttack(s, 10); c.addCardToPile(c.makeCard('dazed'), 'draw'); c.addCardToPile(c.makeCard('dazed'), 'draw'); } },
-    censor: { name: 'Censor', intent: { type: 'debuffblock', block: 25 }, run: (c, s) => { c.gainBlockTo(s, 25); c.applyPower(c.player, 'weak', 2, s); } },
+    catalog: { name: 'Catalog', intent: { type: 'attackdebuff', dmg: 10, detail: 'Shuffle 2 Dazed into your draw pile.' }, run: (c, s) => { c.enemyAttack(s, 10); c.addCardToPile(c.makeCard('dazed'), 'draw'); c.addCardToPile(c.makeCard('dazed'), 'draw'); } },
+    censor: { name: 'Censor', intent: { type: 'debuffblock', block: 25, detail: 'Apply 2 Sapped.' }, run: (c, s) => { c.gainBlockTo(s, 25); c.applyPower(c.player, 'weak', 2, s); } },
     purge: { name: 'Purge', intent: { type: 'attack', dmg: 7, hits: 3 }, run: (c, s) => c.enemyAttack(s, 7, 3) },
   },
   phase: {
@@ -493,8 +495,8 @@ def('void_chanter', {
   name: 'Void Chanter', act: 3, hpMin: 42, hpMax: 48,
   moves: {
     wail: atk('Wail', 13),
-    hex: { name: 'Hex', intent: { type: 'debuff' }, run: (c, s) => { c.applyPower(c.player, 'vulnerable', 2, s); c.applyPower(c.player, 'weak', 2, s); } },
-    unname: { name: 'Unname', intent: { type: 'debuff' }, run: (c, s) => c.applyPower(c.player, 'strengthDown', 2, s) },
+    hex: { name: 'Hex', intent: { type: 'debuff', detail: 'Apply 2 Exposed and 2 Sapped.' }, run: (c, s) => { c.applyPower(c.player, 'vulnerable', 2, s); c.applyPower(c.player, 'weak', 2, s); } },
+    unname: { name: 'Unname', intent: { type: 'debuff', detail: 'Apply 2 Resolve Down.' }, run: (c, s) => c.applyPower(c.player, 'strengthDown', 2, s) },
   },
   pick: (s, c, rng) => {
     if (s.turn === 1 || playerLacks(c, 'vulnerable')) return 'hex';
@@ -508,7 +510,7 @@ def('static_seraph', {
   name: 'Static Seraph', act: 3, hpMin: 50, hpMax: 58,
   moves: {
     beam: atk('Beam', 10, 2),
-    bless: { name: 'False Blessing', intent: { type: 'buffblock', block: 16 }, run: (c, s) => { c.gainBlockTo(s, 16); c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
+    bless: { name: 'False Blessing', intent: { type: 'buffblock', block: 16, detail: 'Gain 3 Resolve.' }, run: (c, s) => { c.gainBlockTo(s, 16); c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
     smite: atk('Smite', 25),
   },
   // Telegraphs Smite every third turn; otherwise builds Resolve before it swings.
@@ -525,7 +527,7 @@ def('echo_wraith', {
   moves: {
     flurry: atk('Echo Flurry', 5, 3),
     rake: atk('Rake', 14),
-    phase: { name: 'Phase Shift', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'intangible', 2, s); c.applyPower(c.player, 'weak', 1, s); } },
+    phase: { name: 'Phase Shift', intent: { type: 'buff', detail: 'Gain 2 Phase; apply 1 Sapped.' }, run: (c, s) => { c.applyPower(s, 'intangible', 2, s); c.applyPower(c.player, 'weak', 1, s); } },
   },
   // Phases on a cycle; when you're turtled up it punches through with the single
   // big Rake instead of a flurry Block soaks.
@@ -541,8 +543,8 @@ def('echo_wraith', {
 def('hollow_cantor', {
   name: 'Hollow Cantor', act: 3, hpMin: 46, hpMax: 52,
   moves: {
-    dirge: { name: 'Dirge', intent: { type: 'buff' }, run: (c, s) => { eHeal(c, weakestAlly(c) || s, 12); const t = otherAlly(c, s); c.applyPower(t, 'strength', 2, s); c.fx('powersurge', { target: t }); } },
-    hymn: { name: 'Warding Hymn', intent: { type: 'buffblock', block: 12 }, run: (c, s) => { c.gainBlockTo(otherAlly(c, s), 10); c.applyPower(s, 'artifact', 1, s); } },
+    dirge: { name: 'Dirge', intent: { type: 'buff', detail: 'Heal the most-wounded ally for 12 HP; give another ally 2 Resolve.' }, run: (c, s) => { eHeal(c, weakestAlly(c) || s, 12); const t = otherAlly(c, s); c.applyPower(t, 'strength', 2, s); c.fx('powersurge', { target: t }); } },
+    hymn: { name: 'Warding Hymn', intent: { type: 'buffblock', block: 12, detail: 'Give an ally 10 Block; gain 1 Charm.' }, run: (c, s) => { c.gainBlockTo(otherAlly(c, s), 10); c.applyPower(s, 'artifact', 1, s); } },
     lash: atk('Candle Lash', 11),
   },
   pick: (s, c, rng) => {
@@ -558,8 +560,8 @@ def('ember_colossus', {
   name: 'Ember Colossus', act: 3, hpMin: 56, hpMax: 64,
   moves: {
     stomp: atk('Magma Stomp', 16),
-    sunder: { name: 'Sunder', intent: { type: 'attackdebuff', dmg: 12 }, run: (c, s) => { c.enemyAttack(s, 12); c.applyPower(c.player, 'frail', 2, s); } },
-    seethe: { name: 'Seethe', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
+    sunder: { name: 'Sunder', intent: { type: 'attackdebuff', dmg: 12, detail: 'Apply 2 Brittle.' }, run: (c, s) => { c.enemyAttack(s, 12); c.applyPower(c.player, 'frail', 2, s); } },
+    seethe: { name: 'Seethe', intent: { type: 'buff', detail: 'Gain 4 Resolve.' }, run: (c, s) => { c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
   },
   pick: (s, c, rng) => {
     if (s.turn === 1) return 'seethe';
@@ -575,7 +577,7 @@ def('static_swarm', {
   moves: {
     scatter: atk('Scatterstatic', 3, 5, { sfx: 'zap' }),
     surge: atk('Surge', 12, 1, { sfx: 'zap' }),
-    corrupt: { name: 'Corrupt', intent: { type: 'debuff' }, run: (c, s) => { c.addCardToPile(c.makeCard('static_curse'), 'discard'); c.applyPower(c.player, 'weak', 1, s); } },
+    corrupt: { name: 'Corrupt', intent: { type: 'debuff', detail: 'Add 1 Static Curse to your discard pile; apply 1 Sapped.' }, run: (c, s) => { c.addCardToPile(c.makeCard('static_curse'), 'discard'); c.applyPower(c.player, 'weak', 1, s); } },
   },
   pick: (s, c, rng) => {
     if (s.turn % 3 === 0) return 'corrupt';
@@ -589,8 +591,8 @@ def('static_swarm', {
 def('choir_master', {
   name: 'Choir Master', act: 3, hpMin: 54, hpMax: 62,
   moves: {
-    conduct: { name: 'Conduct', intent: { type: 'unknown' }, run: (c, s) => { c.summonEnemy('echo_mote'); c.summonEnemy('echo_mote'); } },
-    crescendo: { name: 'Crescendo', intent: { type: 'buff' }, run: (c, s) => { for (const e of c.enemies) if (e.alive && e !== s) { c.applyPower(e, 'strength', 2, s); c.fx('powersurge', { target: e }); } } },
+    conduct: { name: 'Conduct', intent: { type: 'unknown', detail: 'Summon 2 Echo Motes.' }, run: (c, s) => { c.summonEnemy('echo_mote'); c.summonEnemy('echo_mote'); } },
+    crescendo: { name: 'Crescendo', intent: { type: 'buff', detail: 'Give every other enemy 2 Resolve.' }, run: (c, s) => { for (const e of c.enemies) if (e.alive && e !== s) { c.applyPower(e, 'strength', 2, s); c.fx('powersurge', { target: e }); } } },
     lash: atk('Baton Lash', 12),
   },
   pick: (s, c, rng) => {
@@ -620,7 +622,7 @@ def('chrome_archon', {
   moves: {
     annihilate: atk('Annihilate', 30),
     swarm: atk('Nanoswarm', 6, 4),
-    reweave: { name: 'Reweave', intent: { type: 'buffblock', block: 24 }, run: (c, s) => { c.gainBlockTo(s, 24); c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
+    reweave: { name: 'Reweave', intent: { type: 'buffblock', block: 24, detail: 'Gain 3 Resolve.' }, run: (c, s) => { c.gainBlockTo(s, 24); c.applyPower(s, 'strength', 3, s); c.fx('powersurge', { target: s }); } },
   },
   // Reweaves its wall when wounded, drops Annihilate on an undefended hero (but
   // never twice running), and chips with Nanoswarm otherwise.
@@ -638,8 +640,8 @@ def('heart_of_static', {
   moves: {
     blast: atk('Reality Blast', 42),
     multibeam: atk('Cascade', 5, 6, { sfx: 'zap' }),
-    static_field: { name: 'Static Field', intent: { type: 'debuffblock', block: 20 }, run: (c, s) => { for (let i = 0; i < 3; i++) c.addCardToPile(c.makeCard('dazed'), 'draw'); c.applyPower(c.player, 'weak', 1, s); c.gainBlockTo(s, 20); } },
-    rebuild: { name: 'Rebuild', intent: { type: 'buffblock', block: 30 }, run: (c, s) => { c.gainBlockTo(s, 30); c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
+    static_field: { name: 'Static Field', intent: { type: 'debuffblock', block: 20, detail: 'Shuffle 3 Dazed into your draw pile; apply 1 Sapped.' }, run: (c, s) => { for (let i = 0; i < 3; i++) c.addCardToPile(c.makeCard('dazed'), 'draw'); c.applyPower(c.player, 'weak', 1, s); c.gainBlockTo(s, 20); } },
+    rebuild: { name: 'Rebuild', intent: { type: 'buffblock', block: 30, detail: 'Gain 4 Resolve.' }, run: (c, s) => { c.gainBlockTo(s, 30); c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
   },
   buff: { name: 'Invincibility', desc: 'Caps the damage taken in a single turn.' },
   // At half health the Heart tears open (The Static Screams): it walls up, gains

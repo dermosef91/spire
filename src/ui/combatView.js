@@ -6,13 +6,15 @@ import { el, clear } from '../core/util.js';
 import { renderCard, topBar } from './components.js';
 import { POWERS } from '../data/keywords.js';
 import { audio } from '../audio.js';
-import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine, chargeUp, singleFrameAnim, faultLineVFX } from './fx.js';
+import { ensureFxLayer, floatText, floatHTML, hitFlash, shake, lunge, slash, ring, screenShake, burst, shine, chargeUp, singleFrameAnim, faultLineVFX, hiltCrackVFX } from './fx.js';
 import { runAttackQTE, runParryQTE } from './rhythm.js';
 import { combatModel, INTENT, UI, powerIcon } from './icons.js';
 import { spriteOrSvg, hasSprite } from './sprites.js';
 import { background } from '../fx/background.js';
+import { attackNotation, intentDescription, previewCardBlock, previewEnemyAttack } from '../combat/presentation.js';
 
 const eidOf = (ent) => (ent.isPlayer ? 'p' : 'e' + ent.idx);
+const waitMs = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export class CombatView {
   constructor(game, combat) {
@@ -27,6 +29,7 @@ export class CombatView {
     this.drag = null;
     this._dragMove = (e) => this.dragMove(e);
     this._dragEnd = (e) => this.dragEnd(e);
+    this._dragCancel = (e) => this.cancelDrag(e);
     this.els = {};        // eid -> combatant element
     this.parts = {};      // eid -> { intent, glyph, hpfill, hptext, block, powers, medallion }
     this._lastHandCards = [];
@@ -35,9 +38,15 @@ export class CombatView {
     this._lastPowers = {};   // eid -> {key: val}, for pip gain pops
     this._lastIntent = {};   // eid -> signature, for new-intent pops
     this.tempPoses = {};  // locks pose updates during dynamic animations
+    this._poseTokens = {};
     this._suggestEndTurn = false; // true once no card in hand is playable
     this._focusEndTurnPending = false;
     this.endTurnBtn = null;
+    this._choreographedCards = new Set();
+    this._committingUid = null;
+    this._intentPreviewEnemy = null;
+    this._intentPinnedEnemy = null;
+    this.activePlay = null;
   }
 
   // Does this card visibly synergize with the current board? (used to telegraph
@@ -92,7 +101,7 @@ export class CombatView {
   }
 
   handleKeydown(e) {
-    if (this.ended || this.combat.over || this.combat.animating) return;
+    if (this.interactionLocked()) return;
 
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
       return;
@@ -149,6 +158,8 @@ export class CombatView {
 
     scene.addEventListener('click', (e) => {
       if (!e.target.closest('.card, .combatant, .btn, .screen-pile, .potion-slot, .topbar-btn')) {
+        this._intentPinnedEnemy = null;
+        this.clearIntentForecast();
         if (this.pendingCard || this.previewCard) {
           this.pendingCard = null;
           this.previewCard = null;
@@ -204,7 +215,13 @@ export class CombatView {
   buildCombatant(ent, isEnemy) {
     const wrap = el('div', { class: `combatant ${isEnemy ? 'enemy' : 'player'}`, attrs: { 'data-eid': eidOf(ent) } });
     const parts = {};
-    if (isEnemy) { parts.intent = el('div', { class: 'intent' }); wrap.appendChild(parts.intent); }
+    if (isEnemy) {
+      parts.intent = el('div', {
+        class: 'intent',
+        attrs: { role: 'button', tabindex: '0', 'aria-label': 'Enemy intent' },
+      });
+      wrap.appendChild(parts.intent);
+    }
 
     const stage = el('div', { class: 'stage' });
     parts.medallion = el('div', { class: 'medallion' });
@@ -235,14 +252,18 @@ export class CombatView {
     // width after a hit, then drains down (delayed transition in styles.css).
     parts.hpghost = el('div', { class: 'hpghost' });
     parts.hpfill = el('div', { class: 'hpfill' });
+    parts.hpforecast = el('div', { class: 'hp-intent-loss' });
     parts.hptext = el('div', { class: 'hptext' });
     hpwrap.appendChild(parts.hpghost);
     hpwrap.appendChild(parts.hpfill);
+    hpwrap.appendChild(parts.hpforecast);
     hpwrap.appendChild(parts.hptext);
 
     infoWrap.appendChild(nameRow);
     infoWrap.appendChild(hpwrap);
     infoWrap.appendChild(parts.block);
+    parts.forecast = el('div', { class: 'intent-forecast', attrs: { 'aria-live': 'polite' } });
+    infoWrap.appendChild(parts.forecast);
     wrap.appendChild(infoWrap);
 
     parts.powers = el('div', { class: 'powers' });
@@ -262,7 +283,31 @@ export class CombatView {
       });
     }
 
-    if (isEnemy) wrap.addEventListener('click', () => { if (this.pendingCard && ent.alive) this.confirmTarget(ent); });
+    if (isEnemy) {
+      const showIntent = (on) => {
+        if (!ent.alive) return;
+        this.setIntentForecast(ent, on);
+        if (on) this.showIntentTooltip(ent, parts.intent);
+        else this.game.tooltip(null, null, false);
+      };
+      parts.intent.addEventListener('mouseenter', () => showIntent(true));
+      parts.intent.addEventListener('mouseleave', () => { if (this._intentPinnedEnemy !== ent) showIntent(false); });
+      parts.intent.addEventListener('focus', () => showIntent(true));
+      parts.intent.addEventListener('blur', () => { if (this._intentPinnedEnemy !== ent) showIntent(false); });
+      const toggleIntent = (showTooltip) => {
+        const opening = this._intentPinnedEnemy !== ent;
+        this._intentPinnedEnemy = opening ? ent : null;
+        this.setIntentForecast(ent, opening);
+        if (opening && showTooltip) this.showIntentTooltip(ent, parts.intent);
+        else if (!opening) this.game.tooltip(null, null, false);
+      };
+      parts.intent.addEventListener('intentinspect', () => toggleIntent(false));
+      parts.intent.addEventListener('click', (event) => {
+        event.stopPropagation();
+        toggleIntent(true);
+      });
+      wrap.addEventListener('click', () => { if (this.pendingCard && ent.alive) this.confirmTarget(ent); });
+    }
 
     this.parts[eidOf(ent)] = parts;
     return wrap;
@@ -272,6 +317,8 @@ export class CombatView {
   update() {
     if (!this.scene) return;
     this.game.tooltip(null, null, false);
+    this._intentPinnedEnemy = null;
+    this.clearIntentForecast();
     const c = this.combat;
 
     clear(this.topbarHolder).appendChild(topBar(this.game.run, {
@@ -307,8 +354,8 @@ export class CombatView {
         // and stashed it on the node; it fires synchronously during the hit,
         // before this microtask-deferred update runs.
         setTimeout(() => {
-          node.classList.add('dying');
-          setTimeout(() => { node.remove(); }, 620);
+          node.classList.add(node._exitClass || 'dying');
+          setTimeout(() => { node.remove(); }, node._exitDuration || 620);
         }, node._deathFxDelay || 500);
       }
     }
@@ -450,26 +497,35 @@ export class CombatView {
     clear(wrap);
     const it = enemy.intent;
     if (!it) { wrap.appendChild(el('span', { text: '…' })); return; }
-    const c = this.combat;
+    const bonusBlock = previewCardBlock(this.combat, this.previewCard);
+    const preview = previewEnemyAttack(this.combat, enemy, it, { bonusBlock });
+    const name = it.name || 'Unknown Move';
+    wrap.appendChild(el('span', { class: 'intent-name', text: name }));
+    const icons = el('span', { class: 'intent-icons' });
     if (it.type === 'attack' || it.type === 'attackdebuff' || it.type === 'attacksteal') {
-      const dmg = c.calcAttackDamage(it.dmg, enemy, c.player);
-      const hits = it.hits || 1;
-      wrap.appendChild(el('span', { class: 'intent-atk', attrs: { 'data-intent-type': 'attack' }, html: `<i class="intent-ic">${INTENT.attack}</i>${dmg}${hits > 1 ? `×${hits}` : ''}` }));
+      icons.appendChild(el('span', { class: 'intent-atk', attrs: { 'data-intent-type': 'attack' }, html: `<i class="intent-ic">${INTENT.attack}</i>${attackNotation(preview)}` }));
     }
-    if (it.type === 'attackdebuff' || it.type === 'debuff' || it.type === 'debuffblock') wrap.appendChild(el('span', { class: 'intent-deb', attrs: { 'data-intent-type': 'debuff' }, html: `<i class="intent-ic">${INTENT.debuff}</i>` }));
+    if (it.type === 'attackdebuff' || it.type === 'debuff' || it.type === 'debuffblock') icons.appendChild(el('span', { class: 'intent-deb', attrs: { 'data-intent-type': 'debuff' }, html: `<i class="intent-ic">${INTENT.debuff}</i>` }));
     if (it.type === 'attacksteal') {
       const goldAmt = it.gold || 0;
-      wrap.appendChild(el('span', { class: 'intent-steal', attrs: { 'data-intent-type': 'steal' }, html: `<i class="intent-ic">${INTENT.steal}</i>${goldAmt > 0 ? goldAmt : ''}` }));
+      icons.appendChild(el('span', { class: 'intent-steal', attrs: { 'data-intent-type': 'steal' }, html: `<i class="intent-ic">${INTENT.steal}</i>${goldAmt > 0 ? goldAmt : ''}` }));
     }
     if (it.type === 'block' || it.type === 'buffblock' || it.type === 'debuffblock') {
       const blockAmt = it.block || 0;
-      wrap.appendChild(el('span', { class: 'intent-def', attrs: { 'data-intent-type': 'block' }, html: `<i class="intent-ic">${INTENT.block}</i>${blockAmt > 0 ? blockAmt : ''}` }));
+      icons.appendChild(el('span', { class: 'intent-def', attrs: { 'data-intent-type': 'block' }, html: `<i class="intent-ic">${INTENT.block}</i>${blockAmt > 0 ? blockAmt : ''}` }));
     }
-    if (it.type === 'buff' || it.type === 'buffblock') wrap.appendChild(el('span', { class: 'intent-buf', attrs: { 'data-intent-type': 'buff' }, html: `<i class="intent-ic">${INTENT.buff}</i>` }));
-    if (it.type === 'unknown') wrap.appendChild(el('span', { class: 'intent-unk', attrs: { 'data-intent-type': 'unknown' }, html: `<i class="intent-ic">${INTENT.unknown}</i>` }));
-    if (it.type === 'counter') wrap.appendChild(el('span', { class: 'intent-ctr', attrs: { 'data-intent-type': 'counter' }, html: `<i class="intent-ic">${INTENT.counter}</i>` }));
-    if (it.type === 'flee') wrap.appendChild(el('span', { class: 'intent-flee', attrs: { 'data-intent-type': 'flee' }, html: `<i class="intent-ic">${INTENT.flee}</i>` }));
-    wrap.title = it.name || '';
+    if (it.type === 'buff' || it.type === 'buffblock') icons.appendChild(el('span', { class: 'intent-buf', attrs: { 'data-intent-type': 'buff' }, html: `<i class="intent-ic">${INTENT.buff}</i>` }));
+    if (it.type === 'unknown') icons.appendChild(el('span', { class: 'intent-unk', attrs: { 'data-intent-type': 'unknown' }, html: `<i class="intent-ic">${INTENT.unknown}</i>` }));
+    if (it.type === 'counter') icons.appendChild(el('span', { class: 'intent-ctr', attrs: { 'data-intent-type': 'counter' }, html: `<i class="intent-ic">${INTENT.counter}</i>` }));
+    if (it.type === 'flee') icons.appendChild(el('span', { class: 'intent-flee', attrs: { 'data-intent-type': 'flee' }, html: `<i class="intent-ic">${INTENT.flee}</i>` }));
+    wrap.appendChild(icons);
+    if (preview) {
+      const consequence = preview.lethal ? 'LETHAL' : preview.guarded ? 'BLOCKED' : `${preview.hpLost} HP`;
+      wrap.appendChild(el('span', { class: 'intent-consequence', text: consequence }));
+    }
+    wrap.classList.remove('intent-routine', 'intent-guarded', 'intent-danger', 'intent-lethal');
+    wrap.classList.add(`intent-${preview ? preview.severity : 'routine'}`);
+    wrap.setAttribute('aria-label', `${name}. ${intentDescription(it, preview)}`);
     // Pop the pill when the telegraphed move actually changed (move name, type
     // or the displayed damage — Strength/Exposed shifts count too). Skipped on
     // the first render so the battle-start entrance isn't doubled.
@@ -482,6 +538,58 @@ export class CombatView {
       setTimeout(() => wrap.classList.remove('intent-new'), 450);
     }
     this._lastIntent[eid] = sig;
+  }
+
+  intentPreview(enemy) {
+    if (!enemy || !enemy.intent) return null;
+    const bonusBlock = previewCardBlock(this.combat, this.previewCard);
+    return previewEnemyAttack(this.combat, enemy, enemy.intent, { bonusBlock });
+  }
+
+  showIntentTooltip(enemy, wrap) {
+    if (!enemy || !enemy.intent || !wrap) return;
+    const preview = this.intentPreview(enemy);
+    this.game.tooltip({
+      name: enemy.intent.name || 'Enemy Intent',
+      desc: intentDescription(enemy.intent, preview),
+    }, wrap, true);
+  }
+
+  setIntentForecast(enemy, on) {
+    this.clearIntentForecast();
+    if (!on || !enemy || !enemy.intent) return;
+    const preview = this.intentPreview(enemy);
+    if (!preview) return;
+    this._intentPreviewEnemy = enemy;
+    const enemyParts = this.parts[eidOf(enemy)];
+    if (enemyParts && enemyParts.intent) enemyParts.intent.classList.add('intent-inspecting');
+
+    const playerParts = this.parts.p;
+    const playerEl = this.els.p;
+    if (!playerParts || !playerEl) return;
+    const maxHp = Math.max(1, this.combat.player.maxHp);
+    playerParts.hpforecast.style.left = `${(preview.afterHp / maxHp) * 100}%`;
+    playerParts.hpforecast.style.width = `${(preview.hpLost / maxHp) * 100}%`;
+    const bonusBlock = previewCardBlock(this.combat, this.previewCard);
+    const prefix = bonusBlock > 0 && this.previewCard ? `With ${this.previewCard.name}: ` : 'After: ';
+    playerParts.forecast.textContent = `${prefix}${preview.afterHp} HP · ${preview.afterBlock} Block`;
+    playerParts.forecast.className = `intent-forecast forecast-${preview.severity}`;
+    playerEl.classList.add('intent-forecasting');
+  }
+
+  clearIntentForecast() {
+    if (this._intentPreviewEnemy) {
+      const p = this.parts[eidOf(this._intentPreviewEnemy)];
+      if (p && p.intent) p.intent.classList.remove('intent-inspecting');
+    }
+    this._intentPreviewEnemy = null;
+    const playerParts = this.parts.p;
+    if (playerParts && playerParts.hpforecast) {
+      playerParts.hpforecast.style.width = '0%';
+      playerParts.hpforecast.style.left = '0%';
+    }
+    if (playerParts && playerParts.forecast) playerParts.forecast.textContent = '';
+    if (this.els.p) this.els.p.classList.remove('intent-forecasting');
   }
 
   updateOrbs() {
@@ -535,7 +643,7 @@ export class CombatView {
     const textStr = this.pendingCard ? 'Cancel' : 'End Turn';
     // Nothing left to play this turn (empty hand, or every card in hand is
     // unaffordable/unplayable) — suggest the only legal action.
-    const suggestEndTurn = !c.over && !c.animating && !this.pendingCard && !c.hand.some((card) => c.canPlay(card));
+    const suggestEndTurn = !c.over && !c.animating && !this.activePlay && !this.pendingCard && !c.hand.some((card) => c.canPlay(card));
     this._focusEndTurnPending = suggestEndTurn && !this._suggestEndTurn;
     this._suggestEndTurn = suggestEndTurn;
     const endBtn = el('button', {
@@ -565,7 +673,7 @@ export class CombatView {
         }
       },
     });
-    if (c.animating) endBtn.disabled = true;
+    if (c.animating || this.activePlay) endBtn.disabled = true;
     bar.appendChild(endBtn);
     this.endTurnBtn = endBtn;
   }
@@ -585,6 +693,10 @@ export class CombatView {
       const sceneRect = this.scene.getBoundingClientRect();
 
       goneCards.forEach((card) => {
+        if (this._choreographedCards.has(card.uid)) {
+          this._choreographedCards.delete(card.uid);
+          return;
+        }
         const cardEl = this.handHolder.querySelector(`.card[data-uid="${card.uid}"]`);
         if (cardEl) {
           const isConsumed = card.consume || card.type === 'power' || card._forceConsume || (c.consumePile && c.consumePile.some(ec => ec.uid === card.uid));
@@ -666,7 +778,10 @@ export class CombatView {
       const isPreview = this.previewCard && this.previewCard.uid === card.uid;
       const node = renderCard(card, {
         disabled: !playable,
-        class: 'in-hand ' + affordable + combo + (this.pendingCard && this.pendingCard.uid === card.uid ? 'selected ' : '') + (isPreview ? 'previewing' : ''),
+        class: 'in-hand ' + affordable + combo
+          + (this.pendingCard && this.pendingCard.uid === card.uid ? 'selected ' : '')
+          + (isPreview ? 'previewing ' : '')
+          + (this._committingUid === card.uid ? 'committing-source' : ''),
         onHover: (cd, n, on) => { if (!this.drag) this.game.tooltip(cd, n, on, 'card-full'); },
       });
 
@@ -804,12 +919,15 @@ export class CombatView {
   }
 
   // ----------------------------------------------------------- input
+  interactionLocked() {
+    return this.ended || this.combat.over || this.combat.animating || !!this.activePlay;
+  }
+
   clickCard(card) {
     const c = this.combat;
-    if (c.animating || c.over) return;
+    if (this.interactionLocked()) return;
     const living = c.livingEnemies();
-    const isRegularAttack = card.type === 'attack' && card.target === 'enemy';
-    const needsTargetFirst = isRegularAttack && living.length > 1;
+    const needsTargetFirst = card.target === 'enemy' && living.length > 1;
 
     // If the card is already selected/previewed:
     if (this.previewCard && this.previewCard.uid === card.uid) {
@@ -845,7 +963,7 @@ export class CombatView {
   }
 
   confirmTarget(enemy) {
-    if (!this.pendingCard) return;
+    if (!this.pendingCard || this.interactionLocked()) return;
     const card = this.pendingCard;
     this.pendingCard = null;
     this.previewCard = null;
@@ -854,20 +972,19 @@ export class CombatView {
 
   // ----------------------------------------------------------- drag & drop
   onCardPointerDown(e, card, node) {
-    if (this.combat.animating || this.combat.over) return;
+    if (this.interactionLocked()) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (this.drag) return;
     const r = node.getBoundingClientRect();
     this.drag = {
       card, node, id: e.pointerId, sx: e.clientX, sy: e.clientY,
-      w: r.width, h: r.height, moved: false,
+      w: r.width, h: r.height, moved: false, captured: false, pointerType: e.pointerType,
       handTop: this.handHolder.getBoundingClientRect().top,
     };
-    try { node.setPointerCapture(e.pointerId); } catch (_) {}
     node.addEventListener('pointermove', this._dragMove);
     node.addEventListener('pointerup', this._dragEnd);
-    node.addEventListener('pointercancel', this._dragEnd);
-    node.addEventListener('lostpointercapture', this._dragEnd);
+    node.addEventListener('pointercancel', this._dragCancel);
+    node.addEventListener('lostpointercapture', this._dragCancel);
   }
 
   dragMove(e) {
@@ -875,13 +992,18 @@ export class CombatView {
     if (!d) return;
     const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
     if (!d.moved) {
+      if (d.pointerType === 'touch' && Math.abs(dx) > Math.abs(dy) * 1.15 && Math.abs(dx) >= 8) {
+        this.cancelDrag(e, { preserveLayout: true });
+        return;
+      }
       if (Math.hypot(dx, dy) < 8) return;
       d.moved = true;
+      try { d.node.setPointerCapture(d.id); d.captured = true; } catch (_) {}
       this.game.tooltip(null, null, false);
       d.node.classList.add('dragging');
       d.node.style.width = d.w + 'px';
       d.node.style.height = d.h + 'px';
-      if (d.card.target === 'enemy') this.scene.classList.add('targeting');
+      if (d.card.target === 'enemy') this.setDragTargeting(true);
     }
     d.node.style.left = (e.clientX - d.w / 2) + 'px';
     d.node.style.top = (e.clientY - d.h / 2) + 'px';
@@ -901,12 +1023,12 @@ export class CombatView {
     if (!d) return;
     d.node.removeEventListener('pointermove', this._dragMove);
     d.node.removeEventListener('pointerup', this._dragEnd);
-    d.node.removeEventListener('pointercancel', this._dragEnd);
-    d.node.removeEventListener('lostpointercapture', this._dragEnd);
-    try { d.node.releasePointerCapture(d.id); } catch (_) {}
+    d.node.removeEventListener('pointercancel', this._dragCancel);
+    d.node.removeEventListener('lostpointercapture', this._dragCancel);
     this.drag = null;
     this.setDragOver(null);
-    this.scene.classList.remove('targeting');
+    this.setDragTargeting(false);
+    if (d.captured) { try { d.node.releasePointerCapture(d.id); } catch (_) {} }
 
     if (!d.moved) { this.clickCard(d.card); return; } // tap → click-to-play
 
@@ -922,6 +1044,29 @@ export class CombatView {
     }
     if (!played) audio.play('error');
     this.update(); // re-render the hand (clears the lifted node, restores layout)
+  }
+
+  cancelDrag(_event, { preserveLayout = false } = {}) {
+    const d = this.drag;
+    if (!d) return;
+    d.node.removeEventListener('pointermove', this._dragMove);
+    d.node.removeEventListener('pointerup', this._dragEnd);
+    d.node.removeEventListener('pointercancel', this._dragCancel);
+    d.node.removeEventListener('lostpointercapture', this._dragCancel);
+    this.drag = null;
+    this.setDragOver(null);
+    this.setDragTargeting(false);
+    if (d.captured) { try { d.node.releasePointerCapture(d.id); } catch (_) {} }
+    if (!preserveLayout && d.node.isConnected) this.update();
+  }
+
+  setDragTargeting(on) {
+    if (!this.scene) return;
+    this.scene.classList.toggle('targeting', on || !!this.pendingCard);
+    for (const enemy of this.combat.livingEnemies()) {
+      const node = this.els[eidOf(enemy)];
+      if (node) node.classList.toggle('targetable', on || !!this.pendingCard);
+    }
   }
 
   enemyAt(x, y) {
@@ -943,9 +1088,19 @@ export class CombatView {
   }
 
   async playCard(card, target) {
+    if (this.interactionLocked() || !this.combat.canPlay(card)) return;
     this.previewCard = null;
+    this.pendingCard = null;
     const c = this.combat;
     const marks = this.marksFor(card);
+    const active = this.beginCardCommit(card, target);
+    this.activePlay = active;
+    this._committingUid = card.uid;
+    this.game.tooltip(null, null, false);
+    audio.play('cardcommit');
+    this.update();
+    await active.arrived;
+
     // The QTE result travels into the engine as explicit playCard opts; the
     // engine echoes card/charge back out through the fx payloads its handlers
     // read (see FX_HANDLERS below), so no state is smuggled between the two.
@@ -955,17 +1110,22 @@ export class CombatView {
     if (this.game.rhythmOn() && !this.rhythmSuppressed && card.type === 'attack' && !c.over) {
       c.animating = true; // blocks End Turn and further card input during the QTE
       this.update();
-      const { grade, mult } = await runAttackQTE({
-        marks,
-        isTouch: this.game.isTouch(),
-        isTutorial: !this.game.meta.tutorialDone
-      });
-      c.animating = false;
-      rhythmGrade = grade;
-      rhythmMult = mult;
-      // Strong attack — 3+ QTE marks — charges up for a more epic strike,
-      // burning brighter the cleaner the timing.
-      if (marks >= 3) charge = grade === 'perfect' ? 5 : grade === 'miss' ? 3 : 4;
+      try {
+        const { grade, mult } = await runAttackQTE({
+          marks,
+          isTouch: this.game.isTouch(),
+          isTutorial: !this.game.meta.tutorialDone
+        });
+        rhythmGrade = grade;
+        rhythmMult = mult;
+        // Strong attack — 3+ QTE marks — charges up for a more epic strike,
+        // burning brighter the cleaner the timing.
+        if (marks >= 3) charge = grade === 'perfect' ? 5 : grade === 'miss' ? 3 : 4;
+      } catch (error) {
+        console.warn('Attack rhythm prompt failed; resolving the card normally.', error);
+      } finally {
+        c.animating = false;
+      }
     } else if (card.type === 'attack' && marks >= 3 && !c.over) {
       // Rhythm off: heavy attacks still land a charged strike.
       charge = 4;
@@ -974,25 +1134,172 @@ export class CombatView {
     if (card.type !== 'attack') {
       audio.play('skill');
     }
-    // brief play animation on the card element
-    const cardEl = this.handHolder.querySelector(`.card[data-uid="${card.uid}"]`);
-    if (cardEl) { cardEl.classList.add('playing'); }
+    this.beginCardResolve(active, card, target);
 
-    if (card.type === 'skill') {
-      const pEnt = this.combat.player;
-      const eid = eidOf(pEnt);
-      this.tempPoses[eid] = true;
-      this.setSpritePose(pEnt, (card.block || 0) > 0 ? 'block' : 'skill');
-      
-      setTimeout(() => {
-        delete this.tempPoses[eid];
-        if (pEnt.alive) {
-          this.setSpritePose(pEnt, pEnt.block > 0 ? 'block' : 'idle');
-        }
-      }, 855);
+    if (card.type === 'skill') this.holdPose(this.combat.player, (card.block || 0) > 0 ? 'block' : 'skill', 855);
+    else if (card.type === 'power') this.holdPose(this.combat.player, 'skill', 980);
+
+    this._choreographedCards.add(card.uid);
+    const played = this.combat.playCard(card, target, { rhythmMult, rhythmGrade, charge });
+    if (!played) {
+      this._choreographedCards.delete(card.uid);
+      this.abortCardCommit(active);
+      this.activePlay = null;
+      this._committingUid = null;
+      this.update();
+      return;
     }
 
-    this.combat.playCard(card, target, { rhythmMult, rhythmGrade, charge });
+    // Keep the interaction lock through the readable impact beat. The ghost's
+    // final pile travel continues after input is released.
+    const hitCount = card.type === 'attack' ? Math.max(1, card.hits || 1) : 1;
+    const settle = card.type === 'attack' ? 410 + (hitCount - 1) * 72 : 190;
+    await waitMs(active.reduceMotion ? 50 : settle);
+    this.finishCardCommit(active, card);
+    if (this.activePlay === active) this.activePlay = null;
+    this._committingUid = null;
+    this.update();
+  }
+
+  beginCardCommit(card, target) {
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const sceneRect = this.scene.getBoundingClientRect();
+    const source = this.handHolder.querySelector(`.card[data-uid="${card.uid}"]`);
+    const sourceRect = source ? source.getBoundingClientRect() : {
+      left: sceneRect.left + sceneRect.width / 2 - 60,
+      top: sceneRect.top + sceneRect.height * 0.62,
+      width: 120,
+      height: 170,
+    };
+    const ghost = source ? source.cloneNode(true) : renderCard(card);
+    ghost.classList.remove('in-hand', 'selected', 'previewing', 'affordable', 'combo-ready', 'dragging', 'will-play', 'kb-focus', 'committing-source', 'playing');
+    ghost.classList.add('card-cast-ghost', `cast-${card.type}`);
+    ghost.removeAttribute('disabled');
+    ghost.style.left = `${sourceRect.left - sceneRect.left}px`;
+    ghost.style.top = `${sourceRect.top - sceneRect.top}px`;
+    ghost.style.width = `${sourceRect.width}px`;
+    ghost.style.height = `${sourceRect.height}px`;
+    ghost.style.transform = 'none';
+    ghost.style.margin = '0';
+    this.scene.appendChild(ghost);
+
+    const centerX = sceneRect.width * 0.5;
+    const centerY = sceneRect.height * 0.42;
+    const endLeft = centerX - sourceRect.width / 2;
+    const endTop = Math.max(72, centerY - sourceRect.height / 2);
+    const dx = endLeft - (sourceRect.left - sceneRect.left);
+    const dy = endTop - (sourceRect.top - sceneRect.top);
+    if (reduceMotion) {
+      ghost.style.left = `${endLeft}px`;
+      ghost.style.top = `${endTop}px`;
+    }
+    const frames = reduceMotion
+      ? [{ opacity: 0 }, { opacity: 1 }]
+      : [
+          { transform: 'translate(0, 0) scale(1)', opacity: 0.82 },
+          { transform: `translate(${dx}px, ${dy}px) scale(1.07)`, opacity: 1 },
+        ];
+    const commitDuration = reduceMotion ? 70 : 180;
+    const animation = ghost.animate(frames, {
+      duration: commitDuration,
+      easing: 'cubic-bezier(.18,.86,.32,1.12)',
+      fill: 'forwards',
+    });
+    const arrived = Promise.race([
+      animation.finished.catch(() => {}),
+      waitMs(commitDuration + 120),
+    ]).then(() => {
+      if (!ghost.isConnected) return;
+      ghost.style.left = `${endLeft}px`;
+      ghost.style.top = `${endTop}px`;
+      ghost.style.transform = 'none';
+      ghost.style.opacity = '1';
+      animation.cancel();
+      ghost.classList.add('cast-ready');
+    });
+    return { card, target, ghost, arrived, reduceMotion, lines: [], targetEls: [] };
+  }
+
+  beginCardResolve(active, card, target) {
+    const ghost = active && active.ghost;
+    if (!ghost || !ghost.isConnected) return;
+    ghost.classList.add('resolving');
+    let targets = [];
+    if (card.target === 'all') targets = this.combat.livingEnemies().map((enemy) => this.elFor(enemy)).filter(Boolean);
+    else if (card.target === 'enemy' && target) targets = [this.elFor(target)].filter(Boolean);
+    else targets = [this.elFor(this.combat.player)].filter(Boolean);
+    active.targetEls = targets;
+    for (const targetEl of targets) {
+      targetEl.classList.add('card-cast-target');
+      if (active.reduceMotion) continue;
+      const sceneRect = this.scene.getBoundingClientRect();
+      const from = ghost.getBoundingClientRect();
+      const to = targetEl.getBoundingClientRect();
+      const sx = from.left - sceneRect.left + from.width / 2;
+      const sy = from.top - sceneRect.top + from.height / 2;
+      const tx = to.left - sceneRect.left + to.width / 2;
+      const ty = to.top - sceneRect.top + to.height * 0.46;
+      const length = Math.hypot(tx - sx, ty - sy);
+      const angle = Math.atan2(ty - sy, tx - sx) * 180 / Math.PI;
+      const line = el('div', { class: `card-cast-line line-${card.type}` });
+      line.style.left = `${sx}px`;
+      line.style.top = `${sy}px`;
+      line.style.width = `${length}px`;
+      line.style.transform = `rotate(${angle}deg)`;
+      this.fxLayer.appendChild(line);
+      active.lines.push(line);
+    }
+  }
+
+  finishCardCommit(active, card) {
+    if (!active) return;
+    for (const line of active.lines) line.remove();
+    for (const target of active.targetEls) target.classList.remove('card-cast-target');
+    const ghost = active.ghost;
+    if (!ghost || !ghost.isConnected) return;
+    ghost.classList.remove('resolving');
+    ghost.classList.add('departing');
+    const inConsume = this.combat.consumePile.some((entry) => entry.uid === card.uid);
+    const inDiscard = this.combat.discardPile.some((entry) => entry.uid === card.uid);
+    const destination = inConsume ? this.consumePileEl : inDiscard ? this.discardPileEl : null;
+
+    if (active.reduceMotion || !destination || !destination.getBoundingClientRect().width) {
+      const exitFrames = active.reduceMotion
+        ? [{ opacity: 1 }, { opacity: 0 }]
+        : [
+            { opacity: 1, transform: 'translateY(0) scale(1)' },
+            { opacity: 0, transform: 'translateY(-28px) scale(.72)' },
+          ];
+      const anim = ghost.animate(exitFrames, { duration: active.reduceMotion ? 100 : 300, easing: 'ease-in', fill: 'forwards' });
+      anim.onfinish = () => ghost.remove();
+      setTimeout(() => ghost.remove(), (active.reduceMotion ? 100 : 300) + 140);
+      return;
+    }
+
+    const sceneRect = this.scene.getBoundingClientRect();
+    const from = ghost.getBoundingClientRect();
+    const to = destination.getBoundingClientRect();
+    ghost.style.left = `${from.left - sceneRect.left}px`;
+    ghost.style.top = `${from.top - sceneRect.top}px`;
+    ghost.style.transform = 'none';
+    const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+    const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+    const anim = ghost.animate([
+      { transform: 'translate(0,0) scale(1) rotate(0deg)', opacity: 1 },
+      { transform: `translate(${dx}px, ${dy}px) scale(.16) rotate(${inConsume ? -28 : 28}deg)`, opacity: 0 },
+    ], { duration: 360, easing: 'cubic-bezier(.35,.05,.72,.3)', fill: 'forwards' });
+    anim.onfinish = () => ghost.remove();
+    setTimeout(() => ghost.remove(), 500);
+  }
+
+  abortCardCommit(active) {
+    if (!active) return;
+    for (const line of active.lines) line.remove();
+    for (const target of active.targetEls) target.classList.remove('card-cast-target');
+    if (!active.ghost || !active.ghost.isConnected) return;
+    const anim = active.ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: 'forwards' });
+    anim.onfinish = () => active.ghost.remove();
+    setTimeout(() => active.ghost.remove(), 240);
   }
 
   // 1-3 rhythm marks: blueprint override, else scaled by cost.
@@ -1003,6 +1310,7 @@ export class CombatView {
   }
 
   endTurn() {
+    if (this.interactionLocked()) return;
     audio.play('endturn');
     this.pendingCard = null;
     this.previewCard = null;
@@ -1011,7 +1319,7 @@ export class CombatView {
 
   tryPotion(potion, idx) {
     const c = this.combat;
-    if (c.over) return;
+    if (this.interactionLocked()) return;
     if (this.game.isTouch() && !this._potionConfirmed) {
       this.game.confirm(`Use ${potion.name}?`, potion.desc, () => { this._potionConfirmed = true; this.tryPotion(potion, idx); this._potionConfirmed = false; });
       return;
@@ -1037,6 +1345,13 @@ export class CombatView {
     if (!this.fxLayer) return;
     const handler = FX_HANDLERS[type];
     if (handler) handler.call(this, payload, this.fxLayer);
+    else {
+      this._unhandledFx = this._unhandledFx || new Set();
+      if (!this._unhandledFx.has(type)) {
+        this._unhandledFx.add(type);
+        console.warn(`Unhandled combat FX: ${type}`);
+      }
+    }
   }
 
   // Reveal a card an enemy shuffled into the deck (e.g. Dazed from Rivet): show
@@ -1120,10 +1435,32 @@ export class CombatView {
     }
   }
 
+  holdPose(ent, pose, duration = 855) {
+    if (!ent) return;
+    const eid = eidOf(ent);
+    const token = (this._poseTokens[eid] || 0) + 1;
+    this._poseTokens[eid] = token;
+    this.tempPoses[eid] = token;
+    const parts = this.parts[eid];
+    if (parts) parts.currentPose = null; // same-pose multi-hits still retrigger
+    this.setSpritePose(ent, pose);
+    setTimeout(() => {
+      if (this.tempPoses[eid] !== token) return;
+      delete this.tempPoses[eid];
+      if (ent.alive) this.setSpritePose(ent, ent.block > 0 ? 'block' : 'idle');
+    }, duration);
+  }
+
   setSpritePose(ent, pose) {
     const eid = eidOf(ent);
     const p = this.parts[eid];
     if (!p || !p.glyph) return;
+    if (p.currentPose !== pose) {
+      p.currentPose = pose;
+      p.glyph.removeAttribute('data-pose');
+      void p.glyph.offsetWidth;
+      p.glyph.setAttribute('data-pose', pose);
+    }
     const container = p.glyph.querySelector('.sprite-container');
     if (!container) return; // Fallback SVG does not support pose swapping
 
@@ -1144,6 +1481,8 @@ export class CombatView {
         // Clean up any remaining fading-out images immediately to avoid leaks
         container.querySelectorAll('.model-img:not(.active-pose)').forEach(el => el.remove());
         
+        const swapToken = (p.poseSwapToken || 0) + 1;
+        p.poseSwapToken = swapToken;
         // Create the new image element
         const newImg = document.createElement('img');
         newImg.className = 'model-img';
@@ -1156,6 +1495,10 @@ export class CombatView {
         // Trigger transition
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
+            if (p.poseSwapToken !== swapToken || !newImg.parentNode) {
+              newImg.remove();
+              return;
+            }
             newImg.classList.add('active-pose');
             activeImg.classList.remove('active-pose');
             
@@ -1190,6 +1533,7 @@ const VFX_PLAYBOOK = {
   slash: { play: (layer, el) => slash(layer, el), sound: 'attack' },
   'skyfall-hammer': { play: (layer, el) => singleFrameAnim(layer, el, 'skyfall-hammer'), sound: 'thunder' },
   'fault-line': { play: (layer, el) => faultLineVFX(layer, el), sound: 'attack' },
+  'hilt-crack': { play: (layer, el) => hiltCrackVFX(layer, el), sound: 'attack', timing: 'windup' },
   zap: { play: (layer, el) => singleFrameAnim(layer, el, 'zap'), sound: 'zap' },
   spit: { play: (layer, el) => singleFrameAnim(layer, el, 'spit'), sound: 'slime' },
   splash: { play: (layer, el) => singleFrameAnim(layer, el, 'splash'), sound: 'splash' },
@@ -1268,29 +1612,23 @@ const FX_HANDLERS = {
     if (charged) chargeUp(layer, src, payload.charge);
 
     if (payload.source) {
-      const eid = eidOf(payload.source);
-      this.tempPoses[eid] = true;
-      this.setSpritePose(payload.source, 'attack');
-
+      this.holdPose(payload.source, 'attack', charged ? 920 : 760);
+      if (isPlayer && payload.card && payload.target) {
+        const vfxName = payload.card._bp.vfx;
+        const vfx = VFX_PLAYBOOK[vfxName];
+        const targetEl = this.elFor(payload.target);
+        if (vfx && vfx.timing === 'windup' && targetEl) vfx.play(layer, targetEl);
+      }
       if (!isPlayer) {
         const move = currentMove(payload.source);
         audio.play((move && move.sfx) || 'attack');
       }
-
-      setTimeout(() => {
-        delete this.tempPoses[eid];
-        if (payload.source.alive) {
-          this.setSpritePose(payload.source, payload.source.block > 0 ? 'block' : 'idle');
-        }
-      }, 855);
     }
   },
 
   skillstart(payload, layer) {
     if (!payload.source) return;
-    const eid = eidOf(payload.source);
-    this.tempPoses[eid] = true;
-    this.setSpritePose(payload.source, payload.pose || 'skill');
+    this.holdPose(payload.source, payload.pose || 'skill', 855);
 
     const srcEl = this.elFor(payload.source);
     if (srcEl) shine(layer, srcEl);
@@ -1299,12 +1637,6 @@ const FX_HANDLERS = {
       if (move && move.sfx) audio.play(move.sfx);
     }
 
-    setTimeout(() => {
-      delete this.tempPoses[eid];
-      if (payload.source.alive) {
-        this.setSpritePose(payload.source, payload.source.block > 0 ? 'block' : 'idle');
-      }
-    }, 855);
   },
 
   parrymiss(payload, layer) {
@@ -1371,23 +1703,32 @@ const FX_HANDLERS = {
       if (payload.blocked > 0) {
         const tparts = this.parts[eidOf(payload.target)];
         const badge = tparts && tparts.block;
-        if (badge) {
+        if (badge && payload.blockAfter > 0) {
           badge.classList.remove('block-hit');
           void badge.offsetWidth;
           badge.classList.add('block-hit');
-          if (payload.target.block === 0) burst(layer, badge, '#9fc2ff', 10);
         }
+        if (payload.guardBroken) {
+          ring(layer, el2, 'rgba(159,194,255,0.95)');
+          burst(layer, el2, '#9fc2ff', 12);
+        }
+      }
+      if (payload.phased) {
+        floatText(layer, el2, 'PHASED', 'blocked');
+        ring(layer, el2, 'rgba(200,182,255,0.88)');
+        audio.play('negated');
       }
       if (payload.hpLost > 0) {
         const size = Math.round(Math.min(60, 26 + payload.hpLost * 1.4));
         floatText(layer, el2, String(payload.hpLost), 'damage', { size });
         hitFlash(el2, 'damage');
-        const big = payload.hpLost >= 14 || chLevel > 0;
+        this.holdPose(payload.target, 'hurt', payload.lethal ? 980 : 430);
+        const big = payload.lethal || payload.hpLost >= 14 || chLevel > 0;
         if (payload.isAttack) {
-          vfx.play(layer, el2);
+          if (vfx.timing !== 'windup') vfx.play(layer, el2);
           if (payload.source && payload.source.isPlayer) audio.play(vfx.sound);
         }
-        if (payload.target.isPlayer) audio.play('hit');
+        if (payload.target.isPlayer) audio.play(payload.lethal ? 'lethal' : 'hit');
         const bg = background();
         // Hit-stop: on big hits the number/flash land instantly but the target
         // freezes for a beat before the shake and follow-through, so the impact
@@ -1419,22 +1760,31 @@ const FX_HANDLERS = {
           followThrough();
         }
       } else if (payload.blocked > 0) {
-        floatText(layer, el2, payload.target.block === 0 ? 'GUARD BROKEN' : 'BLOCK', 'blocked');
+        this.holdPose(payload.target, 'block', 430);
+        floatText(layer, el2, payload.guardBroken ? 'GUARD BROKEN' : `${payload.blocked} BLOCKED`, 'blocked');
         hitFlash(el2, 'block');
-        audio.play('attack-blocked');
+        audio.play(payload.guardBroken ? 'guardbreak' : 'attack-blocked');
       }
     };
     // Delay the impact fx/sfx on the enemy so it lands a beat after the
     // player's attack sprite animation rather than in the same frame.
-    if (isDelayedPlayerHit) setTimeout(applyDamageFx, 300);
-    else applyDamageFx();
+    const delay = (isDelayedPlayerHit ? 300 : 120) + Math.max(0, payload.hitIndex || 0) * 72;
+    setTimeout(applyDamageFx, delay);
   },
 
   block(payload, layer) {
     const el2 = this.elFor(payload.entity); if (!el2) return;
+    this.holdPose(payload.entity, 'block', 520);
     floatText(layer, el2, `+${payload.amount}`, 'block');
     ring(layer, el2, 'rgba(94,169,230,0.9)');
     audio.play('block');
+  },
+
+  blockprevented(payload, layer) {
+    const el2 = this.elFor(payload.entity); if (!el2) return;
+    floatText(layer, el2, 'SUNDERED · NO BLOCK', 'debuff');
+    hitFlash(el2, 'damage');
+    audio.play('negated');
   },
 
   warded(payload, layer) {
@@ -1443,18 +1793,73 @@ const FX_HANDLERS = {
     floatText(layer, el2, 'WARDED', 'blocked');
     hitFlash(el2, 'block');
     ring(layer, el2, 'rgba(230,180,90,0.9)');
+    audio.play('negated');
   },
 
   heal(payload, layer) {
     const el2 = this.elFor(payload.entity); if (!el2) return;
     floatText(layer, el2, `+${payload.amount}`, 'heal');
     hitFlash(el2, 'heal');
+    ring(layer, el2, 'rgba(117,226,160,0.88)');
+    audio.play('heal');
+  },
+
+  healthloss(payload, layer) {
+    const el2 = this.elFor(payload.entity); if (!el2) return;
+    this.holdPose(payload.entity, 'hurt', payload.lethal ? 900 : 430);
+    floatText(layer, el2, `-${payload.amount}`, 'damage', { size: Math.min(54, 27 + payload.amount) });
+    hitFlash(el2, 'damage');
+    shake(el2, payload.lethal || payload.amount >= 12);
+    if (payload.entity.isPlayer) screenShake(this.scene, payload.lethal);
+    audio.play(payload.lethal ? 'lethal' : 'hit');
+  },
+
+  negated(payload, layer) {
+    const el2 = this.elFor(payload.target); if (!el2) return;
+    const name = POWERS[payload.key] ? POWERS[payload.key].name : 'Debuff';
+    floatHTML(layer, el2, `<i class="pip-ic">${powerIcon('artifact')}</i> ${name} NEGATED`, 'blocked');
+    ring(layer, el2, 'rgba(255,206,92,0.9)');
+    audio.play('negated');
+  },
+
+  dodge(payload, layer) {
+    const el2 = this.elFor(payload.entity); if (!el2) return;
+    this.holdPose(payload.entity, 'skill', 520);
+    floatText(layer, el2, 'DODGE', 'buff');
+    ring(layer, el2, 'rgba(200,230,255,0.82)');
+    el2.classList.remove('combat-dodge');
+    void el2.offsetWidth;
+    el2.classList.add('combat-dodge');
+    setTimeout(() => el2.classList.remove('combat-dodge'), 520);
+    audio.play('dodge');
+  },
+
+  reflect(payload, layer) {
+    const src = this.elFor(payload.source);
+    const target = this.elFor(payload.target);
+    if (src) {
+      floatText(layer, src, 'RIPOSTE', 'buff');
+      ring(layer, src, 'rgba(255,206,92,0.92)');
+    }
+    if (target) burst(layer, target, '#ffd166', 12);
+    audio.play('reflect');
+  },
+
+  stagger(payload, layer) {
+    const el2 = this.elFor(payload.target); if (!el2) return;
+    this.holdPose(payload.target, 'hurt', 620);
+    floatText(layer, el2, 'STAGGERED', 'debuff');
+    hitFlash(el2, 'damage');
+    shake(el2, false);
+    audio.play('stagger');
   },
 
   power(payload, layer) {
     const el2 = this.elFor(payload.target); if (!el2) return;
     const def = POWERS[payload.key]; if (!def) return;
-    floatHTML(layer, el2, `<i class="pip-ic">${powerIcon(payload.key)}</i>${payload.amount > 0 ? '+' : ''}${payload.amount}`, def.type === 'buff' ? 'buff' : 'debuff');
+    const beneficial = (def.type === 'buff' && payload.amount > 0) || (def.type === 'debuff' && payload.amount < 0);
+    floatHTML(layer, el2, `<i class="pip-ic">${powerIcon(payload.key)}</i>${payload.amount > 0 ? '+' : ''}${payload.amount}`, beneficial ? 'buff' : 'debuff');
+    audio.play(beneficial ? 'buff' : 'debuff');
   },
 
   powerfade(payload, layer) {
@@ -1463,7 +1868,9 @@ const FX_HANDLERS = {
     if (payload.key === 'tempo') return;
     const el2 = this.elFor(payload.target); if (!el2) return;
     const def = POWERS[payload.key]; if (!def) return;
-    floatHTML(layer, el2, `<i class="pip-ic">${powerIcon(payload.key)}</i> ${def.name} fades`, def.type === 'buff' ? 'buff' : 'debuff');
+    const beneficial = def.type === 'debuff';
+    floatHTML(layer, el2, `<i class="pip-ic">${powerIcon(payload.key)}</i> ${def.name} fades`, beneficial ? 'buff' : 'debuff');
+    audio.play(beneficial ? 'buff' : 'debuff');
   },
 
   reshuffle(payload) {
@@ -1510,7 +1917,8 @@ const FX_HANDLERS = {
     // doesn't die in the same instant it's struck. The delay is stashed on
     // the node for update()'s removal path, which runs on a later microtask
     // and must match this timing.
-    const delay = (payload.swing && !payload.target.isPlayer ? 300 : 0) + 500;
+    const aftermath = payload.target.isPlayer ? 180 : 500;
+    const delay = (payload.swing && !payload.target.isPlayer ? 300 : 120) + (payload.impactDelay || 0) + aftermath;
     el2._deathFxDelay = delay;
     const glyph = this.parts[eidOf(payload.target)] && this.parts[eidOf(payload.target)].glyph;
     const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1521,7 +1929,17 @@ const FX_HANDLERS = {
       if (glyph && !reduceMotion) glyph.classList.add('death-glitch');
       el2.classList.add('dying');
       const bg = background(); if (bg) bg.pulse('gold', 1.2);
+      audio.play('lethal');
     }, delay);
+  },
+
+  flee(payload, layer) {
+    const el2 = this.elFor(payload.target); if (!el2) return;
+    el2._deathFxDelay = 1;
+    el2._exitClass = 'fleeing';
+    el2._exitDuration = 520;
+    floatText(layer, el2, 'ESCAPES', 'name');
+    audio.play('dodge');
   },
 
   useSkill(payload, layer) {

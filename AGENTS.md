@@ -353,6 +353,38 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
 - **Text contrast on title/scenic backgrounds**: Any overlay text or toggle buttons rendered over scenic background art (such as the bright lines on the title screen) must have a dark semi-transparent backing card/pill background (like `rgba(8, 5, 3, 0.85)`) to block out light lines and ensure contrast.
 - **Smooth Enemy Repositioning**: When an enemy is defeated, their `.dying` transition collapses their `min-width`, `max-width`, `width`, and `margin-left`/`margin-right` to `0` over `0.62s`. This allows the remaining flex children in `.enemy-side` to slide smoothly into their centered positions rather than hopping abruptly. The negative margins are sized to half of `--enemy-gap` to offset the flex container's gaps exactly.
 - **Event scene audio dependency**: `src/scenes/event.js` calls `audio.play()` while resolving choices that change gold/remove cards. Keep `import { audio } from '../audio.js';` in that scene and cover gold-changing event choices in `tools/test.js`; otherwise a choice can mutate run state, throw before `resultThenMap()`, and stay clickable for repeated rewards/costs.
+- **Delayed combat FX must use immutable snapshots**: combat state mutates
+  synchronously, while the view deliberately delays and staggers impacts. Any
+  value read inside a delayed callback (`Block`, HP, guard-break state, hit
+  index) must come from the engine FX payload, not the live entity object,
+  otherwise an earlier hit is rendered using the final state of a multi-hit or
+  a later card. `applyDamage()` snapshots `hpBefore/After`,
+  `blockBefore/After`, `guardBroken`, `hitIndex/hitCount`, and outcome fields;
+  extend that contract when adding another delayed result.
+- **Combat animation channels must not compete for `.stage`**: `.stage` owns
+  displacement (`lunge`, `shake`, hit-stop). Color flashes animate `.glyph` and
+  card/beam overlays live on their own nodes. Two CSS classes that both assign
+  `animation:` to `.stage` silently override one another by source order, so a
+  hit can lose either its flash or recoil with no console error.
+- **Card-play choreography has one owner**: `CombatView.activePlay` creates one
+  persistent card ghost for commit → resolve → discard/consume and locks all
+  other combat input until the readable impact beat. `renderHand()` must skip
+  its legacy departing-card clone for UIDs in `_choreographedCards`. Pose holds
+  are generation-tokened; never restore a pose from an unowned timer. Intent
+  forecasts live in DOM-free `combat/presentation.js` and must not consume or
+  mutate hit-counted status stacks.
+- **Web Animation cleanup needs a timer fallback**: backgrounded/hidden browser
+  tabs may throttle `Element.animate()` enough that `.finished`/`onfinish`
+  arrives very late. Choreography may await the animation for presentation, but
+  race that wait against a bounded timer and give transient DOM nodes an
+  idempotent `setTimeout(remove, duration + slack)` fallback so a card ghost can
+  never retain UI state indefinitely.
+- **Intent-icon clicks are intercepted in capture phase**:
+  `Game.setupGlossaryPopups()` stops propagation on `.intent-*` icons before
+  the parent `.intent` handler can run. Any whole-intent click behavior must be
+  forwarded explicitly from that capture handler (currently the custom
+  `intentinspect` event), or clicking the visible icon works differently from
+  clicking the pill's name/padding.
 
 ## Asset Generation
 - **Model Rules**: Always use the `gpt-image-2` model for all image, sprite, and background art generations. Never use Gemini or any other image models.
@@ -370,6 +402,15 @@ former champions, the Archive catalogues/erases, "home" is the furnace.
 - **Transparency Gotcha**: For clean transparency masking on woodcut assets, always prompt with "Transparent background" and avoid contradictory "Pure black background" tags. The model will produce a bright checkerboard background that is safely keyed out by the default `isNeutralBright` filter (checking RGB balance above `150`). Do not use flood-fill or dark key-outs as they destroy the black linework inside the assets.
 - **Options**: The generator scripts support `--dry-run` (writes SVG/HTML placeholder files, no API keys needed), `--force` (regenerate existing), and `--ids id1,id2` (run specific assets). Requires `OPENAI_API_KEY` for live runs.
 - **Sprite Facing Direction Gotcha**: In combat, player characters (champions) stand on the left and must face **right** (towards enemies). Enemies stand on the right and must face **left** (towards player). Generated sprites that face the wrong direction can be mirrored horizontally using `sharp`'s `.flop()`. Prompt generation and variation prompt rules in `tools/sprites.manifest.json` and `tools/gen-sprite-variations.js` should explicitly specify facing direction to guide DALL-E.
+- **Attack-VFX spritesheets**: `spriteAnim()` expects one 1536×1024 RGBA PNG
+  containing exactly 24 contiguous 256×256 frames in a 6×4 grid, read left
+  to right and then top to bottom. Register every sheet in `STATIC_ASSETS`
+  (`src/core/preload.js`), its recipe in `VFX_PLAYBOOK` (`combatView.js`), and
+  the recipe key as the card blueprint's `vfx`. A sheet whose contact frame
+  should land on the 300ms player-impact beat can use `timing: 'windup'` so it
+  starts from `attackstart`; do not also replay it from the damage handler.
+  Custom screen shake must target `.combat-scene` (the selector owning the
+  shake animation), not merely the nearest generic `.scene` wrapper.
 - **GitHub workflow (preferred for live runs)**: the **Generate Assets**
   workflow (`.github/workflows/sprites.yml`, `workflow_dispatch`) runs the
   generators on an open-egress runner with the repo's `OPENAI_API_KEY` secret

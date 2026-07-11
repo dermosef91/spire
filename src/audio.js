@@ -148,9 +148,15 @@ class Audio {
     if (name === 'growl') gain = 0.45;
     if (name === 'block') gain = 0.42;
     if (name === 'summon') gain = 0.46;
-    if (name === 'phase') gain = 0.5;
+  if (name === 'phase') gain = 0.5;
     if (name === 'tempo_release') gain = 0.4;
     if (name === 'power_surge') gain = 0.4;
+    if (name === 'cardcommit') gain = 0.28;
+    if (name === 'guardbreak') gain = 0.42;
+    if (name === 'buff' || name === 'debuff') gain = 0.24;
+    if (name === 'heal') gain = 0.32;
+    if (name === 'dodge' || name === 'reflect' || name === 'stagger') gain = 0.34;
+    if (name === 'negated' || name === 'lethal') gain = 0.4;
     
     // Try to play from user WAV/MP3 asset files first
     const played = this.playBuffer(name, gain);
@@ -193,6 +199,16 @@ class Audio {
       case 'growl': this.tone(110, 0.28, 'sawtooth', 0.12); this.tone(70, 0.32, 'square', 0.09, 0.04); break;
       case 'tempo_release': [523, 659, 784, 988].forEach((f, i) => this.tone(f, 0.22, 'triangle', 0.12, i * 0.05)); break;
       case 'power_surge': this.tone(80, 0.3, 'sawtooth', 0.13); this.tone(300, 0.15, 'sawtooth', 0.08, 0.15); break;
+      case 'cardcommit': this.tone(360, 0.07, 'triangle', 0.07); this.tone(620, 0.08, 'sine', 0.05, 0.035); break;
+      case 'guardbreak': this.tone(190, 0.09, 'square', 0.1); this.tone(92, 0.22, 'sawtooth', 0.1, 0.045); this.tone(720, 0.04, 'triangle', 0.05, 0.02); break;
+      case 'buff': this.tone(520, 0.1, 'triangle', 0.055); this.tone(780, 0.14, 'sine', 0.05, 0.05); break;
+      case 'debuff': this.tone(300, 0.12, 'sawtooth', 0.05); this.tone(190, 0.18, 'triangle', 0.05, 0.05); break;
+      case 'heal': this.tone(392, 0.16, 'sine', 0.06); this.tone(523, 0.2, 'triangle', 0.065, 0.08); this.tone(659, 0.22, 'sine', 0.045, 0.16); break;
+      case 'dodge': this.tone(760, 0.08, 'sine', 0.055); this.tone(1120, 0.12, 'triangle', 0.045, 0.04); break;
+      case 'reflect': this.tone(880, 0.08, 'triangle', 0.07); this.tone(440, 0.16, 'sine', 0.065, 0.04); break;
+      case 'stagger': this.tone(160, 0.16, 'square', 0.075); this.tone(115, 0.18, 'sawtooth', 0.055, 0.04); break;
+      case 'negated': this.tone(620, 0.1, 'triangle', 0.065); this.tone(930, 0.13, 'sine', 0.05, 0.04); break;
+      case 'lethal': this.tone(72, 0.38, 'sawtooth', 0.12); this.tone(48, 0.48, 'square', 0.07, 0.035); break;
       default: break;
     }
   }

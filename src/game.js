@@ -117,6 +117,11 @@ export class Game {
         e.stopPropagation();
         const info = INTENT_INFO[intentIcon.dataset.intentType];
         if (!info) return;
+        // The capture listener intentionally stops the click before it reaches
+        // CombatView's intent pill. Forward a semantic inspect event so the
+        // exact post-Block HP forecast pins alongside this icon glossary.
+        const intentWrap = intentIcon.closest('.intent');
+        if (intentWrap) intentWrap.dispatchEvent(new Event('intentinspect'));
         if (this.kwNode === intentIcon) { closeKw(); return; }
         this.infoPopup(`<b>${info.label}</b><br>${info.desc}`, intentIcon);
         return;

@@ -69,12 +69,15 @@ try {
   }
   browser = await chromium.launch(launchOptions);
   const page = await browser.newPage();
-  page.on('console', (m) => { if (m.type() === 'error' && !IGNORE.test(m.text())) errors.push('console: ' + m.text()); });
+  page.on('console', (m) => {
+    if (m.type() === 'error' && !IGNORE.test(m.text())) errors.push('console: ' + m.text());
+    if (m.type() === 'warning' && /Unhandled combat FX:/.test(m.text())) errors.push('console: ' + m.text());
+  });
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
 
   // Mark the tutorial done so the first-play coaching overlay doesn't interfere.
   await page.addInitScript(() => {
-    try { localStorage.setItem('spire_of_ase_meta_v1', JSON.stringify({ tutorialDone: true, runs: 0, wins: 0, bestFloor: 0, ascension: 0, maxAscension: 0 })); } catch {}
+    try { localStorage.setItem('spire_of_ase_meta_v1', JSON.stringify({ tutorialDone: true, rhythm: false, runs: 0, wins: 0, bestFloor: 0, ascension: 0, maxAscension: 0 })); } catch {}
   });
 
   // NB: never wait on 'networkidle' here — the looping music/animation keeps the
@@ -102,6 +105,55 @@ try {
   const enemySides = await page.locator('.enemy-side').count();
   if (handCount < 1) throw new Error('combat mounted but no cards in hand');
   if (enemySides < 1) throw new Error('combat mounted but no enemy side rendered');
+  await page.waitForFunction(() => Array.from(document.querySelectorAll('.hand .card')).every((card) => getComputedStyle(card).pointerEvents !== 'none'), null, { timeout: 2500 });
+
+  // Intent communicates exact damage + post-Block consequence through its
+  // accessible label, not only colored icons.
+  const intentLabel = await page.locator('.enemy .intent').getAttribute('aria-label');
+  if (!intentLabel || intentLabel === 'Enemy intent') throw new Error('enemy intent has no accessible move description');
+  if (/Attack for \d+/.test(intentLabel) && !/(reaches HP|absorbs all)/.test(intentLabel)) {
+    throw new Error(`attacking intent is missing its post-Block consequence: ${intentLabel}`);
+  }
+
+  // First tap previews; second tap commits one sequence-owned ghost. Input is
+  // locked through resolution, the hand updates once, and the ghost always
+  // cleans itself up after reaching discard/consume.
+  const playable = page.locator('.hand .card.affordable').first();
+  const uid = await playable.getAttribute('data-uid');
+  if (!uid) throw new Error('playable card has no stable uid');
+  await playable.click({ force: true });
+  await page.waitForSelector(`.hand .card.previewing[data-uid="${uid}"]`, { timeout: 1000 });
+  await page.locator(`.hand .card[data-uid="${uid}"]`).click({ force: true });
+  await page.waitForSelector('.card-cast-ghost', { timeout: 1000 });
+  const ghostCount = await page.locator('.card-cast-ghost').count();
+  if (ghostCount !== 1) throw new Error(`expected one card-play ghost, saw ${ghostCount}`);
+  if (!(await page.locator('.end-turn').isDisabled())) throw new Error('End Turn stayed enabled during card resolution');
+  await page.waitForFunction((playedUid) => !document.querySelector(`.hand .card[data-uid="${playedUid}"]`), uid, { timeout: 2500 });
+  await page.waitForSelector('.card-cast-ghost', { state: 'detached', timeout: 2500 });
+  if (await page.locator('.end-turn').isDisabled()) throw new Error('End Turn stayed disabled after card resolution');
+
+  // Hilt Crack is not in the starter deck, so inject one through the exposed
+  // combat debug seam and exercise its real view-owned play sequence. This
+  // catches a missing preload/playbook key or malformed spritesheet path that
+  // DOM-free card tests cannot see.
+  const hiltUid = await page.evaluate(() => {
+    const combat = window.__combat;
+    const card = combat.makeCard('pommel');
+    combat.energy = Math.max(combat.energy, 1);
+    combat.hand.unshift(card);
+    combat.notify();
+    return card.uid;
+  });
+  await page.waitForSelector(`.hand .card[data-uid="${hiltUid}"]`, { timeout: 1000 });
+  await page.evaluate((playedUid) => {
+    const combat = window.__combat;
+    const card = combat.hand.find((c) => c.uid === playedUid);
+    window.__ase.combatView.playCard(card, combat.livingEnemies()[0]);
+  }, hiltUid);
+  await page.waitForSelector('.sprite-vfx-hilt-crack', { timeout: 1500 });
+  const hiltSheet = await page.locator('.sprite-vfx-hilt-crack').first().evaluate((node) => getComputedStyle(node).backgroundImage);
+  if (!hiltSheet.includes('hilt-crack.png')) throw new Error(`Hilt Crack used the wrong VFX sheet: ${hiltSheet}`);
+  await page.waitForSelector('.sprite-vfx-hilt-crack', { state: 'detached', timeout: 1800 });
 
   if (errors.length) throw new Error('uncaught JS errors during the flow:\n  ' + errors.join('\n  '));
 

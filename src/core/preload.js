@@ -35,6 +35,7 @@ const STATIC_ASSETS = [
   'assets/animation sprites/spit.png',
   'assets/animation sprites/splash.png',
   'assets/animation sprites/fault-line.png',
+  'assets/animation sprites/hilt-crack.png',
   'assets/animation sprites/skyfall-hammer.png',
   'assets/sounds/click.wav',
   'assets/sounds/reward.wav',

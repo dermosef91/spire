@@ -314,10 +314,14 @@ export class Combat {
   }
 
   // Apply a chunk of damage to an entity through Block, returns HP actually lost.
-  applyDamage(target, amount, { isAttack = false, source = null } = {}) {
+  applyDamage(target, amount, { isAttack = false, source = null, hitIndex = 0, hitCount = 1 } = {}) {
     if (!target.alive) return 0;
+    const hpBefore = target.hp;
+    const blockBefore = target.block;
+    const requested = amount;
     let dmg = amount;
-    if (target.powers.intangible && dmg > 1) dmg = 1;
+    const phased = !!(target.powers.intangible && dmg > 1);
+    if (phased) dmg = 1;
     // Per-turn damage cap (Heart of Static's Invincibility): clamp what this
     // enemy can take across a single player turn, then bank it. Resets each
     // player turn in startPlayerTurn.
@@ -346,7 +350,20 @@ export class Combat {
         if (!source.isPlayer && source.id) this.lastAttackerId = source.id;
       }
     }
-    this.fx('damage', { target, dmg, hpLost, blocked, isAttack, source, ...this._swingInfo() });
+    const guardBroken = blocked > 0 && blockBefore > 0 && target.block === 0;
+    const lethal = hpLost > 0 && target.hp <= 0 && !(target.isPlayer && this.fairyShield);
+    const outcome = lethal ? 'lethal'
+      : hpLost > 0 ? (guardBroken ? 'breakthrough' : 'hit')
+      : blocked > 0 ? (guardBroken ? 'guardbreak' : 'blocked')
+      : 'prevented';
+    this.fx('damage', {
+      target, dmg, hpLost, blocked, isAttack, source,
+      hpBefore, hpAfter: Math.max(0, target.hp), blockBefore, blockAfter: target.block,
+      requested, mitigated: Math.max(0, requested - dmg), phased,
+      guardBroken, lethal, outcome,
+      hitIndex, hitCount,
+      ...this._swingInfo(),
+    });
     // Hit-counted debuffs: this hit used up one Exposed on the target and one
     // Sapped on the attacker (blocked hits still consume — the window was
     // spent on this swing either way). The multipliers were already applied
@@ -375,7 +392,7 @@ export class Combat {
     if (isAttack && !target.isPlayer && target.hp > 0 && source && source.isPlayer && target.powers.counter) {
       this.applyPower(target, 'strength', target.powers.counter, target);
     }
-    this.checkDeath(target);
+    this.checkDeath(target, { impactDelay: Math.max(0, hitIndex) * 72 });
     if (!target.isPlayer) this.checkPhase(target);
     return hpLost;
   }
@@ -412,7 +429,7 @@ export class Combat {
     return e;
   }
 
-  checkDeath(entity) {
+  checkDeath(entity, { impactDelay = 0 } = {}) {
     if (entity.hp <= 0 && entity.alive) {
       if (entity.isPlayer) {
         if (this.fairyShield) {
@@ -421,10 +438,12 @@ export class Combat {
           this.log("Ancestor's Breath pulls you back from death!");
           return;
         }
-        entity.hp = 0; entity.alive = false; this.lose();
+        entity.hp = 0; entity.alive = false;
+        this.fx('death', { target: entity, impactDelay });
+        this.lose();
       } else {
         entity.hp = 0; entity.alive = false;
-        this.fx('death', { target: entity, swing: this._swing });
+        this.fx('death', { target: entity, swing: this._swing, impactDelay });
         this.onEnemyDeath(entity);
       }
     }
@@ -473,7 +492,7 @@ export class Combat {
     enemy.alive = false;
     enemy.fled = true;
     this.log(`${enemy.name} flees!`);
-    this.fx('death', { target: enemy });
+    this.fx('flee', { target: enemy });
     if (this.livingEnemies().length === 0) this.win();
     this.notify();
   }
@@ -483,12 +502,17 @@ export class Combat {
     if (!target || !target.alive) { target = this.randomEnemy(); if (!target) return 0; }
     let total = 0;
     const mult = (this._cardDamageMult || 1) * (this._play ? this._play.rhythmMult : 1);
-    this.fx('attackstart', { source: this.player, target, charge: this._play ? this._play.charge : 0 });
+    this.fx('attackstart', {
+      source: this.player,
+      target,
+      charge: this._play ? this._play.charge : 0,
+      card: this._play ? this._play.card : null,
+    });
     this._swing = true;
     for (let i = 0; i < hits; i++) {
       if (!target.alive) break;
       const dmg = Math.floor(this.calcAttackDamage(base, this.player, target) * mult);
-      total += this.applyDamage(target, dmg, { isAttack: true, source: this.player });
+      total += this.applyDamage(target, dmg, { isAttack: true, source: this.player, hitIndex: i, hitCount: hits });
     }
     this._swing = false;
     this.notify();
@@ -496,13 +520,17 @@ export class Combat {
   }
   dealAll(base, hits = 1) {
     let total = 0;
-    this.fx('attackstart', { source: this.player, charge: this._play ? this._play.charge : 0 });
+    this.fx('attackstart', {
+      source: this.player,
+      charge: this._play ? this._play.charge : 0,
+      card: this._play ? this._play.card : null,
+    });
     const mult = (this._cardDamageMult || 1) * (this._play ? this._play.rhythmMult : 1);
     this._swing = true;
     for (let i = 0; i < hits; i++) {
       for (const e of this.livingEnemies()) {
         const dmg = Math.floor(this.calcAttackDamage(base, this.player, e) * mult);
-        total += this.applyDamage(e, dmg, { isAttack: true, source: this.player });
+        total += this.applyDamage(e, dmg, { isAttack: true, source: this.player, hitIndex: i, hitCount: hits });
       }
     }
     this._swing = false;
@@ -557,7 +585,7 @@ export class Combat {
       if (!this.player.alive) break;
       const dmg = Math.round(this.calcAttackDamage(base, enemy, this.player) * this.run.enemyDamageMult());
       totalDmg += dmg;
-      this.applyDamage(this.player, dmg, { isAttack: true, source: enemy });
+      this.applyDamage(this.player, dmg, { isAttack: true, source: enemy, hitIndex: i, hitCount: hits });
     }
 
     // Fired after the hit resolves, not before: a Sapped/etc. reaction to a
@@ -580,7 +608,7 @@ export class Combat {
 
   gainBlock(amount) {
     // player block from cards: dexterity + frail + noBlock
-    if (this.player.powers.noBlock) return;
+    if (this.player.powers.noBlock) { this.fx('blockprevented', { entity: this.player }); return; }
     let b = amount + (this.player.powers.dexterity || 0);
     // Brittle is hit-counted like the other debuffs: each card Block gain
     // consumes one stack for its 25% reduction (no turn tick).
@@ -591,14 +619,14 @@ export class Combat {
     this.notify();
   }
   gainBlockRaw(amount) {
-    if (this.player.powers.noBlock) return;
+    if (this.player.powers.noBlock) { this.fx('blockprevented', { entity: this.player }); return; }
     const b = Math.max(0, amount);
     this.player.block += b;
     if (b > 0) this.fx('block', { entity: this.player, amount: b });
     this.notify();
   }
   gainBlockTo(entity, amount, raw = false) {
-    if (entity.isPlayer && entity.powers.noBlock) return;
+    if (entity.isPlayer && entity.powers.noBlock) { this.fx('blockprevented', { entity }); return; }
     let b = amount;
     if (!raw && entity.isPlayer) {
       b += (entity.powers.dexterity || 0);
@@ -612,14 +640,18 @@ export class Combat {
 
   heal(amount) {
     if (amount <= 0) return;
+    const before = this.player.hp;
     this.player.hp = Math.min(this.player.maxHp, this.player.hp + amount);
-    this.fx('heal', { entity: this.player, amount });
+    const healed = this.player.hp - before;
+    if (healed > 0) this.fx('heal', { entity: this.player, amount: healed });
     this.notify();
   }
   loseHp(entity, amount) {
     if (entity.powers.intangible && amount > 1) amount = 1;
-    entity.hp -= amount;
-    if (entity.isPlayer) this.fire('hpLost', { amount });
+    const lost = Math.max(0, Math.min(entity.hp, amount));
+    entity.hp -= lost;
+    if (lost > 0) this.fx('healthloss', { entity, amount: lost, lethal: entity.hp <= 0 });
+    if (entity.isPlayer) this.fire('hpLost', { amount: lost });
     this.checkDeath(entity);
     this.notify();
   }
@@ -633,10 +665,12 @@ export class Combat {
     if (amount > 0 && def && def.type === 'debuff' && target.powers.artifact > 0) {
       target.powers.artifact -= 1;
       if (target.powers.artifact <= 0) delete target.powers.artifact;
+      this.fx('negated', { target, key });
       this.notify();
       return;
     }
-    target.powers[key] = (target.powers[key] || 0) + amount;
+    const before = target.powers[key] || 0;
+    target.powers[key] = before + amount;
     // 'signed' powers (e.g. Resolve) may hold a negative value and are removed
     // only at exactly 0; everything else clamps away at <= 0. (See POWERS.)
     if (def && def.signed) {
@@ -644,7 +678,9 @@ export class Combat {
     } else if (target.powers[key] <= 0) {
       delete target.powers[key];
     }
-    if (amount !== 0) this.fx('power', { target, key, amount });
+    const after = target.powers[key] || 0;
+    const delta = after - before;
+    if (delta !== 0) this.fx('power', { target, source, key, amount: delta, before, after });
     this.notify();
   }
 
