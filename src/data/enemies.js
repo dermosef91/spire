@@ -258,29 +258,34 @@ def('spark_imp', {
   },
 });
 
-// Act 1 elite — Warden: a measured guard until wounded, then a proper phase
+// Act 1 elite — Warden: a measured guard until wounded, then a phase
 // transition (the run's first, before the boss shows one): at 40% HP its
-// gilding ignites — Gild Wrath fires once (+4 Resolve, shields-up block, the
-// .phased aura + banner) and its rotation turns relentlessly aggressive.
-// Replaces the old wrath *move* loop, which silently re-buffed every other
-// turn below 40% with no marquee moment.
+// gilding ignites — the .phased aura + banner fire, it shields up, and its
+// rotation becomes the wrath loop (re-gild every other turn, swing between).
+// The phase is deliberately **presentation, not a stat buff**: sim-tuning
+// showed that granting the +4 Resolve free in onEnter (instead of it costing
+// the wrath turn) plus an attack-heavy phase-2 cycle collapsed the warden+imp
+// elite from ~75% win to ~13-25% — so phase 2 keeps the exact pre-phase wrath
+// cadence and pays for its Resolve with its turns, same as before.
 def('gilded_warden', {
   name: 'Gilded Warden', act: 1, elite: true, hpMin: 58, hpMax: 64,
   moves: {
     cleave: atk('Wide Cleave', 14),
     barrage: atk('Brass Barrage', 5, 3),
     fortify: { name: 'Fortify', intent: { type: 'buffblock', block: 12 }, run: (c, s) => { c.gainBlockTo(s, 12); c.applyPower(s, 'strength', 2, s); c.fx('powersurge', { target: s }); } },
+    wrath: { name: 'Gild Wrath', intent: { type: 'buff' }, run: (c, s) => { c.applyPower(s, 'strength', 4, s); c.fx('powersurge', { target: s }); } },
   },
   phase: {
     at: 0.4, name: 'Gild Wrath',
     log: "The Warden's gilding ignites — Gild Wrath!",
-    onEnter: (c, s) => { c.applyPower(s, 'strength', 4, s); c.gainBlockTo(s, 10); },
+    onEnter: (c, s) => { c.gainBlockTo(s, 10); },
   },
   pick: (s, c, rng) => {
     if (s._phased) {
-      // No more patient guard — sustained aggression, re-gilding on a cycle.
-      const cyc = ['barrage', 'cleave', 'fortify'];
-      return cyc[(s.turn - 1) % cyc.length];
+      // The old wrath rhythm with a marquee moment: the transform re-picks the
+      // intent, so a telegraphed Gild Wrath is always phase 2's first move.
+      if (s.last !== 'wrath') return 'wrath';
+      return rng.pick(['barrage', 'cleave']);
     }
     if (s.turn === 1) return 'cleave';
     if (s.last === 'cleave') return 'fortify';
