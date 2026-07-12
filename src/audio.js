@@ -31,6 +31,11 @@ const SOUNDS = {
   power_surge: 'assets/sounds/power_surge.wav',
 };
 
+// Volume balance: music sits noticeably louder than sound effects. Bump
+// MUSIC_VOLUME up / SFX_GAIN_SCALE down together to widen the music:SFX ratio.
+const MUSIC_VOLUME = 0.15;   // was 0.08 — all looping music tracks
+const SFX_GAIN_SCALE = 0.6;  // multiplies every sound-effect gain
+
 // Tiny procedural sound + ambient pad using WebAudio — no asset files required.
 class Audio {
   constructor() {
@@ -89,7 +94,7 @@ class Audio {
       const source = this.ctx.createBufferSource();
       source.buffer = this.buffers[name];
       const gainNode = this.ctx.createGain();
-      gainNode.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+      gainNode.gain.setValueAtTime(gainVal * SFX_GAIN_SCALE, this.ctx.currentTime);
       source.connect(gainNode);
       gainNode.connect(this.ctx.destination);
       source.start(0);
@@ -103,21 +108,21 @@ class Audio {
     if (!this.titleMusic) {
       this.titleMusic = new window.Audio('assets/music/titletheme.mp3');
       this.titleMusic.loop = true;
-      this.titleMusic.volume = 0.08;
+      this.titleMusic.volume = MUSIC_VOLUME;
     }
   }
   ensureCombatMusic() {
     if (!this.combatMusic) {
       this.combatMusic = new window.Audio('assets/music/combattheme1.mp3');
       this.combatMusic.loop = true;
-      this.combatMusic.volume = 0.08;
+      this.combatMusic.volume = MUSIC_VOLUME;
     }
   }
   ensureBossMusic() {
     if (!this.bossMusic) {
       this.bossMusic = new window.Audio('assets/music/combattheme3.mp3');
       this.bossMusic.loop = true;
-      this.bossMusic.volume = 0.08;
+      this.bossMusic.volume = MUSIC_VOLUME;
     }
   }
   ensureActMusic(act) {
@@ -127,7 +132,7 @@ class Audio {
       if (this.actMusic) this.actMusic.pause();
       this.actMusic = new window.Audio(src);
       this.actMusic.loop = true;
-      this.actMusic.volume = 0.08;
+      this.actMusic.volume = MUSIC_VOLUME;
       this.actMusicAct = act;
     }
     return this.actMusic;
@@ -141,7 +146,7 @@ class Audio {
     const g = this.ctx.createGain();
     osc.type = type; osc.frequency.setValueAtTime(freq, t);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(gain, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(gain * SFX_GAIN_SCALE, t + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     osc.connect(g); g.connect(this.ctx.destination);
     osc.start(t); osc.stop(t + dur + 0.02);
