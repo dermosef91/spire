@@ -47,6 +47,8 @@ export const EndScene = {
   gameOver(victory, info = {}) {
     const run = this.run;
     clearSave();
+    this.meta.runsCompleted = (this.meta.runsCompleted || 0) + 1;
+    saveMeta(this.meta);
     // Nemesis seed (#19): remember the foe that felled you so the next run can
     // stage a buffed rematch. Guard on a real, current enemy id.
     if (!victory && info.slainById && ENEMIES[info.slainById]) {
@@ -94,6 +96,7 @@ export const EndScene = {
   },
   victory() {
     this.meta.wins += 1;
+    this.meta.runsCompleted = (this.meta.runsCompleted || 0) + 1;
     // Check if any characters just became unlocked at this win count.
     this._charsJustUnlocked = newlyUnlockedChars(this.meta.wins);
     this._cardsJustUnlocked = checkNewCardUnlocks(this.meta, this.run);

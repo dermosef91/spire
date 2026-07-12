@@ -116,12 +116,16 @@ export const TitleScene = {
       const s = sec % 60;
       return `${m}:${s < 10 ? '0' : ''}${s}`;
     };
-    const ascLabel = this.meta.maxAscension >= MAX_ASCENSION ? 'ASCENSION MAX' : `ASCENSION ${this.meta.maxAscension}`;
-    const bestTimeStr = formatTime(this.meta.bestTime);
-    panel.appendChild(el('div', {
-      class: 'title-meta',
-      text: `RUNS: ${this.meta.runs}   ·   VICTORIES: ${this.meta.wins}   ·   BEST TIME: ${bestTimeStr}   ·   ${ascLabel} UNLOCKED`
-    }));
+    // Hide the run stats until the player has completed (won or lost) at least
+    // one run — a fresh player sees a clean title with no empty scoreboard.
+    if ((this.meta.runsCompleted || 0) > 0) {
+      const ascLabel = this.meta.maxAscension >= MAX_ASCENSION ? 'ASCENSION MAX' : `ASCENSION ${this.meta.maxAscension}`;
+      const bestTimeStr = formatTime(this.meta.bestTime);
+      panel.appendChild(el('div', {
+        class: 'title-meta',
+        text: `RUNS: ${this.meta.runs}   ·   VICTORIES: ${this.meta.wins}   ·   BEST TIME: ${bestTimeStr}   ·   ${ascLabel} UNLOCKED`
+      }));
+    }
     this.setScene(panel, 'title');
   },
 

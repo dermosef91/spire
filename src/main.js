@@ -19,7 +19,6 @@ const game = new Game(root);
 const bar = el('div', { class: 'boot-bar' }, [el('div', { class: 'boot-bar-fill' })]);
 const loading = el('div', { class: 'boot-loading' }, [
   el('div', { class: 'boot-title', text: 'ÀṢẸ' }),
-  el('div', { class: 'boot-status', text: 'Summoning the Spire…' }),
   bar,
 ]);
 root.appendChild(loading);
