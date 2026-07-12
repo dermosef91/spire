@@ -166,6 +166,22 @@ npm start            # static server at http://localhost:8080 (server.js, zero d
   bug: either set `rhythm: false` in the seeded `spire_of_ase_meta_v1`
   localStorage before combat, or only assert on `type==='skill'` cards, when
   writing this kind of check.
+  **Self/all-target drag drop zone is the whole battlefield, not just the
+  player combatant.** `dragMove`/`dragEnd`'s non-enemy-target branch plays
+  the card if `playerAt(x,y)` hits the player node (precise, and what shows
+  the `.targetable`/`drag-over` highlight) **or** the drop point is anywhere
+  above `this.battlefield.getBoundingClientRect().bottom` (`d.fieldBottom`,
+  captured once in `onCardPointerDown`) — do not use `.hand`'s own container
+  top for this second check, even though it looks like the natural "above
+  the hand" boundary: `.hand` has `padding-top: clamp(46px, 6.5vh, 66px)`,
+  so that rect's top sits 46–66px above where any card pixel actually
+  renders. On a cramped landscape-phone viewport an enemy's center can fall
+  numerically inside that padding band even though it reads as clearly "in
+  the battlefield," so requiring `e.clientY < handTop` (or requiring a
+  precise player hit alone) silently rejected a self/all-target card dropped
+  onto the enemy side while the identical drag onto the player succeeded —
+  a real, reproducible asymmetry, not a one-off. Verified with real touch
+  input dragging onto both the player and the enemy side.
   Enemies choose moves via `bp.pick(s, c, rng)`; prefer `rng.weighted(...)` +
   the player-state helpers in `enemies.js` (`playerLowHp`/`playerBlocked`/
   `playerLacks`/`selfLowHp`) over fixed `turn % n` cycles. A blueprint
