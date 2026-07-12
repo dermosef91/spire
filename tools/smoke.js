@@ -172,8 +172,14 @@ try {
   }
   await page.waitForSelector('.card-cast-ghost', { state: 'detached', timeout: 2500 });
 
+  // Prefer the cheapest affordable attack, not just the first one: the
+  // starter deck mixes 1-cost and 2-cost attacks, and picking an expensive
+  // one here can fully drain the energy the next assertion (any affordable
+  // card left in hand) depends on, turning a hand-composition fluke into a
+  // spurious smoke failure unrelated to drag-and-drop itself.
   const attackUid = await page.evaluate(() => window.__combat.hand
-    .find((card) => card.type === 'attack' && card.target === 'enemy' && window.__combat.canPlay(card))?.uid || null);
+    .filter((card) => card.type === 'attack' && card.target === 'enemy' && window.__combat.canPlay(card))
+    .sort((a, b) => a.cost - b.cost)[0]?.uid || null);
   if (!attackUid) throw new Error('starter hand has no affordable attack for drag smoke');
   const attackCard = page.locator(`.hand .card[data-uid="${attackUid}"]`);
   const attackBox = await attackCard.boundingBox();
