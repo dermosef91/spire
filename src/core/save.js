@@ -40,7 +40,7 @@ function defaultMeta() {
   // lastNemesis: {id,name,act} of the foe that ended the previous run. The next
   //   run promotes its first elite into a buffed "Rendered <name>" rematch.
   return {
-    runs: 0, wins: 0, bestFloor: 0, ascensions: 0, maxAscension: 0, ascension: 0,
+    runs: 0, runsCompleted: 0, wins: 0, bestFloor: 0, ascensions: 0, maxAscension: 0, ascension: 0,
     tutorialDone: false, multiEnemyTutorialDone: false, ascendedOnce: false, timesAscended: 0, spireUnwritten: false,
     rhythm: true, bestTime: 0, unlockedCards: [],
     lastNemesis: null,
