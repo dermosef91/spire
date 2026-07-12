@@ -181,6 +181,7 @@ export class CombatView {
     scene.appendChild(this.depthBack);
 
     const field = el('div', { class: 'battlefield' });
+    this.battlefield = field;
     this.playerSide = el('div', { class: 'player-side' });
     this.enemySide = el('div', { class: 'enemy-side' });
     field.appendChild(this.playerSide);
@@ -1149,7 +1150,15 @@ export class CombatView {
     this.drag = {
       card, node, id: e.pointerId, sx: e.clientX, sy: e.clientY,
       w: r.width, h: r.height, moved: false, captured: false, pointerType: e.pointerType, dropTarget: null,
-      handTop: this.handHolder.getBoundingClientRect().top,
+      // Self/all-target cards should play on any drop within the playing
+      // field, not only a precise hit on the player combatant — the field's
+      // own bottom edge is the real field/hand boundary. (.hand's own rect
+      // top can't be used for this: it includes ~46-66px of top padding
+      // above where any card pixel renders, so on cramped landscape-phone
+      // layouts a drop that's clearly on the battlefield, e.g. over an
+      // enemy sitting lower on screen than the player, could numerically
+      // land inside that padding band and get silently rejected.)
+      fieldBottom: this.battlefield.getBoundingClientRect().bottom,
     };
     // A mouse can leave a fanned card before the first pointermove reaches
     // its listener. Capture immediately so a fast drag still crosses the
@@ -1222,9 +1231,10 @@ export class CombatView {
       d.node.classList.toggle('will-play', !!hit && playable);
     } else {
       const hit = this.playerAt(e.clientX, e.clientY);
+      const inField = e.clientY < d.fieldBottom;
       d.dropTarget = hit;
       this.setDragOver(hit ? hit.node : null);
-      d.node.classList.toggle('will-play', !!hit && playable);
+      d.node.classList.toggle('will-play', (!!hit || inField) && playable);
     }
   }
 
@@ -1253,7 +1263,7 @@ export class CombatView {
       if (d.card.target === 'enemy') {
         const hit = dropTarget || this.enemyAt(e.clientX, e.clientY);
         if (hit) { this.playCard(d.card, hit.e); played = true; }
-      } else if (dropTarget || this.playerAt(e.clientX, e.clientY)) {
+      } else if (dropTarget || this.playerAt(e.clientX, e.clientY) || e.clientY < d.fieldBottom) {
         this.playCard(d.card, this.combat.randomEnemy());
         played = true;
       }
