@@ -22,6 +22,9 @@ function legendHtml() {
 export const MapScene = {
   // ----------------------------------------------------------- map
   showMap() {
+    // Climb-mode runs navigate via the Descent-Vote door scene instead of the
+    // branching board; legacy saves (no climb) still render the node map.
+    if (this.run.climb) return this.showDoors();
     audio.setMusicMode('act', this.run.act);
     saveRun(this.run);
     const run = this.run;
@@ -345,10 +348,14 @@ export const MapScene = {
     run.heal(run.maxHp);
     run._actMonster = 0;
     run.actFlags = {}; // reactive-map flags are per-act (#18)
-    run.map = generateMap(run.rng, run.act);
-    run.position = null;
-    run.pathTaken = [];
-    run.mapDiscovered = [];
+    if (run.climb) {
+      run.beginClimb(); // fresh doors for the new act (resets floor/director)
+    } else {
+      run.map = generateMap(run.rng, run.act);
+      run.position = null;
+      run.pathTaken = [];
+      run.mapDiscovered = [];
+    }
     saveRun(run);
     this.showActIntro();
   },

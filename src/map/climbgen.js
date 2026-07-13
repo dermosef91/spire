@@ -18,9 +18,14 @@
 
 import { DOOR_PROSE, NAMED_DOORS, CURATOR_LINES, omenCategory } from '../data/doors.js';
 
-// Master switch. While false the game runs the legacy branching map unchanged;
-// RunState never builds climb state on its own. Tests build it explicitly.
-export const CLIMB_MODE = false;
+// Master switch. New runs build climb state and the game offers doors instead
+// of the branching node map. Legacy saves (built before this) keep their map.
+export const CLIMB_MODE = true;
+
+// Named Thresholds (micro-events at the sill) generate but their special
+// resolve behaviour isn't wired until phase 4 — keep them out of live offers
+// until then so a named door can't promise a toll/shortcut it won't deliver.
+const NAMED_ENABLED = false;
 
 export const FLOORS = 15;            // rooms per act (matches mapgen ROWS)
 const BOSS_FLOOR = FLOORS + 1;       // the terminal boss gate
@@ -214,7 +219,7 @@ function applyGuarantees(picks, act, floor, director) {
 
 // ------------------------------------------------------------------ named doors
 function pickNamedIndex(rng, act, floor, picks) {
-  if (floor < 4 || floor >= FLOORS) return -1;
+  if (!NAMED_ENABLED || floor < 4 || floor >= FLOORS) return -1;
   const chance = act >= 2 ? 0.14 : 0.09;
   if (!rng.bool(chance)) return -1;
   // Prefer to name a plain-ish room slot; any slot works.

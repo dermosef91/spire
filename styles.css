@@ -432,6 +432,9 @@ body.scene-combat #bg-image.show {
 body.scene-map #bg-image.show {
   opacity: 0.2;
 }
+body.scene-doors #bg-image.show {
+  opacity: 0.24;
+}
 body.scene-reward #bg-image.show {
   opacity: 0.15;
 }
@@ -904,6 +907,125 @@ body.scene-act-intro #bg-image.show { opacity: 0.55; }
 .map-legend-list { display: flex; flex-direction: column; gap: 10px; }
 .leg { display: flex; align-items: center; gap: 9px; }
 .leg-ic { width: 22px; height: 22px; display: inline-grid; place-items: center; flex: 0 0 auto; }
+
+/* ----------------------------- doors (Descent-Vote) ----------------------------- */
+.scene.doors { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+.doors-scene { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.doors-body {
+  flex: 1 1 auto; min-height: 0; display: flex; gap: 16px; align-items: stretch;
+  padding: 10px clamp(12px, 4vw, 48px) 18px; box-sizing: border-box;
+}
+.doors-main {
+  flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 12px; overflow-y: auto;
+}
+.doors-curator {
+  font-family: var(--font-display); color: var(--amber); letter-spacing: 0.08em;
+  font-size: clamp(15px, 2.2vw, 20px); text-align: center; opacity: 0.92; margin: 0;
+  max-width: 40ch; text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+}
+.doors-main .scene-heading, .doors-main h2 { margin: 0 0 4px; }
+
+.doors-row {
+  display: flex; gap: clamp(12px, 2.5vw, 26px); justify-content: center;
+  align-items: stretch; width: 100%; flex-wrap: wrap;
+}
+.door-card {
+  position: relative; flex: 0 1 clamp(200px, 26vw, 280px); min-width: 190px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 22px 18px 16px; cursor: pointer; text-align: center; color: var(--cream);
+  background: linear-gradient(180deg, rgba(20,13,8,0.86) 0%, rgba(10,6,4,0.92) 100%);
+  border: 1.5px solid rgba(255,170,80,0.32);
+  border-radius: 10px;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,170,80,0.08);
+  transition: transform 0.2s cubic-bezier(.2,.8,.2,1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.door-card::before {
+  content: ''; position: absolute; inset: 4px; border-radius: 7px; pointer-events: none;
+  border: 1px solid rgba(255,170,80,0.12);
+}
+.door-card:hover, .door-card.kb-focus {
+  transform: translateY(-6px); border-color: var(--orange);
+  box-shadow: 0 20px 42px rgba(0,0,0,0.7), 0 0 22px rgba(255,106,26,0.35);
+}
+.door-card.door-danger { border-color: rgba(255,90,40,0.5); }
+.door-card.door-danger:hover, .door-card.door-danger.kb-focus {
+  border-color: #ff5a28; box-shadow: 0 20px 42px rgba(0,0,0,0.7), 0 0 24px rgba(255,70,30,0.45);
+}
+.door-omen {
+  width: clamp(58px, 8vw, 80px); height: clamp(58px, 8vw, 80px);
+  display: grid; place-items: center; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
+}
+.door-omen .svg-ic { width: 100%; height: 100%; }
+.door-prose {
+  margin: 0; font-size: clamp(13px, 1.5vw, 15px); line-height: 1.5;
+  color: var(--cream); opacity: 0.9; flex: 1 1 auto;
+}
+.door-foot {
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
+  margin-top: 4px;
+}
+.door-tag {
+  font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700;
+  color: var(--amber); opacity: 0.85;
+}
+.door-card.door-danger .door-tag { color: #ff8a5a; }
+.door-tag.tag-sealed, .door-tag.tag-veiled { color: var(--cream); opacity: 0.6; }
+.door-num {
+  width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 12px; font-weight: 700; color: var(--cream);
+  border: 1px solid rgba(255,170,80,0.35); opacity: 0.7;
+}
+
+/* ascent gauge — vertical spire silhouette of the act, right rail */
+.ascent-gauge {
+  flex: 0 0 auto; width: 84px; display: flex; flex-direction: column; align-items: center;
+  gap: 8px; padding: 8px 6px; align-self: center; max-height: 100%;
+  background: var(--panel); border: 1px solid rgba(255,170,80,0.16); border-radius: 10px;
+}
+.ascent-head {
+  font-family: var(--font-display); color: var(--orange); font-size: 12px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+}
+.ascent-track { display: flex; flex-direction: column; align-items: center; gap: 4px; overflow-y: auto; min-height: 0; }
+.ascent-notch {
+  width: 32px; height: 32px; border-radius: 6px; display: grid; place-items: center;
+  border: 1px solid rgba(255,170,80,0.18); background: rgba(255,255,255,0.02); flex: 0 0 auto;
+}
+.ascent-notch .svg-ic { width: 78%; height: 78%; opacity: 0.9; }
+.ascent-notch.done { border-color: rgba(255,170,80,0.4); background: rgba(255,106,26,0.08); }
+.ascent-notch.here {
+  border-color: var(--orange); box-shadow: 0 0 12px rgba(255,106,26,0.5);
+  animation: ascentHere 1.8s ease-in-out infinite;
+}
+.ascent-notch.pre-boss:not(.done) { border-style: dashed; border-color: var(--ember); }
+.ascent-notch.ascent-boss { width: 40px; height: 40px; border-color: var(--orange); }
+@keyframes ascentHere { 0%,100% { box-shadow: 0 0 8px rgba(255,106,26,0.4); } 50% { box-shadow: 0 0 18px rgba(255,106,26,0.7); } }
+
+/* narrow portrait: gauge reflows into a horizontal strip below the offer */
+@media (max-width: 760px) {
+  .doors-body { flex-direction: column; gap: 10px; padding-bottom: 10px; }
+  .doors-row { flex-wrap: wrap; }
+  .ascent-gauge { width: 100%; flex-direction: row; max-height: none; padding: 6px 10px; }
+  .ascent-track { flex-direction: row-reverse; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; gap: 3px; }
+  .ascent-notch { width: 26px; height: 26px; }
+  .ascent-notch.ascent-boss { width: 30px; height: 30px; }
+}
+/* landscape phone: keep the right rail but shrink everything to fit the fold */
+@media (max-height: 560px) {
+  .doors-body { padding: 6px clamp(8px, 3vw, 24px) 8px; gap: 10px; }
+  .doors-curator { font-size: 14px; }
+  .door-card { padding: 12px 12px 10px; gap: 7px; flex-basis: clamp(160px, 24vw, 230px); }
+  .door-omen { width: 46px; height: 46px; }
+  .door-prose { font-size: 12px; line-height: 1.4; -webkit-line-clamp: 4; }
+  .ascent-gauge { width: 60px; }
+  .ascent-notch { width: 24px; height: 24px; }
+  .ascent-notch.ascent-boss { width: 30px; height: 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ascent-notch.here { animation: none; }
+  .door-card:hover, .door-card.kb-focus { transform: none; }
+}
 
 /* ============================================================
    CARDS — black slab, ember double-frame, art panel, type pill
