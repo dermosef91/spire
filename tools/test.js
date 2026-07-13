@@ -13,6 +13,11 @@ import assert from 'node:assert/strict';
 import { RNG } from '../src/core/rng.js';
 import { RunState } from '../src/core/state.js';
 import { generateMap, nextNodes, nodeAt } from '../src/map/mapgen.js';
+import {
+  FLOORS, newDirector, newClimb, directorUpdate, recordPick,
+  generateOffer, curatorLine,
+} from '../src/map/climbgen.js';
+import { DOOR_PROSE } from '../src/data/doors.js';
 import { createCard, upgradeCard, canUpgrade } from '../src/data/cards.js';
 import { Combat } from '../src/combat/combat.js';
 import { enemyMovePacing, impactProfile, previewCardBlock, previewEnemyAttack } from '../src/combat/presentation.js';
@@ -242,6 +247,136 @@ test('legacy event rooms are converted to combats when loading a run', () => {
   node.type = 'event';
   const loaded = RunState.fromJSON(saved);
   assert.equal(loaded.map.grid[node.row][node.col].type, 'monster');
+});
+
+// -------------------------------------------------- descent-vote (climbgen)
+console.log('Descent-Vote climb (map/climbgen.js)');
+
+// Walk one full act greedily (always take door 0), returning the per-floor
+// offers plus the taken-type sequence. `hpFrac` drives the curator appetite.
+function walkAct(seed, act, hpFrac = 0.7) {
+  const rng = new RNG(seed);
+  const dir = newDirector();
+  const run = { hp: Math.round(80 * hpFrac), maxHp: 80, gold: 90 };
+  const offers = [];
+  const taken = [];
+  for (let floor = 1; floor <= FLOORS + 1; floor++) {
+    directorUpdate(dir, run);
+    const offer = generateOffer(rng, act, floor, dir);
+    offers.push({ floor, offer });
+    const chosen = offer[0];
+    if (chosen.type !== 'boss') recordPick(dir, chosen.type);
+    taken.push(chosen.type);
+  }
+  return { offers, taken, dir };
+}
+
+test('an act yields 15 room floors + a boss gate, each a valid offer', () => {
+  const { offers } = walkAct(7, 1);
+  assert.equal(offers.length, FLOORS + 1);
+  for (const { floor, offer } of offers) {
+    assert.ok(offer.length >= 1 && offer.length <= 3, `floor ${floor} door count`);
+    for (const d of offer) {
+      assert.ok(typeof d.type === 'string' && d.type.length, 'door has a type');
+      assert.ok(['plain', 'veiled', 'sealed'].includes(d.tier), 'door has a valid tier');
+      assert.ok(typeof d.prose === 'string' && d.prose.length, `floor ${floor} prose non-empty`);
+    }
+  }
+  assert.equal(offers[FLOORS].offer[0].type, 'boss', 'final offer is the boss gate');
+  assert.equal(offers[FLOORS].offer.length, 1, 'boss gate is a single door');
+});
+
+test('floor 1 is an all-combat opening and the pre-boss floor is a rest', () => {
+  const { offers } = walkAct(11, 2);
+  assert.ok(offers[0].offer.every((d) => d.type === 'monster'), 'floor 1 all monster');
+  const preBoss = offers[FLOORS - 1].offer; // floor 15
+  assert.equal(preBoss.length, 1);
+  assert.equal(preBoss[0].type, 'rest', 'summit threshold is the ancestor fire');
+});
+
+test('same seed + same choices reproduces the identical offer sequence', () => {
+  const a = walkAct(4242, 3);
+  const b = walkAct(4242, 3);
+  assert.deepEqual(a.offers, b.offers);
+  assert.deepEqual(a.taken, b.taken);
+});
+
+test('climb state round-trips through save/load', () => {
+  const run = new RunState('amara', 555);
+  run.beginClimb();
+  const rng = run.rng;
+  directorUpdate(run.climb.director, run);
+  run.climb.offer = generateOffer(rng, 1, 1, run.climb.director);
+  run.climb.offerFloor = 1;
+  run.climb.floor = 0;
+  const loaded = RunState.fromJSON(JSON.parse(JSON.stringify(run.toJSON())));
+  assert.deepEqual(loaded.climb, run.climb, 'climb survives serialization');
+});
+
+test('legacy saves (no climb) load without a climb and keep their map', () => {
+  const saved = new RunState('kofi', 3).toJSON();
+  delete saved.climb;
+  const loaded = RunState.fromJSON(saved);
+  assert.equal(loaded.climb, null);
+  assert.ok(loaded.map && loaded.map.rows === 15, 'still on the node map');
+});
+
+test('pacing clamps hold across many seeded acts', () => {
+  for (let s = 0; s < 120; s++) {
+    const act = 1 + (s % 3);
+    const { offers, dir } = walkAct(s * 13 + 1, act, 0.3 + (s % 5) * 0.15);
+    let combatStreak = 0;
+    for (const { floor, offer } of offers) {
+      if (floor > FLOORS) continue; // boss gate
+      for (const d of offer) {
+        if (d.type === 'elite') assert.ok(floor >= 5, `elite before floor 5 (seed ${s}, floor ${floor})`);
+        if (d.type === 'treasure') assert.ok(floor >= 6 && floor <= 10, `treasure out of band (seed ${s}, floor ${floor})`);
+        if (d.type === 'rest' && floor < FLOORS) assert.ok(floor >= 4, `rest too early (seed ${s}, floor ${floor})`);
+      }
+      // Late floors always offer a way out of combat.
+      if (floor >= 11 && floor < FLOORS) {
+        assert.ok(offer.some((d) => d.type !== 'monster' && d.type !== 'elite'),
+          `no non-combat door at floor ${floor} (seed ${s})`);
+      }
+      // The greedy walk takes door 0; a run can never be forced into a 4th
+      // straight fight (some non-combat door is always reachable by then).
+      const taken0 = offer[0].type;
+      if (taken0 === 'monster' || taken0 === 'elite') combatStreak++;
+      else combatStreak = 0;
+      if (combatStreak >= 4) {
+        assert.ok(offer.some((d) => d.type !== 'monster' && d.type !== 'elite'),
+          `no escape from a 4-combat streak at floor ${floor} (seed ${s})`);
+      }
+    }
+    assert.ok(dir.offeredShop, `no bazaar offered all act (seed ${s})`);
+  }
+});
+
+test('the Spire offers comfort to the strong and fights to the weak (appetite)', () => {
+  const strong = newDirector();
+  const weak = newDirector();
+  directorUpdate(strong, { hp: 80, maxHp: 80, gold: 200 });
+  directorUpdate(weak, { hp: 8, maxHp: 80, gold: 0 });
+  assert.ok(strong.appetite > weak.appetite, 'fuller climber => hungrier Spire');
+  assert.ok(strong.appetite >= 66 && weak.appetite <= 33, 'appetite reaches both bands');
+  assert.ok(curatorLine(new RNG(1), strong.appetite).length > 0);
+  assert.ok(curatorLine(new RNG(1), weak.appetite).length > 0);
+});
+
+test('every prose cell the generator can key into is non-empty', () => {
+  const types = ['monster', 'elite', 'shop', 'rest', 'treasure', 'event'];
+  for (const act of [1, 2, 3]) {
+    for (const t of types) {
+      assert.ok(DOOR_PROSE.plain[act][t] && DOOR_PROSE.plain[act][t].length,
+        `plain[${act}][${t}] empty`);
+    }
+    for (const cat of ['danger', 'comfort']) {
+      assert.ok(DOOR_PROSE.veiled[act][cat] && DOOR_PROSE.veiled[act][cat].length,
+        `veiled[${act}][${cat}] empty`);
+    }
+    assert.ok(DOOR_PROSE.sealed[act] && DOOR_PROSE.sealed[act].length, `sealed[${act}] empty`);
+    assert.ok(DOOR_PROSE.boss[act] && DOOR_PROSE.boss[act].length, `boss[${act}] empty`);
+  }
 });
 
 // ----------------------------------------------------------------- cards
