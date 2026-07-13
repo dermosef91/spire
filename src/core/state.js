@@ -6,7 +6,6 @@ import { CHARACTERS } from '../data/characters.js';
 import { RELICS } from '../data/relics.js';
 import { createCard, upgradeCard, canUpgrade } from '../data/cards.js';
 import { deactivateEventRooms, generateMap } from '../map/mapgen.js';
-import { newClimb, CLIMB_MODE } from '../map/climbgen.js';
 
 // Ascension ladder — each level ADDS its modifier on top of every lower level,
 // so the climb grows steadily crueler. Unlocked one at a time by winning at the
@@ -72,11 +71,6 @@ export class RunState {
     this.position = null; // {row, col}
     this.pathTaken = []; // visited nodes this act: {row, col} entries, 'boss' last
     this.mapDiscovered = []; // node keys revealed this act (e.g. "0-2", "boss")
-    // Descent-Vote climb state (map/climbgen.js). New runs build a climb; the
-    // node map is still generated above so legacy-save code paths and tooling
-    // that read run.map keep working, but the game navigates via doors.
-    this.climb = null;
-    if (CLIMB_MODE) this.beginClimb();
     this.lastResult = null;
 
     this.elapsedTime = 0;
@@ -96,14 +90,6 @@ export class RunState {
   energyBonus() { return this.relics.reduce((s, id) => s + (RELICS[id]?.energyBonus || 0), 0); }
   restHealBonus() { return this.relics.reduce((s, id) => s + (RELICS[id]?.restBonus || 0), 0); }
   canRestHeal() { return !this.relics.some((id) => RELICS[id]?.blockRestHeal); }
-
-  // Start (or restart, per act) the Descent-Vote climb for this run. Callers
-  // that opt into CLIMB_MODE use this instead of the generated node map.
-  beginClimb() {
-    this.climb = newClimb();
-    this.position = null;
-    return this.climb;
-  }
 
   grantRandomRelic() {
     const pool = Object.values(RELICS).filter(
@@ -212,7 +198,6 @@ export class RunState {
       actFlags: this.actFlags || {}, nemesisDone: !!this.nemesisDone,
       bossesDefeated: this.bossesDefeated, foesSlain: this.foesSlain, usedEvents: this.usedEvents,
       map: this.map, position: this.position, pathTaken: this.pathTaken || [], mapDiscovered: this.mapDiscovered || [],
-      climb: this.climb || null,
       elapsedTime: this.elapsedTime,
     };
   }
@@ -243,7 +228,6 @@ export class RunState {
     run.position = data.position;
     run.pathTaken = data.pathTaken || []; // default keeps legacy saves loading
     run.mapDiscovered = data.mapDiscovered || [];
-    run.climb = data.climb || null; // legacy saves have no climb; stay on the map
     run.lastResult = null;
     run.elapsedTime = data.elapsedTime || 0;
     run.sessionStartTime = Date.now();

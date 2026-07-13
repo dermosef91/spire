@@ -135,22 +135,6 @@ export const NODE = {
   treasure: `<img src="assets/icons/treasure.png" class="svg-ic" alt="Treasure" />`,
 };
 
-/* ============================== OMENS (Descent-Vote doors) ==================
- * Line-art tells for a door whose room type is only partially revealed. Plain
- * doors reuse the NODE type icons above; veiled doors show danger/comfort and
- * sealed doors show the blank seam. Kept intentionally simple and monochrome-
- * themable so they read as portents, not badges. */
-export const OMEN = {
-  // A row of fangs — something waits to bite.
-  danger: S(`<path d="M22 34 L32 60 L40 40 L50 64 L60 40 L68 60 L78 34" stroke="${O}" stroke-width="5"/><path d="M22 34 H78" stroke="${E}" stroke-width="3" opacity="0.7"/>`),
-  // A hearth flame over its bowl — an offering, a welcome.
-  comfort: S(`<path d="M50 26 C62 42 62 54 50 66 C38 54 38 42 50 26Z" fill="${A}" stroke="${C}" stroke-width="3"/><path d="M30 72 Q50 80 70 72" stroke="${O}" stroke-width="4"/>`),
-  // A sealed seam — no tell at all.
-  sealed: S(`<rect x="32" y="20" width="36" height="60" rx="7" stroke="${O}" stroke-width="4"/><path d="M50 20 V80" stroke="${A}" stroke-width="3" opacity="0.55" stroke-dasharray="4 6"/><circle cx="50" cy="50" r="3" fill="${E}"/>`),
-  // A doorway arch — the shared frame motif.
-  door: S(`<path d="M28 82 V40 C28 22 72 22 72 40 V82" stroke="${O}" stroke-width="5"/><path d="M28 82 H72" stroke="${C}" stroke-width="4"/>`),
-};
-
 /* ============================== POWERS / STATUS ============================== */
 const POWER_SVG = {
   strength: `<path d="M30 58 q-6 -10 4 -12 l18 -4 q4 -14 14 -10 q10 4 4 16 l-2 8 q10 6 4 16 q-6 8 -18 6 l-20 -4 q-12 -4 -8 -12Z" fill="${O}" stroke="${C}" stroke-width="3"/>`,

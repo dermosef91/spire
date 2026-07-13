@@ -78,10 +78,9 @@ const SCENES = [
   },
   {
     key: 'map',
-    label: 'Descent doors',
+    label: 'Act map',
     settle: 700,
-    // startRun lands on the act-intro; jump straight to the offer (climb mode
-    // delegates showMap() to the Descent-Vote door scene).
+    // startRun lands on the act-intro; jump straight to the map.
     drive: () => { window.__ase.startRun('amara'); window.__ase.showMap(); },
   },
   {
@@ -133,7 +132,7 @@ function auditPage() {
 
   // Interactive controls that must sit fully inside the viewport to be usable.
   const controls = Array.from(document.querySelectorAll(
-    'button, .btn, .char-card, .map-node.reachable, .door-card, .card.in-hand, .energy-orb, .end-turn, .screen-pile'
+    'button, .btn, .char-card, .map-node.reachable, .card.in-hand, .energy-orb, .end-turn, .screen-pile'
   )).filter(visible);
 
   for (const c of controls) {

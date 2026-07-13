@@ -91,13 +91,16 @@ try {
   // Act intro → map
   await page.getByText('Enter', { exact: true }).first().click();
 
-  // Doors (Descent-Vote) → open the first door (floor 1 is always an
-  // all-combat opening, so this leads straight into a fight).
-  await page.waitForSelector('.door-card', { timeout: 5000 });
-  if (!(await page.$('.doors-curator'))) throw new Error('curator line missing from the offer');
-  if (!(await page.$('.ascent-gauge'))) throw new Error('ascent gauge missing from the offer');
-  if (await page.locator('.door-card').count() < 2) throw new Error('the opening offer has fewer than 2 doors');
-  await page.locator('.door-card').first().click({ force: true });
+  // Map → enter the first reachable node (row 0 is always a monster fight).
+  // Reachable nodes carry a perpetual twinkle/pulse animation, so Playwright's
+  // click-stability check never settles — force the click (node is visible and
+  // enabled; only the infinite animation blocks the actionability wait).
+  await page.waitForSelector('.map-node.reachable', { timeout: 5000 });
+  if (await page.locator('.map-atmosphere .map-weather-mote').count() < 10) throw new Error('map atmosphere motes are missing');
+  if (await page.locator('.map-node.reachable.discovered').count() < 1) throw new Error('reachable rooms were not discovered');
+  if (await page.locator('.map-node.unexplored').count() < 1) throw new Error('future rooms have no discovery haze');
+  await page.locator('.map-node.reachable').first().click({ force: true });
+  await page.waitForSelector('.map-traveler', { timeout: 800 });
 
   // Combat must mount with a hand and an enemy present
   await page.waitForSelector('.battlefield', { timeout: 8000 });
@@ -252,11 +255,7 @@ try {
     window.__combat.player.block = 0;
     window.__combat.endTurn();
   });
-  // The enemy phase deliberately holds an "Enemy Turn" banner (~650ms) before
-  // the first foe acts and the `.enemy-acting` spotlight lands (~830ms after
-  // endTurn), so allow the same generous window as the sibling enemy-phase
-  // waits below rather than a tight 2.2s that a slow CI runner can overrun.
-  await page.waitForSelector('.enemy-acting', { timeout: 3500 });
+  await page.waitForSelector('.enemy-acting', { timeout: 2200 });
   const actingCount = await page.locator('.enemy-acting').count();
   if (actingCount !== 1) throw new Error(`enemy phase spotlighted ${actingCount} foes instead of one`);
   const enemyPhaseHandOpacity = Number(await page.locator('.hand').evaluate((node) => getComputedStyle(node).opacity));
