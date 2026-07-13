@@ -6,7 +6,7 @@ import { CHARACTERS } from '../data/characters.js';
 import { RELICS } from '../data/relics.js';
 import { createCard, upgradeCard, canUpgrade } from '../data/cards.js';
 import { deactivateEventRooms, generateMap } from '../map/mapgen.js';
-import { newClimb } from '../map/climbgen.js';
+import { newClimb, CLIMB_MODE } from '../map/climbgen.js';
 
 // Ascension ladder — each level ADDS its modifier on top of every lower level,
 // so the climb grows steadily crueler. Unlocked one at a time by winning at the
@@ -72,10 +72,11 @@ export class RunState {
     this.position = null; // {row, col}
     this.pathTaken = []; // visited nodes this act: {row, col} entries, 'boss' last
     this.mapDiscovered = []; // node keys revealed this act (e.g. "0-2", "boss")
-    // Descent-Vote climb state (map/climbgen.js) — null until beginClimb().
-    // Built lazily so the legacy node map stays the default while CLIMB_MODE
-    // is off; a run carries either a map or a climb, never depends on both.
+    // Descent-Vote climb state (map/climbgen.js). New runs build a climb; the
+    // node map is still generated above so legacy-save code paths and tooling
+    // that read run.map keep working, but the game navigates via doors.
     this.climb = null;
+    if (CLIMB_MODE) this.beginClimb();
     this.lastResult = null;
 
     this.elapsedTime = 0;

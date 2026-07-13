@@ -25,6 +25,7 @@ import { KeyboardController } from './core/keyboard.js';
 
 import { TitleScene } from './scenes/title.js';
 import { MapScene } from './scenes/map.js';
+import { DoorScene } from './scenes/doors.js';
 import { CombatScene } from './scenes/combat.js';
 import { RewardScene } from './scenes/rewards.js';
 import { ShopScene } from './scenes/shop.js';
@@ -542,6 +543,7 @@ Object.assign(
   Game.prototype,
   TitleScene,
   MapScene,
+  DoorScene,
   CombatScene,
   RewardScene,
   ShopScene,

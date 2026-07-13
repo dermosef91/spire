@@ -1,6 +1,6 @@
 # ÀṢẸ — QA screenshot & responsiveness audit
 
-Generated: 2026-07-11T20:40:23.303Z
+Generated: 2026-07-13T07:40:08.267Z
 
 Run with `node tools/qa-screenshots.js`. Screenshots and this report
 are written to `docs/qa/`.
@@ -15,7 +15,7 @@ are written to `docs/qa/`.
 
 ![mobile-landscape charselect](./mobile-landscape-charselect.jpg)
 
-### Act map — ✓ clean
+### Descent doors — ✓ clean
 
 ![mobile-landscape map](./mobile-landscape-map.jpg)
 
@@ -33,7 +33,7 @@ are written to `docs/qa/`.
 
 ![desktop charselect](./desktop-charselect.jpg)
 
-### Act map — ✓ clean
+### Descent doors — ✓ clean
 
 ![desktop map](./desktop-map.jpg)
 
