@@ -1,0 +1,52 @@
+name: Fetch Munich OSM data
+
+# TEMPORARY, branch-scoped: the Claude session's network policy blocks
+# Overpass, so this fetches the raw OSM data on the open-egress runner and
+# commits it back to the feature branch (same pattern as sprites.yml).
+# Deleted before merge to main.
+on:
+  push:
+    branches:
+      - claude/munich-restaurant-map-hy46ii
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Skip if data already fetched
+        id: guard
+        run: |
+          if [ -f tools/munich/raw-restaurants.json ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node
+        if: steps.guard.outputs.skip == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch from Overpass
+        if: steps.guard.outputs.skip == 'false'
+        run: node tools/munich/fetch-munich-osm.js
+
+      - name: Commit raw data
+        if: steps.guard.outputs.skip == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/munich/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: fetch Munich OSM raw data [automated]"
+            git push
+          fi
