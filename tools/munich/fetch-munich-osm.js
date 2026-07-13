@@ -16,26 +16,38 @@ mkdirSync(outDir, { recursive: true });
 
 const MIRRORS = [
   'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.osm.jp/api/interpreter',
 ];
 
+// Overpass instances 406/403 requests without an identifying UA, and shared
+// GitHub-runner IPs get 429s — identify ourselves and back off patiently.
+const HEADERS = {
+  'Content-Type': 'application/x-www-form-urlencoded',
+  'User-Agent': 'munich-restaurant-map-databuild/1.0 (one-off; https://github.com/dermosef91/spire)',
+  'Accept': 'application/json',
+};
+
 async function overpass(query, label) {
-  for (const url of MIRRORS) {
-    for (let attempt = 1; attempt <= 3; attempt++) {
+  for (let round = 1; round <= 3; round++) {
+    for (const url of MIRRORS) {
       try {
-        console.log(`[${label}] POST ${url} (attempt ${attempt})`);
+        console.log(`[${label}] POST ${url} (round ${round})`);
         const res = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          headers: HEADERS,
           body: 'data=' + encodeURIComponent(query),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        console.log(`[${label}] got ${json.elements?.length ?? 0} elements`);
+        if (!json.elements) throw new Error('no elements in response');
+        console.log(`[${label}] got ${json.elements.length} elements`);
         return json;
       } catch (e) {
         console.warn(`[${label}] failed: ${e.message}`);
-        await new Promise(r => setTimeout(r, 5000 * attempt));
+        await new Promise(r => setTimeout(r, 15000 * round));
       }
     }
   }
