@@ -252,7 +252,11 @@ try {
     window.__combat.player.block = 0;
     window.__combat.endTurn();
   });
-  await page.waitForSelector('.enemy-acting', { timeout: 2200 });
+  // The enemy phase deliberately holds an "Enemy Turn" banner (~650ms) before
+  // the first foe acts and the `.enemy-acting` spotlight lands (~830ms after
+  // endTurn), so allow the same generous window as the sibling enemy-phase
+  // waits below rather than a tight 2.2s that a slow CI runner can overrun.
+  await page.waitForSelector('.enemy-acting', { timeout: 3500 });
   const actingCount = await page.locator('.enemy-acting').count();
   if (actingCount !== 1) throw new Error(`enemy phase spotlighted ${actingCount} foes instead of one`);
   const enemyPhaseHandOpacity = Number(await page.locator('.hand').evaluate((node) => getComputedStyle(node).opacity));
