@@ -284,28 +284,14 @@ async function main() {
             }
           }
 
-          // Descent-Vote doors (climb mode). Prefer a revealed comfort door,
-          // then a non-danger door, else just take the first one.
-          const doors = Array.from(document.querySelectorAll('.door-card'));
-          if (doors.length > 0) {
-            const priorityDoor = doors.find(n => n.querySelector('.tag-rest')) ||
-                                 doors.find(n => n.querySelector('.tag-treasure')) ||
-                                 doors.find(n => n.querySelector('.tag-event')) ||
-                                 doors.find(n => !n.classList.contains('door-danger')) ||
-                                 doors[0];
-            await window.hostLog(`Scene doors: Opening door class=${priorityDoor.className}`);
-            priorityDoor.click();
-            lastActionTime = Date.now();
-            return;
-          }
-
-          // Legacy node map (only reached by pre-climb saves).
           const reachableNodes = Array.from(document.querySelectorAll('.map-node.reachable'));
           if (reachableNodes.length > 0) {
+            // Prioritize campfire (rest), then treasure, then events, then shop, then elite, then combat
             const priorityNode = reachableNodes.find(n => n.classList.contains('node-rest')) ||
                                  reachableNodes.find(n => n.classList.contains('node-treasure')) ||
                                  reachableNodes.find(n => n.classList.contains('node-event')) ||
                                  reachableNodes[0];
+
             await window.hostLog(`Scene map: Entering node type=${priorityNode.className} title=${priorityNode.title}`);
             priorityNode.click();
             lastActionTime = Date.now();
